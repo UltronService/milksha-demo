@@ -18,7 +18,28 @@
   ];
   const KNOWN_LAYOUTS = ['milksha-callboard'];
   const STANDBY_FALLBACKS = ['logo-on-primary'];
-  const SITE_BASE = '.';
+
+  /**
+   * Directory URL prefix for this site (GitHub Pages sub-path safe).
+   * @returns {string}
+   */
+  function detectSiteBase() {
+    const loc = root.location;
+    if (!loc || typeof loc.pathname !== 'string') {
+      return './';
+    }
+    let path = loc.pathname;
+    const lastSegment = path.split('/').pop() || '';
+    if (lastSegment && lastSegment.indexOf('.') !== -1) {
+      path = path.slice(0, path.lastIndexOf('/') + 1);
+    } else if (!path.endsWith('/')) {
+      path = path + '/';
+    }
+    if (path === '/') {
+      return './';
+    }
+    return path;
+  }
 
   /**
    * @param {string} message
@@ -49,6 +70,9 @@
     }
     if (trimmed.charAt(0) === '/') {
       return trimmed;
+    }
+    if (base === './') {
+      return './' + trimmed.replace(/^\/+/, '');
     }
     return base.replace(/\/+$/, '') + '/' + trimmed.replace(/^\/+/, '');
   }
@@ -174,7 +198,8 @@
    */
   function loadSiteBrand(options) {
     const opts = options || {};
-    const url = 'brand.json';
+    const base = detectSiteBase();
+    const url = base === './' ? 'brand.json' : base + 'brand.json';
     const fetchFn = opts.fetchFn || root.fetch;
 
     if (typeof fetchFn !== 'function') {
@@ -203,11 +228,12 @@
       })
       .then(function (data) {
         const validated = validateBrand(data, 'milksha');
-        return normalizeBrand(validated, SITE_BASE);
+        return normalizeBrand(validated, base);
       });
   }
 
   QMS.BrandLoadError = BrandLoadError;
+  QMS.detectSiteBase = detectSiteBase;
   QMS.KNOWN_LAYOUTS = KNOWN_LAYOUTS;
   QMS.resolveAssetPath = resolveAssetPath;
   QMS.validateBrand = validateBrand;

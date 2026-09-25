@@ -1,12 +1,25 @@
 .milksha-stage {
+  position: relative;
   margin: 0;
+  width: 100vw;
+  height: 100vh;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: #111;
   font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
   font-variant-numeric: tabular-nums;
+  --milksha-ov-num: 320px;
+  --milksha-ov-tag: 64px;
+  --milksha-ov-peak: 1;
+}
+
+.milksha-board-viewport {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .milksha-board {
@@ -136,10 +149,13 @@
 }
 
 .milksha-card.p {
-  gap: 12px;
-  padding-left: 10px;
+  gap: 8px;
+  padding-left: 8px;
+  padding-right: 6px;
   background: #efefef;
   border: 1px solid #c8c8c8;
+  min-width: 0;
+  overflow: visible;
 }
 
 .milksha-num {
@@ -155,6 +171,10 @@
 .milksha-prep .milksha-num {
   color: #6a6a6a;
   font-weight: 700;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .milksha-tag {
@@ -209,6 +229,7 @@
 .milksha-ov {
   position: absolute;
   inset: 0;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.72);
   display: flex;
   align-items: center;
@@ -216,6 +237,10 @@
   z-index: 5;
   opacity: 0;
   pointer-events: none;
+}
+
+body:has(.milksha-demo-drawer.open) .milksha-ov {
+  padding-right: min(360px, 92vw);
 }
 
 .milksha-ov.visible {
@@ -226,11 +251,14 @@
   background: #fff;
   color: #000;
   border-radius: 28px;
-  padding: 30px 80px;
+  padding: clamp(12px, 3vh, 30px) clamp(16px, 6vw, 80px);
   text-align: center;
-  border: 10px solid #000;
-  outline: 8px solid #fff;
-  max-width: 85%;
+  border: clamp(4px, 1vw, 10px) solid #000;
+  outline: clamp(4px, 0.8vw, 8px) solid #fff;
+  box-sizing: border-box;
+  max-width: min(92vw, calc(100vw - min(360px, 92vw) - 40px), 900px);
+  max-height: 88vh;
+  overflow: visible;
   transform: scale(0.6);
   opacity: 0;
   will-change: transform, opacity;
@@ -238,7 +266,7 @@
 
 .milksha-ovbox.phase-in {
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-  transform: scale(1);
+  transform: scale(var(--milksha-ov-peak, 1));
   opacity: 1;
 }
 
@@ -250,13 +278,17 @@
 
 .milksha-ovnum {
   font-weight: 900;
-  line-height: 1;
-  letter-spacing: 6px;
+  line-height: 1.05;
+  letter-spacing: clamp(2px, 0.8vw, 6px);
+  font-size: var(--milksha-ov-num);
+  word-break: break-all;
 }
 
 .milksha-ovtxt {
   font-weight: 900;
-  margin-top: 10px;
+  margin-top: clamp(6px, 1.5vh, 10px);
+  font-size: var(--milksha-ov-tag);
+  line-height: 1.2;
 }
 
 .milksha-demo-handle {
