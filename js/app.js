@@ -34,8 +34,15 @@
         }
         const runtime = QMS.bootMilkshaBoard(brand);
         if (queryFlag('demo') && typeof QMS.attachMilkshaDemo === 'function') {
+          const base =
+            brand.basePath ||
+            (typeof QMS.detectSiteBase === 'function' ? QMS.detectSiteBase() : './');
+          const scriptUrl =
+            base === './'
+              ? 'demo/milksha-demo-script.json'
+              : base + 'demo/milksha-demo-script.json';
           QMS.attachMilkshaDemo(runtime, {
-            scriptUrl: 'demo/milksha-demo-script.json',
+            scriptUrl: scriptUrl,
           });
         }
       })

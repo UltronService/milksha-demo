@@ -231,10 +231,12 @@
 
     rootEl.className = 'milksha-stage';
     rootEl.innerHTML =
-      '<div class="milksha-board" id="milksha-board"></div>' +
+      '<div class="milksha-board-viewport" id="milksha-board-viewport">' +
+      '<div class="milksha-board" id="milksha-board"></div></div>' +
       '<div class="milksha-ov" id="milksha-ov" aria-hidden="true">' +
       '<div class="milksha-ovbox" id="milksha-ovbox"></div></div>';
 
+    const boardViewportEl = doc.getElementById('milksha-board-viewport');
     const boardEl = doc.getElementById('milksha-board');
     const ovEl = doc.getElementById('milksha-ov');
     const ovBoxEl = doc.getElementById('milksha-ovbox');
@@ -282,14 +284,32 @@
       const vw = win.innerWidth || cfg.W;
       const vh = win.innerHeight || cfg.H;
       scale = Math.min(vw / cfg.W, vh / cfg.H, 1);
+      const viewW = Math.round(cfg.W * scale);
+      const viewH = Math.round(cfg.H * scale);
+      if (boardViewportEl) {
+        boardViewportEl.style.width = viewW + 'px';
+        boardViewportEl.style.height = viewH + 'px';
+      }
       boardEl.style.width = cfg.W + 'px';
       boardEl.style.height = cfg.H + 'px';
       boardEl.style.transform = 'scale(' + scale + ')';
       boardEl.style.transformOrigin = 'top left';
-      const offsetX = (vw - cfg.W * scale) / 2;
-      const offsetY = (vh - cfg.H * scale) / 2;
-      boardEl.style.marginLeft = offsetX + 'px';
-      boardEl.style.marginTop = offsetY + 'px';
+      boardEl.style.marginLeft = '0';
+      boardEl.style.marginTop = '0';
+      const shortLandscape = orientation === 'landscape' && vh <= 500;
+      const ovNumPx = Math.min(
+        cfg.overlay.font,
+        Math.round(vw * (shortLandscape ? 0.12 : 0.22)),
+        Math.round(vh * (shortLandscape ? 0.26 : 0.55)),
+      );
+      const ovTagPx = Math.min(
+        cfg.overlay.tag,
+        Math.round(vw * (shortLandscape ? 0.055 : 0.08)),
+        Math.round(vh * (shortLandscape ? 0.08 : 0.12)),
+      );
+      rootEl.style.setProperty('--milksha-ov-num', ovNumPx + 'px');
+      rootEl.style.setProperty('--milksha-ov-tag', ovTagPx + 'px');
+      rootEl.style.setProperty('--milksha-ov-peak', shortLandscape ? '0.72' : '1');
     }
 
     function formatClock() {
@@ -439,7 +459,7 @@
         z +=
           '<div class="milksha-grid" style="grid-template-columns:repeat(' +
           zcfg.cols +
-          ',1fr);grid-template-rows:repeat(' +
+          ',minmax(0,1fr));grid-template-rows:repeat(' +
           zcfg.rows +
           ',1fr);height:' +
           (hh - zcfg.titleH - 24) +
@@ -547,13 +567,9 @@
       ovBoxEl.innerHTML =
         '<div>' +
         renderTagHtml(item.sourceKey, cfg.overlay.tag) +
-        '</div><div class="milksha-ovnum" style="font-size:' +
-        cfg.overlay.font +
-        'px">' +
+        '</div><div class="milksha-ovnum">' +
         item.number +
-        '</div><div class="milksha-ovtxt" style="font-size:' +
-        cfg.overlay.tag +
-        'px">' +
+        '</div><div class="milksha-ovtxt">' +
         brand.copy.pickupHint +
         '</div>';
       ovEl.style.opacity = '1';
