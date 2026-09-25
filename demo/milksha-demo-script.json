@@ -1,0 +1,748 @@
+[
+  {
+    "_note": "開店，畫面清空（空陣列）",
+    "_expectRing": [],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-00:0001",
+      "serviceSpecialData_Json_Md5Hash": "9d229e86403e2653ff2fc11c0899b4ee",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "第一批：現場 2 筆、迷點 1 筆進準備中",
+    "_expectRing": [],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1001"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P021"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-05:0002",
+      "serviceSpecialData_Json_Md5Hash": "d8d541c8a7a6b965244deb3e207b9972",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "1001 轉可取餐（要響）；新增 foodpanda、Uber Eats 準備中",
+    "_expectRing": [
+      "store:1001"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1001"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U512"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-10:0003",
+      "serviceSpecialData_Json_Md5Hash": "f0e4f02018892e3bf1f0cedf6573e39b",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "1002 與 P021 同時轉可取餐（兩個都要響）；新增 UDD、現場 1003",
+    "_expectRing": [
+      "store:1002",
+      "point:P021"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1001"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U512"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D08"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1003"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-15:0004",
+      "serviceSpecialData_Json_Md5Hash": "5152d8e7fb0017e8bd01588d9ac3f900",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "1001 取餐完消失（不響）；F37 轉可取餐（要響）",
+    "_expectRing": [
+      "fp:F37"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U512"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D08"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1003"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-20:0005",
+      "serviceSpecialData_Json_Md5Hash": "2e2f64c4850e43450feed041f9396658",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "U512、D08 轉可取餐（要響）；1004 直接出現在可取餐（沒經過準備中，也要響）；五種來源都出現過可取餐",
+    "_expectRing": [
+      "uber:U512",
+      "udd:D08",
+      "store:1004"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_OK",
+              "number": "U512"
+            },
+            {
+              "source_type": "From_Udd_OK",
+              "number": "D08"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1003"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1004"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-25:0006",
+      "serviceSpecialData_Json_Md5Hash": "1881b5a62fbf436905be3412d8382ecd",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "尖峰：準備中一次湧入 28 筆（需翻頁）；1003 轉可取餐（要響）",
+    "_expectRing": [
+      "store:1003"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_OK",
+              "number": "U512"
+            },
+            {
+              "source_type": "From_Udd_OK",
+              "number": "D08"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1003"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1004"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1005"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1006"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1007"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1008"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1009"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1010"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1011"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1012"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1013"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1014"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1015"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1016"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1017"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1018"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P022"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P023"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P024"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P025"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F38"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F39"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F40"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F41"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U513"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U514"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U515"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D09"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D10"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D11"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-30:0007",
+      "serviceSpecialData_Json_Md5Hash": "8058b5785316d6bfd26de1996dcf3c98",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "尖峰：11 筆同時轉可取餐（可取餐也需翻頁，全部要響，建議排隊逐一響）",
+    "_expectRing": [
+      "store:1005",
+      "store:1006",
+      "store:1007",
+      "store:1008",
+      "store:1009",
+      "store:1010",
+      "store:1011",
+      "store:1012",
+      "point:P022",
+      "fp:F38",
+      "uber:U513"
+    ],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1002"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P021"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F37"
+            },
+            {
+              "source_type": "From_UberEat_OK",
+              "number": "U512"
+            },
+            {
+              "source_type": "From_Udd_OK",
+              "number": "D08"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1003"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1004"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1005"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1006"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1007"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1008"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1009"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1010"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1011"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1012"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P022"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F38"
+            },
+            {
+              "source_type": "From_UberEat_OK",
+              "number": "U513"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1013"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1014"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1015"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1016"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1017"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1018"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P023"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P024"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P025"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F39"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F40"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F41"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U514"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U515"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D09"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D10"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D11"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-35:0008",
+      "serviceSpecialData_Json_Md5Hash": "8c939de190096a8b6f32ba6596164333",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "早先 7 筆可取餐被取走一起消失（不響）",
+    "_expectRing": [],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_OK",
+              "number": "1005"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1006"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1007"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1008"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1009"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1010"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1011"
+            },
+            {
+              "source_type": "From_Store_OK",
+              "number": "1012"
+            },
+            {
+              "source_type": "From_milksha_point_OK",
+              "number": "P022"
+            },
+            {
+              "source_type": "From_FoodPanda_OK",
+              "number": "F38"
+            },
+            {
+              "source_type": "From_UberEat_OK",
+              "number": "U513"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1013"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1014"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1015"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1016"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1017"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1018"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P023"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P024"
+            },
+            {
+              "source_type": "From_milksha_point_Preparing",
+              "number": "P025"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F39"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F40"
+            },
+            {
+              "source_type": "From_FoodPanda_Preparing",
+              "number": "F41"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U514"
+            },
+            {
+              "source_type": "From_UberEat_Preparing",
+              "number": "U515"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D09"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D10"
+            },
+            {
+              "source_type": "From_Udd_Preparing",
+              "number": "D11"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-40:0009",
+      "serviceSpecialData_Json_Md5Hash": "7524aa9edc7e98071fcd2f05f664d02d",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  },
+  {
+    "_note": "收尾：只剩 2 筆準備中，其餘全部消失（不響）",
+    "_expectRing": [],
+    "request": {
+      "isEncrypt": false,
+      "serviceSpecialData_Json": {
+        "target": "milkshademo001",
+        "data": {
+          "number_content": [
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1013"
+            },
+            {
+              "source_type": "From_Store_Preparing",
+              "number": "1014"
+            }
+          ],
+          "newsTicker_content": [],
+          "newsTickerSpeed": 0
+        }
+      },
+      "merchant_id": "milksha",
+      "account": "demo001",
+      "timeStmp": "2026-09-25-10-00-45:0010",
+      "serviceSpecialData_Json_Md5Hash": "875d88d17084f2f34a2d99050923dc9b",
+      "signature": "DEMO-NO-SIGNATURE"
+    }
+  }
+]

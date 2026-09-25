@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="common.js"></script></head>
+<body style="width:2920px;height:1830px;position:relative">
+<div class="notes" style="left:40px;top:24px;width:1920px"><h1>迷客夏 叫號看板 線框圖｜橫式 1920×1080 <span class="meta">（示意草圖，假資料；非正式設計稿）</span></h1></div>
+<div id="b" style="position:absolute;left:110px;top:190px"></div>
+<div id="c" style="position:absolute;left:110px;top:190px"></div>
+<div class="notes" style="left:40px;top:1300px;width:1960px">
+  <h2>⑧ 號碼變成「可取餐」時的彈出放大（左為示意圖）</h2>
+  <div style="padding-left:850px;padding-top:20px;font-size:28px;line-height:1.7">全畫面半透明深色遮罩（不用模糊）＋中央白底大號碼＋來源標籤＋「請取餐」。<br>
+  約 2.8 秒：0.3 秒放大淡入 → 停留 2.2 秒 → 0.3 秒縮小淡出，同時「叮咚」提示音。<br>
+  同一次推送有多筆：逐一播放，最多 3 筆；第 4 筆起直接安靜加入列表（仍有粗白框）。<br>
+  號碼被取走（從資料中消失）：直接移除，不做動畫。</div>
+</div>
+<div id="inset" class="inset" style="left:110px;top:1360px;transform:scale(0.4)"></div>
+<div class="notes" style="left:2080px;top:110px;width:810px">
+<h2>說明</h2>
+<ol>
+<li><b class="n">1</b><b>頁首</b>（高 80px）：品牌 LOGO、「取餐叫號」、時鐘。不放跑馬燈。</li>
+<li><b class="n">2</b><b>可取餐區（最醒目）</b>：佔寬度 62%，黑底白字。號碼字級 140px（數字實高約 100px ≈ 螢幕高 9%）。3 欄 × 4 列＝每頁 12 筆。<b>最新可取餐的排最前面</b>（左上）。</li>
+<li><b class="n">3</b><b>來源標籤</b>：每個號碼上方一個小標籤＝圖示字＋文字（現場／迷點／熊貓／Uber／UDD），不只靠顏色辨識。</li>
+<li><b class="n">4</b><b>剛叫到的號碼</b>：彈出動畫結束後，卡片保留粗白框約 10 秒（靜態、不閃爍）。</li>
+<li><b class="n">5</b><b>頁碼「1/2」＋細進度條</b>：超過一頁才出現；每 6 秒自動換頁；有新的可取餐號碼時跳回第 1 頁並重新計時。</li>
+<li><b class="n">6</b><b>準備中區（低調）</b>：佔寬度 38%，淺灰底、灰字，字級 64px。2 欄 × 9 列＝每頁 18 筆。<b>等最久的排最前面</b>。</li>
+<li><b class="n">7</b><b>準備中頁碼</b>：與可取餐區各自獨立換頁，規則相同。</li>
+</ol>
+<h2>每頁筆數公式（沿用既有規則）</h2>
+<div>每頁列數 = max(3, floor(可用高度 ÷ 列高))<br>每頁筆數 = 每頁列數 × 欄數；頁數 &gt; 1 才自動輪播。<br>門市端不捲動。</div>
+<h2>顏色與字型</h2>
+<div>可取餐：#161616 底 / #FFFFFF 字（對比 &gt; 15:1）<br>準備中：#E4E4E4 底 / #6A6A6A 字（約 4.6:1）<br>數字用等寬數字（tabular-nums），建議 Noto Sans TC Black / Roboto Mono。</div>
+</ol></div>
+<script>
+const L={W:1920,H:1080,header:80,split:'row',readyFrac:.62,readyPage:'1/2',prepPage:'1/2',
+ ready:{cols:3,rows:4,font:140,tagSize:30,titleH:84,titleF:50,progress:1},
+ prep:{cols:2,rows:9,font:64,tagSize:24,titleH:84,titleF:42,progress:1}};
+document.getElementById('b').innerHTML=board(L);
+document.getElementById('c').innerHTML=callouts([[1,90,-76],[2,-78,100],[3,300,205],[4,-78,200],[5,1080,-76],[6,1230,-76],[7,1830,-76]]);
+document.getElementById('inset').innerHTML=board(Object.assign({},L,{overlay:{font:320,tag:64}}));
+</script></body></html>

@@ -1,0 +1,95 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="common.js"></script>
+<style>
+.dr{background:#fff;border:3px solid #333;border-radius:14px;padding:22px;font-size:24px;color:#222}
+.dr h3{font-size:28px;display:flex;justify-content:space-between;border-bottom:2px solid #ccc;padding-bottom:10px;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}
+.btn{border:3px solid #333;border-radius:10px;padding:8px 18px;background:#f4f4f4;font-weight:700}
+.btn.big{display:block;text-align:center;background:#333;color:#fff;font-size:30px;padding:16px}
+.btn.sel{background:#333;color:#fff}
+.inp{border:2px solid #888;border-radius:8px;padding:6px 14px;min-width:120px;color:#777;background:#fafafa}
+.tg{display:inline-block;width:70px;height:36px;border-radius:18px;background:#333;position:relative;vertical-align:middle}
+.tg:after{content:'';position:absolute;right:4px;top:4px;width:28px;height:28px;border-radius:50%;background:#fff}
+.lbl{color:#777;font-size:20px}
+pre{font-family:'Noto Sans Mono CJK TC',monospace;font-size:17px;background:#f0f0f0;border:1px dashed #999;padding:10px;line-height:1.35}
+.sec{border-top:1px dashed #bbb;margin-top:14px;padding-top:6px}
+.url{font-family:'Noto Sans Mono CJK TC',monospace;background:#eee;border:2px solid #999;border-radius:8px;padding:6px 14px;font-size:22px;display:inline-block}
+</style></head>
+<body style="width:2500px;height:1560px;position:relative">
+<div class="notes" style="left:40px;top:24px;width:2400px"><h1>迷客夏 叫號看板｜展示控制（模擬推送）線框圖 <span class="meta">（僅供 Demo，正式看板不出現）</span></h1></div>
+
+<div class="notes" style="left:40px;top:100px"><h2>A. 看板畫面（網址加 ?demo=1 才有控制入口）</h2></div>
+<div style="position:absolute;left:40px;top:160px"><span class="url">…/milksha-board?orientation=landscape&amp;demo=1</span></div>
+<div id="mini" style="position:absolute;left:40px;top:220px;width:960px;height:540px;overflow:hidden;outline:4px solid #333">
+  <div id="mb" class="inset" style="left:0;top:0;transform:scale(.5)"></div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:330px;background:#fff;border-left:4px solid #333;padding:12px;font-size:17px">
+    <b style="font-size:20px">展示控制</b><span style="float:right">✕</span>
+    <div style="margin-top:8px;background:#333;color:#fff;text-align:center;padding:8px;border-radius:6px;font-weight:700">▶ 模擬推送</div>
+    <div style="margin-top:8px">自動播放 ● 開　每 8 秒</div><div>步驟 3 / 12</div>
+    <div style="margin-top:6px;color:#777">（完整內容見右側 B）</div></div>
+</div>
+<div class="co" style="left:990px;top:250px">1</div>
+<div id="mini2" style="position:absolute;left:40px;top:800px;width:960px;height:540px;overflow:hidden;outline:4px solid #333">
+  <div id="mb2" class="inset" style="left:0;top:0;transform:scale(.5)"></div>
+  <div style="position:absolute;right:0;bottom:24px;width:120px;height:40px;background:#1565FF;opacity:.85;border-radius:10px 0 0 10px;color:#fff;font-weight:700;font-size:18px;text-align:center;line-height:36px">⚙ 展示</div>
+</div>
+<div class="co" style="left:990px;top:1270px">2</div>
+<div class="notes" style="left:40px;top:1350px;width:980px;font-size:23px">
+上：面板打開（右側抽屜，蓋在看板上，僅展示者操作時出現）。<br>
+下：面板收起：只剩右下角半透明小把手「⚙ 展示」；閒置 10 秒自動收起。<br>
+不加 ?demo=1 → 完全沒有把手與面板，就是乾淨的正式看板。</div>
+
+<div class="notes" style="left:1080px;top:100px"><h2>B. 展示控制面板（放大）</h2></div>
+<div class="dr" style="position:absolute;left:1080px;top:160px;width:640px;height:1370px">
+  <h3><span>展示控制 <span class="lbl">Demo</span></span><span>✕</span></h3>
+  <div class="row"><span class="lbl">目前步驟</span><b>3 / 12</b><span class="lbl">　下次推送</span><b>4 秒後</b></div>
+  <div class="btn big">▶ 模擬推送（下一步）</div>
+  <div class="sec"></div>
+  <div class="row"><b>自動播放</b><span class="tg"></span><span>開</span></div>
+  <div class="row"><span class="lbl">間隔</span><span class="btn">5 秒</span><span class="btn sel">8 秒</span><span class="btn">10 秒</span></div>
+  <div class="row"><span class="lbl">劇本</span><span class="inp" style="min-width:360px">一般時段（12 步，循環）▾</span></div>
+  <div class="lbl" style="margin-left:4px">其他劇本：尖峰爆單（一次 5 筆可取餐）／跨頁測試（40 筆）／清空測試</div>
+  <div class="sec"></div>
+  <div class="row"><b>手動加號</b></div>
+  <div class="row"><span class="inp">現場 ▾</span><span class="inp">號碼 1530</span></div>
+  <div class="row"><span class="btn sel">準備中</span><span class="btn">可取餐</span><span class="btn">＋ 加入並推送</span></div>
+  <div class="row"><span class="btn">隨機一筆→可取餐</span><span class="btn">隨機取走一筆</span></div>
+  <div class="sec"></div>
+  <div class="row"><span class="btn">清空畫面（空陣列）</span><span class="btn">重置劇本</span></div>
+  <div class="row"><b>提示音</b><span class="tg"></span><span>開</span><span class="lbl">　版面</span><span class="btn sel">橫</span><span class="btn">直</span></div>
+  <div class="sec"></div>
+  <div class="lbl">最近一次推送的資料（假資料）</div>
+<pre>"number_content": [
+  {"source_type":"From_Store_OK","number":"1523"},
+  {"source_type":"From_UberEat_OK","number":"1522"},
+  {"source_type":"From_Udd_Preparing","number":"1502"},
+  …共 21 筆
+]</pre>
+  <div class="lbl">快捷鍵：D＝開/關面板　空白鍵＝模擬推送　A＝自動播放</div>
+</div>
+<div class="co" style="left:1690px;top:200px">3</div>
+<div class="co" style="left:1690px;top:410px">4</div>
+<div class="co" style="left:1690px;top:720px">5</div>
+<div class="co" style="left:1690px;top:1050px">6</div>
+
+<div class="notes" style="left:1790px;top:100px;width:680px">
+<h2>說明</h2>
+<ol>
+<li><b class="n">1</b><b>入口藏起來</b>：只有網址帶 <b>?demo=1</b> 才會出現。面板是右側抽屜，打開時才蓋住看板一角。</li>
+<li><b class="n">2</b><b>收起狀態</b>：只剩小把手；按 D 鍵或遙控器「選單」鍵也能開關。閒置 10 秒自動收起，不影響展示畫面。</li>
+<li><b class="n">3</b><b>模擬推送</b>：按一次＝送出劇本的下一份「完整名單」，看板照正式規則比對新舊名單並更新。</li>
+<li><b class="n">4</b><b>自動播放</b>：每 N 秒（預設 8 秒）自動送出下一步，播完循環，適合無人值守展示。</li>
+<li><b class="n">5</b><b>手動操作</b>：臨時加號、把號碼改成可取餐、模擬取走，現場可即興示範。</li>
+<li><b class="n">6</b><b>資料預覽</b>：顯示最近一次假資料，欄位與迷客夏規格一致（source_type、number）。</li>
+</ol>
+<h2>C. 另一選項：獨立控制頁</h2>
+<div><span class="url">…/milksha-control</span><br>另開一個分頁當遙控器（同一台瀏覽器內，用頁面間通訊傳送假資料），看板頁完全不顯示任何控制元件。適合用筆電接大螢幕展示；STB 上建議用 A 方案。</div>
+<h2>自動播放劇本範例（一般時段）</h2>
+<div style="font-size:22px">1 開機：6 筆準備中<br>2 +2 筆準備中（熊貓、Uber）<br>3 1 筆 → 可取餐（彈出）<br>4 2 筆 → 可取餐（依序彈出）<br>5 1 筆被取走（直接消失）<br>… 12 清空後重新開始</div>
+</div>
+<script>
+const L={W:1920,H:1080,header:80,split:'row',readyFrac:.62,readyPage:'1/2',prepPage:'1/2',
+ ready:{cols:3,rows:4,font:140,tagSize:30,titleH:84,titleF:50,progress:1},
+ prep:{cols:2,rows:9,font:64,tagSize:24,titleH:84,titleF:42,progress:1}};
+document.getElementById('mb').innerHTML=board(L);
+document.getElementById('mb2').innerHTML=board(L);
+</script></body></html>
