@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css"><script src="common.js"></script></head>
+<body style="width:2160px;height:2200px;position:relative">
+<div class="notes" style="left:40px;top:24px;width:2100px"><h1>迷客夏 叫號看板 線框圖｜直式 1080×1920 <span class="meta">（示意草圖，假資料；非正式設計稿）</span></h1></div>
+<div id="b" style="position:absolute;left:110px;top:190px"></div>
+<div id="c" style="position:absolute;left:110px;top:190px"></div>
+<div class="notes" style="left:1270px;top:110px;width:860px">
+<h2>說明</h2>
+<ol>
+<li><b class="n">1</b><b>頁首</b>（高 90px）：品牌 LOGO、「取餐叫號」、時鐘。不放跑馬燈。</li>
+<li><b class="n">2</b><b>可取餐區（上方、最醒目）</b>：佔內容高度 60%，黑底白字。號碼字級 180px（數字實高約 130px ≈ 螢幕高 6.8%）。2 欄 × 4 列＝每頁 8 筆。<b>最新的排最前面</b>。</li>
+<li><b class="n">3</b><b>來源標籤</b>：號碼上方，圖示字＋文字，不只靠顏色。</li>
+<li><b class="n">4</b><b>剛叫到的號碼</b>：粗白框保留約 10 秒（靜態）。</li>
+<li><b class="n">5</b><b>頁碼「1/3」＋細進度條</b>：超過一頁才出現；6 秒換頁；有新可取餐號碼→跳回第 1 頁並重新計時。</li>
+<li><b class="n">6</b><b>準備中區（下方、低調）</b>：佔 40%，淺灰底灰字，字級 80px。3 欄 × 5 列＝每頁 15 筆。<b>等最久的排最前面</b>。</li>
+<li><b class="n">7</b><b>準備中頁碼</b>：獨立換頁，規則相同。</li>
+</ol>
+<h2>為什麼直式只放 2 欄？</h2>
+<div>直式寬度只有 1080px。4 位數號碼要維持「數字高 ≥ 螢幕高 6%」，每欄至少需約 450px 寬，所以可取餐區用 2 欄、放大字級，犧牲每頁筆數換取遠距可讀。</div>
+<h2>⑧ 彈出放大（直式）</h2>
+<div>與橫式相同：遮罩＋中央大號碼（約 300px 字級，寬度不超過螢幕 85%）＋來源標籤＋「請取餐」，約 2.8 秒，搭配提示音。</div>
+</ol></div>
+<div class="notes" style="left:1330px;top:1410px"><h2>⑧ 彈出狀態示意</h2></div>
+<div id="inset" class="inset" style="left:1330px;top:1470px;transform:scale(0.3)"></div>
+<script>
+const P={W:1080,H:1920,header:90,split:'col',readyFrac:.6,readyPage:'1/3',prepPage:'1/2',
+ ready:{cols:2,rows:4,font:180,tagSize:34,titleH:90,titleF:52,progress:1},
+ prep:{cols:3,rows:5,font:80,tagSize:26,titleH:84,titleF:44,progress:1}};
+document.getElementById('b').innerHTML=board(P);
+document.getElementById('c').innerHTML=callouts([[1,90,-76],[2,-78,110],[3,380,200],[4,-78,240],[5,1100,110],[6,-78,1210],[7,1100,1210]]);
+document.getElementById('inset').innerHTML=board(Object.assign({},P,{overlay:{font:300,tag:64}}));
+</script></body></html>

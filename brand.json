@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "brandId": "milksha",
+  "displayName": "迷客夏",
+  "layout": "milksha-callboard",
+  "theme": {
+    "primary": "#161616",
+    "accent": "#1565FF",
+    "bannerOpacity": 0.85,
+    "bannerOpacityMin": 0.75
+  },
+  "copy": {
+    "pickupHint": "請取餐",
+    "standbyFallback": "logo-on-primary"
+  },
+  "queue": {
+    "historyOrientation": "horizontal",
+    "historyPageIntervalSec": 6,
+    "mainNumberMaxLenForLargeFont": 4
+  },
+  "audio": {
+    "tts": false,
+    "dingDong": true,
+    "mutedDefault": false
+  },
+  "assets": {
+    "logo": "assets/logo.svg",
+    "menuImage": "",
+    "standbyVideo": ""
+  },
+  "storeId": null,
+  "deviceId": null
+}

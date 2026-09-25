@@ -1,0 +1,8 @@
+{
+  "name": "milksha-demo",
+  "private": true,
+  "description": "迷客夏取餐叫號看板 GitHub Pages 展示站",
+  "scripts": {
+    "test": "node --test tests/**/*.test.js"
+  }
+}
