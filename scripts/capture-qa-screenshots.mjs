@@ -3,7 +3,9 @@ import { cpSync, mkdirSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+
+const PEAK_FRAME_INDEX = 8;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -49,10 +51,28 @@ function startServer() {
   });
 }
 
+async function loadPeakBoardState(page, query = '') {
+  const scriptPath = join(ROOT, 'demo', 'milksha-demo-script.json');
+  const script = JSON.parse(readFileSync(scriptPath, 'utf8'));
+  const frame = script[PEAK_FRAME_INDEX];
+  const content = frame.request.serviceSpecialData_Json.data.number_content;
+  await page.goto(BASE + query, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await page.evaluate((rows) => {
+    window.QMS.runtime.applyPayload(rows);
+  }, content);
+  await page.waitForSelector('.milksha-prep .milksha-num', { timeout: 5000 });
+  await page.waitForTimeout(400);
+}
+
 async function captureBoard(page, name, width, height, query = '') {
   await page.setViewportSize({ width, height });
-  await page.goto(BASE + query, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(800);
+  await loadPeakBoardState(page, query);
+  const prepNums = await page.locator('.milksha-prep .milksha-num').count();
+  const readyNums = await page.locator('.milksha-ready .milksha-num').count();
+  if (prepNums < 1 || readyNums < 1) {
+    throw new Error(`Board not populated for ${name} (ready=${readyNums}, prep=${prepNums})`);
+  }
   await page.screenshot({ path: join(ARTIFACTS, name), fullPage: false });
 }
 
