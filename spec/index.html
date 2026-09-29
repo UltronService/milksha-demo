@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>叫號機接收端 API 串接規格 — 討論文件 v1.2</title>
+  <title>叫號機接收端 API 串接規格 — 討論文件 v1.3</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -36,6 +36,18 @@
       border-radius: 6px; padding: 1rem 1.15rem; margin: 0 0 1.25rem; font-size: 0.95rem;
     }
     .plain-box h2 { margin-top: 0; padding-top: 0; border-top: none; font-size: 1.15rem; }
+    .meeting-box {
+      background: #fffbeb; border: 2px solid #d97706; border-left: 6px solid #d97706;
+      border-radius: 8px; padding: 1.15rem 1.25rem; margin: 0 0 1.5rem;
+    }
+    .meeting-box > h2 { margin: 0 0 0.5rem; padding-top: 0; border-top: none; color: #92400e; font-size: 1.25rem; }
+    .meeting-box .lead { font-size: 0.95rem; margin: 0 0 1rem; color: var(--text); }
+    .meeting-box .question-block { margin: 0.85rem 0; border-color: #fcd34d; }
+    .meeting-box h3 { margin: 0 0 0.5rem; font-size: 1.05rem; color: #92400e; }
+    .result-filled {
+      margin-top: 0.35rem; padding: 0.5rem 0.65rem;
+      background: #f5f5f5; border-radius: 4px; font-size: 0.9rem; color: var(--text);
+    }
     .role-list { margin: 0.75rem 0; padding: 0; list-style: none; }
     .role-list li { margin: 0.65rem 0; padding-left: 0; }
     .role-list strong { display: inline-block; min-width: 7.5rem; color: var(--accent); }
@@ -123,7 +135,7 @@
   <div class="wrap">
     <header>
       <h1>叫號機接收端 API 串接規格 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v1.2 · <strong>日期</strong> 2026-09-29</p>
+      <p class="meta"><strong>版本</strong> v1.3 · <strong>日期</strong> 2026-09-29</p>
       <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》。技術欄位以該文件為準。「想要的做法」為奧創討論目標，規格未寫的路徑會標成紅色。</p>
     </header>
 
@@ -136,6 +148,35 @@
         <li><strong>叫號大螢幕</strong>客人看到的準備中／可取餐。</li>
       </ul>
       <p>規格<strong>沒寫</strong>掃杯貼、也<strong>沒寫</strong>機上盒去改 POS 裡的訂單。那是下面「想要的做法」多出來的一條路。</p>
+    </section>
+
+    <section id="first-meeting" class="meeting-box" aria-labelledby="first-meeting-title">
+      <h2 id="first-meeting-title">第一次會議必問三題</h2>
+      <p class="lead">開會時請達鈦／迷客夏逐題回答；答案寫入各題「討論結果」。若對方當下無法定案，請明確標「待確認」，勿自行假設。</p>
+
+      <div class="question-block" id="meeting-q1">
+        <h3>題一（現況架構）</h3>
+        <p>POS 叫號或訂單狀態變更後，資料<strong>現在</strong>送到哪裡？請對方畫一條線：POS → ？→ ？。試試點（奧創接收端）誰負責把名單送進來——是達鈦 POS 直接打奧創 API，還是經迷客夏系統轉發？若對方「還不確定」，把「待確認」寫進討論結果。</p>
+        <div class="result-slot"><strong>討論結果（架構對齊）</strong>
+          <div class="result-filled">2026-09-29 會議前：POS 現況資料流尚未釐清；試試點誰呼叫奧創接收端 API <strong>不確定（對方可能尚未定案）</strong>。</div>
+        </div>
+      </div>
+
+      <div class="question-block" id="meeting-q2">
+        <h3>題二（接上規格 Q1）</h3>
+        <p>奧創<strong>接收端</strong>的 URL、連線方式（HTTP 方法等）由<strong>誰</strong>提供給達鈦設定？規格書未寫死此項；沒有地址則 server 無法對接。</p>
+        <div class="result-slot"><strong>討論結果</strong>
+          <div class="result-filled">2026-09-29 會議前尚未討論；需第一次會議用本題釐清（對應下方 <a href="#q1">Q1</a>）。</div>
+        </div>
+      </div>
+
+      <div class="question-block" id="meeting-q3">
+        <h3>題三（掃碼寫回，另議題）</h3>
+        <p>《叫號機接收端 API》只做<strong>顯示</strong>；掃碼後要讓 POS 狀態一致——現有達鈦／迷客夏 API <strong>能否</strong>接收寫回？若不能，誰改、試試點是否<strong>先做顯示、寫回第二期</strong>？</p>
+        <div class="result-slot"><strong>討論結果（掃碼寫回）</strong>
+          <div class="result-filled">規格未定義寫回；屬紅色路徑／另議題。現況能否寫回 POS：<strong>未知</strong>，須與接收端顯示規格分開談。</div>
+        </div>
+      </div>
     </section>
 
     <section id="purpose">
@@ -492,8 +533,10 @@
           <span class="tag tag-blocker">優先</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>文件未載明。</p>
-        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
+        <p>文件未載明。第一次會議請用頁首 <a href="#meeting-q2">題二</a> 釐清。</p>
+        <div class="result-slot"><strong>討論結果</strong>
+          <div class="result-filled">2026-09-29 會議前尚未討論；需第一次會議用「題二」釐清接收端 URL、HTTP 方法，以及由誰提供網址給達鈦設定。</div>
+        </div>
       </div>
       <div class="question-block" id="q2">
         <div class="question-head">
@@ -572,6 +615,8 @@
     <section id="changelog">
       <h2>7. 更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v1.3</dt>
+        <dd>新增「第一次會議必問三題」區塊（架構、接收端 URL／Q1、掃碼寫回）；依會議前現況預填 Q1 與三題討論結果（待第一次會議更新）。</dd>
         <dt>2026-09-29 · v1.2</dt>
         <dd>補上迷客夏原規劃流程圖，以及「POS／迷客夏少改、機上盒掃碼寫回」的差異說明與圖（紅色路徑標明規格未定義）。</dd>
         <dt>2026-09-29 · v1.1</dt>
