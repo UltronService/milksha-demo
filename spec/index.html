@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.4</title>
+  <title>叫號機接收端 API 串接規格 — 討論文件 v1.0</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -12,9 +12,9 @@
       --bg: #fafafa;
       --card: #fff;
       --accent: #2d5a3d;
+      --warn: #b91c1c;
       --tag-pending: #b45309;
       --tag-confirm: #1d4ed8;
-      --tag-done: #15803d;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,907 +25,468 @@
       color: var(--text);
       background: var(--bg);
     }
-    .wrap {
-      max-width: 52rem;
-      margin: 0 auto;
-      padding: 1.25rem 1rem 3rem;
-    }
-    header {
-      border-bottom: 2px solid var(--accent);
-      padding-bottom: 1rem;
-      margin-bottom: 1.75rem;
-    }
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0 0 0.5rem;
-      line-height: 1.3;
-    }
-    .meta {
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
+    .wrap { max-width: 52rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.75rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem; line-height: 1.3; }
+    .meta { font-size: 0.9rem; color: var(--muted); }
     .meta strong { color: var(--text); }
-    .sources {
-      margin-top: 0.75rem;
-      font-size: 0.9rem;
-    }
-    .sources a {
-      color: var(--accent);
-      word-break: break-all;
-    }
+    .source-note { margin-top: 0.75rem; font-size: 0.9rem; padding: 0.65rem 0.85rem; background: #eef3ef; border-radius: 4px; }
     h2 {
-      font-size: 1.2rem;
-      margin: 2rem 0 0.75rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid var(--border);
-      color: var(--accent);
+      font-size: 1.2rem; margin: 2rem 0 0.75rem; padding-top: 0.5rem;
+      border-top: 1px solid var(--border); color: var(--accent);
     }
     h2:first-of-type { border-top: none; margin-top: 0; }
     h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
-    ul { margin: 0.5rem 0; padding-left: 1.35rem; }
+    ul, ol { margin: 0.5rem 0; padding-left: 1.35rem; }
     li { margin: 0.35rem 0; }
     p { margin: 0.5rem 0; }
+    pre {
+      background: #1e1e1e; color: #e8e8e8; padding: 1rem; border-radius: 6px;
+      overflow-x: auto; font-size: 0.8rem; line-height: 1.45;
+    }
+    code { font-family: ui-monospace, "Cascadia Code", monospace; font-size: 0.9em; }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-      margin: 0.75rem 0;
-      background: var(--card);
+      width: 100%; border-collapse: collapse; font-size: 0.9rem;
+      margin: 0.75rem 0; background: var(--card);
     }
-    th, td {
-      border: 1px solid var(--border);
-      padding: 0.5rem 0.65rem;
-      text-align: left;
-      vertical-align: top;
-    }
+    th, td { border: 1px solid var(--border); padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
     th { background: #eef3ef; font-weight: 600; }
-    .flow {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1rem 1.15rem;
-      margin: 0.75rem 0;
-      font-size: 0.95rem;
+    .spell-warn {
+      background: #fee2e2; border: 1px solid #fecaca; padding: 0.65rem 0.85rem;
+      border-radius: 4px; font-size: 0.9rem; margin: 0.75rem 0;
     }
-    .flow ol { margin: 0; padding-left: 1.25rem; }
-    .flow li { margin: 0.5rem 0; }
+    .spell-warn strong { color: var(--warn); }
+    .diagram {
+      margin: 1rem 0 1.25rem; padding: 0.75rem; background: var(--card);
+      border: 1px solid var(--border); border-radius: 6px; overflow-x: auto;
+    }
+    .diagram figcaption { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin: 0 0 0.5rem; }
+    .diagram svg { display: block; max-width: 100%; height: auto; }
+    .compare-grid {
+      display: grid; gap: 0.75rem; margin: 0.75rem 0;
+      grid-template-columns: 1fr; font-size: 0.9rem;
+    }
+    @media (min-width: 520px) { .compare-grid { grid-template-columns: 1fr 1fr; } }
+    .compare-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem;
+    }
+    .compare-box h4 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    .example-note { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+    .accept-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .accept-list li {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      padding: 0.5rem 0; border-bottom: 1px dashed var(--border);
+    }
+    .accept-list input { margin-top: 0.35rem; flex-shrink: 0; }
+    .accept-status { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
     .question-block {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1rem 1.15rem;
-      margin: 1rem 0;
+      background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+      padding: 1rem 1.15rem; margin: 1rem 0;
     }
-    .question-head {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 0.5rem 0.75rem;
-      margin-bottom: 0.65rem;
-    }
-    .question-id {
-      font-weight: 600;
-      flex: 1 1 12rem;
-    }
+    .question-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 0.75rem; margin-bottom: 0.65rem; }
+    .question-id { font-weight: 600; flex: 1 1 12rem; }
     .tag {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-      white-space: nowrap;
+      display: inline-block; font-size: 0.75rem; font-weight: 600;
+      padding: 0.2rem 0.55rem; border-radius: 4px; white-space: nowrap;
     }
     .tag-pending { background: #fef3c7; color: var(--tag-pending); }
     .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
-    .tag-done { background: #dcfce7; color: var(--tag-done); }
-    .tag-blocker { background: #fee2e2; color: #b91c1c; }
-    .diagram {
-      margin: 1rem 0 1.25rem;
-      padding: 0.75rem;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow-x: auto;
-    }
-    .diagram figcaption {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--accent);
-      margin: 0 0 0.5rem;
-    }
-    .diagram svg { display: block; max-width: 100%; height: auto; }
-    .diagram a { color: #b91c1c; font-weight: 600; }
-    .scheme-block {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1rem 1.15rem;
-      margin: 1.25rem 0;
-    }
-    .scheme-block h4 { margin: 0 0 0.5rem; font-size: 1rem; color: var(--accent); }
-    .scheme-meta { font-size: 0.9rem; color: var(--muted); margin: 0.35rem 0; }
-    .result-slot {
-      margin-top: 0.75rem;
-      padding-top: 0.65rem;
-      border-top: 1px dashed var(--border);
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
+    .tag-blocker { background: #fee2e2; color: var(--warn); }
+    .result-slot { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); font-size: 0.9rem; color: var(--muted); }
     .result-slot strong { color: var(--text); }
     .result-empty {
-      min-height: 2.5rem;
-      margin-top: 0.35rem;
-      padding: 0.5rem;
-      background: #f5f5f5;
-      border-radius: 4px;
-      color: #999;
-      font-style: italic;
+      min-height: 2.5rem; margin-top: 0.35rem; padding: 0.5rem;
+      background: #f5f5f5; border-radius: 4px; color: #999; font-style: italic;
     }
-    .changelog {
-      font-size: 0.9rem;
-    }
+    .changelog { font-size: 0.9rem; }
     .changelog dt { font-weight: 600; margin-top: 0.75rem; }
     .changelog dd { margin: 0.25rem 0 0 0; color: var(--muted); }
-    footer {
-      margin-top: 2.5rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    @media (min-width: 640px) {
-      .wrap { padding: 2rem 1.5rem 4rem; }
-      h1 { font-size: 1.75rem; }
-    }
+    footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+    @media (min-width: 640px) { .wrap { padding: 2rem 1.5rem 4rem; } h1 { font-size: 1.75rem; } }
     @media print {
       body { background: #fff; font-size: 11pt; }
       .wrap { max-width: none; padding: 0; }
-      .question-block, .flow, table, .diagram { break-inside: avoid; }
-      .diagram svg text { fill: #000; }
-      .diagram .stroke-red { stroke: #b91c1c; }
-      .diagram .fill-red { fill: #b91c1c; }
-      a { color: var(--text); text-decoration: none; }
-      a[href^="http"]::after {
-        content: " (" attr(href) ")";
-        font-size: 0.85em;
-        word-break: break-all;
-      }
+      .question-block, .diagram, table, pre { break-inside: avoid; }
+      pre { background: #f5f5f5; color: #000; border: 1px solid #ccc; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>迷客夏 掃描槍叫號整合 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v0.4 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
-      <div class="sources">
-        <p><strong>原始文件</strong></p>
-        <ul>
-          <li>共筆：<a href="https://docs.google.com/document/d/16YvO8tjRNUzsPZTGyp_V6f6oHGNRwJBWECWgQwgV7ic/edit" target="_blank" rel="noopener">Google Doc（迷客夏共筆）</a></li>
-          <li>Socket 技術文件：<a href="https://docs.google.com/document/d/1zhhh25TzulcoTAYuxVdsW-pqCgAr4fsTYvcbiIhBhzI/edit" target="_blank" rel="noopener">Google Doc（Socket 技術文件）</a></li>
-        </ul>
-      </div>
+      <h1>叫號機接收端 API 串接規格 — 討論文件</h1>
+      <p class="meta"><strong>版本</strong> v1.0 · <strong>日期</strong> 2026-09-29</p>
+      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》（本頁內容僅整理該文件，不含其他來源）。</p>
     </header>
 
-    <section id="arch-choice">
-      <h2>最優先討論：串接架構怎麼選</h2>
-      <div class="question-head">
-        <span class="tag tag-pending">待討論</span>
-        <span class="tag tag-blocker">最優先</span>
-      </div>
+    <section id="purpose">
+      <h2>1. 文件目的與角色</h2>
+      <p>本文件提供<strong>叫號機顯示廠商</strong>進行<strong>接收端</strong>串接。</p>
+      <ul>
+        <li><strong>發送端</strong>：已在線上運行，依既有格式推送資料。</li>
+        <li><strong>接收端（我們）</strong>需完成：
+          <ol>
+            <li>接收叫號資料；</li>
+            <li>將資料顯示於<strong>指定門市螢幕</strong>；</li>
+            <li>回傳處理結果。</li>
+          </ol>
+        </li>
+      </ul>
+      <p><strong>Request 與 Response</strong> 的欄位名稱、資料型別及結構<strong>不可任意修改</strong>。</p>
+    </section>
 
-      <h3>背景</h3>
-      <p><strong>現況：</strong>達鈦 POS 已經會把訂單／叫號資料送到迷客夏自己的 API。Socket 技術文件是迷客夏「建議」奧創的做法，尚未定案。</p>
+    <section id="flows">
+      <h2>2. 流程圖</h2>
 
-      <div class="scheme-block" id="scheme-a">
-        <h4>方案 A（迷客夏文件建議）：店內直連</h4>
-        <p>機上盒開 TCP Server，達鈦 POS 在店內網路直接連機上盒送叫號資料；掃碼結果直接回 POS。</p>
-        <figure class="diagram">
-          <figcaption>方案 A · 店內直連</figcaption>
-          <svg viewBox="0 0 520 200" role="img" aria-label="方案 A 店內直連流程">
-            <defs><marker id="ar-a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
-            <rect x="30" y="70" width="100" height="50" rx="4" fill="#fff" stroke="#333"/>
-            <text x="80" y="92" text-anchor="middle" font-size="11">達鈦 POS</text>
-            <text x="80" y="108" text-anchor="middle" font-size="9">店內網</text>
-            <rect x="210" y="55" width="120" height="80" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="270" y="85" text-anchor="middle" font-size="11">機上盒 App</text>
-            <text x="270" y="102" text-anchor="middle" font-size="9">TCP Server</text>
-            <text x="270" y="118" text-anchor="middle" font-size="9">叫號螢幕</text>
-            <line x1="130" y1="95" x2="208" y2="95" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-a)"/>
-            <text x="170" y="88" font-size="9">叫號 JSON</text>
-            <line x1="208" y1="110" x2="130" y2="110" stroke="#333" marker-end="url(#ar-a)"/>
-            <text x="165" y="125" font-size="9">掃碼回報</text>
-            <rect x="40" y="145" width="80" height="32" rx="4" fill="#fff" stroke="#333"/>
-            <text x="80" y="165" text-anchor="middle" font-size="9">掃描槍</text>
-            <line x1="80" y1="145" x2="240" y2="135" stroke="#333" marker-end="url(#ar-a)"/>
-            <rect x="400" y="20" width="100" height="40" rx="4" fill="#f5f5f5" stroke="#999" stroke-dasharray="4 3"/>
-            <text x="450" y="45" text-anchor="middle" font-size="10">迷客夏 API</text>
-            <text x="450" y="58" text-anchor="middle" font-size="8">（POS 既有上送）</text>
-          </svg>
-        </figure>
-        <p class="scheme-meta"><strong>優點：</strong>快；店內網路即可運作（外網斷也能用）。</p>
-        <p class="scheme-meta"><strong>缺點：</strong>達鈦要新寫串接；掃碼回報通道文件未定義；要固定網段。</p>
-        <p class="scheme-meta"><strong>要改：</strong>達鈦（大）、奧創（中）、迷客夏（無）。</p>
-      </div>
+      <figure class="diagram">
+        <figcaption>（a）整體資料流</figcaption>
+        <svg viewBox="0 0 520 120" role="img" aria-label="整體資料流">
+          <defs><marker id="ar1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
+          <rect x="8" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="58" y="67" text-anchor="middle" font-size="11">既有送端系統</text>
+          <text x="130" y="67" font-size="10">API Request</text>
+          <line x1="108" y1="62" x2="148" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="150" y="40" width="120" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="210" y="67" text-anchor="middle" font-size="11">叫號機接收服務</text>
+          <text x="290" y="55" font-size="9">依 target</text>
+          <line x1="270" y1="62" x2="310" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="312" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="362" y="67" text-anchor="middle" font-size="11">門市叫號畫面</text>
+          <text x="430" y="55" font-size="9">API Response</text>
+          <line x1="412" y1="62" x2="452" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="454" y="40" width="58" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="483" y="62" text-anchor="middle" font-size="9">送端</text>
+          <text x="483" y="76" text-anchor="middle" font-size="9">系統</text>
+        </svg>
+      </figure>
 
-      <div class="scheme-block" id="scheme-b">
-        <h4>方案 B（負責人提出）：走迷客夏現有 API</h4>
-        <p>達鈦照舊打迷客夏 API（不用改）；奧創機上盒從迷客夏取得叫號資料。<strong>B1</strong> 奧創定時去讀迷客夏；<strong>B2</strong> 迷客夏資料更新時轉送給奧創。</p>
-        <figure class="diagram">
-          <figcaption>方案 B · 經迷客夏 API（B1 定時讀／B2 推送）</figcaption>
-          <svg viewBox="0 0 560 240" role="img" aria-label="方案 B 迷客夏 API 流程">
-            <defs><marker id="ar-b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
-            <rect x="20" y="40" width="90" height="44" rx="4" fill="#fff" stroke="#333"/>
-            <text x="65" y="67" text-anchor="middle" font-size="11">達鈦 POS</text>
-            <rect x="200" y="30" width="120" height="64" rx="4" fill="#fef3c7" stroke="#b45309"/>
-            <text x="260" y="55" text-anchor="middle" font-size="11">迷客夏 API</text>
-            <text x="260" y="72" text-anchor="middle" font-size="9">（既有上送）</text>
-            <line x1="110" y1="62" x2="198" y2="62" stroke="#333" marker-end="url(#ar-b)"/>
-            <rect x="400" y="40" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="465" y="67" text-anchor="middle" font-size="11">機上盒／螢幕</text>
-            <line x1="320" y1="55" x2="398" y2="55" stroke="#2d5a3d" marker-end="url(#ar-b)"/>
-            <text x="360" y="48" font-size="8">B1 定時讀</text>
-            <line x1="320" y1="75" x2="398" y2="75" stroke="#2d5a3d" stroke-dasharray="5 3" marker-end="url(#ar-b)"/>
-            <text x="355" y="88" font-size="8">B2 更新轉送</text>
-            <rect x="400" y="120" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="465" y="147" text-anchor="middle" font-size="10">奧創（掃碼）</text>
-            <line x1="465" y1="84" x2="465" y2="118" stroke="#333" marker-end="url(#ar-b)"/>
-            <line x1="465" y1="164" x2="320" y2="95" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
-            <line x1="260" y1="94" x2="260" y2="155" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
-            <line x1="110" y1="175" x2="198" y2="155" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
-            <rect x="170" y="168" width="220" height="50" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
-            <text x="280" y="190" text-anchor="middle" font-size="10" fill="#b91c1c">？需確認迷客夏能否做到</text>
-            <text x="280" y="206" text-anchor="middle" font-size="9" fill="#b91c1c">寫回掃碼結果並通知 POS</text>
-          </svg>
-        </figure>
-        <p class="scheme-meta"><strong>優點：</strong>達鈦可能完全不用改；奧創不用處理店內網段。</p>
-        <p class="scheme-meta"><strong>缺點：</strong>迷客夏要開讀取或轉送口子，還要能接收掃碼回傳並通知 POS；資料繞雲端一圈會稍慢；門市外網斷線時畫面停住、掃碼無法即時回傳。</p>
-        <p class="scheme-meta"><strong>要改：</strong>達鈦（無或很小）、迷客夏（中）、奧創（中）。</p>
-      </div>
+      <figure class="diagram">
+        <figcaption>（b）接收處理決策（含 isOK 與 isSuccess 差異）</figcaption>
+        <svg viewBox="0 0 640 380" role="img" aria-label="接收處理決策流程">
+          <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
+          <rect x="260" y="8" width="120" height="36" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="320" y="31" text-anchor="middle" font-size="11">收到 Request</text>
+          <line x1="320" y1="44" x2="320" y2="58" stroke="#333" marker-end="url(#ar2)"/>
+          <polygon points="320,60 380,90 320,120 260,90" fill="#fff" stroke="#333"/>
+          <text x="320" y="94" text-anchor="middle" font-size="10">格式檢查</text>
+          <line x1="380" y1="90" x2="480" y2="90" stroke="#333" marker-end="url(#ar2)"/>
+          <text x="420" y="84" font-size="9">錯</text>
+          <rect x="482" y="72" width="140" height="36" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="552" y="94" text-anchor="middle" font-size="9">叫號資料格式錯誤</text>
+          <line x1="320" y1="120" x2="320" y2="134" stroke="#333" marker-end="url(#ar2)"/>
+          <polygon points="320,136 400,166 320,196 240,166" fill="#fff" stroke="#333"/>
+          <text x="320" y="170" text-anchor="middle" font-size="10">找 target</text>
+          <line x1="400" y1="166" x2="480" y2="166" stroke="#333" marker-end="url(#ar2)"/>
+          <text x="430" y="160" font-size="9">無</text>
+          <rect x="482" y="148" width="140" height="36" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="552" y="170" text-anchor="middle" font-size="9">找不到目標叫號機</text>
+          <line x1="320" y1="196" x2="320" y2="210" stroke="#333" marker-end="url(#ar2)"/>
+          <polygon points="320,212 410,242 320,272 230,242" fill="#fff" stroke="#333"/>
+          <text x="320" y="240" text-anchor="middle" font-size="10">螢幕是否連線</text>
+          <line x1="410" y1="242" x2="480" y2="242" stroke="#333" marker-end="url(#ar2)"/>
+          <text x="438" y="236" font-size="9">否</text>
+          <rect x="482" y="224" width="148" height="36" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="556" y="246" text-anchor="middle" font-size="9">目標叫號機尚未連線</text>
+          <line x1="320" y1="272" x2="320" y2="286" stroke="#333" marker-end="url(#ar2)"/>
+          <rect x="250" y="288" width="140" height="36" rx="4" fill="#dcfce7" stroke="#15803d"/>
+          <text x="320" y="310" text-anchor="middle" font-size="11">顯示 → 資料顯示成功</text>
+          <rect x="20" y="330" width="600" height="44" rx="4" fill="#fef3c7" stroke="#b45309"/>
+          <text x="320" y="350" text-anchor="middle" font-size="10">外層 isOK = true：API 正常完成處理</text>
+          <text x="320" y="366" text-anchor="middle" font-size="10">內層 isSuccess：是否成功顯示至叫號機（見 information／result JSON 字串）</text>
+        </svg>
+      </figure>
 
-      <div class="scheme-block" id="scheme-c">
-        <h4>方案 C（比照現有做法）：多打一份到奧創雲端</h4>
-        <p>達鈦用打迷客夏 API 的同樣方式，多打一份到奧創的雲端 API；機上盒從奧創雲端拿資料；掃碼結果由奧創回傳達鈦。</p>
-        <figure class="diagram">
-          <figcaption>方案 C · 奧創雲端 API</figcaption>
-          <svg viewBox="0 0 540 220" role="img" aria-label="方案 C 奧創雲端流程">
-            <defs><marker id="ar-c" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
-            <rect x="20" y="50" width="90" height="44" rx="4" fill="#fff" stroke="#333"/>
-            <text x="65" y="77" text-anchor="middle" font-size="11">達鈦 POS</text>
-            <rect x="180" y="25" width="110" height="40" rx="4" fill="#fef3c7" stroke="#b45309"/>
-            <text x="235" y="50" text-anchor="middle" font-size="10">迷客夏 API</text>
-            <line x1="110" y1="65" x2="178" y2="45" stroke="#333" marker-end="url(#ar-c)"/>
-            <rect x="180" y="85" width="110" height="40" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="235" y="110" text-anchor="middle" font-size="10">奧創雲端 API</text>
-            <line x1="110" y1="75" x2="178" y2="105" stroke="#2d5a3d" marker-end="url(#ar-c)"/>
-            <text x="130" y="98" font-size="8">同格式多送一份</text>
-            <rect x="380" y="60" width="130" height="50" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="445" y="82" text-anchor="middle" font-size="11">機上盒</text>
-            <text x="445" y="98" text-anchor="middle" font-size="9">拉取／接收</text>
-            <line x1="290" y1="105" x2="378" y2="90" stroke="#333" marker-end="url(#ar-c)"/>
-            <line x1="445" y1="110" x2="110" y2="110" stroke="#333" stroke-dasharray="5 3" marker-end="url(#ar-c)"/>
-            <text x="280" y="125" font-size="9">掃碼結果回傳達鈦</text>
-            <text x="270" y="175" text-anchor="middle" font-size="9" fill="#5c5c5c">不經迷客夏 · 外網斷則畫面停</text>
-          </svg>
-        </figure>
-        <p class="scheme-meta"><strong>優點：</strong>達鈦沿用熟悉格式，改動小於 A；不經迷客夏。</p>
-        <p class="scheme-meta"><strong>缺點：</strong>達鈦仍要小改；同樣繞雲端、外網斷會停。</p>
-        <p class="scheme-meta"><strong>要改：</strong>達鈦（小）、奧創（中）、迷客夏（無）。</p>
-      </div>
+      <figure class="diagram">
+        <figcaption>（c）畫面整批更新規則</figcaption>
+        <p class="example-note">以下「上一批／這一批」對照為示意，號碼延伸自文件範例 1488、1985。</p>
+        <ul>
+          <li><code>_Preparing</code> → 準備中區域；<code>_OK</code> → 可取餐區域。</li>
+          <li>本次 <code>number_content</code> 中不存在的舊號碼需移除。</li>
+          <li><code>number_content</code> 為空陣列 → 清空叫號畫面。</li>
+          <li><code>newsTicker_content</code> 為空陣列 → 清空跑馬燈。</li>
+        </ul>
+        <div class="compare-grid">
+          <div class="compare-box">
+            <h4>上一批（示意）</h4>
+            <p>準備中：1985（<code>From_Store_Preparing</code>）</p>
+            <p>可取餐：1488（<code>From_Store_OK</code>）、1200（<code>From_Store_OK</code>）</p>
+            <p>跑馬燈：「歡迎光臨…」</p>
+          </div>
+          <div class="compare-box">
+            <h4>這一批（示意）</h4>
+            <p>準備中：（無 1985 → 移除）</p>
+            <p>可取餐：1488（保留）、2100（新增 <code>From_Store_OK</code>）</p>
+            <p>1200 不在本批 → 從畫面移除</p>
+            <p>若 <code>number_content: []</code> → 兩區全清空</p>
+          </div>
+        </div>
+      </figure>
+    </section>
 
-      <h3>比較表</h3>
+    <section id="request">
+      <h2>3. Request</h2>
+      <h3>範例（整理為合法 JSON）</h3>
+      <pre>{
+  "isEncrypt": false,
+  "serviceSpecialData_Json": {
+    "target": "composec030020",
+    "data": {
+      "number_content": [
+        {
+          "source_type": "From_Store_OK",
+          "number": "1488"
+        },
+        {
+          "source_type": "From_Store_Preparing",
+          "number": "1985"
+        }
+      ],
+      "newsTicker_content": [
+        "歡迎光臨 COMPOSE 臺北信陽店",
+        ""
+      ],
+      "newsTickerSpeed": 8.0
+    }
+  },
+  "merchant_id": "compose",
+  "account": "c030020",
+  "timeStmp": "2026-07-17-13-17-00:2831",
+  "serviceSpecialData_Json_Md5Hash": "8f4e7936a314a6b84af58116b272d0fe",
+  "signature": "Base64 簽章字串"
+}</pre>
+
+      <h3>欄位說明</h3>
       <table>
-        <thead>
-          <tr>
-            <th>方案</th>
-            <th>達鈦要改</th>
-            <th>迷客夏要改</th>
-            <th>奧創要改</th>
-            <th>速度</th>
-            <th>外網斷線時</th>
-            <th>掃碼回報怎麼走</th>
-          </tr>
-        </thead>
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
         <tbody>
-          <tr>
-            <td>A 店內直連</td>
-            <td>大</td>
-            <td>無</td>
-            <td>中</td>
-            <td>快（店內）</td>
-            <td>店內仍可運作</td>
-            <td>機上盒 → POS（文件未定義）</td>
-          </tr>
-          <tr>
-            <td>B 迷客夏 API</td>
-            <td>無或很小</td>
-            <td>中</td>
-            <td>中</td>
-            <td>稍慢（繞雲端）</td>
-            <td>畫面停、掃碼難即時回傳</td>
-            <td>奧創 → 迷客夏 → POS（待確認）</td>
-          </tr>
-          <tr>
-            <td>C 奧創雲端</td>
-            <td>小</td>
-            <td>無</td>
-            <td>中</td>
-            <td>稍慢（繞雲端）</td>
-            <td>畫面停</td>
-            <td>奧創 → 達鈦</td>
-          </tr>
+          <tr><td>isEncrypt</td><td>Boolean</td><td>資料是否加密</td></tr>
+          <tr><td>serviceSpecialData_Json</td><td>Object</td><td>叫號機顯示資料</td></tr>
+          <tr><td>merchant_id</td><td>String</td><td>品牌代碼</td></tr>
+          <tr><td>account</td><td>String</td><td>門市帳號</td></tr>
+          <tr><td>timeStmp</td><td>String</td><td>資料產生時間</td></tr>
+          <tr><td>serviceSpecialData_Json_Md5Hash</td><td>String</td><td>顯示資料 MD5</td></tr>
+          <tr><td>signature</td><td>String</td><td>發送端數位簽章</td></tr>
         </tbody>
       </table>
 
-      <h3>會議要問迷客夏的問題</h3>
-      <ol>
-        <li>現有 API 能不能讓奧創讀到叫號資料，或在更新時轉送給奧創？</li>
-        <li>掃碼結果能不能寫回迷客夏並通知 POS？</li>
-        <li>資料更新多快？</li>
-        <li>現有 API 有沒有文件可以提供？</li>
-        <li>門市外網穩定度與斷線時的預期行為。</li>
-      </ol>
-
-      <div class="result-slot">
-        <strong>討論結果</strong>
-        <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-      </div>
-    </section>
-
-    <section id="confirmed">
-      <h2>已確定事項</h2>
-      <ul>
-        <li><strong>掃描槍</strong>：有線，接機上盒；全台同款 Sunmi 小閃1／小閃2。</li>
-        <li><strong>杯貼條碼</strong>：格式為「取餐號碼,訂單類型」，由接 POS 的貼紙機印出。訂單類型：1 內用、2 外帶、3 外送、4 UberEats、5 Foodpanda、6 你訂。</li>
-        <li><strong>選項 B（掃碼流程）</strong>：POS 送「製作中」；掃一次＝可取餐，再掃一次＝從畫面拿掉。POS 也可能直接送可取餐。</li>
-        <li><strong>螢幕顯示</strong>：只顯示「製作中」「可取餐」兩區；取完餐直接拿掉，不做歷史區（2026-09-29 定案）。</li>
-        <li><strong>號碼</strong>：不自動移除（需依掃碼或 POS 狀態異動）。</li>
-        <li><strong>硬體</strong>：獨立 16:9 橫式螢幕，不穿插廣告。</li>
-        <li><strong>斷線</strong>：保留最後狀態，掃描槍照常可用；重連／重開機向 POS 要完整名單，並把離線期間掃描同步回 POS。</li>
-        <li><strong>樣式</strong>：規則經雙方測試定案後由奧創設定，迷客夏不自行調整。</li>
-        <li><strong>支援</strong>：門市問題先找奧創 Line 客服；奧創提供操作影片與說明網頁。</li>
-        <li><strong>試點</strong>：十月底新開松山店，試點三個月。</li>
-        <li><strong>費用</strong>：不收串接費，月費多 50 元；POS 改版、佈線、硬體由迷客夏負擔。</li>
-      </ul>
-      <figure class="diagram" id="diagram-reconnect">
-        <figcaption>圖 5 · 斷線與重連流程</figcaption>
-        <svg viewBox="0 0 640 200" role="img" aria-label="斷線與重連流程圖">
-          <defs>
-            <marker id="arrow-reconn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
-            </marker>
-          </defs>
-          <rect x="10" y="70" width="110" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="65" y="97" text-anchor="middle" font-size="12">斷線</text>
-          <rect x="140" y="70" width="150" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="215" y="90" text-anchor="middle" font-size="11">螢幕保留最後狀態</text>
-          <text x="215" y="106" text-anchor="middle" font-size="11">掃描槍照常可用</text>
-          <line x1="120" y1="92" x2="138" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
-          <rect x="310" y="70" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="375" y="90" text-anchor="middle" font-size="11">重連／重開機</text>
-          <text x="375" y="106" text-anchor="middle" font-size="11">fullTicketStatus</text>
-          <line x1="290" y1="92" x2="308" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
-          <rect x="460" y="70" width="170" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="545" y="90" text-anchor="middle" font-size="11">POS 回完整名單</text>
-          <text x="545" y="106" text-anchor="middle" font-size="11">補傳離線掃描 → POS</text>
-          <line x1="440" y1="92" x2="458" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
-          <text x="320" y="155" text-anchor="middle" font-size="11" fill="#b91c1c">補傳通道 → 見</text>
-          <a href="#gap-1"><text x="400" y="155" font-size="11" fill="#b91c1c" font-weight="bold">缺口 1</text></a>
-        </svg>
-      </figure>
-    </section>
-
-    <section id="socket">
-      <h2>Socket 技術文件重點</h2>
-
-      <h3>連線與資料格式</h3>
-      <ul>
-        <li>機上盒 App 開 TCP Server，等待 POS 連線；訊息為 JSON。</li>
-        <li>連上後機上盒送出字串 <code>fullTicketStatus</code>，POS 回傳完整叫號狀態；之後僅送異動。</li>
-        <li>心跳機制另議。</li>
-        <li>POS 開機時名單一定為空，之後向 ODO 撈取線上／外送單。</li>
-      </ul>
-
-      <figure class="diagram" id="diagram-sync">
-        <figcaption>圖 2 · 連線與同步流程（循序）</figcaption>
-        <svg viewBox="0 0 520 320" role="img" aria-label="POS 與機上盒連線同步循序圖">
-          <defs>
-            <marker id="arrow-sync" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
-            </marker>
-          </defs>
-          <rect x="180" y="8" width="160" height="36" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="260" y="31" text-anchor="middle" font-size="12">POS（達鈦）連上機上盒</text>
-          <line x1="260" y1="44" x2="260" y2="58" stroke="#333" marker-end="url(#arrow-sync)"/>
-          <rect x="150" y="60" width="220" height="36" rx="4" fill="#fff" stroke="#333"/>
-          <text x="260" y="83" text-anchor="middle" font-size="12">機上盒送出 fullTicketStatus</text>
-          <line x1="260" y1="96" x2="260" y2="110" stroke="#333" marker-end="url(#arrow-sync)"/>
-          <rect x="130" y="112" width="260" height="36" rx="4" fill="#fff" stroke="#333"/>
-          <text x="260" y="135" text-anchor="middle" font-size="12">POS 回傳完整叫號名單（JSON）</text>
-          <line x1="260" y1="148" x2="260" y2="162" stroke="#333" marker-end="url(#arrow-sync)"/>
-          <rect x="150" y="164" width="220" height="36" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="260" y="187" text-anchor="middle" font-size="12">之後僅推送狀態異動</text>
-          <rect x="40" y="220" width="440" height="40" rx="4" fill="#fef3c7" stroke="#b45309" stroke-dasharray="6 4"/>
-          <text x="260" y="245" text-anchor="middle" font-size="12">心跳（連線確認）：另議</text>
-        </svg>
-      </figure>
-
-      <h3>狀態碼</h3>
+      <h3>顯示資料欄位（serviceSpecialData_Json）</h3>
+      <p><strong>target</strong>：目標叫號機識別值（例：<code>"composec030020"</code>）。接收端需依 target 將資料傳送至對應門市螢幕。</p>
+      <p><strong>number_content</strong>：門市目前需顯示的<strong>完整</strong>叫號資料陣列。</p>
       <table>
-        <thead>
-          <tr>
-            <th>代碼</th>
-            <th>意義</th>
-          </tr>
-        </thead>
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>已接單</td></tr>
-          <tr><td>2</td><td>製作中</td></tr>
-          <tr><td>3</td><td>可取餐</td></tr>
-          <tr><td>0</td><td>完成</td></tr>
-        </tbody>
-      </table>
-      <p>叫號螢幕端：每 90 秒自動重叫一次、最多兩次（由螢幕自行處理）。</p>
-
-      <figure class="diagram" id="diagram-status">
-        <figcaption>圖 3 · 訂單狀態流程</figcaption>
-        <svg viewBox="0 0 720 260" role="img" aria-label="訂單狀態碼流程圖">
-          <defs>
-            <marker id="arrow-st" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
-            </marker>
-          </defs>
-          <rect x="10" y="50" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="60" y="77" text-anchor="middle" font-size="11">已接單 (1)</text>
-          <line x1="110" y1="72" x2="138" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
-          <rect x="140" y="50" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="190" y="77" text-anchor="middle" font-size="11">製作中 (2)</text>
-          <line x1="240" y1="72" x2="268" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
-          <rect x="270" y="50" width="100" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="320" y="77" text-anchor="middle" font-size="11">可取餐 (3)</text>
-          <line x1="370" y1="72" x2="398" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
-          <rect x="400" y="50" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="460" y="70" text-anchor="middle" font-size="11">完成 (0)</text>
-          <text x="460" y="86" text-anchor="middle" font-size="10">／從畫面拿掉</text>
-          <path d="M 190 94 L 190 118 L 320 118 L 320 94" fill="none" stroke="#2d5a3d" stroke-dasharray="5 3" marker-end="url(#arrow-st)"/>
-          <text x="255" y="132" text-anchor="middle" font-size="10" fill="#2d5a3d">POS 也可能直接送可取餐</text>
-          <text x="320" y="165" text-anchor="middle" font-size="10">掃一次＝可取餐；再掃一次＝拿掉</text>
-          <text x="320" y="182" text-anchor="middle" font-size="10">螢幕：90 秒重叫，最多 2 次</text>
-          <rect x="530" y="42" width="170" height="60" rx="4" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="8 5"/>
-          <text x="615" y="68" text-anchor="middle" font-size="12" fill="#b91c1c">「取消」</text>
-          <text x="615" y="86" text-anchor="middle" font-size="10" fill="#b91c1c">狀態不存在</text>
-          <a href="#gap-2"><text x="615" y="102" text-anchor="middle" font-size="10" fill="#b91c1c" font-weight="bold">→ 缺口 2</text></a>
-        </svg>
-      </figure>
-
-      <h3>欄位</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>欄位</th>
-            <th>說明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Store_ID</td><td>門市識別</td></tr>
-          <tr><td>Order_ID</td><td>訂單識別</td></tr>
-          <tr><td>Pickup_Number</td><td>取餐號；0168～9999 或第三方平台號碼</td></tr>
-          <tr><td>Order_Type</td><td>訂單類型（對應杯貼類型碼）</td></tr>
-          <tr><td>Status</td><td>狀態碼（見上表）</td></tr>
-          <tr><td>Create_Time</td><td>建立時間</td></tr>
-          <tr><td>Booking_Time</td><td>預約時間</td></tr>
-          <tr><td>Update_Time</td><td>更新時間</td></tr>
-          <tr><td>Total_Qty</td><td>總數量</td></tr>
-          <tr><td>Total_Time</td><td>總時間（文件定義）</td></tr>
-          <tr><td>Order_Items</td><td>品項陣列：Item_Code, Item_Name, Count, Unit_Price</td></tr>
+          <tr><td>source_type</td><td>String</td><td>訂單來源及狀態</td></tr>
+          <tr><td>number</td><td>String</td><td>顯示號碼（<strong>必須以字串處理，不可轉為整數</strong>）</td></tr>
         </tbody>
       </table>
 
-      <h3>網段規格（技術文件）</h3>
-      <ul>
-        <li>POS：<code>10.3.X.21</code>～<code>10.3.X.23</code></li>
-        <li>叫號機／螢幕：<code>10.3.X.223</code></li>
+      <h3>source_type（10 種）</h3>
+      <p>接收端需支援下列全部類型，並依<strong>完整字串</strong>判斷。</p>
+      <table>
+        <thead><tr><th>source_type</th><th>來源</th><th>顯示狀態</th></tr></thead>
+        <tbody>
+          <tr><td>From_Store_Preparing</td><td>門市現場</td><td>準備中</td></tr>
+          <tr><td>From_Store_OK</td><td>門市現場</td><td>可取餐</td></tr>
+          <tr><td>From_milksha_point_Preparing</td><td>迷點</td><td>準備中</td></tr>
+          <tr><td>From_milksha_point_OK</td><td>迷點</td><td>可取餐</td></tr>
+          <tr><td>From_FoodPanda_Preparing</td><td>foodpanda</td><td>準備中</td></tr>
+          <tr><td>From_FoodPanda_OK</td><td>foodpanda</td><td>可取餐</td></tr>
+          <tr><td>From_UberEat_Preparing</td><td>Uber Eats</td><td>準備中</td></tr>
+          <tr><td>From_UberEat_OK</td><td>Uber Eats</td><td>可取餐</td></tr>
+          <tr><td>From_Udd_Preparing</td><td>UDD</td><td>準備中</td></tr>
+          <tr><td>From_Udd_OK</td><td>UDD</td><td>可取餐</td></tr>
+        </tbody>
+      </table>
+
+      <h3>跑馬燈欄位</h3>
+      <table>
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>newsTicker_content</td><td>String Array</td><td>跑馬燈文字（空字串可忽略不顯示）</td></tr>
+          <tr><td>newsTickerSpeed</td><td>Number</td><td>跑馬燈速度</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="response">
+      <h2>4. Response</h2>
+      <h3>範例</h3>
+      <pre>{
+  "merchant_id": "Milksha",
+  "account": "Tammy001",
+  "isOK": true,
+  "information": "{\"isSuccess\":false,\"information\":\"目標叫號機尚未連線\"}",
+  "reslut": {
+    "CallingNumberMasterResponse": {
+      "result": "{\"isSuccess\":false,\"information\":\"目標叫號機尚未連線\"}",
+      "statusCode": "200"
+    }
+  },
+  "resultMd5": "bdb40f2be456e1c382c4fe3dc8e5606c",
+  "reesultMd5_ServerSignature": "Base64 簽章字串",
+  "isEncrypted": false
+}</pre>
+
+      <div class="spell-warn">
+        <strong>拼字特殊、不可修改的正式欄位名稱：</strong>
+        Request 的 <code>timeStmp</code>；Response 的 <code>reslut</code>、<code>reesultMd5_ServerSignature</code>。
+      </div>
+
+      <h3>欄位說明</h3>
+      <table>
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>merchant_id</td><td>String</td><td>商戶代碼</td></tr>
+          <tr><td>account</td><td>String</td><td>帳號</td></tr>
+          <tr><td>isOK</td><td>Boolean</td><td>API 是否正常完成處理</td></tr>
+          <tr><td>information</td><td>String</td><td>實際處理結果，內容為 <strong>JSON 字串</strong></td></tr>
+          <tr><td>reslut</td><td>Object</td><td>叫號機處理結果</td></tr>
+          <tr><td>resultMd5</td><td>String</td><td>回傳資料 MD5</td></tr>
+          <tr><td>reesultMd5_ServerSignature</td><td>String</td><td>接收端伺服器簽章</td></tr>
+          <tr><td>isEncrypted</td><td>Boolean</td><td>回傳資料是否加密</td></tr>
+        </tbody>
+      </table>
+
+      <h3>內層 JSON 字串解析</h3>
+      <p><code>information</code> 與 <code>CallingNumberMasterResponse.result</code> 為 JSON 字串，例：</p>
+      <pre>"{\"isSuccess\":false,\"information\":\"目標叫號機尚未連線\"}"</pre>
+      <p>解析後：</p>
+      <pre>{
+  "isSuccess": false,
+  "information": "目標叫號機尚未連線"
+}</pre>
+      <table>
+        <thead><tr><th>欄位</th><th>型別</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>isSuccess</td><td>Boolean</td><td>是否成功顯示至叫號機</td></tr>
+          <tr><td>information</td><td>String</td><td>成功或失敗訊息</td></tr>
+        </tbody>
+      </table>
+      <p><code>isOK = true</code> 只代表 API 正常完成處理；實際是否成功顯示，需看內層的 <code>isSuccess</code>。</p>
+
+      <h3>建議回傳訊息（四種）</h3>
+      <p><strong>成功</strong></p>
+      <pre>{ "isSuccess": true, "information": "資料顯示成功" }</pre>
+      <p><strong>目標未連線</strong></p>
+      <pre>{ "isSuccess": false, "information": "目標叫號機尚未連線" }</pre>
+      <p><strong>找不到設備</strong></p>
+      <pre>{ "isSuccess": false, "information": "找不到目標叫號機" }</pre>
+      <p><strong>資料錯誤</strong></p>
+      <pre>{ "isSuccess": false, "information": "叫號資料格式錯誤" }</pre>
+    </section>
+
+    <section id="acceptance">
+      <h2>5. 驗收項目</h2>
+      <p>新接收端需完成以下測試：</p>
+      <ul class="accept-list">
+        <li><input type="checkbox" disabled aria-label="未測"><span>1. 準備中號碼正常顯示。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>2. 可取餐號碼正常顯示。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>3. 多筆號碼同時顯示。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>4. 號碼狀態切換。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>5. 空陣列可清空畫面。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>6. 跑馬燈內容及速度更新。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>7. 找不到目標設備時正確回傳。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>8. 目標叫號機離線時正確回傳。</span><span class="accept-status">未測</span></li>
+        <li><input type="checkbox" disabled aria-label="未測"><span>9. Response 格式符合既有規格。</span><span class="accept-status">未測</span></li>
       </ul>
-
-      <figure class="diagram" id="diagram-arch">
-        <figcaption>圖 1 · 系統架構與連線</figcaption>
-        <svg viewBox="0 0 700 340" role="img" aria-label="系統架構圖">
-          <defs>
-            <marker id="arrow-arch" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
-            </marker>
-          </defs>
-          <rect x="250" y="8" width="200" height="52" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="350" y="30" text-anchor="middle" font-size="12" font-weight="bold">POS（達鈦）</text>
-          <text x="350" y="48" text-anchor="middle" font-size="10">10.3.X.21～23</text>
-          <rect x="40" y="90" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="100" y="110" text-anchor="middle" font-size="11">貼紙機</text>
-          <text x="100" y="126" text-anchor="middle" font-size="9">接 POS 印杯貼</text>
-          <line x1="160" y1="112" x2="248" y2="40" stroke="#333" marker-end="url(#arrow-arch)"/>
-          <rect x="520" y="78" width="160" height="52" rx="4" fill="#fff" stroke="#333"/>
-          <text x="600" y="100" text-anchor="middle" font-size="11">ODO</text>
-          <text x="600" y="118" text-anchor="middle" font-size="9">線上／外送單</text>
-          <line x1="520" y1="104" x2="452" y2="50" stroke="#333" marker-end="url(#arrow-arch)"/>
-          <rect x="250" y="160" width="200" height="56" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="350" y="182" text-anchor="middle" font-size="12" font-weight="bold">機上盒 App</text>
-          <text x="350" y="200" text-anchor="middle" font-size="10">TCP Server · 10.3.X.223</text>
-          <line x1="350" y1="60" x2="350" y2="158" stroke="#333" stroke-width="2" marker-end="url(#arrow-arch)"/>
-          <text x="380" y="125" font-size="9">JSON Socket</text>
-          <rect x="80" y="250" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="140" y="277" text-anchor="middle" font-size="11">掃描槍（有線）</text>
-          <line x1="200" y1="272" x2="268" y2="210" stroke="#333" marker-end="url(#arrow-arch)"/>
-          <rect x="500" y="250" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="560" y="270" text-anchor="middle" font-size="11">叫號螢幕</text>
-          <text x="560" y="286" text-anchor="middle" font-size="9">16:9 橫式</text>
-          <line x1="450" y1="200" x2="500" y2="260" stroke="#333" marker-end="url(#arrow-arch)"/>
-          <text x="470" y="235" font-size="9">HDMI</text>
-        </svg>
-      </figure>
-
-      <h3>流程概要</h3>
-      <div class="flow">
-        <ol>
-          <li>機上盒啟動 TCP Server，POS 連線。</li>
-          <li>機上盒送出 <code>fullTicketStatus</code>，POS 回傳當下完整叫號清單（JSON）。</li>
-          <li>之後 POS 僅推送狀態異動；叫號螢幕依 Status 顯示於「製作中」或「可取餐」。</li>
-          <li>店員以掃描槍掃杯貼：依選項 B 將訂單推進可取餐或從畫面移除（掃碼回傳 POS 之 API 尚待文件補齊）。</li>
-          <li>斷線期間螢幕保留最後狀態、掃碼仍可用；恢復連線後向 POS 索取完整名單並補傳離線掃描結果。</li>
-          <li>螢幕對可取餐號碼執行 90 秒重叫（最多兩次）。</li>
-        </ol>
-      </div>
     </section>
 
-    <section id="gaps">
-      <h2>文件缺口與矛盾（待討論）</h2>
+    <section id="open-questions">
+      <h2>6. 待確認問題</h2>
+      <p>以下為<strong>本份串接規格文件未寫清楚</strong>之處（不臆測答案）。</p>
 
-      <div class="question-block" id="gap-1">
+      <div class="question-block" id="q1">
         <div class="question-head">
-          <span class="question-id">1. 掃碼後機上盒如何通知 POS</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p>最大缺口：掃完後機上盒怎麼通知 POS，現有文件完全未描述。選項 B 與離線補傳皆依賴此通道。<strong>註：</strong>答案取決於<a href="#arch-choice">上方架構選擇</a>。</p>
-        <figure class="diagram" id="diagram-scan-pos">
-          <figcaption>圖 4 · 掃碼回報 POS 流程</figcaption>
-          <svg viewBox="0 0 560 200" role="img" aria-label="掃碼回報 POS 流程圖">
-            <defs>
-              <marker id="arrow-scan" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
-              </marker>
-            </defs>
-            <rect x="20" y="70" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-            <text x="70" y="97" text-anchor="middle" font-size="11">掃描槍</text>
-            <text x="70" y="110" text-anchor="middle" font-size="9">杯貼條碼</text>
-            <line x1="120" y1="92" x2="148" y2="92" stroke="#333" marker-end="url(#arrow-scan)"/>
-            <rect x="150" y="60" width="120" height="64" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-            <text x="210" y="85" text-anchor="middle" font-size="11">機上盒 App</text>
-            <text x="210" y="102" text-anchor="middle" font-size="9">更新螢幕</text>
-            <text x="210" y="116" text-anchor="middle" font-size="9">掃一次／再掃</text>
-            <line x1="270" y1="92" x2="298" y2="92" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-scan)"/>
-            <rect x="300" y="55" width="150" height="74" rx="4" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
-            <text x="375" y="82" text-anchor="middle" font-size="13" fill="#b91c1c" font-weight="bold">？</text>
-            <text x="375" y="100" text-anchor="middle" font-size="10" fill="#b91c1c">文件未定義</text>
-            <text x="375" y="116" text-anchor="middle" font-size="10" fill="#b91c1c">通知 POS 通道</text>
-            <line x1="450" y1="92" x2="478" y2="92" stroke="#333" marker-end="url(#arrow-scan)"/>
-            <rect x="480" y="70" width="70" height="44" rx="4" fill="#fff" stroke="#333"/>
-            <text x="515" y="97" text-anchor="middle" font-size="11">POS</text>
-            <text x="280" y="155" text-anchor="middle" font-size="11" fill="#b91c1c" font-weight="bold">缺口 1 · 優先（阻擋）</text>
-          </svg>
-        </figure>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block" id="gap-2">
-        <div class="question-head">
-          <span class="question-id">2. 沒有「取消」狀態</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p>狀態碼未涵蓋訂單取消；叫錯或撤單時如何從螢幕移除尚不明。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">3. 網路與網段描述不一致</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p>同批文件出現 <code>192.168.1.x</code> 與 <code>10.3.X.223</code>；技術文件寫有線，共筆提及螢幕多用無線。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">4. JSON／欄位格式不一致</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p><code>Status</code> 有時為數字、有時為字串 <code>"3"</code>；範例 JSON 缺逗號；<code>Order_ID</code>、<code>Staff_ID</code> 在表格與範例間不一致。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">5. 取餐號碼長度</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p>文件寫 0168～9999，外送平台號碼可能較長且含英文。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">6. 「訂單清空」寫「無」</span>
-          <span class="tag tag-pending">待討論</span>
-        </div>
-        <p>日結或清單重置行為未在技術文件說明清楚。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="they-ask-us">
-      <h2>對方反問我們</h2>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">2.4 兩邊狀態會在什麼情境不一致？</span>
+          <span class="question-id">Q1 API 網址、HTTP 方法、由誰提供網址給發送端？</span>
+          <span class="tag tag-blocker">優先</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>需由奧創說明 POS 與叫號螢幕狀態可能分歧的場景與處理方式。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <p>文件未載明。</p>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q2">
         <div class="question-head">
-          <span class="question-id">6.1 為什麼要固定網段？</span>
+          <span class="question-id">Q2 signature 簽章方式、金鑰交換；是否驗簽；reesultMd5_ServerSignature 如何簽？</span>
+          <span class="tag tag-blocker">優先</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>需回覆固定 <code>10.3.X.x</code> 網段之技術或維運理由。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q3">
         <div class="question-head">
-          <span class="question-id">6.5 連線確認（心跳）通常有哪些機制？</span>
+          <span class="question-id">Q3 serviceSpecialData_Json_Md5Hash 與 resultMd5 對哪段文字、何種格式計算 MD5？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>文件標示心跳另議；需提出建議做法供雙方定案。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-    </section>
-
-    <section id="ask-milksha">
-      <h2>待問迷客夏／達鈦</h2>
-
-      <h3>問達鈦（POS 技術）</h3>
-
-      <div class="question-block">
+      <div class="question-block" id="q4">
         <div class="question-head">
-          <span class="question-id">1. 杯子掃完以後，機上盒要怎麼通知 POS「這張單可以取餐了／已經取走了」？</span>
-          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="question-id">Q4 isEncrypt=true 時加密方式？是否一定會出現？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>掃一次可取餐、再掃一次拿掉，以及斷線後補傳都靠它。<strong>註：</strong>答案取決於<a href="#arch-choice">上方架構選擇</a>。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q5">
         <div class="question-head">
-          <span class="question-id">2. 客人取消訂單或店員叫錯號時，POS 會送什麼狀態讓畫面撤下號碼？</span>
-          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="question-id">Q5 target 命名規則與門市螢幕對應；一店多台螢幕如何處理？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>目前狀態碼沒有「取消」。</p>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <p>範例 target 為 <code>composec030020</code>（文件未說明是否為 merchant_id + account）。</p>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q6">
         <div class="question-head">
-          <span class="question-id">3. 網段寫了 192.168.1.x 和 10.3.X.223 兩種，以哪個為準？叫號機上盒走有線還是無線？</span>
+          <span class="question-id">Q6 Request 範例 merchant_id 為 compose，Response 為 Milksha／Tammy001，Response 應填什麼？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q7">
         <div class="question-head">
-          <span class="question-id">4. Status 是數字 3 還是文字 "3"？Order_ID、Staff_ID 在欄位表和範例寫法不同，以哪個為準？能否提供格式正確的範例資料？</span>
+          <span class="question-id">Q7 timeStmp 格式（例 2026-07-17-13-17-00:2831）與冒號後數字；是否用於判斷舊資料或順序？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q8">
         <div class="question-head">
-          <span class="question-id">5. 「訂單清空」寫「無」，是否表示 POS 從不送清空？打烊或 POS 重開時畫面舊號碼怎麼處理？</span>
+          <span class="question-id">Q8 發送頻率與逾時：多久送一次、多久沒回應算失敗、失敗是否重送？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q9">
         <div class="question-head">
-          <span class="question-id">6. 心跳（連線確認）寫「另議」，傾向哪種做法、多久確認一次？</span>
+          <span class="question-id">Q9 statusCode 與 isOK=false 各在什麼情況使用？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <h3>問迷客夏（門市與營運）</h3>
-
-      <div class="question-block">
+      <div class="question-block" id="q10">
         <div class="question-head">
-          <span class="question-id">7. 取餐號碼範圍是多少？每天幾點歸零？</span>
+          <span class="question-id">Q10 newsTickerSpeed 8.0 的單位與快慢方向？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
-
-      <div class="question-block">
+      <div class="question-block" id="q11">
         <div class="question-head">
-          <span class="question-id">8. 外送平台號碼可能超過四位數且含英文，畫面要完整顯示還是只顯示後幾碼？</span>
+          <span class="question-id">Q11 是否有測試環境與測試帳號可供驗收？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">9. 預約單還沒開始做之前，要不要先顯示在「製作中」？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">10. 螢幕每 90 秒自動重叫一次、最多兩次，是否同意？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">11. 叫錯號或取消時，門市希望怎麼撤下號碼（POS 端操作或其他方式）？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">12. 叫號要不要有聲音？松山店螢幕有沒有喇叭？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">13. 門市現有電視與機上盒可以沿用，還是要換新？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">14. 總部是否需要叫號統計（每日單量、平均等候時間等）？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <h3>松山試點店現場資訊</h3>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">15. 機上盒型號與記憶體大小？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
-      </div>
-
-      <div class="question-block">
-        <div class="question-head">
-          <span class="question-id">16. 門市每天幾點關店？機上盒是否要鎖定只開叫號畫面？</span>
-          <span class="tag tag-confirm">待確認</span>
-        </div>
-        <div class="result-slot">
-          <strong>討論結果</strong>
-          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
-        </div>
+        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
       </div>
     </section>
 
     <section id="changelog">
-      <h2>更新紀錄</h2>
+      <h2>7. 更新紀錄</h2>
       <dl class="changelog">
-        <dt>2026-09-29 · v0.4</dt>
-        <dd>新增「最優先討論：串接架構怎麼選」（方案 A／B／C 流程圖與比較表）；待問第 1 題連結架構區塊。</dd>
-        <dt>2026-09-29 · v0.3</dt>
-        <dd>加入流程圖（系統架構、連線同步、狀態、掃碼回報 POS、斷線重連）。</dd>
-        <dt>2026-09-29 · v0.2</dt>
-        <dd>待問清單改為 16 題並分組；修正錯字。</dd>
-        <dt>2026-09-29 · v0.1</dt>
-        <dd>初版公開討論頁：整理 PM 筆記（迷客夏共筆與 Socket 技術文件 Google Doc 連結）、已確定事項、Socket 重點、待討論／待確認項目與空白討論結果欄位。</dd>
+        <dt>2026-09-29 · v1.0</dt>
+        <dd>依《叫號機接收端 API 串接規格》重寫整頁（舊版內容已移除）。</dd>
       </dl>
     </section>
 
-    <footer>
-      奧創 × 迷客夏 掃描槍叫號整合討論文件 · 靜態頁面，無需建置步驟
-    </footer>
+    <footer>叫號機接收端 API 串接規格 · 討論整理頁 · 靜態 HTML</footer>
   </div>
 </body>
 </html>
