@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.2</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --border: #d8d8d8;
+      --bg: #fafafa;
+      --card: #fff;
+      --accent: #2d5a3d;
+      --tag-pending: #b45309;
+      --tag-confirm: #1d4ed8;
+      --tag-done: #15803d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 3rem;
+    }
+    header {
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      line-height: 1.3;
+    }
+    .meta {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .meta strong { color: var(--text); }
+    .sources {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .sources a {
+      color: var(--accent);
+      word-break: break-all;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin: 2rem 0 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--accent);
+    }
+    h2:first-of-type { border-top: none; margin-top: 0; }
+    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    ul { margin: 0.5rem 0; padding-left: 1.35rem; }
+    li { margin: 0.35rem 0; }
+    p { margin: 0.5rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 0.75rem 0;
+      background: var(--card);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eef3ef; font-weight: 600; }
+    .flow {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.15rem;
+      margin: 0.75rem 0;
+      font-size: 0.95rem;
+    }
+    .flow ol { margin: 0; padding-left: 1.25rem; }
+    .flow li { margin: 0.5rem 0; }
+    .question-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.15rem;
+      margin: 1rem 0;
+    }
+    .question-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+    .question-id {
+      font-weight: 600;
+      flex: 1 1 12rem;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .tag-pending { background: #fef3c7; color: var(--tag-pending); }
+    .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
+    .tag-done { background: #dcfce7; color: var(--tag-done); }
+    .tag-blocker { background: #fee2e2; color: #b91c1c; }
+    .result-slot {
+      margin-top: 0.75rem;
+      padding-top: 0.65rem;
+      border-top: 1px dashed var(--border);
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .result-slot strong { color: var(--text); }
+    .result-empty {
+      min-height: 2.5rem;
+      margin-top: 0.35rem;
+      padding: 0.5rem;
+      background: #f5f5f5;
+      border-radius: 4px;
+      color: #999;
+      font-style: italic;
+    }
+    .changelog {
+      font-size: 0.9rem;
+    }
+    .changelog dt { font-weight: 600; margin-top: 0.75rem; }
+    .changelog dd { margin: 0.25rem 0 0 0; color: var(--muted); }
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    @media (min-width: 640px) {
+      .wrap { padding: 2rem 1.5rem 4rem; }
+      h1 { font-size: 1.75rem; }
+    }
+    @media print {
+      body { background: #fff; font-size: 11pt; }
+      .wrap { max-width: none; padding: 0; }
+      .question-block, .flow, table { break-inside: avoid; }
+      a { color: var(--text); text-decoration: none; }
+      a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.85em;
+        word-break: break-all;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>迷客夏 掃描槍叫號整合 — 討論文件</h1>
+      <p class="meta"><strong>版本</strong> v0.2 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
+      <div class="sources">
+        <p><strong>原始文件</strong></p>
+        <ul>
+          <li>共筆：<a href="https://docs.google.com/document/d/16YvO8tjRNUzsPZTGyp_V6f6oHGNRwJBWECWgQwgV7ic/edit" target="_blank" rel="noopener">Google Doc（迷客夏共筆）</a></li>
+          <li>Socket 技術文件：<a href="https://docs.google.com/document/d/1zhhh25TzulcoTAYuxVdsW-pqCgAr4fsTYvcbiIhBhzI/edit" target="_blank" rel="noopener">Google Doc（Socket 技術文件）</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <section id="confirmed">
+      <h2>已確定事項</h2>
+      <ul>
+        <li><strong>掃描槍</strong>：有線，接機上盒；全台同款 Sunmi 小閃1／小閃2。</li>
+        <li><strong>杯貼條碼</strong>：格式為「取餐號碼,訂單類型」，由接 POS 的貼紙機印出。訂單類型：1 內用、2 外帶、3 外送、4 UberEats、5 Foodpanda、6 你訂。</li>
+        <li><strong>選項 B（掃碼流程）</strong>：POS 送「製作中」；掃一次＝可取餐，再掃一次＝從畫面拿掉。POS 也可能直接送可取餐。</li>
+        <li><strong>螢幕顯示</strong>：只顯示「製作中」「可取餐」兩區；取完餐直接拿掉，不做歷史區（2026-09-29 定案）。</li>
+        <li><strong>號碼</strong>：不自動移除（需依掃碼或 POS 狀態異動）。</li>
+        <li><strong>硬體</strong>：獨立 16:9 橫式螢幕，不穿插廣告。</li>
+        <li><strong>斷線</strong>：保留最後狀態，掃描槍照常可用；重連／重開機向 POS 要完整名單，並把離線期間掃描同步回 POS。</li>
+        <li><strong>樣式</strong>：規則經雙方測試定案後由奧創設定，迷客夏不自行調整。</li>
+        <li><strong>支援</strong>：門市問題先找奧創 Line 客服；奧創提供操作影片與說明網頁。</li>
+        <li><strong>試點</strong>：十月底新開松山店，試點三個月。</li>
+        <li><strong>費用</strong>：不收串接費，月費多 50 元；POS 改版、佈線、硬體由迷客夏負擔。</li>
+      </ul>
+    </section>
+
+    <section id="socket">
+      <h2>Socket 技術文件重點</h2>
+
+      <h3>連線與資料格式</h3>
+      <ul>
+        <li>機上盒 App 開 TCP Server，等待 POS 連線；訊息為 JSON。</li>
+        <li>連上後機上盒送出字串 <code>fullTicketStatus</code>，POS 回傳完整叫號狀態；之後僅送異動。</li>
+        <li>心跳機制另議。</li>
+        <li>POS 開機時名單一定為空，之後向 ODO 撈取線上／外送單。</li>
+      </ul>
+
+      <h3>狀態碼</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>代碼</th>
+            <th>意義</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>已接單</td></tr>
+          <tr><td>2</td><td>製作中</td></tr>
+          <tr><td>3</td><td>可取餐</td></tr>
+          <tr><td>0</td><td>完成</td></tr>
+        </tbody>
+      </table>
+      <p>叫號螢幕端：每 90 秒自動重叫一次、最多兩次（由螢幕自行處理）。</p>
+
+      <h3>欄位</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>欄位</th>
+            <th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Store_ID</td><td>門市識別</td></tr>
+          <tr><td>Order_ID</td><td>訂單識別</td></tr>
+          <tr><td>Pickup_Number</td><td>取餐號；0168～9999 或第三方平台號碼</td></tr>
+          <tr><td>Order_Type</td><td>訂單類型（對應杯貼類型碼）</td></tr>
+          <tr><td>Status</td><td>狀態碼（見上表）</td></tr>
+          <tr><td>Create_Time</td><td>建立時間</td></tr>
+          <tr><td>Booking_Time</td><td>預約時間</td></tr>
+          <tr><td>Update_Time</td><td>更新時間</td></tr>
+          <tr><td>Total_Qty</td><td>總數量</td></tr>
+          <tr><td>Total_Time</td><td>總時間（文件定義）</td></tr>
+          <tr><td>Order_Items</td><td>品項陣列：Item_Code, Item_Name, Count, Unit_Price</td></tr>
+        </tbody>
+      </table>
+
+      <h3>網段規格（技術文件）</h3>
+      <ul>
+        <li>POS：<code>10.3.X.21</code>～<code>10.3.X.23</code></li>
+        <li>叫號機／螢幕：<code>10.3.X.223</code></li>
+      </ul>
+
+      <h3>流程概要</h3>
+      <div class="flow">
+        <ol>
+          <li>機上盒啟動 TCP Server，POS 連線。</li>
+          <li>機上盒送出 <code>fullTicketStatus</code>，POS 回傳當下完整叫號清單（JSON）。</li>
+          <li>之後 POS 僅推送狀態異動；叫號螢幕依 Status 顯示於「製作中」或「可取餐」。</li>
+          <li>店員以掃描槍掃杯貼：依選項 B 將訂單推進可取餐或從畫面移除（掃碼回傳 POS 之 API 尚待文件補齊）。</li>
+          <li>斷線期間螢幕保留最後狀態、掃碼仍可用；恢復連線後向 POS 索取完整名單並補傳離線掃描結果。</li>
+          <li>螢幕對可取餐號碼執行 90 秒重叫（最多兩次）。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="gaps">
+      <h2>文件缺口與矛盾（待討論）</h2>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">1. 掃碼後機上盒如何通知 POS</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p>最大缺口：掃完後機上盒怎麼通知 POS，現有文件完全未描述。選項 B 與離線補傳皆依賴此通道。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">2. 沒有「取消」狀態</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p>狀態碼未涵蓋訂單取消；叫錯或撤單時如何從螢幕移除尚不明。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">3. 網路與網段描述不一致</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p>同批文件出現 <code>192.168.1.x</code> 與 <code>10.3.X.223</code>；技術文件寫有線，共筆提及螢幕多用無線。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">4. JSON／欄位格式不一致</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p><code>Status</code> 有時為數字、有時為字串 <code>"3"</code>；範例 JSON 缺逗號；<code>Order_ID</code>、<code>Staff_ID</code> 在表格與範例間不一致。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">5. 取餐號碼長度</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p>文件寫 0168～9999，外送平台號碼可能較長且含英文。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">6. 「訂單清空」寫「無」</span>
+          <span class="tag tag-pending">待討論</span>
+        </div>
+        <p>日結或清單重置行為未在技術文件說明清楚。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="they-ask-us">
+      <h2>對方反問我們</h2>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">2.4 兩邊狀態會在什麼情境不一致？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>需由奧創說明 POS 與叫號螢幕狀態可能分歧的場景與處理方式。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">6.1 為什麼要固定網段？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>需回覆固定 <code>10.3.X.x</code> 網段之技術或維運理由。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">6.5 連線確認（心跳）通常有哪些機制？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>文件標示心跳另議；需提出建議做法供雙方定案。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ask-milksha">
+      <h2>待問迷客夏／達鈦</h2>
+
+      <h3>問達鈦（POS 技術）</h3>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">1. 杯子掃完以後，機上盒要怎麼通知 POS「這張單可以取餐了／已經取走了」？</span>
+          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>掃一次可取餐、再掃一次拿掉，以及斷線後補傳都靠它。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">2. 客人取消訂單或店員叫錯號時，POS 會送什麼狀態讓畫面撤下號碼？</span>
+          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>目前狀態碼沒有「取消」。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">3. 網段寫了 192.168.1.x 和 10.3.X.223 兩種，以哪個為準？叫號機上盒走有線還是無線？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">4. Status 是數字 3 還是文字 "3"？Order_ID、Staff_ID 在欄位表和範例寫法不同，以哪個為準？能否提供格式正確的範例資料？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">5. 「訂單清空」寫「無」，是否表示 POS 從不送清空？打烊或 POS 重開時畫面舊號碼怎麼處理？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">6. 心跳（連線確認）寫「另議」，傾向哪種做法、多久確認一次？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <h3>問迷客夏（門市與營運）</h3>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">7. 取餐號碼範圍是多少？每天幾點歸零？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">8. 外送平台號碼可能超過四位數且含英文，畫面要完整顯示還是只顯示後幾碼？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">9. 預約單還沒開始做之前，要不要先顯示在「製作中」？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">10. 螢幕每 90 秒自動重叫一次、最多兩次，是否同意？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">11. 叫錯號或取消時，門市希望怎麼撤下號碼（POS 端操作或其他方式）？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">12. 叫號要不要有聲音？松山店螢幕有沒有喇叭？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">13. 門市現有電視與機上盒可以沿用，還是要換新？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">14. 總部是否需要叫號統計（每日單量、平均等候時間等）？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <h3>松山試點店現場資訊</h3>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">15. 機上盒型號與記憶體大小？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">16. 門市每天幾點關店？機上盒是否要鎖定只開叫號畫面？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="changelog">
+      <h2>更新紀錄</h2>
+      <dl class="changelog">
+        <dt>2026-09-29 · v0.2</dt>
+        <dd>待問清單改為 16 題並分組；修正錯字。</dd>
+        <dt>2026-09-29 · v0.1</dt>
+        <dd>初版公開討論頁：整理 PM 筆記（迷客夏共筆與 Socket 技術文件 Google Doc 連結）、已確定事項、Socket 重點、待討論／待確認項目與空白討論結果欄位。</dd>
+      </dl>
+    </section>
+
+    <footer>
+      奧創 × 迷客夏 掃描槍叫號整合討論文件 · 靜態頁面，無需建置步驟
+    </footer>
+  </div>
+</body>
+</html>
