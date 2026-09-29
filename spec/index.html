@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.1</title>
+  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.2</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -119,6 +119,7 @@
     .tag-pending { background: #fef3c7; color: var(--tag-pending); }
     .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
     .tag-done { background: #dcfce7; color: var(--tag-done); }
+    .tag-blocker { background: #fee2e2; color: #b91c1c; }
     .result-slot {
       margin-top: 0.75rem;
       padding-top: 0.65rem;
@@ -169,7 +170,7 @@
   <div class="wrap">
     <header>
       <h1>迷客夏 掃描槍叫號整合 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v0.1 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
+      <p class="meta"><strong>版本</strong> v0.2 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
       <div class="sources">
         <p><strong>原始文件</strong></p>
         <ul>
@@ -182,7 +183,7 @@
     <section id="confirmed">
       <h2>已確定事項</h2>
       <ul>
-        <li><strong>掃描槍</strong>：有線，接機上盒；全台同款 Sunmi 小锃1／小锃2。</li>
+        <li><strong>掃描槍</strong>：有線，接機上盒；全台同款 Sunmi 小閃1／小閃2。</li>
         <li><strong>杯貼條碼</strong>：格式為「取餐號碼,訂單類型」，由接 POS 的貼紙機印出。訂單類型：1 內用、2 外帶、3 外送、4 UberEats、5 Foodpanda、6 你訂。</li>
         <li><strong>選項 B（掃碼流程）</strong>：POS 送「製作中」；掃一次＝可取餐，再掃一次＝從畫面拿掉。POS 也可能直接送可取餐。</li>
         <li><strong>螢幕顯示</strong>：只顯示「製作中」「可取餐」兩區；取完餐直接拿掉，不做歷史區（2026-09-29 定案）。</li>
@@ -385,9 +386,37 @@
     <section id="ask-milksha">
       <h2>待問迷客夏／達鈦</h2>
 
+      <h3>問達鈦（POS 技術）</h3>
+
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">4.1 號碼範圍與每天歸零時間</span>
+          <span class="question-id">1. 杯子掃完以後，機上盒要怎麼通知 POS「這張單可以取餐了／已經取走了」？</span>
+          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>掃一次可取餐、再掃一次拿掉，以及斷線後補傳都靠它。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">2. 客人取消訂單或店員叫錯號時，POS 會送什麼狀態讓畫面撤下號碼？</span>
+          <span class="tag tag-blocker">優先（阻擋）</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <p>目前狀態碼沒有「取消」。</p>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">3. 網段寫了 192.168.1.x 和 10.3.X.223 兩種，以哪個為準？叫號機上盒走有線還是無線？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -398,7 +427,7 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">4.2 外送長單號顯示</span>
+          <span class="question-id">4. Status 是數字 3 還是文字 "3"？Order_ID、Staff_ID 在欄位表和範例寫法不同，以哪個為準？能否提供格式正確的範例資料？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -409,7 +438,7 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">4.4 預約單是否先顯示</span>
+          <span class="question-id">5. 「訂單清空」寫「無」，是否表示 POS 從不送清空？打烊或 POS 重開時畫面舊號碼怎麼處理？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -420,7 +449,20 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">4.5 90 秒重叫是否同意</span>
+          <span class="question-id">6. 心跳（連線確認）寫「另議」，傾向哪種做法、多久確認一次？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <h3>問迷客夏（門市與營運）</h3>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">7. 取餐號碼範圍是多少？每天幾點歸零？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -431,7 +473,7 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">4.7 叫錯／取消如何撤下</span>
+          <span class="question-id">8. 外送平台號碼可能超過四位數且含英文，畫面要完整顯示還是只顯示後幾碼？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -442,7 +484,7 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">5.2 是否要聲音、有無喇叭</span>
+          <span class="question-id">9. 預約單還沒開始做之前，要不要先顯示在「製作中」？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -453,7 +495,7 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">5.3 現有電視與機上盒能否沿用</span>
+          <span class="question-id">10. 螢幕每 90 秒自動重叫一次、最多兩次，是否同意？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -464,7 +506,64 @@
 
       <div class="question-block">
         <div class="question-head">
-          <span class="question-id">8.1 總部是否要看統計</span>
+          <span class="question-id">11. 叫錯號或取消時，門市希望怎麼撤下號碼（POS 端操作或其他方式）？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">12. 叫號要不要有聲音？松山店螢幕有沒有喇叭？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">13. 門市現有電視與機上盒可以沿用，還是要換新？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">14. 總部是否需要叫號統計（每日單量、平均等候時間等）？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <h3>松山試點店現場資訊</h3>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">15. 機上盒型號與記憶體大小？</span>
+          <span class="tag tag-confirm">待確認</span>
+        </div>
+        <div class="result-slot">
+          <strong>討論結果</strong>
+          <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <div class="question-head">
+          <span class="question-id">16. 門市每天幾點關店？機上盒是否要鎖定只開叫號畫面？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
         <div class="result-slot">
@@ -477,6 +576,8 @@
     <section id="changelog">
       <h2>更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v0.2</dt>
+        <dd>待問清單改為 16 題並分組；修正錯字。</dd>
         <dt>2026-09-29 · v0.1</dt>
         <dd>初版公開討論頁：整理 PM 筆記（迷客夏共筆與 Socket 技術文件 Google Doc 連結）、已確定事項、Socket 重點、待討論／待確認項目與空白討論結果欄位。</dd>
       </dl>
