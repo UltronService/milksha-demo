@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.3</title>
+  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.4</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -136,6 +136,15 @@
     }
     .diagram svg { display: block; max-width: 100%; height: auto; }
     .diagram a { color: #b91c1c; font-weight: 600; }
+    .scheme-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.15rem;
+      margin: 1.25rem 0;
+    }
+    .scheme-block h4 { margin: 0 0 0.5rem; font-size: 1rem; color: var(--accent); }
+    .scheme-meta { font-size: 0.9rem; color: var(--muted); margin: 0.35rem 0; }
     .result-slot {
       margin-top: 0.75rem;
       padding-top: 0.65rem;
@@ -189,7 +198,7 @@
   <div class="wrap">
     <header>
       <h1>迷客夏 掃描槍叫號整合 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v0.3 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
+      <p class="meta"><strong>版本</strong> v0.4 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
       <div class="sources">
         <p><strong>原始文件</strong></p>
         <ul>
@@ -198,6 +207,171 @@
         </ul>
       </div>
     </header>
+
+    <section id="arch-choice">
+      <h2>最優先討論：串接架構怎麼選</h2>
+      <div class="question-head">
+        <span class="tag tag-pending">待討論</span>
+        <span class="tag tag-blocker">最優先</span>
+      </div>
+
+      <h3>背景</h3>
+      <p><strong>現況：</strong>達鈦 POS 已經會把訂單／叫號資料送到迷客夏自己的 API。Socket 技術文件是迷客夏「建議」奧創的做法，尚未定案。</p>
+
+      <div class="scheme-block" id="scheme-a">
+        <h4>方案 A（迷客夏文件建議）：店內直連</h4>
+        <p>機上盒開 TCP Server，達鈦 POS 在店內網路直接連機上盒送叫號資料；掃碼結果直接回 POS。</p>
+        <figure class="diagram">
+          <figcaption>方案 A · 店內直連</figcaption>
+          <svg viewBox="0 0 520 200" role="img" aria-label="方案 A 店內直連流程">
+            <defs><marker id="ar-a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
+            <rect x="30" y="70" width="100" height="50" rx="4" fill="#fff" stroke="#333"/>
+            <text x="80" y="92" text-anchor="middle" font-size="11">達鈦 POS</text>
+            <text x="80" y="108" text-anchor="middle" font-size="9">店內網</text>
+            <rect x="210" y="55" width="120" height="80" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="270" y="85" text-anchor="middle" font-size="11">機上盒 App</text>
+            <text x="270" y="102" text-anchor="middle" font-size="9">TCP Server</text>
+            <text x="270" y="118" text-anchor="middle" font-size="9">叫號螢幕</text>
+            <line x1="130" y1="95" x2="208" y2="95" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-a)"/>
+            <text x="170" y="88" font-size="9">叫號 JSON</text>
+            <line x1="208" y1="110" x2="130" y2="110" stroke="#333" marker-end="url(#ar-a)"/>
+            <text x="165" y="125" font-size="9">掃碼回報</text>
+            <rect x="40" y="145" width="80" height="32" rx="4" fill="#fff" stroke="#333"/>
+            <text x="80" y="165" text-anchor="middle" font-size="9">掃描槍</text>
+            <line x1="80" y1="145" x2="240" y2="135" stroke="#333" marker-end="url(#ar-a)"/>
+            <rect x="400" y="20" width="100" height="40" rx="4" fill="#f5f5f5" stroke="#999" stroke-dasharray="4 3"/>
+            <text x="450" y="45" text-anchor="middle" font-size="10">迷客夏 API</text>
+            <text x="450" y="58" text-anchor="middle" font-size="8">（POS 既有上送）</text>
+          </svg>
+        </figure>
+        <p class="scheme-meta"><strong>優點：</strong>快；店內網路即可運作（外網斷也能用）。</p>
+        <p class="scheme-meta"><strong>缺點：</strong>達鈦要新寫串接；掃碼回報通道文件未定義；要固定網段。</p>
+        <p class="scheme-meta"><strong>要改：</strong>達鈦（大）、奧創（中）、迷客夏（無）。</p>
+      </div>
+
+      <div class="scheme-block" id="scheme-b">
+        <h4>方案 B（負責人提出）：走迷客夏現有 API</h4>
+        <p>達鈦照舊打迷客夏 API（不用改）；奧創機上盒從迷客夏取得叫號資料。<strong>B1</strong> 奧創定時去讀迷客夏；<strong>B2</strong> 迷客夏資料更新時轉送給奧創。</p>
+        <figure class="diagram">
+          <figcaption>方案 B · 經迷客夏 API（B1 定時讀／B2 推送）</figcaption>
+          <svg viewBox="0 0 560 240" role="img" aria-label="方案 B 迷客夏 API 流程">
+            <defs><marker id="ar-b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
+            <rect x="20" y="40" width="90" height="44" rx="4" fill="#fff" stroke="#333"/>
+            <text x="65" y="67" text-anchor="middle" font-size="11">達鈦 POS</text>
+            <rect x="200" y="30" width="120" height="64" rx="4" fill="#fef3c7" stroke="#b45309"/>
+            <text x="260" y="55" text-anchor="middle" font-size="11">迷客夏 API</text>
+            <text x="260" y="72" text-anchor="middle" font-size="9">（既有上送）</text>
+            <line x1="110" y1="62" x2="198" y2="62" stroke="#333" marker-end="url(#ar-b)"/>
+            <rect x="400" y="40" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="465" y="67" text-anchor="middle" font-size="11">機上盒／螢幕</text>
+            <line x1="320" y1="55" x2="398" y2="55" stroke="#2d5a3d" marker-end="url(#ar-b)"/>
+            <text x="360" y="48" font-size="8">B1 定時讀</text>
+            <line x1="320" y1="75" x2="398" y2="75" stroke="#2d5a3d" stroke-dasharray="5 3" marker-end="url(#ar-b)"/>
+            <text x="355" y="88" font-size="8">B2 更新轉送</text>
+            <rect x="400" y="120" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="465" y="147" text-anchor="middle" font-size="10">奧創（掃碼）</text>
+            <line x1="465" y1="84" x2="465" y2="118" stroke="#333" marker-end="url(#ar-b)"/>
+            <line x1="465" y1="164" x2="320" y2="95" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
+            <line x1="260" y1="94" x2="260" y2="155" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
+            <line x1="110" y1="175" x2="198" y2="155" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar-b)"/>
+            <rect x="170" y="168" width="220" height="50" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+            <text x="280" y="190" text-anchor="middle" font-size="10" fill="#b91c1c">？需確認迷客夏能否做到</text>
+            <text x="280" y="206" text-anchor="middle" font-size="9" fill="#b91c1c">寫回掃碼結果並通知 POS</text>
+          </svg>
+        </figure>
+        <p class="scheme-meta"><strong>優點：</strong>達鈦可能完全不用改；奧創不用處理店內網段。</p>
+        <p class="scheme-meta"><strong>缺點：</strong>迷客夏要開讀取或轉送口子，還要能接收掃碼回傳並通知 POS；資料繞雲端一圈會稍慢；門市外網斷線時畫面停住、掃碼無法即時回傳。</p>
+        <p class="scheme-meta"><strong>要改：</strong>達鈦（無或很小）、迷客夏（中）、奧創（中）。</p>
+      </div>
+
+      <div class="scheme-block" id="scheme-c">
+        <h4>方案 C（比照現有做法）：多打一份到奧創雲端</h4>
+        <p>達鈦用打迷客夏 API 的同樣方式，多打一份到奧創的雲端 API；機上盒從奧創雲端拿資料；掃碼結果由奧創回傳達鈦。</p>
+        <figure class="diagram">
+          <figcaption>方案 C · 奧創雲端 API</figcaption>
+          <svg viewBox="0 0 540 220" role="img" aria-label="方案 C 奧創雲端流程">
+            <defs><marker id="ar-c" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
+            <rect x="20" y="50" width="90" height="44" rx="4" fill="#fff" stroke="#333"/>
+            <text x="65" y="77" text-anchor="middle" font-size="11">達鈦 POS</text>
+            <rect x="180" y="25" width="110" height="40" rx="4" fill="#fef3c7" stroke="#b45309"/>
+            <text x="235" y="50" text-anchor="middle" font-size="10">迷客夏 API</text>
+            <line x1="110" y1="65" x2="178" y2="45" stroke="#333" marker-end="url(#ar-c)"/>
+            <rect x="180" y="85" width="110" height="40" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="235" y="110" text-anchor="middle" font-size="10">奧創雲端 API</text>
+            <line x1="110" y1="75" x2="178" y2="105" stroke="#2d5a3d" marker-end="url(#ar-c)"/>
+            <text x="130" y="98" font-size="8">同格式多送一份</text>
+            <rect x="380" y="60" width="130" height="50" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="445" y="82" text-anchor="middle" font-size="11">機上盒</text>
+            <text x="445" y="98" text-anchor="middle" font-size="9">拉取／接收</text>
+            <line x1="290" y1="105" x2="378" y2="90" stroke="#333" marker-end="url(#ar-c)"/>
+            <line x1="445" y1="110" x2="110" y2="110" stroke="#333" stroke-dasharray="5 3" marker-end="url(#ar-c)"/>
+            <text x="280" y="125" font-size="9">掃碼結果回傳達鈦</text>
+            <text x="270" y="175" text-anchor="middle" font-size="9" fill="#5c5c5c">不經迷客夏 · 外網斷則畫面停</text>
+          </svg>
+        </figure>
+        <p class="scheme-meta"><strong>優點：</strong>達鈦沿用熟悉格式，改動小於 A；不經迷客夏。</p>
+        <p class="scheme-meta"><strong>缺點：</strong>達鈦仍要小改；同樣繞雲端、外網斷會停。</p>
+        <p class="scheme-meta"><strong>要改：</strong>達鈦（小）、奧創（中）、迷客夏（無）。</p>
+      </div>
+
+      <h3>比較表</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>方案</th>
+            <th>達鈦要改</th>
+            <th>迷客夏要改</th>
+            <th>奧創要改</th>
+            <th>速度</th>
+            <th>外網斷線時</th>
+            <th>掃碼回報怎麼走</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A 店內直連</td>
+            <td>大</td>
+            <td>無</td>
+            <td>中</td>
+            <td>快（店內）</td>
+            <td>店內仍可運作</td>
+            <td>機上盒 → POS（文件未定義）</td>
+          </tr>
+          <tr>
+            <td>B 迷客夏 API</td>
+            <td>無或很小</td>
+            <td>中</td>
+            <td>中</td>
+            <td>稍慢（繞雲端）</td>
+            <td>畫面停、掃碼難即時回傳</td>
+            <td>奧創 → 迷客夏 → POS（待確認）</td>
+          </tr>
+          <tr>
+            <td>C 奧創雲端</td>
+            <td>小</td>
+            <td>無</td>
+            <td>中</td>
+            <td>稍慢（繞雲端）</td>
+            <td>畫面停</td>
+            <td>奧創 → 達鈦</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>會議要問迷客夏的問題</h3>
+      <ol>
+        <li>現有 API 能不能讓奧創讀到叫號資料，或在更新時轉送給奧創？</li>
+        <li>掃碼結果能不能寫回迷客夏並通知 POS？</li>
+        <li>資料更新多快？</li>
+        <li>現有 API 有沒有文件可以提供？</li>
+        <li>門市外網穩定度與斷線時的預期行為。</li>
+      </ol>
+
+      <div class="result-slot">
+        <strong>討論結果</strong>
+        <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
+      </div>
+    </section>
 
     <section id="confirmed">
       <h2>已確定事項</h2>
@@ -410,7 +584,7 @@
           <span class="question-id">1. 掃碼後機上盒如何通知 POS</span>
           <span class="tag tag-pending">待討論</span>
         </div>
-        <p>最大缺口：掃完後機上盒怎麼通知 POS，現有文件完全未描述。選項 B 與離線補傳皆依賴此通道。</p>
+        <p>最大缺口：掃完後機上盒怎麼通知 POS，現有文件完全未描述。選項 B 與離線補傳皆依賴此通道。<strong>註：</strong>答案取決於<a href="#arch-choice">上方架構選擇</a>。</p>
         <figure class="diagram" id="diagram-scan-pos">
           <figcaption>圖 4 · 掃碼回報 POS 流程</figcaption>
           <svg viewBox="0 0 560 200" role="img" aria-label="掃碼回報 POS 流程圖">
@@ -556,7 +730,7 @@
           <span class="tag tag-blocker">優先（阻擋）</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <p>掃一次可取餐、再掃一次拿掉，以及斷線後補傳都靠它。</p>
+        <p>掃一次可取餐、再掃一次拿掉，以及斷線後補傳都靠它。<strong>註：</strong>答案取決於<a href="#arch-choice">上方架構選擇</a>。</p>
         <div class="result-slot">
           <strong>討論結果</strong>
           <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
@@ -738,6 +912,8 @@
     <section id="changelog">
       <h2>更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v0.4</dt>
+        <dd>新增「最優先討論：串接架構怎麼選」（方案 A／B／C 流程圖與比較表）；待問第 1 題連結架構區塊。</dd>
         <dt>2026-09-29 · v0.3</dt>
         <dd>加入流程圖（系統架構、連線同步、狀態、掃碼回報 POS、斷線重連）。</dd>
         <dt>2026-09-29 · v0.2</dt>
