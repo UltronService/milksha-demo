@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>叫號機接收端 API 串接規格 — 討論文件 v1.0</title>
+  <title>叫號機接收端 API 串接規格 — 討論文件 v1.2</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -31,6 +31,14 @@
     .meta { font-size: 0.9rem; color: var(--muted); }
     .meta strong { color: var(--text); }
     .source-note { margin-top: 0.75rem; font-size: 0.9rem; padding: 0.65rem 0.85rem; background: #eef3ef; border-radius: 4px; }
+    .plain-box {
+      background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--accent);
+      border-radius: 6px; padding: 1rem 1.15rem; margin: 0 0 1.25rem; font-size: 0.95rem;
+    }
+    .plain-box h2 { margin-top: 0; padding-top: 0; border-top: none; font-size: 1.15rem; }
+    .role-list { margin: 0.75rem 0; padding: 0; list-style: none; }
+    .role-list li { margin: 0.65rem 0; padding-left: 0; }
+    .role-list strong { display: inline-block; min-width: 7.5rem; color: var(--accent); }
     h2 {
       font-size: 1.2rem; margin: 2rem 0 0.75rem; padding-top: 0.5rem;
       border-top: 1px solid var(--border); color: var(--accent);
@@ -115,15 +123,26 @@
   <div class="wrap">
     <header>
       <h1>叫號機接收端 API 串接規格 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v1.0 · <strong>日期</strong> 2026-09-29</p>
-      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》（本頁內容僅整理該文件，不含其他來源）。</p>
+      <p class="meta"><strong>版本</strong> v1.2 · <strong>日期</strong> 2026-09-29</p>
+      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》。技術欄位以該文件為準。「想要的做法」為奧創討論目標，規格未寫的路徑會標成紅色。</p>
     </header>
+
+    <section id="plain" class="plain-box">
+      <h2>白話說明：門市裡誰跟誰講話？</h2>
+      <p>顧客看大螢幕等取餐號。規格規劃是：<strong>店裡 POS</strong> 把「現在要顯示哪些號碼」送給奧創；<strong>奧創</strong>貼到電視上，再跟 POS 說「貼好了」或「電視沒連上」。</p>
+      <ul class="role-list">
+        <li><strong>門市 POS</strong>規格叫「既有送端」（達鈦）。</li>
+        <li><strong>奧創</strong>規格叫「接收端」：接收服務＋機上盒＋畫面。</li>
+        <li><strong>叫號大螢幕</strong>客人看到的準備中／可取餐。</li>
+      </ul>
+      <p>規格<strong>沒寫</strong>掃杯貼、也<strong>沒寫</strong>機上盒去改 POS 裡的訂單。那是下面「想要的做法」多出來的一條路。</p>
+    </section>
 
     <section id="purpose">
       <h2>1. 文件目的與角色</h2>
       <p>本文件提供<strong>叫號機顯示廠商</strong>進行<strong>接收端</strong>串接。</p>
       <ul>
-        <li><strong>發送端</strong>：已在線上運行，依既有格式推送資料。</li>
+        <li><strong>發送端（既有送端）</strong>：已在線上運行，依既有格式推送資料。<span class="example-note">會議確認：即門市 POS。</span></li>
         <li><strong>接收端（我們）</strong>需完成：
           <ol>
             <li>接收叫號資料；</li>
@@ -138,28 +157,100 @@
     <section id="flows">
       <h2>2. 流程圖</h2>
 
+      <h3 id="milksha-original">2.1 迷客夏原規劃（規格有寫的）</h3>
+      <p>POS 像櫃台把<strong>整份名單念一遍</strong>；奧創把名單貼上佈告欄，再跟櫃台說貼好了或佈告欄沒電。每次送來的是這家店此刻要顯示的<strong>完整名單</strong>。奧創回的是「有沒有顯示成功」，<strong>不是</strong>去改 POS 裡那張訂單。</p>
       <figure class="diagram">
-        <figcaption>（a）整體資料流</figcaption>
-        <svg viewBox="0 0 520 120" role="img" aria-label="整體資料流">
-          <defs><marker id="ar1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
-          <rect x="8" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="58" y="67" text-anchor="middle" font-size="11">既有送端系統</text>
-          <text x="130" y="67" font-size="10">API Request</text>
-          <line x1="108" y1="62" x2="148" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="150" y="40" width="120" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="210" y="67" text-anchor="middle" font-size="11">叫號機接收服務</text>
-          <text x="290" y="55" font-size="9">依 target</text>
-          <line x1="270" y1="62" x2="310" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="312" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="362" y="67" text-anchor="middle" font-size="11">門市叫號畫面</text>
-          <text x="430" y="55" font-size="9">API Response</text>
-          <line x1="412" y1="62" x2="452" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="454" y="40" width="58" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="483" y="62" text-anchor="middle" font-size="9">送端</text>
-          <text x="483" y="76" text-anchor="middle" font-size="9">系統</text>
+        <figcaption>迷客夏原規劃：送來顯示、回覆顯示結果</figcaption>
+        <svg viewBox="0 0 640 200" role="img" aria-label="迷客夏原規劃資料流">
+          <defs>
+            <marker id="ar1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker>
+          </defs>
+          <rect x="12" y="70" width="120" height="56" rx="4" fill="#fff" stroke="#333"/>
+          <text x="72" y="92" text-anchor="middle" font-size="12">門市 POS</text>
+          <text x="72" y="108" text-anchor="middle" font-size="9">（規格：既有送端）</text>
+          <line x1="132" y1="92" x2="188" y2="92" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar1)"/>
+          <text x="160" y="84" text-anchor="middle" font-size="9">① 送叫號名單</text>
+          <rect x="190" y="62" width="150" height="72" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="265" y="88" text-anchor="middle" font-size="12">奧創接收服務</text>
+          <text x="265" y="106" text-anchor="middle" font-size="9">＋現場機上盒</text>
+          <text x="265" y="122" text-anchor="middle" font-size="8">（未規定一定在盒上收 API）</text>
+          <line x1="340" y1="92" x2="398" y2="92" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar1)"/>
+          <text x="370" y="84" text-anchor="middle" font-size="9">② 依 target 顯示</text>
+          <rect x="400" y="70" width="110" height="56" rx="4" fill="#fff" stroke="#333"/>
+          <text x="455" y="102" text-anchor="middle" font-size="12">叫號大螢幕</text>
+          <path d="M 72 126 L 72 168 L 265 168 L 265 134" fill="none" stroke="#333" stroke-width="2" marker-end="url(#ar1)"/>
+          <text x="168" y="162" font-size="9">③ 回覆：顯示成功／尚未連線／找不到機／格式錯誤</text>
+          <text x="320" y="192" text-anchor="middle" font-size="10" fill="#5c5c5c">規格沒有掃碼、也沒有改 POS 訂單</text>
         </svg>
       </figure>
 
+      <h3 id="desired-flow">2.2 想要的做法：POS、迷客夏 API 少改，機上盒能改 POS 訂單</h3>
+      <p><strong>差別：</strong>原規劃只有「顯示路」。你們要再加「寫回路」——店員掃杯貼後，機上盒去動 POS 裡那張單（例如改成可取餐）。顯示路可沿用規格 API；寫回路<strong>這份文件完全沒寫</strong>（圖上紅色虛線）。</p>
+      <p><strong>少改與寫回會打架的原因：</strong>要改 POS 的單，POS 必須收得到機上盒的消息。若達鈦、迷客夏程式幾乎不動，只能借用他們<strong>現在已經在用</strong>的入口。規格沒保證有這扇門，所以要問達鈦／迷客夏；不能自己發明欄位。</p>
+      <figure class="diagram">
+        <figcaption>想要的流程：綠色＝規格原規劃；紅色＝掃碼寫回（規格未定義）</figcaption>
+        <svg viewBox="0 0 680 280" role="img" aria-label="想要的雙向流程">
+          <defs>
+            <marker id="ar-g" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2d5a3d"/></marker>
+            <marker id="ar-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#b91c1c"/></marker>
+          </defs>
+          <rect x="20" y="30" width="130" height="50" rx="4" fill="#f5f5f5" stroke="#999" stroke-dasharray="5 3"/>
+          <text x="85" y="50" text-anchor="middle" font-size="11">迷客夏 API</text>
+          <text x="85" y="66" text-anchor="middle" font-size="8">盡量不改（本規格未畫）</text>
+          <rect x="20" y="110" width="130" height="56" rx="4" fill="#fff" stroke="#333"/>
+          <text x="85" y="132" text-anchor="middle" font-size="12">門市 POS</text>
+          <text x="85" y="148" text-anchor="middle" font-size="9">訂單在這裡</text>
+          <rect x="240" y="100" width="160" height="76" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="320" y="124" text-anchor="middle" font-size="12">奧創機上盒</text>
+          <text x="320" y="142" text-anchor="middle" font-size="9">掃描槍接在這裡</text>
+          <text x="320" y="158" text-anchor="middle" font-size="9">＋叫號畫面</text>
+          <rect x="500" y="110" width="150" height="56" rx="4" fill="#fff" stroke="#333"/>
+          <text x="575" y="142" text-anchor="middle" font-size="12">顧客看的螢幕</text>
+          <line x1="150" y1="128" x2="238" y2="128" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-g)"/>
+          <text x="194" y="120" text-anchor="middle" font-size="8" fill="#2d5a3d">顯示路：送完整名單</text>
+          <line x1="400" y1="138" x2="498" y2="138" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-g)"/>
+          <text x="448" y="130" text-anchor="middle" font-size="8" fill="#2d5a3d">更新畫面</text>
+          <path d="M 240 160 L 160 160 L 160 148" fill="none" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-g)"/>
+          <text x="200" y="178" font-size="8" fill="#2d5a3d">回覆「有沒有顯示成功」</text>
+          <path d="M 300 176 L 300 220 L 85 220 L 85 168" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 4" marker-end="url(#ar-r)"/>
+          <text x="200" y="214" font-size="10" fill="#b91c1c">寫回路：掃碼後改 POS 訂單？</text>
+          <rect x="40" y="236" width="600" height="36" rx="4" fill="#fee2e2" stroke="#b91c1c"/>
+          <text x="340" y="258" text-anchor="middle" font-size="11" fill="#b91c1c">紅色這條：這份規格完全沒定義</text>
+        </svg>
+      </figure>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>迷客夏原規劃</th>
+            <th>你們想要的</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>誰送叫號畫面資料</td>
+            <td>POS 送給奧創</td>
+            <td>一樣（沿用同一套送法）</td>
+          </tr>
+          <tr>
+            <td>奧創回什麼</td>
+            <td>只回顯示成不成功</td>
+            <td>這段可留；另外還要能改訂單</td>
+          </tr>
+          <tr>
+            <td>掃杯貼</td>
+            <td>規格沒寫</td>
+            <td>機上盒掃完要寫回 POS</td>
+          </tr>
+          <tr>
+            <td>POS／迷客夏改動</td>
+            <td>POS 當送端（規格假設已上線）</td>
+            <td>希望少改 → 寫回要借用現有通道，否則 POS 仍要開一小扇門收人</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.3 規格細節：收到之後怎麼處理、畫面怎麼整批換</h3>
       <figure class="diagram">
         <figcaption>（b）接收處理決策（含 isOK 與 isSuccess 差異）</figcaption>
         <svg viewBox="0 0 640 380" role="img" aria-label="接收處理決策流程">
@@ -481,6 +572,10 @@
     <section id="changelog">
       <h2>7. 更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v1.2</dt>
+        <dd>補上迷客夏原規劃流程圖，以及「POS／迷客夏少改、機上盒掃碼寫回」的差異說明與圖（紅色路徑標明規格未定義）。</dd>
+        <dt>2026-09-29 · v1.1</dt>
+        <dd>新增白話說明區；流程圖標示門市 POS（既有送端）。</dd>
         <dt>2026-09-29 · v1.0</dt>
         <dd>依《叫號機接收端 API 串接規格》重寫整頁（舊版內容已移除）。</dd>
       </dl>
