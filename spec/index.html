@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.2</title>
+  <title>迷客夏 掃描槍叫號整合 — 討論文件 v0.3</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -120,6 +120,22 @@
     .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
     .tag-done { background: #dcfce7; color: var(--tag-done); }
     .tag-blocker { background: #fee2e2; color: #b91c1c; }
+    .diagram {
+      margin: 1rem 0 1.25rem;
+      padding: 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .diagram figcaption {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0 0 0.5rem;
+    }
+    .diagram svg { display: block; max-width: 100%; height: auto; }
+    .diagram a { color: #b91c1c; font-weight: 600; }
     .result-slot {
       margin-top: 0.75rem;
       padding-top: 0.65rem;
@@ -156,7 +172,10 @@
     @media print {
       body { background: #fff; font-size: 11pt; }
       .wrap { max-width: none; padding: 0; }
-      .question-block, .flow, table { break-inside: avoid; }
+      .question-block, .flow, table, .diagram { break-inside: avoid; }
+      .diagram svg text { fill: #000; }
+      .diagram .stroke-red { stroke: #b91c1c; }
+      .diagram .fill-red { fill: #b91c1c; }
       a { color: var(--text); text-decoration: none; }
       a[href^="http"]::after {
         content: " (" attr(href) ")";
@@ -170,7 +189,7 @@
   <div class="wrap">
     <header>
       <h1>迷客夏 掃描槍叫號整合 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v0.2 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
+      <p class="meta"><strong>版本</strong> v0.3 · <strong>日期</strong> 2026-09-29 · 僅涵蓋叫號（不含菜單）</p>
       <div class="sources">
         <p><strong>原始文件</strong></p>
         <ul>
@@ -195,6 +214,32 @@
         <li><strong>試點</strong>：十月底新開松山店，試點三個月。</li>
         <li><strong>費用</strong>：不收串接費，月費多 50 元；POS 改版、佈線、硬體由迷客夏負擔。</li>
       </ul>
+      <figure class="diagram" id="diagram-reconnect">
+        <figcaption>圖 5 · 斷線與重連流程</figcaption>
+        <svg viewBox="0 0 640 200" role="img" aria-label="斷線與重連流程圖">
+          <defs>
+            <marker id="arrow-reconn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
+            </marker>
+          </defs>
+          <rect x="10" y="70" width="110" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="65" y="97" text-anchor="middle" font-size="12">斷線</text>
+          <rect x="140" y="70" width="150" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="215" y="90" text-anchor="middle" font-size="11">螢幕保留最後狀態</text>
+          <text x="215" y="106" text-anchor="middle" font-size="11">掃描槍照常可用</text>
+          <line x1="120" y1="92" x2="138" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
+          <rect x="310" y="70" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="375" y="90" text-anchor="middle" font-size="11">重連／重開機</text>
+          <text x="375" y="106" text-anchor="middle" font-size="11">fullTicketStatus</text>
+          <line x1="290" y1="92" x2="308" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
+          <rect x="460" y="70" width="170" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="545" y="90" text-anchor="middle" font-size="11">POS 回完整名單</text>
+          <text x="545" y="106" text-anchor="middle" font-size="11">補傳離線掃描 → POS</text>
+          <line x1="440" y1="92" x2="458" y2="92" stroke="#333" marker-end="url(#arrow-reconn)"/>
+          <text x="320" y="155" text-anchor="middle" font-size="11" fill="#b91c1c">補傳通道 → 見</text>
+          <a href="#gap-1"><text x="400" y="155" font-size="11" fill="#b91c1c" font-weight="bold">缺口 1</text></a>
+        </svg>
+      </figure>
     </section>
 
     <section id="socket">
@@ -207,6 +252,30 @@
         <li>心跳機制另議。</li>
         <li>POS 開機時名單一定為空，之後向 ODO 撈取線上／外送單。</li>
       </ul>
+
+      <figure class="diagram" id="diagram-sync">
+        <figcaption>圖 2 · 連線與同步流程（循序）</figcaption>
+        <svg viewBox="0 0 520 320" role="img" aria-label="POS 與機上盒連線同步循序圖">
+          <defs>
+            <marker id="arrow-sync" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
+            </marker>
+          </defs>
+          <rect x="180" y="8" width="160" height="36" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="260" y="31" text-anchor="middle" font-size="12">POS（達鈦）連上機上盒</text>
+          <line x1="260" y1="44" x2="260" y2="58" stroke="#333" marker-end="url(#arrow-sync)"/>
+          <rect x="150" y="60" width="220" height="36" rx="4" fill="#fff" stroke="#333"/>
+          <text x="260" y="83" text-anchor="middle" font-size="12">機上盒送出 fullTicketStatus</text>
+          <line x1="260" y1="96" x2="260" y2="110" stroke="#333" marker-end="url(#arrow-sync)"/>
+          <rect x="130" y="112" width="260" height="36" rx="4" fill="#fff" stroke="#333"/>
+          <text x="260" y="135" text-anchor="middle" font-size="12">POS 回傳完整叫號名單（JSON）</text>
+          <line x1="260" y1="148" x2="260" y2="162" stroke="#333" marker-end="url(#arrow-sync)"/>
+          <rect x="150" y="164" width="220" height="36" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="260" y="187" text-anchor="middle" font-size="12">之後僅推送狀態異動</text>
+          <rect x="40" y="220" width="440" height="40" rx="4" fill="#fef3c7" stroke="#b45309" stroke-dasharray="6 4"/>
+          <text x="260" y="245" text-anchor="middle" font-size="12">心跳（連線確認）：另議</text>
+        </svg>
+      </figure>
 
       <h3>狀態碼</h3>
       <table>
@@ -224,6 +293,37 @@
         </tbody>
       </table>
       <p>叫號螢幕端：每 90 秒自動重叫一次、最多兩次（由螢幕自行處理）。</p>
+
+      <figure class="diagram" id="diagram-status">
+        <figcaption>圖 3 · 訂單狀態流程</figcaption>
+        <svg viewBox="0 0 720 260" role="img" aria-label="訂單狀態碼流程圖">
+          <defs>
+            <marker id="arrow-st" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
+            </marker>
+          </defs>
+          <rect x="10" y="50" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="60" y="77" text-anchor="middle" font-size="11">已接單 (1)</text>
+          <line x1="110" y1="72" x2="138" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
+          <rect x="140" y="50" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="190" y="77" text-anchor="middle" font-size="11">製作中 (2)</text>
+          <line x1="240" y1="72" x2="268" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
+          <rect x="270" y="50" width="100" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="320" y="77" text-anchor="middle" font-size="11">可取餐 (3)</text>
+          <line x1="370" y1="72" x2="398" y2="72" stroke="#333" marker-end="url(#arrow-st)"/>
+          <rect x="400" y="50" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="460" y="70" text-anchor="middle" font-size="11">完成 (0)</text>
+          <text x="460" y="86" text-anchor="middle" font-size="10">／從畫面拿掉</text>
+          <path d="M 190 94 L 190 118 L 320 118 L 320 94" fill="none" stroke="#2d5a3d" stroke-dasharray="5 3" marker-end="url(#arrow-st)"/>
+          <text x="255" y="132" text-anchor="middle" font-size="10" fill="#2d5a3d">POS 也可能直接送可取餐</text>
+          <text x="320" y="165" text-anchor="middle" font-size="10">掃一次＝可取餐；再掃一次＝拿掉</text>
+          <text x="320" y="182" text-anchor="middle" font-size="10">螢幕：90 秒重叫，最多 2 次</text>
+          <rect x="530" y="42" width="170" height="60" rx="4" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="8 5"/>
+          <text x="615" y="68" text-anchor="middle" font-size="12" fill="#b91c1c">「取消」</text>
+          <text x="615" y="86" text-anchor="middle" font-size="10" fill="#b91c1c">狀態不存在</text>
+          <a href="#gap-2"><text x="615" y="102" text-anchor="middle" font-size="10" fill="#b91c1c" font-weight="bold">→ 缺口 2</text></a>
+        </svg>
+      </figure>
 
       <h3>欄位</h3>
       <table>
@@ -254,6 +354,41 @@
         <li>叫號機／螢幕：<code>10.3.X.223</code></li>
       </ul>
 
+      <figure class="diagram" id="diagram-arch">
+        <figcaption>圖 1 · 系統架構與連線</figcaption>
+        <svg viewBox="0 0 700 340" role="img" aria-label="系統架構圖">
+          <defs>
+            <marker id="arrow-arch" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
+            </marker>
+          </defs>
+          <rect x="250" y="8" width="200" height="52" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="350" y="30" text-anchor="middle" font-size="12" font-weight="bold">POS（達鈦）</text>
+          <text x="350" y="48" text-anchor="middle" font-size="10">10.3.X.21～23</text>
+          <rect x="40" y="90" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="100" y="110" text-anchor="middle" font-size="11">貼紙機</text>
+          <text x="100" y="126" text-anchor="middle" font-size="9">接 POS 印杯貼</text>
+          <line x1="160" y1="112" x2="248" y2="40" stroke="#333" marker-end="url(#arrow-arch)"/>
+          <rect x="520" y="78" width="160" height="52" rx="4" fill="#fff" stroke="#333"/>
+          <text x="600" y="100" text-anchor="middle" font-size="11">ODO</text>
+          <text x="600" y="118" text-anchor="middle" font-size="9">線上／外送單</text>
+          <line x1="520" y1="104" x2="452" y2="50" stroke="#333" marker-end="url(#arrow-arch)"/>
+          <rect x="250" y="160" width="200" height="56" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="350" y="182" text-anchor="middle" font-size="12" font-weight="bold">機上盒 App</text>
+          <text x="350" y="200" text-anchor="middle" font-size="10">TCP Server · 10.3.X.223</text>
+          <line x1="350" y1="60" x2="350" y2="158" stroke="#333" stroke-width="2" marker-end="url(#arrow-arch)"/>
+          <text x="380" y="125" font-size="9">JSON Socket</text>
+          <rect x="80" y="250" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="140" y="277" text-anchor="middle" font-size="11">掃描槍（有線）</text>
+          <line x1="200" y1="272" x2="268" y2="210" stroke="#333" marker-end="url(#arrow-arch)"/>
+          <rect x="500" y="250" width="120" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="560" y="270" text-anchor="middle" font-size="11">叫號螢幕</text>
+          <text x="560" y="286" text-anchor="middle" font-size="9">16:9 橫式</text>
+          <line x1="450" y1="200" x2="500" y2="260" stroke="#333" marker-end="url(#arrow-arch)"/>
+          <text x="470" y="235" font-size="9">HDMI</text>
+        </svg>
+      </figure>
+
       <h3>流程概要</h3>
       <div class="flow">
         <ol>
@@ -270,19 +405,46 @@
     <section id="gaps">
       <h2>文件缺口與矛盾（待討論）</h2>
 
-      <div class="question-block">
+      <div class="question-block" id="gap-1">
         <div class="question-head">
           <span class="question-id">1. 掃碼後機上盒如何通知 POS</span>
           <span class="tag tag-pending">待討論</span>
         </div>
         <p>最大缺口：掃完後機上盒怎麼通知 POS，現有文件完全未描述。選項 B 與離線補傳皆依賴此通道。</p>
+        <figure class="diagram" id="diagram-scan-pos">
+          <figcaption>圖 4 · 掃碼回報 POS 流程</figcaption>
+          <svg viewBox="0 0 560 200" role="img" aria-label="掃碼回報 POS 流程圖">
+            <defs>
+              <marker id="arrow-scan" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#333"/>
+              </marker>
+            </defs>
+            <rect x="20" y="70" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+            <text x="70" y="97" text-anchor="middle" font-size="11">掃描槍</text>
+            <text x="70" y="110" text-anchor="middle" font-size="9">杯貼條碼</text>
+            <line x1="120" y1="92" x2="148" y2="92" stroke="#333" marker-end="url(#arrow-scan)"/>
+            <rect x="150" y="60" width="120" height="64" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+            <text x="210" y="85" text-anchor="middle" font-size="11">機上盒 App</text>
+            <text x="210" y="102" text-anchor="middle" font-size="9">更新螢幕</text>
+            <text x="210" y="116" text-anchor="middle" font-size="9">掃一次／再掃</text>
+            <line x1="270" y1="92" x2="298" y2="92" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-scan)"/>
+            <rect x="300" y="55" width="150" height="74" rx="4" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+            <text x="375" y="82" text-anchor="middle" font-size="13" fill="#b91c1c" font-weight="bold">？</text>
+            <text x="375" y="100" text-anchor="middle" font-size="10" fill="#b91c1c">文件未定義</text>
+            <text x="375" y="116" text-anchor="middle" font-size="10" fill="#b91c1c">通知 POS 通道</text>
+            <line x1="450" y1="92" x2="478" y2="92" stroke="#333" marker-end="url(#arrow-scan)"/>
+            <rect x="480" y="70" width="70" height="44" rx="4" fill="#fff" stroke="#333"/>
+            <text x="515" y="97" text-anchor="middle" font-size="11">POS</text>
+            <text x="280" y="155" text-anchor="middle" font-size="11" fill="#b91c1c" font-weight="bold">缺口 1 · 優先（阻擋）</text>
+          </svg>
+        </figure>
         <div class="result-slot">
           <strong>討論結果</strong>
           <div class="result-empty" aria-label="討論結果待填">（尚未填寫）</div>
         </div>
       </div>
 
-      <div class="question-block">
+      <div class="question-block" id="gap-2">
         <div class="question-head">
           <span class="question-id">2. 沒有「取消」狀態</span>
           <span class="tag tag-pending">待討論</span>
@@ -576,6 +738,8 @@
     <section id="changelog">
       <h2>更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v0.3</dt>
+        <dd>加入流程圖（系統架構、連線同步、狀態、掃碼回報 POS、斷線重連）。</dd>
         <dt>2026-09-29 · v0.2</dt>
         <dd>待問清單改為 16 題並分組；修正錯字。</dd>
         <dt>2026-09-29 · v0.1</dt>
