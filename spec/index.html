@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>叫號機接收端 API 串接規格 — 討論文件 v1.0</title>
+  <title>叫號機接收端 API 串接規格 — 討論文件 v1.1</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -31,6 +31,14 @@
     .meta { font-size: 0.9rem; color: var(--muted); }
     .meta strong { color: var(--text); }
     .source-note { margin-top: 0.75rem; font-size: 0.9rem; padding: 0.65rem 0.85rem; background: #eef3ef; border-radius: 4px; }
+    .plain-box {
+      background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--accent);
+      border-radius: 6px; padding: 1rem 1.15rem; margin: 0 0 1.25rem; font-size: 0.95rem;
+    }
+    .plain-box h2 { margin-top: 0; padding-top: 0; border-top: none; font-size: 1.15rem; }
+    .role-list { margin: 0.75rem 0; padding: 0; list-style: none; }
+    .role-list li { margin: 0.65rem 0; padding-left: 0; }
+    .role-list strong { display: inline-block; min-width: 7.5rem; color: var(--accent); }
     h2 {
       font-size: 1.2rem; margin: 2rem 0 0.75rem; padding-top: 0.5rem;
       border-top: 1px solid var(--border); color: var(--accent);
@@ -115,15 +123,28 @@
   <div class="wrap">
     <header>
       <h1>叫號機接收端 API 串接規格 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v1.0 · <strong>日期</strong> 2026-09-29</p>
-      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》（本頁內容僅整理該文件，不含其他來源）。</p>
+      <p class="meta"><strong>版本</strong> v1.1 · <strong>日期</strong> 2026-09-29</p>
+      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》。下方「白話說明」協助非工程背景理解；技術條文與欄位仍以規格原文為準。</p>
     </header>
+
+    <section id="plain" class="plain-box">
+      <h2>白話說明：門市裡誰跟誰講話？</h2>
+      <p>想像顧客看著大螢幕等取餐號碼。背後是兩邊在交換訊息：<strong>店裡的 POS</strong> 告訴系統「現在有哪些號碼在準備、哪些可以取」；<strong>奧創</strong>負責把這些號碼<strong>顯示在電視上</strong>，並回覆 POS「收到了、畫面有沒有成功更新」。</p>
+      <ul class="role-list">
+        <li><strong>門市 POS</strong>規格裡叫「既有送端」：達鈦 POS，已在線上運作，用規格定的格式把叫號資料送出去。</li>
+        <li><strong>奧創</strong>規格裡的「接收端」：包含叫號機接收服務與門市<strong>機上盒</strong>，接到資料後依 <code>target</code> 送到正確門市的螢幕。</li>
+        <li><strong>叫號大螢幕</strong>顧客看到的畫面（準備中／可取餐、跑馬燈等）。</li>
+      </ul>
+      <p><strong>一次來回在做什麼？</strong> POS 送出這一刻「這家店全部要顯示的號碼」→ 奧創更新螢幕 → 奧創回傳成功或失敗原因（例如螢幕沒連上、格式錯了）。</p>
+      <p><strong>和規格用語的對照：</strong> 送出的資料叫 <strong>Request</strong>，回覆叫 <strong>Response</strong>。外層 <code>isOK</code> 表示「這次 API 有沒有正常跑完」；真正「有沒有顯示在螢幕上」要看內層的 <code>isSuccess</code>。</p>
+      <p class="example-note">本份規格<strong>沒有描述</strong> POS 與迷客夏其他系統之間的連線；以下技術章節僅涵蓋「POS → 奧創接收端 → 螢幕 → 回 POS」這段。</p>
+    </section>
 
     <section id="purpose">
       <h2>1. 文件目的與角色</h2>
       <p>本文件提供<strong>叫號機顯示廠商</strong>進行<strong>接收端</strong>串接。</p>
       <ul>
-        <li><strong>發送端</strong>：已在線上運行，依既有格式推送資料。</li>
+        <li><strong>發送端（既有送端）</strong>：已在線上運行，依既有格式推送資料。<span class="example-note">會議確認：即門市 POS（達鈦）。</span></li>
         <li><strong>接收端（我們）</strong>需完成：
           <ol>
             <li>接收叫號資料；</li>
@@ -140,23 +161,25 @@
 
       <figure class="diagram">
         <figcaption>（a）整體資料流</figcaption>
-        <svg viewBox="0 0 520 120" role="img" aria-label="整體資料流">
+        <svg viewBox="0 0 560 130" role="img" aria-label="整體資料流">
           <defs><marker id="ar1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker></defs>
-          <rect x="8" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="58" y="67" text-anchor="middle" font-size="11">既有送端系統</text>
-          <text x="130" y="67" font-size="10">API Request</text>
-          <line x1="108" y1="62" x2="148" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="150" y="40" width="120" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
-          <text x="210" y="67" text-anchor="middle" font-size="11">叫號機接收服務</text>
-          <text x="290" y="55" font-size="9">依 target</text>
-          <line x1="270" y1="62" x2="310" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="312" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="362" y="67" text-anchor="middle" font-size="11">門市叫號畫面</text>
-          <text x="430" y="55" font-size="9">API Response</text>
-          <line x1="412" y1="62" x2="452" y2="62" stroke="#333" marker-end="url(#ar1)"/>
-          <rect x="454" y="40" width="58" height="44" rx="4" fill="#fff" stroke="#333"/>
-          <text x="483" y="62" text-anchor="middle" font-size="9">送端</text>
-          <text x="483" y="76" text-anchor="middle" font-size="9">系統</text>
+          <rect x="4" y="36" width="108" height="52" rx="4" fill="#fff" stroke="#333"/>
+          <text x="58" y="58" text-anchor="middle" font-size="11">門市 POS</text>
+          <text x="58" y="74" text-anchor="middle" font-size="8">（規格：既有送端）</text>
+          <text x="130" y="67" font-size="10">送出</text>
+          <line x1="112" y1="62" x2="148" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="150" y="40" width="130" height="44" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="215" y="60" text-anchor="middle" font-size="11">奧創接收服務</text>
+          <text x="215" y="76" text-anchor="middle" font-size="9">＋機上盒</text>
+          <text x="300" y="55" font-size="9">依 target</text>
+          <line x1="280" y1="62" x2="318" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="320" y="40" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="370" y="67" text-anchor="middle" font-size="11">叫號大螢幕</text>
+          <text x="438" y="55" font-size="9">回覆</text>
+          <line x1="420" y1="62" x2="458" y2="62" stroke="#333" marker-end="url(#ar1)"/>
+          <rect x="460" y="36" width="92" height="52" rx="4" fill="#fff" stroke="#333"/>
+          <text x="506" y="62" text-anchor="middle" font-size="10">門市 POS</text>
+          <text x="280" y="115" text-anchor="middle" font-size="9" fill="#5c5c5c">API Request → … → API Response</text>
         </svg>
       </figure>
 
@@ -481,6 +504,8 @@
     <section id="changelog">
       <h2>7. 更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-09-29 · v1.1</dt>
+        <dd>新增白話說明區；流程圖標示門市 POS（既有送端）與奧創接收端。</dd>
         <dt>2026-09-29 · v1.0</dt>
         <dd>依《叫號機接收端 API 串接規格》重寫整頁（舊版內容已移除）。</dd>
       </dl>
