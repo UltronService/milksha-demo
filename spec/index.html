@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>叫號機接收端 API 串接規格 — 討論文件 v1.3</title>
+  <title>叫號機接收端 API 串接規格 — 討論文件 v1.6</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -111,7 +111,15 @@
     }
     .tag-pending { background: #fef3c7; color: var(--tag-pending); }
     .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
+    .tag-draft { background: #dbeafe; color: #1d4ed8; }
     .tag-blocker { background: #fee2e2; color: var(--warn); }
+    .draft-section {
+      background: #f0f7ff; border: 2px solid #2563eb; border-left: 6px solid #2563eb;
+      border-radius: 8px; padding: 1.15rem 1.25rem; margin: 0 0 1.5rem;
+    }
+    .draft-section > h2 { margin: 0; padding-top: 0; border-top: none; color: #1e40af; font-size: 1.25rem; }
+    .draft-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
+    .draft-note { font-size: 0.9rem; color: var(--muted); margin: 0 0 1rem; }
     .result-slot { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); font-size: 0.9rem; color: var(--muted); }
     .result-slot strong { color: var(--text); }
     .result-empty {
@@ -135,8 +143,8 @@
   <div class="wrap">
     <header>
       <h1>叫號機接收端 API 串接規格 — 討論文件</h1>
-      <p class="meta"><strong>版本</strong> v1.3 · <strong>日期</strong> 2026-09-29</p>
-      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》。技術欄位以該文件為準。「想要的做法」為奧創討論目標，規格未寫的路徑會標成紅色。</p>
+      <p class="meta"><strong>版本</strong> v1.6 · <strong>日期</strong> 2026-10-02</p>
+      <p class="source-note"><strong>資料來源：</strong>迷客夏提供之《叫號機接收端 API 串接規格》；並補充 <strong>迷客夏 Tammy 2026-09-24～29</strong> LINE 對話中已確認之現況與目標做法。技術欄位以規格文件為準。「想要的做法」為奧創討論目標，規格未寫的路徑會標成紅色。</p>
     </header>
 
     <section id="plain" class="plain-box">
@@ -148,6 +156,7 @@
         <li><strong>叫號大螢幕</strong>客人看到的準備中／可取餐。</li>
       </ul>
       <p>規格<strong>沒寫</strong>掃杯貼、也<strong>沒寫</strong>機上盒去改 POS 裡的訂單。那是下面「想要的做法」多出來的一條路。</p>
+      <p><strong>迷客夏 Tammy 2026-09-24～29（現況／目標）：</strong>今日全達鈦門市 POS 打<strong>迷客夏 URL</strong>（與台中高鐵同規格）；試點改為 POS <strong>只換 URL</strong> 打<strong>奧創接收端</strong>，JSON 格式不變。迷客夏不留存叫號資料；跑馬燈可選。</p>
     </section>
 
     <section id="first-meeting" class="meeting-box" aria-labelledby="first-meeting-title">
@@ -158,7 +167,16 @@
         <h3>題一（現況架構）</h3>
         <p>POS 叫號或訂單狀態變更後，資料<strong>現在</strong>送到哪裡？請對方畫一條線：POS → ？→ ？。試試點（奧創接收端）誰負責把名單送進來——是達鈦 POS 直接打奧創 API，還是經迷客夏系統轉發？若對方「還不確定」，把「待確認」寫進討論結果。</p>
         <div class="result-slot"><strong>討論結果（架構對齊）</strong>
-          <div class="result-filled">2026-09-29 會議前：POS 現況資料流尚未釐清；試試點誰呼叫奧創接收端 API <strong>不確定（對方可能尚未定案）</strong>。</div>
+          <div class="result-filled">
+            <p>2026-09-29 會議前：POS 現況資料流尚未釐清；試試點誰呼叫奧創接收端 API <strong>不確定（對方可能尚未定案）</strong>。</p>
+            <p><strong>已從對話得知</strong>（迷客夏 Tammy 2026-09-24～29）：</p>
+            <ul>
+              <li><strong>現況</strong>：達鈦 POS → 迷客夏 URL；全達鈦門市；與台中高鐵同一套規格。</li>
+              <li><strong>試點目標</strong>：POS 直接呼叫奧創接收端（換 URL）；API 格式與現行相同。</li>
+              <li><strong>狀態流</strong>：結帳 → POS 打奧創 → 準備中；店員在叫號控制屏「完成」或掃碼 → POS 再打奧創 → 已完成／可取餐。</li>
+              <li><strong>分工</strong>：迷客夏 IT 與奧創直接對接；達鈦 POS 改動由迷客夏協調。</li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -166,7 +184,15 @@
         <h3>題二（接上規格 Q1）</h3>
         <p>奧創<strong>接收端</strong>的 URL、連線方式（HTTP 方法等）由<strong>誰</strong>提供給達鈦設定？規格書未寫死此項；沒有地址則 server 無法對接。</p>
         <div class="result-slot"><strong>討論結果</strong>
-          <div class="result-filled">2026-09-29 會議前尚未討論；需第一次會議用本題釐清（對應下方 <a href="#q1">Q1</a>）。</div>
+          <div class="result-filled">
+            <p>2026-09-29 會議前尚未討論；需第一次會議用本題釐清（對應下方 <a href="#q1">Q1</a>）。</p>
+            <p><strong>已從對話得知</strong>（迷客夏 Tammy 2026-09-24～29）：</p>
+            <ul>
+              <li>達鈦端改動為<strong>僅替換 endpoint URL</strong> 至奧創接收端；其餘 payload 沿用現行。</li>
+              <li>奧創需建置 receiver API（對話中奧創端表示<strong>尚未完成</strong>）。</li>
+              <li><strong>仍待確認</strong>：實際 URL、HTTP 方法、由誰在何時提供給達鈦設定。</li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -174,9 +200,32 @@
         <h3>題三（掃碼寫回，另議題）</h3>
         <p>《叫號機接收端 API》只做<strong>顯示</strong>；掃碼後要讓 POS 狀態一致——現有達鈦／迷客夏 API <strong>能否</strong>接收寫回？若不能，誰改、試試點是否<strong>先做顯示、寫回第二期</strong>？</p>
         <div class="result-slot"><strong>討論結果（掃碼寫回）</strong>
-          <div class="result-filled">規格未定義寫回；屬紅色路徑／另議題。現況能否寫回 POS：<strong>未知</strong>，須與接收端顯示規格分開談。</div>
+          <div class="result-filled">
+            <p>規格未定義寫回；屬紅色路徑／另議題。現況能否寫回 POS：<strong>未知</strong>，須與接收端顯示規格分開談。</p>
+            <p><strong>已從對話得知</strong>（迷客夏 Tammy 2026-09-24～29）：</p>
+            <ul>
+              <li>顯示路仍為 POS 外送完整名單至接收端；店員在<strong>叫號控制屏</strong>完成或掃碼後，由 <strong>POS 再外送</strong>更新狀態（非規格內「機上盒改 POS」路徑）。</li>
+              <li><strong>仍待確認</strong>：掃碼是否僅能透過叫號控制屏觸發 POS 外送，或另有 POS 內建流程。</li>
+            </ul>
+          </div>
         </div>
       </div>
+
+      <div class="question-block" id="meeting-ui">
+        <h3>附錄（對話：UI 與測試，非必問三題）</h3>
+        <p><strong>UI</strong>（迷客夏 Tammy 2026-09-24～29）：保留準備中區塊；對含 logo 的 demo 正面；希望提供 mock 供內部審閱。</p>
+        <p><strong>測試</strong>：Tammy 可試送；測試環境在奧創側；開發階段自呼叫驗證可接受（對應 <a href="#q11">Q11</a>）。</p>
+      </div>
+    </section>
+
+    <section id="meeting-2026-10-01" class="meeting-box" aria-labelledby="meeting-20261001-title">
+      <h2 id="meeting-20261001-title">2026-10-01 會議決議（試點接收端）</h2>
+      <p class="lead">以下為會議對外可引用之事實摘要；細部工程實作不在本頁展開。</p>
+      <ul>
+        <li>試點改由<strong>奧創自建 API server</strong>作為叫號<strong>接收端</strong>，承接 POS 外送；不再使用迷客夏現行接收 URL。</li>
+        <li>外送資料之 JSON 格式與迷客夏／達鈦<strong>現行相同</strong>；達鈦 POS 端改動為<strong>僅更換 endpoint URL</strong> 至奧創提供之接收端位址。</li>
+        <li>顯示與回覆仍依《叫號機接收端 API 串接規格》；本頁不新增掃碼寫回或規格外欄位。</li>
+      </ul>
     </section>
 
     <section id="purpose">
@@ -200,6 +249,7 @@
 
       <h3 id="milksha-original">2.1 迷客夏原規劃（規格有寫的）</h3>
       <p>POS 像櫃台把<strong>整份名單念一遍</strong>；奧創把名單貼上佈告欄，再跟櫃台說貼好了或佈告欄沒電。每次送來的是這家店此刻要顯示的<strong>完整名單</strong>。奧創回的是「有沒有顯示成功」，<strong>不是</strong>去改 POS 裡那張訂單。</p>
+      <p class="example-note"><strong>迷客夏 Tammy 2026-09-24～29：</strong>上線前達鈦 POS 打<strong>迷客夏 URL</strong>；試點改打<strong>奧創接收端 URL</strong>，格式同規格。結帳送準備中、完成／掃碼後送可取餐，皆由 POS 外送。</p>
       <figure class="diagram">
         <figcaption>迷客夏原規劃：送來顯示、回覆顯示結果</figcaption>
         <svg viewBox="0 0 640 200" role="img" aria-label="迷客夏原規劃資料流">
@@ -535,7 +585,16 @@
         </div>
         <p>文件未載明。第一次會議請用頁首 <a href="#meeting-q2">題二</a> 釐清。</p>
         <div class="result-slot"><strong>討論結果</strong>
-          <div class="result-filled">2026-09-29 會議前尚未討論；需第一次會議用「題二」釐清接收端 URL、HTTP 方法，以及由誰提供網址給達鈦設定。</div>
+          <div class="result-filled">
+            <p>2026-09-29 會議前尚未討論；需第一次會議用「題二」釐清接收端 URL、HTTP 方法，以及由誰提供網址給達鈦設定。</p>
+            <p><strong>已從對話得知</strong>（迷客夏 Tammy 2026-09-24～29）：</p>
+            <ul>
+              <li>試點做法：達鈦 POS <strong>只改 URL</strong> 指向奧創接收端；HTTP 方法等細節對話未載明。</li>
+              <li>奧創建 receiver；整合由迷客夏 IT 與奧創直接對接，達鈦設定由迷客夏協調。</li>
+              <li><strong>仍待確認</strong>：正式／測試 URL 交付達鈦之方式與時程。</li>
+            </ul>
+            <p><strong>2026-10-01 會議</strong>：試點由奧創自建接收端 API server 承接 POS 外送；達鈦端<strong>僅更換 endpoint URL</strong>，JSON 格式與現行相同。實際 URL 交付達鈦之方式與時程<strong>仍待確認</strong>。</p>
+          </div>
         </div>
       </div>
       <div class="question-block" id="q2">
@@ -608,13 +667,134 @@
           <span class="question-id">Q11 是否有測試環境與測試帳號可供驗收？</span>
           <span class="tag tag-confirm">待確認</span>
         </div>
-        <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
+        <div class="result-slot"><strong>討論結果</strong>
+          <div class="result-filled">
+            <p><strong>已從對話得知</strong>（迷客夏 Tammy 2026-09-24～29）：Tammy 端可試送；<strong>測試環境在奧創側</strong>建置；開發階段自呼叫驗證可。正式測試帳號／target 對照表對話未載明。</p>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <section id="receiver-architecture-draft" class="draft-section" aria-labelledby="v16-arch-title">
+      <div class="draft-head">
+        <h2 id="v16-arch-title">奧創接收端架構草案（供迷客夏討論確認）</h2>
+        <span class="tag tag-draft">草案・待迷客夏確認</span>
+      </div>
+      <p>以下為奧創側<strong>試點接收端</strong>之工程方向摘要，供迷客夏 IT 與達鈦對接前對齊；細節以會議確認為準。本節標示<strong>草案</strong>者尚未定案。</p>
+
+      <h3>架構概覽</h3>
+      <p>達鈦 POS 以 HTTPS 呼叫奧創<strong>接收端 API</strong>（規劃部署於 Firebase Cloud Functions 第二代，區域 <code>asia-east1</code>）。接收端依規格檢查 payload 格式與簽章（方式<strong>待迷客夏確認</strong>）後，以 <code>target</code> 為鍵將該門市螢幕應顯示之<strong>整份名單</strong>寫入 Firestore；再依規格回傳 Response（外層 <code>isOK</code>、內層 <code>isSuccess</code>）。門市叫號螢幕／機上盒以即時監聽方式讀取 Firestore，更新準備中與可取餐區塊。</p>
+      <figure class="diagram">
+        <figcaption>試點接收端資料流（草案）</figcaption>
+        <svg viewBox="0 0 720 220" role="img" aria-label="奧創接收端架構草案資料流">
+          <defs>
+            <marker id="ar-v16" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#333"/></marker>
+          </defs>
+          <rect x="8" y="72" width="108" height="52" rx="4" fill="#fff" stroke="#333"/>
+          <text x="62" y="94" text-anchor="middle" font-size="11">達鈦 POS</text>
+          <text x="62" y="110" text-anchor="middle" font-size="8">HTTPS Request</text>
+          <line x1="116" y1="98" x2="168" y2="98" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-v16)"/>
+          <text x="142" y="90" text-anchor="middle" font-size="8">①</text>
+          <rect x="170" y="58" width="148" height="80" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+          <text x="244" y="82" text-anchor="middle" font-size="11">接收端 API</text>
+          <text x="244" y="98" text-anchor="middle" font-size="8">Cloud Functions 2nd gen</text>
+          <text x="244" y="112" text-anchor="middle" font-size="8">region: asia-east1</text>
+          <text x="244" y="126" text-anchor="middle" font-size="8">格式／簽章驗證</text>
+          <line x1="318" y1="98" x2="368" y2="98" stroke="#2d5a3d" stroke-width="2" marker-end="url(#ar-v16)"/>
+          <text x="343" y="90" text-anchor="middle" font-size="8">② 寫入</text>
+          <rect x="370" y="62" width="132" height="72" rx="4" fill="#fff" stroke="#333"/>
+          <text x="436" y="88" text-anchor="middle" font-size="11">Firestore</text>
+          <text x="436" y="104" text-anchor="middle" font-size="8">stores/{target}</text>
+          <text x="436" y="120" text-anchor="middle" font-size="8">準備中／可取餐</text>
+          <line x1="244" y1="138" x2="244" y2="168" stroke="#333" stroke-width="2" marker-end="url(#ar-v16)"/>
+          <text x="244" y="162" text-anchor="middle" font-size="8">③ Response（isOK／內層 isSuccess）</text>
+          <path d="M 62 124 L 62 188 L 580 188 L 580 134" fill="none" stroke="#333" stroke-width="2" marker-end="url(#ar-v16)"/>
+          <rect x="512" y="72" width="118" height="52" rx="4" fill="#fff" stroke="#333"/>
+          <text x="571" y="94" text-anchor="middle" font-size="10">叫號螢幕</text>
+          <text x="571" y="110" text-anchor="middle" font-size="8">機上盒即時讀取</text>
+          <text x="320" y="206" text-anchor="middle" font-size="9" fill="#5c5c5c">④ Firestore 即時更新驅動畫面（非 POS 輪詢）</text>
+        </svg>
+      </figure>
+
+      <h3>開發環境與正式環境（草案）</h3>
+      <ul>
+        <li>規劃使用<strong>兩個獨立的 Firebase 專案</strong>：<strong>dev</strong>（內部與 Tammy 試送、奧創自測）與 <strong>prod</strong>（驗收通過後僅提供達鈦 POS 使用）。</li>
+        <li><strong>dev 接收端 URL</strong>：<code>https://&lt;dev網址&gt;/…</code> <span class="tag tag-pending">待提供</span> — 供迷客夏 Tammy 試送與奧創開發階段自測。</li>
+        <li><strong>prod 接收端 URL</strong>：<code>https://&lt;prod網址&gt;/…</code> <span class="tag tag-pending">待提供</span> — 驗收完成後交付達鈦設定；達鈦<strong>僅更換 endpoint URL</strong>，Request JSON 格式不變。</li>
+        <li>切換上線：POS 端只改 URL，payload 與欄位名稱維持現行規格。</li>
+      </ul>
+
+      <h3>Firestore 狀態設計（草案）</h3>
+      <p>以規格之 <code>target</code> 對應一筆門市螢幕狀態；路徑範例 <code>stores/{target}</code>（集合／路徑命名<strong>草案</strong>，可於會議調整）。</p>
+      <table>
+        <thead><tr><th>欄位（草案）</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>preparing</code></td><td>字串陣列，對應 Request 中 <code>source_type = From_Store_Preparing</code> 之 <code>number</code></td></tr>
+          <tr><td><code>ready</code></td><td>字串陣列，對應 <code>From_Store_OK</code></td></tr>
+          <tr><td><code>newsTicker</code></td><td>選填；若 POS 有送則可存，螢幕端可選用或<strong>忽略</strong>（與 Q10 等待確認項目連動）</td></tr>
+          <tr><td><code>lastTimeStmp</code></td><td>最近一次成功寫入所依 Request 之 <code>timeStmp</code>（拼字依規格）</td></tr>
+          <tr><td><code>updatedAt</code></td><td>伺服器寫入時間（供除錯／監控，非規格 Request 欄位）</td></tr>
+          <tr><td><code>merchant_id</code>、<code>account</code></td><td>取自 Request，供螢幕或營運對照</td></tr>
+          <tr><td>請求紀錄（子集合或欄位，<strong>草案</strong>）</td><td>簡短記錄 target、timeStmp、結果摘要；<strong>保留天數</strong>列為<a href="#v16-open-items">待確認問題</a></td></tr>
+        </tbody>
+      </table>
+
+      <h3>接收端處理規則（草案）</h3>
+      <ol>
+        <li><strong>整批覆寫</strong>：同一 <code>target</code> 每次 Request 以本次 <code>CallingNumberMasterRequest</code> 內之清單，覆寫該 target 的準備中／可取餐陣列（與規格「送完整名單」一致）。</li>
+        <li><strong>空陣列清空</strong>：某類別無資料時以空陣列表示，螢幕應清空該區塊（對應驗收項目 5）。</li>
+        <li><strong>建議回傳訊息對照</strong>（內層 <code>information</code>，見本頁 Response 章節）：
+          <table>
+            <thead><tr><th>情境（草案）</th><th>內層訊息</th><th>外層 <code>isOK</code>（草案）</th></tr></thead>
+            <tbody>
+              <tr><td>格式／簽章／必填欄位不符</td><td>叫號資料格式錯誤</td><td>true（API 已完成處理）或依 Q9 待確認</td></tr>
+              <tr><td><code>target</code> 未在試點名單或未建檔</td><td>找不到目標叫號機</td><td>true</td></tr>
+              <tr><td>target 存在但現場螢幕／機上盒離線（判定方式<strong>草案</strong>）</td><td>目標叫號機尚未連線</td><td>true</td></tr>
+              <tr><td>驗證通過且狀態已寫入 Firestore</td><td>資料顯示成功</td><td>true</td></tr>
+            </tbody>
+          </table>
+        </li>
+        <li><strong>timeStmp 亂序</strong>：若 POS 重送或網路延遲導致較舊的 <code>timeStmp</code> 晚到，是否拒寫或仍覆寫 — <span class="tag tag-confirm">待確認問題</span>（連動 <a href="#q7">Q7</a>）。</li>
+      </ol>
+
+      <h3>驗收項目與接收端對照（草案）</h3>
+      <p>對應本頁「5. 驗收項目」共九項；實測於 <strong>dev</strong> 環境試送（Tammy 或奧創），正式達鈦僅接 prod URL。</p>
+      <table>
+        <thead><tr><th>#</th><th>驗收項目</th><th>接收端預期行為（草案）</th><th>建議驗證方式</th><th>狀態</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>準備中號碼正常顯示</td><td>寫入 <code>preparing</code>，螢幕即時顯示</td><td>dev 試送含 <code>From_Store_Preparing</code></td><td>未測</td></tr>
+          <tr><td>2</td><td>可取餐號碼正常顯示</td><td>寫入 <code>ready</code>，螢幕即時顯示</td><td>dev 試送含 <code>From_Store_OK</code></td><td>未測</td></tr>
+          <tr><td>3</td><td>多筆號碼同時顯示</td><td>整批覆寫多筆至對應陣列</td><td>dev 一次送多筆 number</td><td>未測</td></tr>
+          <tr><td>4</td><td>號碼狀態切換</td><td>後續 Request 整批更新，號碼由 preparing 移至 ready 等</td><td>dev 連續試送兩次不同名單</td><td>未測</td></tr>
+          <tr><td>5</td><td>空陣列可清空畫面</td><td>空陣列覆寫後螢幕清空該區</td><td>dev 送空清單</td><td>未測</td></tr>
+          <tr><td>6</td><td>跑馬燈內容及速度更新</td><td>若有 <code>newsTicker</code> 則寫入；螢幕是否採用<strong>草案</strong>可選</td><td>dev 試送跑馬燈欄位</td><td>未測</td></tr>
+          <tr><td>7</td><td>找不到目標設備時正確回傳</td><td>未知 <code>target</code> → 內層「找不到目標叫號機」</td><td>dev 送未建檔 target</td><td>未測</td></tr>
+          <tr><td>8</td><td>目標叫號機離線時正確回傳</td><td>離線判定後 → 內層「目標叫號機尚未連線」（是否仍寫入 Firestore<strong>待確認</strong>）</td><td>dev 模擬螢幕離線</td><td>未測</td></tr>
+          <tr><td>9</td><td>Response 格式符合既有規格</td><td>回傳欄位名稱、巢狀 JSON 字串結構與規格一致</td><td>dev 試送比對 Response schema</td><td>未測</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="v16-open-items">迷客夏需提供／確認</h3>
+      <ul>
+        <li><strong>簽章</strong>：Request 驗簽方式、測試用金鑰或帳號（對應 <a href="#q2">Q2</a>、<a href="#q3">Q3</a>）。</li>
+        <li><strong>HTTP 方法</strong>：POST／其他及 Content-Type（對應 <a href="#q1">Q1</a>）。</li>
+        <li><strong>試點 target 清單</strong>：<code>target</code> 與門市螢幕對照表（對應 <a href="#q5">Q5</a>）。</li>
+        <li><strong>發送行為</strong>：頻率、逾時、失敗重送策略（對應 <a href="#q8">Q8</a>）。</li>
+        <li><strong>紀錄保留</strong>：接收端請求 log 保留天數與是否需供迷客夏查詢。</li>
+      </ul>
+
+      <div class="result-slot"><strong>討論結果</strong><div class="result-empty">（尚未填寫）</div></div>
     </section>
 
     <section id="changelog">
       <h2>7. 更新紀錄</h2>
       <dl class="changelog">
+        <dt>2026-10-02 · v1.6</dt>
+        <dd>新增<strong>奧創接收端架構草案</strong>：Cloud Functions 接收 API、Firestore 狀態、dev／prod 切換、處理規則與九項驗收對照表，供迷客夏 IT 討論確認。</dd>
+        <dt>2026-10-02 · v1.5</dt>
+        <dd>合併 main 之 v1.2／v1.3 內容；新增 <strong>2026-10-01 會議決議</strong>：試點改由奧創自建接收端 API server 承接 POS 外送（取代迷客夏現行 URL），JSON 格式不變、達鈦 POS 僅更換 endpoint URL。</dd>
+        <dt>2026-10-01 · v1.4</dt>
+        <dd>依迷客夏 Tammy 2026-09-24～29 LINE 對話更新：現況 POS→迷客夏 URL、試點 POS→奧創接收端（僅換 URL）、狀態流程與分工；必問三題與 Q1／Q11 增列「已從對話得知」；UI／測試附錄。</dd>
         <dt>2026-09-29 · v1.3</dt>
         <dd>新增「第一次會議必問三題」區塊（架構、接收端 URL／Q1、掃碼寫回）；依會議前現況預填 Q1 與三題討論結果（待第一次會議更新）。</dd>
         <dt>2026-09-29 · v1.2</dt>
