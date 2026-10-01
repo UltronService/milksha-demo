@@ -111,7 +111,15 @@
     }
     .tag-pending { background: #fef3c7; color: var(--tag-pending); }
     .tag-confirm { background: #dbeafe; color: var(--tag-confirm); }
+    .tag-draft { background: #dbeafe; color: #1d4ed8; }
     .tag-blocker { background: #fee2e2; color: var(--warn); }
+    .draft-section {
+      background: #f0f7ff; border: 2px solid #2563eb; border-left: 6px solid #2563eb;
+      border-radius: 8px; padding: 1.15rem 1.25rem; margin: 0 0 1.5rem;
+    }
+    .draft-section > h2 { margin: 0; padding-top: 0; border-top: none; color: #1e40af; font-size: 1.25rem; }
+    .draft-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
+    .draft-note { font-size: 0.9rem; color: var(--muted); margin: 0 0 1rem; }
     .result-slot { margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); font-size: 0.9rem; color: var(--muted); }
     .result-slot strong { color: var(--text); }
     .result-empty {
@@ -667,10 +675,10 @@
       </div>
     </section>
 
-    <section id="v16-receiver-architecture" class="plain-box" aria-labelledby="v16-arch-title">
-      <div class="question-head">
+    <section id="receiver-architecture-draft" class="draft-section" aria-labelledby="v16-arch-title">
+      <div class="draft-head">
         <h2 id="v16-arch-title">奧創接收端架構草案（供迷客夏討論確認）</h2>
-        <span class="tag tag-pending">草案・待迷客夏確認</span>
+        <span class="tag tag-draft">草案・待迷客夏確認</span>
       </div>
       <p>以下為奧創側<strong>試點接收端</strong>之工程方向摘要，供迷客夏 IT 與達鈦對接前對齊；細節以會議確認為準。本節標示<strong>草案</strong>者尚未定案。</p>
 
