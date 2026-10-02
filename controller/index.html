@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>叫號看板 · 控制端</title>
+    <link rel="stylesheet" href="controller.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>叫號看板控制端</h1>
+      <p class="sub">local / firestore（假雲端 gateway）測試</p>
+    </header>
+    <main class="grid">
+      <section id="sec-connect" class="card">
+        <h2>1. 連線設定</h2>
+        <label>店編號 <input id="fld-store" value="s120030" /></label>
+        <label>模式
+          <select id="fld-mode"><option value="local">local</option><option value="firestore">firestore</option></select>
+        </label>
+        <label>裝置 ID（看板）<input id="fld-device" value="stb-01" /></label>
+        <label>Gateway <input id="fld-gateway" placeholder="127.0.0.1:8787" /></label>
+        <label>API Key <input id="fld-key" /></label>
+        <label>accessCode <input id="fld-code" value="dev-code" /></label>
+        <button type="button" id="btn-connect" class="primary">連線</button>
+        <p id="online-state" class="hint">尚未連線</p>
+        <div class="cols2">
+          <div><h3>準備中</h3><ul id="list-prep"></ul></div>
+          <div><h3>可取餐</h3><ul id="list-ready"></ul></div>
+        </div>
+      </section>
+      <section id="sec-pos" class="card">
+        <h2>2. 模擬 POS</h2>
+        <label>號碼 <input id="fld-no" value="2001" /></label>
+        <label>狀態
+          <select id="fld-status"><option value="preparing">準備中</option><option value="ready">可取餐</option></select>
+        </label>
+        <div class="row">
+          <button type="button" id="btn-add-ticket">新增訂單並送出</button>
+          <button type="button" id="btn-send-board">送整份名單</button>
+          <button type="button" id="btn-clear-board">送空名單</button>
+        </div>
+        <div class="row">
+          <button type="button" id="btn-bad-sign">故意錯簽名</button>
+        </div>
+        <textarea id="fld-tammy" rows="6" spellcheck="false"></textarea>
+        <button type="button" id="btn-send-tammy">送 Tammy JSON</button>
+      </section>
+      <section id="sec-net" class="card">
+        <h2>3. 模擬網路</h2>
+        <div class="row">
+          <button type="button" id="btn-offline">模擬斷網</button>
+          <button type="button" id="btn-restore">恢復</button>
+        </div>
+        <label>變慢（毫秒）<input id="fld-delay" type="number" value="3000" /></label>
+        <button type="button" id="btn-slow">模擬變慢</button>
+      </section>
+      <section id="sec-special" class="card">
+        <h2>4. 特殊狀況</h2>
+        <div class="row">
+          <button type="button" id="btn-clear-now">03:00 清空</button>
+          <button type="button" id="btn-reload">要求重新整理</button>
+          <button type="button" id="btn-reboot">要求重開機</button>
+        </div>
+      </section>
+      <section id="sec-log" class="card wide">
+        <h2>5. 紀錄</h2>
+        <div class="row">
+          <button type="button" id="btn-export-json">匯出 JSON</button>
+          <button type="button" id="btn-clear-log">清除本機紀錄</button>
+        </div>
+        <ul id="log-list"></ul>
+      </section>
+    </main>
+    <script src="../config/firebase.js"></script>
+    <script src="../js/board/today-board.js"></script>
+    <script src="../js/transport/paths.js"></script>
+    <script src="../js/transport/firestore-value.js"></script>
+    <script src="../js/transport/board-seq.js"></script>
+    <script src="../js/transport/config-resolve.js"></script>
+    <script src="../js/transport/auth-session.js"></script>
+    <script src="../js/transport/pos-sign.js"></script>
+    <script src="../js/transport/cloud-api.js"></script>
+    <script src="../js/transport/firestore-rest.js"></script>
+    <script src="../js/transport/local-cloud-shim.js"></script>
+    <script src="../js/transport/local-transport.js"></script>
+    <script src="../js/transport/firestore-transport.js"></script>
+    <script src="../js/transport/create-transport.js"></script>
+    <script src="../js/receiver/validate-request.js"></script>
+    <script src="controller-app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+/**
+ * Canonical today_board document (Firestore) — shared by local & firestore modes.
+ */
+(function (root) {
+  'use strict';
+
+  const QMS = (root.QMS = root.QMS || {});
+  QMS.Board = QMS.Board || {};
+
+  /**
+   * @returns {string} YYYY-MM-DD in Asia/Taipei
+   */
+  function taipeiBusinessDate(d) {
+    const date = d || new Date();
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const y = parts.find(function (p) {
+      return p.type === 'year';
+    });
+    const m = parts.find(function (p) {
+      return p.type === 'month';
+    });
+    const day = parts.find(function (p) {
+      return p.type === 'day';
+    });
+    return (y ? y.value : '1970') + '-' + (m ? m.value : '01') + '-' + (day ? day.value : '01');
+  }
+
+  /**
+   * @param {Array<{ no: string, status: string, updatedAt?: string }>} tickets
+   * @param {{ preparingType?: string, readyType?: string }} [opts]
+   * @returns {Array<{ source_type: string, number: string }>}
+   */
+  function ticketsToNumberContent(tickets, opts) {
+    const preparingType = (opts && opts.preparingType) || 'From_Store_Preparing';
+    const readyType = (opts && opts.readyType) || 'From_Store_OK';
+    const out = [];
+    const list = Array.isArray(tickets) ? tickets : [];
+    for (let i = 0; i < list.length; i += 1) {
+      const t = list[i];
+      if (!t || typeof t.no !== 'string') {
+        continue;
+      }
+      if (t.status === 'ready') {
+        out.push({ source_type: readyType, number: t.no });
+      } else if (t.status === 'preparing') {
+        out.push({ source_type: preparingType, number: t.no });
+      }
+    }
+    return out;
+  }
+
+  /**
+   * @param {Array<{ source_type: string, number: string }>} numberContent
+   * @returns {Array<{ no: string, status: 'preparing'|'ready', updatedAt: string }>}
+   */
+  function numberContentToTickets(numberContent) {
+    const now = new Date().toISOString();
+    const out = [];
+    const list = Array.isArray(numberContent) ? numberContent : [];
+    for (let i = 0; i < list.length; i += 1) {
+      const row = list[i];
+      if (!row || typeof row.number !== 'string' || typeof row.source_type !== 'string') {
+        continue;
+      }
+      let status = 'preparing';
+      if (row.source_type.indexOf('_OK') === row.source_type.length - 3) {
+        status = 'ready';
+      } else if (row.source_type.indexOf('_Preparing') !== -1) {
+        status = 'preparing';
+      } else {
+        continue;
+      }
+      out.push({ no: row.number, status: status, updatedAt: now });
+    }
+    return out;
+  }
+
+  /**
+   * @param {object} raw
+   * @returns {{ ok: true, board: object } | { ok: false, error: string }}
+   */
+  function normalizeTodayBoard(raw) {
+    if (!raw || typeof raw !== 'object') {
+      return { ok: false, error: 'invalid board' };
+    }
+    const seq = Number(raw.seq);
+    if (!Number.isFinite(seq)) {
+      return { ok: false, error: 'invalid seq' };
+    }
+    const tickets = Array.isArray(raw.tickets) ? raw.tickets : [];
+    return {
+      ok: true,
+      board: {
+        storeId: String(raw.storeId || ''),
+        businessDate: String(raw.businessDate || ''),
+        seq: seq,
+        updatedAt: String(raw.updatedAt || ''),
+        source: raw.source === 'A' || raw.source === 'B' || raw.source === 'system' ? raw.source : 'A',
+        tickets: tickets,
+        clearedAt: raw.clearedAt || null,
+      },
+    };
+  }
+
+  /**
+   * @param {string} storeId
+   * @param {number} seq
+   * @param {Array<object>} tickets
+   * @param {'A'|'B'|'system'} source
+   */
+  function buildTodayBoard(storeId, seq, tickets, source) {
+    return {
+      storeId: storeId,
+      businessDate: taipeiBusinessDate(),
+      seq: seq,
+      updatedAt: new Date().toISOString(),
+      source: source || 'A',
+      tickets: tickets,
+      clearedAt: tickets.length === 0 ? new Date().toISOString() : null,
+    };
+  }
+
+  QMS.Board.TodayBoard = {
+    taipeiBusinessDate: taipeiBusinessDate,
+    ticketsToNumberContent: ticketsToNumberContent,
+    numberContentToTickets: numberContentToTickets,
+    normalizeTodayBoard: normalizeTodayBoard,
+    buildTodayBoard: buildTodayBoard,
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);
