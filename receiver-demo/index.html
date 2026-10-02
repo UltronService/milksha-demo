@@ -29,6 +29,14 @@
         font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
         font-variant-numeric: tabular-nums;
       }
+      .rcv-stage[data-simulated-offline='1']::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 0 6px rgba(200, 96, 0, 0.45);
+        z-index: 20;
+      }
       .rcv-viewport {
         position: relative;
         flex-shrink: 0;

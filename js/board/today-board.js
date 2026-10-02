@@ -92,10 +92,18 @@
       if (!t || typeof t.no !== 'string') {
         continue;
       }
+      if (typeof t.source_type === 'string' && t.source_type) {
+        out.push({ source_type: t.source_type, number: t.no });
+        continue;
+      }
       if (t.status === 'ready') {
-        out.push({ source_type: readyType, number: t.no });
+        const st =
+          (opts && opts.readyByKey && t.sourceKey && opts.readyByKey[t.sourceKey]) || readyType;
+        out.push({ source_type: st, number: t.no });
       } else if (t.status === 'preparing') {
-        out.push({ source_type: preparingType, number: t.no });
+        const st =
+          (opts && opts.prepByKey && t.sourceKey && opts.prepByKey[t.sourceKey]) || preparingType;
+        out.push({ source_type: st, number: t.no });
       }
     }
     return out;
@@ -122,9 +130,40 @@
       } else {
         continue;
       }
-      out.push({ no: row.number, status: status, updatedAt: now });
+      out.push({
+        no: row.number,
+        status: status,
+        updatedAt: now,
+        source_type: row.source_type,
+      });
     }
     return out;
+  }
+
+  /**
+   * @param {string|Date} [isoOrDate]
+   * @returns {string}
+   */
+  function formatTaipeiDateTimeHuman(isoOrDate) {
+    const d =
+      typeof isoOrDate === 'string'
+        ? new Date(isoOrDate)
+        : isoOrDate instanceof Date
+          ? isoOrDate
+          : new Date();
+    if (Number.isNaN(d.getTime())) {
+      return '—';
+    }
+    return new Intl.DateTimeFormat('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(d);
   }
 
   /**
@@ -176,6 +215,7 @@
     taipeiBusinessDate: taipeiBusinessDate,
     taipeiHourMinute: taipeiHourMinute,
     formatTaipeiClockHM: formatTaipeiClockHM,
+    formatTaipeiDateTimeHuman: formatTaipeiDateTimeHuman,
     ticketsToNumberContent: ticketsToNumberContent,
     numberContentToTickets: numberContentToTickets,
     normalizeTodayBoard: normalizeTodayBoard,

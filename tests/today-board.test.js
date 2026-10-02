@@ -32,6 +32,29 @@ test('tickets round-trip to number_content', function () {
   const back = TB.numberContentToTickets(nc);
   assert.equal(back[0].no, '1001');
   assert.equal(back[1].status, 'ready');
+  const nc2 = TB.ticketsToNumberContent(back);
+  assert.equal(nc2[1].source_type, 'From_Store_OK');
+});
+
+test('tickets preserve per-order source_type', function () {
+  const TB = loadTodayBoard();
+  const tickets = [
+    {
+      no: '9001',
+      status: 'preparing',
+      source_type: 'From_FoodPanda_Preparing',
+      updatedAt: '2026-10-02T00:00:00.000Z',
+    },
+    {
+      no: '9002',
+      status: 'ready',
+      source_type: 'From_UberEat_OK',
+      updatedAt: '2026-10-02T00:00:01.000Z',
+    },
+  ];
+  const nc = TB.ticketsToNumberContent(tickets);
+  assert.equal(nc[0].source_type, 'From_FoodPanda_Preparing');
+  assert.equal(nc[1].source_type, 'From_UberEat_OK');
 });
 
 test('normalizeTodayBoard rejects bad seq', function () {

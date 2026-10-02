@@ -13,7 +13,11 @@ let cloudProc;
 let siteServer;
 
 export function startCloud() {
+  if (cloudProc && cloudProc.exitCode === null) {
+    return;
+  }
   try {
+    execSync('pkill -f "fake-cloud/server.mjs" 2>/dev/null || true', { stdio: 'ignore' });
     execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
   } catch {
     /* ignore */
@@ -46,6 +50,9 @@ export async function waitCloudReady() {
 }
 
 export function startSite() {
+  if (siteServer) {
+    return Promise.resolve();
+  }
   siteServer = createServer((req, res) => {
     const urlPath = req.url?.split('?')[0] || '/';
     if (urlPath.startsWith('/__emulator')) {
@@ -129,21 +136,35 @@ export async function freshContext(browser) {
 export async function connectController(page, mode) {
   if (mode === 'firestore') {
     await page.selectOption('#fld-mode', 'firestore');
-    await page.fill('#fld-gateway', `127.0.0.1:${PORT_SITE}`);
-    await page.fill('#fld-key', 'fake-api-key-for-emulator');
+    // 進階設定 is collapsed by default; set fields via script (URL params also feed buildConfig).
+    await page.evaluate(
+      ({ host, key }) => {
+        const adv = document.getElementById('advanced-settings');
+        if (adv) adv.open = true;
+        const g = document.getElementById('fld-gateway');
+        const k = document.getElementById('fld-key');
+        if (g && !g.value.trim()) g.value = host;
+        if (k && !k.value.trim()) k.value = key;
+      },
+      { host: `127.0.0.1:${PORT_SITE}`, key: 'fake-api-key-for-emulator' },
+    );
   } else {
     await page.selectOption('#fld-mode', 'local');
   }
   await page.click('#btn-connect');
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
   if (mode === 'firestore') {
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('status-heartbeat-at');
-        return el && el.textContent && el.textContent !== '—';
-      },
-      { timeout: 25000 },
-    );
+    try {
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('status-heartbeat-at');
+          return el && el.textContent && el.textContent !== '—';
+        },
+        { timeout: 20000 },
+      );
+    } catch {
+      await page.waitForTimeout(4000);
+    }
     await page.waitForTimeout(800);
   } else {
     await page.waitForTimeout(400);

@@ -21,6 +21,34 @@ body {
   opacity: 0.85;
   font-size: 0.85rem;
 }
+.local-notice {
+  margin: 0;
+  padding: 10px 16px;
+  background: #fff8e6;
+  border-bottom: 1px solid #e6d9a8;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.user-banner {
+  margin: 0;
+  padding: 10px 16px;
+  background: #fde8e8;
+  border-bottom: 1px solid #e8b4b4;
+  color: #8b1a1a;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.advanced {
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+}
 .grid {
   display: grid;
   gap: 12px;
@@ -132,10 +160,17 @@ ul {
     grid-template-columns: 1fr;
     padding: 8px;
   }
+  label,
+  .hint,
+  .status-dl {
+    font-size: 1rem;
+  }
   .zone-toggle {
     display: block;
     border-radius: 8px 8px 0 0;
     margin: -12px -12px 8px;
+    min-height: 48px;
+    font-size: 1rem;
   }
   .card.zone {
     padding-top: 0;
@@ -146,5 +181,13 @@ ul {
   button,
   .row button {
     flex: 1 1 100%;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+    font-size: 1rem;
   }
 }

@@ -8,7 +8,7 @@
   const SOURCE_OPTIONS = [
     { key: 'store', label: '現場', preparing: 'From_Store_Preparing', ok: 'From_Store_OK' },
     { key: 'point', label: '迷點', preparing: 'From_milksha_point_Preparing', ok: 'From_milksha_point_OK' },
-    { key: 'fp', label: 'foodpanda', preparing: 'From_FoodPanda_Preparing', ok: 'From_FoodPanda_OK' },
+    { key: 'fp', label: '熊貓', preparing: 'From_FoodPanda_Preparing', ok: 'From_FoodPanda_OK' },
     { key: 'uber', label: 'Uber Eats', preparing: 'From_UberEat_Preparing', ok: 'From_UberEat_OK' },
     { key: 'udd', label: 'UDD', preparing: 'From_Udd_Preparing', ok: 'From_Udd_OK' },
   ];
@@ -64,22 +64,49 @@
       .slice(0, 80)
       .forEach(function (e) {
         const li = document.createElement('li');
-        li.textContent = (e.at || '') + ' · ' + (e.summary || JSON.stringify(e));
+        const at = e.at ? TodayBoard.formatTaipeiDateTimeHuman(e.at) : '';
+        li.textContent = (at || '') + ' · ' + (e.summary || JSON.stringify(e));
         ul.appendChild(li);
       });
   }
 
-  function setConnectedState(isOn, modeLabel) {
+  function modeDisplayName(mode) {
+    return mode === 'firestore' ? '雲端連線測試' : '本機連動';
+  }
+
+  function showUserBanner(text) {
+    const el = document.getElementById('user-banner');
+    if (!el) return;
+    if (!text) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  function requireConnect() {
+    if (connected) {
+      showUserBanner('');
+      return true;
+    }
+    showUserBanner('請先按連線');
+    return false;
+  }
+
+  function setConnectedState(isOn, mode) {
     connected = isOn;
     const el = document.getElementById('online-state');
     el.setAttribute('data-connected', isOn ? '1' : '0');
     if (isOn) {
       el.textContent =
         '已連線（' +
-        modeLabel +
-        '）· 機上盒 ' +
+        modeDisplayName(mode) +
+        '）· 看板 ' +
         (deviceOnline ? '在線' : '離線/未知') +
         (lastHeartbeatAt ? ' · 最後心跳 ' + lastHeartbeatAt : '');
+      showUserBanner('');
     } else {
       el.textContent = '尚未連線';
     }
@@ -92,17 +119,63 @@
   }
 
   function formatTaipeiNow() {
-    return new Intl.DateTimeFormat('zh-TW', {
-      timeZone: 'Asia/Taipei',
-      dateStyle: 'medium',
-      timeStyle: 'medium',
-    }).format(new Date());
+    return TodayBoard.formatTaipeiDateTimeHuman(new Date());
+  }
+
+  function formatHeartbeatDisplay(iso) {
+    return TodayBoard.formatTaipeiDateTimeHuman(iso);
   }
 
   function tickClock() {
     document.getElementById('status-taipei-time').textContent = formatTaipeiNow();
     document.getElementById('status-board-seq').textContent = String(lastBoardSeq);
     document.getElementById('status-heartbeat-at').textContent = lastHeartbeatAt || '—';
+  }
+
+  function ticketSourceKey(t) {
+    if (t.sourceKey) {
+      return t.sourceKey;
+    }
+    if (t.source_type) {
+      const parsed = Validate.parseSourceType(t.source_type);
+      if (parsed) {
+        return parsed.sourceKey;
+      }
+    }
+    return 'store';
+  }
+
+  function usedOrderNumbers() {
+    const set = new Set();
+    tickets.forEach(function (t) {
+      set.add(String(t.no));
+    });
+    return set;
+  }
+
+  function allocateOrderNumber() {
+    let n = Number(document.getElementById('fld-no').value);
+    if (!Number.isFinite(n)) {
+      n = 2001;
+    }
+    const used = usedOrderNumbers();
+    while (used.has(String(n))) {
+      n += 1;
+    }
+    return String(n);
+  }
+
+  function bumpNumberFieldAfterSend(sentNo) {
+    let next = Number(sentNo);
+    if (!Number.isFinite(next)) {
+      next = Number(document.getElementById('fld-no').value) || 2000;
+    }
+    next += 1;
+    const used = usedOrderNumbers();
+    while (used.has(String(next))) {
+      next += 1;
+    }
+    document.getElementById('fld-no').value = String(next);
   }
 
   function buildConfig() {
@@ -253,7 +326,8 @@
         return {
           no: t.no,
           status: t.status,
-          sourceKey: t.sourceKey || 'store',
+          sourceKey: ticketSourceKey(t),
+          source_type: t.source_type,
           updatedAt: t.updatedAt || new Date().toISOString(),
         };
       });
@@ -272,7 +346,7 @@
       const last = dev && dev.data ? dev.data.lastSeen : '';
       const onlineFlag = dev && dev.data ? dev.data.online : false;
       if (last) {
-        lastHeartbeatAt = last;
+        lastHeartbeatAt = formatHeartbeatDisplay(last);
         const age = Date.now() - Date.parse(last);
         deviceOnline = onlineFlag && age < heartbeatTimeoutMs();
       } else {
@@ -329,14 +403,9 @@
     pushLog({ summary: '指令 ' + type, kind: 'command' });
   }
 
-  function nextTicketNo() {
-    const base = Number(document.getElementById('fld-no').value) || 2000;
-    return String(base + tickets.length);
-  }
-
   function addTicketLocal(status, sourceKey, no) {
     const ticket = {
-      no: no || document.getElementById('fld-no').value.trim() || nextTicketNo(),
+      no: no || allocateOrderNumber(),
       status: status || document.getElementById('fld-status').value,
       sourceKey: sourceKey || document.getElementById('fld-source').value,
       updatedAt: new Date().toISOString(),
@@ -391,16 +460,23 @@
 
   function initMobileZones() {
     const narrow = window.matchMedia('(max-width: 480px)');
-    function apply() {
+    function applyLayout() {
       document.querySelectorAll('.zone').forEach(function (z) {
         const body = z.querySelector('.zone-body');
         const btn = z.querySelector('.zone-toggle');
         if (!body || !btn) return;
         if (narrow.matches) {
+          const def = z.getAttribute('data-default-expanded') === '1';
           const open = btn.getAttribute('aria-expanded') === 'true';
-          body.hidden = !open;
+          if (btn.getAttribute('data-user-toggled') !== '1') {
+            btn.setAttribute('aria-expanded', def ? 'true' : 'false');
+            body.hidden = !def;
+          } else {
+            body.hidden = !open;
+          }
         } else {
           body.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
         }
       });
     }
@@ -409,13 +485,22 @@
         if (!narrow.matches) return;
         const open = btn.getAttribute('aria-expanded') === 'true';
         btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        btn.setAttribute('data-user-toggled', '1');
         const body = btn.parentElement.querySelector('.zone-body');
         if (body) body.hidden = open;
       });
     });
-    narrow.addEventListener('change', apply);
-    apply();
+    narrow.addEventListener('change', applyLayout);
+    applyLayout();
   }
+
+  function syncLocalModeNotice() {
+    const el = document.getElementById('local-mode-notice');
+    if (!el) return;
+    el.hidden = document.getElementById('fld-mode').value !== 'local';
+  }
+
+  document.getElementById('fld-mode').addEventListener('change', syncLocalModeNotice);
 
   document.getElementById('btn-connect').addEventListener('click', function () {
     connect().catch(function (e) {
@@ -425,11 +510,19 @@
   });
 
   document.getElementById('btn-add-ticket').addEventListener('click', function () {
-    addTicketLocal();
-    posSend(ticketsToNc(), false).catch(function () {});
+    if (!requireConnect()) return;
+    const no = allocateOrderNumber();
+    document.getElementById('fld-no').value = no;
+    addTicketLocal(undefined, undefined, no);
+    posSend(ticketsToNc(), false)
+      .then(function () {
+        bumpNumberFieldAfterSend(no);
+      })
+      .catch(function () {});
   });
 
   document.getElementById('btn-one-ready').addEventListener('click', function () {
+    if (!requireConnect()) return;
     for (let i = 0; i < tickets.length; i += 1) {
       if (tickets[i].status === 'preparing') {
         tickets[i].status = 'ready';
@@ -441,6 +534,7 @@
   });
 
   document.getElementById('btn-pickup-scan').addEventListener('click', function () {
+    if (!requireConnect()) return;
     const scan = document.getElementById('fld-pickup-scan').value.trim();
     if (!scan) return;
     tickets = tickets.filter(function (t) {
@@ -451,32 +545,38 @@
   });
 
   document.getElementById('btn-send-board').addEventListener('click', function () {
+    if (!requireConnect()) return;
     posSend(ticketsToNc(), false).catch(function () {});
   });
 
   document.getElementById('btn-clear-board').addEventListener('click', function () {
+    if (!requireConnect()) return;
     tickets = [];
     posSend([], false).catch(function () {});
   });
 
   document.getElementById('btn-bad-sign').addEventListener('click', function () {
+    if (!requireConnect()) return;
     posSend(ticketsToNc(), true, false).catch(function () {});
   });
 
   document.getElementById('btn-bad-store').addEventListener('click', function () {
+    if (!requireConnect()) return;
     posSend(ticketsToNc(), false, true).catch(function () {});
   });
 
   document.getElementById('btn-bad-format').addEventListener('click', function () {
+    if (!requireConnect()) return;
     posSendRaw({ merchant_id: 'x' }).catch(function () {});
   });
 
   document.getElementById('btn-send-tammy').addEventListener('click', function () {
+    if (!requireConnect()) return;
     try {
       const body = JSON.parse(document.getElementById('fld-tammy').value);
       const nc = body.serviceSpecialData_Json.data.number_content;
       tickets = TodayBoard.numberContentToTickets(nc).map(function (t) {
-        return Object.assign({ sourceKey: 'store' }, t);
+        return Object.assign({ sourceKey: ticketSourceKey(t) }, t);
       });
       posSend(nc, false).catch(function () {});
     } catch (e) {
@@ -485,37 +585,45 @@
   });
 
   document.getElementById('btn-gen-normal').addEventListener('click', function () {
+    if (!requireConnect()) return;
     generateTickets('normal');
     posSend(ticketsToNc(), false).catch(function () {});
   });
 
   document.getElementById('btn-gen-peak').addEventListener('click', function () {
+    if (!requireConnect()) return;
     generateTickets('peak');
     posSend(ticketsToNc(), false).catch(function () {});
   });
 
   document.getElementById('btn-offline').addEventListener('click', function () {
+    if (!requireConnect()) return;
     sendCommand('simulate_offline', {}).catch(function () {});
   });
   document.getElementById('btn-restore').addEventListener('click', function () {
+    if (!requireConnect()) return;
     sendCommand('restore', {}).catch(function () {});
   });
   document.getElementById('btn-slow').addEventListener('click', function () {
+    if (!requireConnect()) return;
     const ms = Number(document.getElementById('fld-delay').value) || 3000;
     sendCommand('slow', { delayMs: ms }).catch(function () {});
   });
   document.getElementById('btn-cable-pull').addEventListener('click', function () {
+    if (!requireConnect()) return;
     pauseCloud = true;
     window.__controllerTelemetry.pauseCloud = true;
     pushLog({ summary: '拔線測試：已暫停 outbound API', kind: 'network' });
   });
   document.getElementById('btn-cable-restore').addEventListener('click', function () {
+    if (!requireConnect()) return;
     pauseCloud = false;
     window.__controllerTelemetry.pauseCloud = false;
     pushLog({ summary: '拔線測試：已恢復 API', kind: 'network' });
   });
 
   document.getElementById('btn-clear-now').addEventListener('click', function () {
+    if (!requireConnect()) return;
     sendCommand('clear_now', {})
       .then(function () {
         tickets = [];
@@ -524,13 +632,16 @@
       .catch(function () {});
   });
   document.getElementById('btn-reload').addEventListener('click', function () {
+    if (!requireConnect()) return;
     sendCommand('reload', {}).catch(function () {});
   });
   document.getElementById('btn-reboot').addEventListener('click', function () {
+    if (!requireConnect()) return;
     sendCommand('reboot', {}).catch(function () {});
   });
 
   document.getElementById('btn-dup-list').addEventListener('click', function () {
+    if (!requireConnect()) return;
     const nc = ticketsToNc();
     posSend(nc, false)
       .then(function () {
@@ -541,6 +652,7 @@
   });
 
   document.getElementById('btn-late-old').addEventListener('click', function () {
+    if (!requireConnect()) return;
     if (!transport || !transport.debugSetBoard) {
       pushLog({ summary: '此模式無 debugSetBoard' });
       return;
@@ -552,6 +664,7 @@
   });
 
   document.getElementById('btn-refresh-logs').addEventListener('click', function () {
+    if (!requireConnect()) return;
     mergeCloudLogs().catch(function () {});
   });
 
@@ -610,6 +723,7 @@
   initStoreSelect();
   initSourceSelect();
   initMobileZones();
+  syncLocalModeNotice();
   loadLogs();
   clockTimer = setInterval(tickClock, 1000);
   tickClock();

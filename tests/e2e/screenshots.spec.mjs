@@ -1,28 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
-import {
-  startCloud,
-  waitCloudReady,
-  startSite,
-  stopHarness,
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  freshContext,
-} from './harness.mjs';
+import { urlsForMode, connectController, resetCloudState } from './harness.mjs';
 
 const ART = '/opt/cursor/artifacts';
 
-test.beforeAll(async () => {
+test.beforeAll(() => {
   mkdirSync(ART, { recursive: true });
-  startCloud();
-  await waitCloudReady();
-  await startSite();
-});
-
-test.afterAll(() => {
-  stopHarness();
 });
 
 test('save controller and board screenshots', async ({ browser }) => {
@@ -52,24 +36,37 @@ test('save controller and board screenshots', async ({ browser }) => {
   await controller.screenshot({ path: `${ART}/controller-desktop.png`, fullPage: false });
 
   await controller.setViewportSize({ width: 390, height: 844 });
+  await expect(controller.locator('#local-mode-notice')).toBeVisible();
+  await expect(controller.locator('#sec-net .zone-body')).toBeHidden();
   await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: false });
+  await controller.setViewportSize({ width: 1440, height: 900 });
+
+  const sourceRows = [
+    { source: 'store', no: '7101', status: 'preparing' },
+    { source: 'point', no: '7102', status: 'preparing' },
+    { source: 'fp', no: '7103', status: 'ready' },
+    { source: 'uber', no: '7104', status: 'ready' },
+    { source: 'udd', no: '7105', status: 'preparing' },
+  ];
+  for (const row of sourceRows) {
+    await controller.selectOption('#fld-source', row.source);
+    await controller.fill('#fld-no', row.no);
+    await controller.selectOption('#fld-status', row.status);
+    await controller.click('#btn-add-ticket');
+  }
+  await receiver.setViewportSize({ width: 1366, height: 768 });
+  await expect(receiver.locator('.rcv-tag', { hasText: '熊貓' })).toBeVisible({ timeout: 15000 });
+  await receiver.screenshot({ path: `${ART}/board-sources-1366.png`, fullPage: false });
 
   await controller.click('#btn-gen-normal');
-  await controller.fill('#fld-no', '4101');
-  await controller.selectOption('#fld-status', 'ready');
-  await controller.click('#btn-add-ticket');
-  await controller.fill('#fld-no', '4102');
-  await controller.selectOption('#fld-status', 'preparing');
-  await controller.click('#btn-add-ticket');
-  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '4101' })).toHaveCount(1, {
+  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '1002' })).toHaveCount(1, {
     timeout: 15000,
   });
-  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '4102' })).toHaveCount(1, {
+  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '1001' })).toHaveCount(1, {
     timeout: 15000,
   });
 
   await receiver.setViewportSize({ width: 1366, height: 768 });
-  const clockBefore = await receiver.locator('#rcv-clock').innerText();
   await receiver.waitForTimeout(500);
   await receiver.screenshot({
     path: `${ART}/board-1366.png`,
@@ -87,13 +84,7 @@ test('save controller and board screenshots', async ({ browser }) => {
   });
   const guestText = await receiver.locator('[data-testid="rcv-guest-stage"]').innerText();
   expect(guestText).not.toContain('尚未連線');
-  for (let i = 0; i < 65; i += 1) {
-    const clockNow = await receiver.locator('#rcv-clock').innerText();
-    if (clockNow !== clockBefore) {
-      break;
-    }
-    await receiver.waitForTimeout(1000);
-  }
+  await receiver.waitForTimeout(800);
   await receiver.screenshot({
     path: `${ART}/board-offline-1366.png`,
     fullPage: false,
@@ -107,6 +98,8 @@ test('save controller and board screenshots', async ({ browser }) => {
   expect(pngSize(boardPng)).toEqual({ width: 1366, height: 768 });
   expect(pngSize(offlinePng)).toEqual({ width: 1366, height: 768 });
   expect(boardPng.equals(offlinePng)).toBe(false);
+  const sourcesPng = readFileSync(`${ART}/board-sources-1366.png`);
+  expect(sourcesPng.equals(boardPng)).toBe(false);
 
   await ctx.close();
 });

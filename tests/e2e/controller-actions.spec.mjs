@@ -1,26 +1,7 @@
 import { test, expect } from '@playwright/test';
-import {
-  startCloud,
-  waitCloudReady,
-  startSite,
-  stopHarness,
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  freshContext,
-} from './harness.mjs';
+import { urlsForMode, connectController, resetCloudState, freshContext } from './harness.mjs';
 
 const MODES = ['local', 'firestore'];
-
-test.beforeAll(async () => {
-  startCloud();
-  await waitCloudReady();
-  await startSite();
-});
-
-test.afterAll(() => {
-  stopHarness();
-});
 
 /**
  * @param {import('@playwright/test').Browser} browser
@@ -160,6 +141,44 @@ for (const mode of MODES) {
     await ctx.close();
   });
 
+  test(`${tag} | order number auto-increment`, async ({ browser }) => {
+    const { ctx, receiver, controller } = await openSession(browser, mode);
+    await controller.fill('#fld-no', '2001');
+    await controller.selectOption('#fld-status', 'preparing');
+    await controller.click('#btn-add-ticket');
+    await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2001' })).toHaveCount(1, {
+      timeout: 15000,
+    });
+    await controller.click('#btn-add-ticket');
+    await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2002' })).toHaveCount(1, {
+      timeout: 15000,
+    });
+    await expect(controller.locator('#fld-no')).toHaveValue('2003');
+    await ctx.close();
+  });
+
+  test(`${tag} | order source badges`, async ({ browser }) => {
+    const { ctx, receiver, controller } = await openSession(browser, mode);
+    const cases = [
+      { source: 'store', tag: '現場', no: '6201', status: 'preparing' },
+      { source: 'fp', tag: '熊貓', no: '6202', status: 'preparing' },
+      { source: 'uber', tag: 'Uber', no: '6203', status: 'ready' },
+    ];
+    for (const c of cases) {
+      await controller.selectOption('#fld-source', c.source);
+      await controller.fill('#fld-no', c.no);
+      await controller.selectOption('#fld-status', c.status);
+      await controller.click('#btn-add-ticket');
+    }
+    await expect(receiver.locator('.rcv-prep .rcv-tag', { hasText: '熊貓' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(receiver.locator('.rcv-ready .rcv-tag', { hasText: 'Uber' })).toBeVisible({
+      timeout: 15000,
+    });
+    await ctx.close();
+  });
+
   test(`${tag} | logs merge and export hooks`, async ({ browser }) => {
     const { ctx, controller } = await openSession(browser, mode);
     await controller.click('#btn-refresh-logs');
@@ -169,6 +188,40 @@ for (const mode of MODES) {
     await ctx.close();
   });
 }
+
+test('controller | require connect banner', async ({ browser }) => {
+  const ctx = await freshContext(browser);
+  const controller = await ctx.newPage();
+  await controller.goto(urlsForMode('local').ctrl);
+  await controller.click('#btn-add-ticket');
+  await expect(controller.locator('#user-banner')).toHaveText('請先按連線');
+  await ctx.close();
+});
+
+test('board | no chime for ready while offline on reconnect', async ({ browser }) => {
+  const { ctx, receiver, controller } = await openSession(browser, 'local');
+  await receiver.evaluate(() => {
+    window.__rcvTelemetry.ringCount = 0;
+  });
+  await controller.fill('#fld-no', '5501');
+  await controller.selectOption('#fld-status', 'preparing');
+  await controller.click('#btn-add-ticket');
+  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '5501' })).toHaveCount(1, {
+    timeout: 15000,
+  });
+  const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
+  await controller.click('#btn-offline');
+  await controller.waitForTimeout(1500);
+  await controller.click('#btn-one-ready');
+  await controller.waitForTimeout(1500);
+  await controller.click('#btn-restore');
+  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '5501' })).toHaveCount(1, {
+    timeout: 15000,
+  });
+  const ringsAfter = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
+  expect(ringsAfter).toBe(ringsBefore);
+  await ctx.close();
+});
 
 test('board | cache after reload and no rechime on reconnect', async ({ browser }) => {
   const { ctx, receiver, controller } = await openSession(browser, 'local');

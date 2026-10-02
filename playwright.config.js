@@ -4,6 +4,8 @@ export default {
   timeout: 90000,
   workers: 1,
   fullyParallel: false,
+  globalSetup: 'tests/e2e/global-setup.mjs',
+  globalTeardown: 'tests/e2e/global-teardown.mjs',
   use: {
     headless: true,
   },

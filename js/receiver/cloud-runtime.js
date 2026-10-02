@@ -42,6 +42,7 @@
     let isFirstApply = true;
     let slowNetworkTimer = null;
     let last0300ClearDate = '';
+    let suppressRingOnNextApply = false;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
@@ -77,7 +78,11 @@
         Validate.itemId,
       );
       const newly = BoardSeq.newlyReadyIds(prevReadySet, nextReady);
-      const shouldRing = !isFirstApply && newly.length > 0 && !(opts && opts.silent);
+      let shouldRing = !isFirstApply && newly.length > 0 && !(opts && opts.silent);
+      if (suppressRingOnNextApply) {
+        shouldRing = false;
+        suppressRingOnNextApply = false;
+      }
 
       const store = Validate.findStore(storeId);
       const req = {
@@ -173,6 +178,7 @@
         simulateOffline = false;
         networkDelayMs = 0;
         setSimulatedOfflineFlag(false);
+        suppressRingOnNextApply = true;
         pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;

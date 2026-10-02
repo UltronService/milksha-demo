@@ -87,6 +87,7 @@ function numberToTickets(nc) {
     no: row.number,
     status: row.source_type?.includes('_OK') ? 'ready' : 'preparing',
     updatedAt: now,
+    source_type: row.source_type || 'From_Store_Preparing',
   }));
 }
 
