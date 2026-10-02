@@ -52,7 +52,7 @@ test('save controller and board screenshots', async ({ browser }) => {
   await controller.screenshot({ path: `${ART}/controller-desktop.png`, fullPage: false });
 
   await controller.setViewportSize({ width: 390, height: 844 });
-  await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: true });
+  await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: false });
 
   await controller.click('#btn-gen-normal');
   await controller.fill('#fld-no', '4101');
