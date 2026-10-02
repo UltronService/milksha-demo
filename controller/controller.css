@@ -94,3 +94,57 @@ ul {
   font-size: 0.85rem;
   color: #555;
 }
+.status-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+  margin: 8px 0;
+}
+.status-dl dt {
+  font-weight: 700;
+  color: #666;
+}
+.status-dl dd {
+  margin: 0;
+}
+.bad-data {
+  margin-top: 12px;
+  border: 1px dashed #ccc;
+  padding: 8px;
+  border-radius: 8px;
+}
+.bad-data legend {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.zone-toggle {
+  width: 100%;
+  text-align: left;
+  background: #f0f0f0;
+  border: none;
+  padding: 10px 12px;
+  font-weight: 800;
+  display: none;
+}
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+  .zone-toggle {
+    display: block;
+    border-radius: 8px 8px 0 0;
+    margin: -12px -12px 8px;
+  }
+  .card.zone {
+    padding-top: 0;
+  }
+  .zone-body[hidden] {
+    display: none;
+  }
+  button,
+  .row button {
+    flex: 1 1 100%;
+  }
+}

@@ -53,7 +53,8 @@
   function createFirestoreRestClient(options) {
     const cfg = options.config;
     const getAuthHeaders = options.getAuthHeaders || null;
-    let inflight = null;
+    /** @type {Map<string, AbortController>} */
+    const inflightByPath = new Map();
     let backoffMs = 0;
     const maxBackoff = 30000;
 
@@ -68,11 +69,14 @@
      * @returns {Promise<{ data: Record<string, unknown>, updateTime: string } | null>}
      */
     async function getDocument(docPath) {
-      if (inflight) {
-        inflight.abort();
+      const pathKey = 'doc:' + docPath;
+      const prev = inflightByPath.get(pathKey);
+      if (prev) {
+        prev.abort();
       }
-      inflight = new AbortController();
-      const signal = inflight.signal;
+      const controller = new AbortController();
+      inflightByPath.set(pathKey, controller);
+      const signal = controller.signal;
       try {
         if (backoffMs > 0) {
           await sleep(backoffMs);
@@ -99,8 +103,8 @@
         backoffMs = Math.min(maxBackoff, backoffMs > 0 ? backoffMs * 2 : 1000);
         throw err;
       } finally {
-        if (inflight && inflight.signal === signal) {
-          inflight = null;
+        if (inflightByPath.get(pathKey) === controller) {
+          inflightByPath.delete(pathKey);
         }
       }
     }
@@ -115,11 +119,14 @@
      * @param {string} collectionPath
      */
     async function listDocuments(collectionPath) {
-      if (inflight) {
-        inflight.abort();
+      const pathKey = 'list:' + collectionPath;
+      const prev = inflightByPath.get(pathKey);
+      if (prev) {
+        prev.abort();
       }
-      inflight = new AbortController();
-      const signal = inflight.signal;
+      const controller = new AbortController();
+      inflightByPath.set(pathKey, controller);
+      const signal = controller.signal;
       try {
         const headers = getAuthHeaders ? await getAuthHeaders() : {};
         const url = baseUrl(cfg) + '/' + collectionPath.replace(/^\//, '');
@@ -139,15 +146,17 @@
           };
         });
       } finally {
-        inflight = null;
+        if (inflightByPath.get(pathKey) === controller) {
+          inflightByPath.delete(pathKey);
+        }
       }
     }
 
     function destroy() {
-      if (inflight) {
-        inflight.abort();
-        inflight = null;
-      }
+      inflightByPath.forEach(function (c) {
+        c.abort();
+      });
+      inflightByPath.clear();
     }
 
     return {

@@ -208,6 +208,8 @@
         pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
+      } else if (type === 'clear_now') {
+        applyNumberContent([], localSeq, { silent: true });
       } else if (type === 'reload') {
         root.location.reload();
       } else if (type === 'reboot') {
@@ -355,6 +357,9 @@
       receiveBoard: receiveBoard,
       getLocalSeq: function () {
         return localSeq;
+      },
+      getReadyHideMinutes: function () {
+        return readyHideMinutes;
       },
     };
   }

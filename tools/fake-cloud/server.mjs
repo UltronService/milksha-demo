@@ -159,6 +159,11 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/health') {
       return json(res, 200, { ok: true });
     }
+    if (url.pathname === '/test/reset' && req.method === 'POST') {
+      docs.clear();
+      logs.clear();
+      return json(res, 200, { ok: true });
+    }
 
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
@@ -179,7 +184,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const storeId = body.storeId || body.account || 's120030';
 
-      if (name === 'posReceiver') {
+      if (name === 'posReceiver' || name === 'posReceiver/') {
         if (!body.serviceSpecialData_Json) {
           return json(res, 400, { isSuccess: false, information: '叫號資料格式錯誤' });
         }
