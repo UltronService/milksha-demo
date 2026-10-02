@@ -304,9 +304,10 @@
         cursor: pointer;
       }
     </style>
+    <script src="../js/board/today-board.js"></script>
   </head>
   <body>
-    <div class="rcv-stage" id="rcv-stage" data-testid="rcv-guest-stage">
+    <div class="rcv-stage" id="rcv-stage" data-testid="rcv-guest-stage" data-simulated-offline="0">
       <div class="rcv-viewport" id="rcv-viewport">
         <div class="rcv-board" id="rcv-board"></div>
       </div>
@@ -564,12 +565,19 @@
         }
 
         function formatClock() {
-          var d = new Date();
-          return (
-            String(d.getHours()).padStart(2, '0') +
-            ':' +
-            String(d.getMinutes()).padStart(2, '0')
-          );
+          if (window.QMS && window.QMS.Board && window.QMS.Board.TodayBoard.formatTaipeiClockHM) {
+            return window.QMS.Board.TodayBoard.formatTaipeiClockHM();
+          }
+          return new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Taipei',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+          })
+            .format(new Date())
+            .replace(/^(\d{1,2}):(\d{2})$/, function (_m, h, m) {
+              return String(h).padStart(2, '0') + ':' + m;
+            });
         }
 
         function layoutZones() {
@@ -1103,7 +1111,7 @@
           if (c) {
             c.textContent = formatClock();
           }
-        }, 10000);
+        }, 1000);
         startPageTimers();
         initDemoPanel();
         renderBoard();

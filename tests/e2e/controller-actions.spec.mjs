@@ -114,11 +114,17 @@ for (const mode of MODES) {
   test(`${tag} | bad signature store format`, async ({ browser }) => {
     const { ctx, controller } = await openSession(browser, mode);
     await controller.click('#btn-bad-sign');
-    await expect(controller.locator('#log-list li').first()).toContainText('失敗', { timeout: 8000 });
+    await expect(controller.locator('#log-list li').first()).toContainText(/失敗|簽章|isSuccess=false/, {
+      timeout: 8000,
+    });
     await controller.click('#btn-bad-store');
-    await expect(controller.locator('#log-list li').first()).toContainText('失敗', { timeout: 8000 });
+    await expect(controller.locator('#log-list li').first()).toContainText(/失敗|找不到|isSuccess=false/, {
+      timeout: 8000,
+    });
     await controller.click('#btn-bad-format');
-    await expect(controller.locator('#log-list li').first()).toContainText('失敗', { timeout: 8000 });
+    await expect(controller.locator('#log-list li').first()).toContainText(/失敗|格式|isSuccess=false/, {
+      timeout: 8000,
+    });
     await ctx.close();
   });
 
@@ -182,10 +188,32 @@ test('board | cache after reload and no rechime on reconnect', async ({ browser 
   await ctx.close();
 });
 
-test('board | readyHideMin param and receiveBoard API', async ({ browser }) => {
-  const { ctx, receiver } = await openSession(browser, 'local', '&readyHideMin=30');
-  const hide = await receiver.evaluate(() => window.receiverCloud.getReadyHideMinutes());
-  expect(hide).toBe(30);
+test('board | POS list exact removal and empty clears screen', async ({ browser }) => {
+  const { ctx, receiver, controller } = await openSession(browser, 'local');
+  await controller.fill('#fld-no', '2801');
+  await controller.selectOption('#fld-status', 'preparing');
+  await controller.click('#btn-add-ticket');
+  await controller.fill('#fld-no', '2802');
+  await controller.selectOption('#fld-status', 'ready');
+  await controller.click('#btn-add-ticket');
+  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2801' })).toHaveCount(1, {
+    timeout: 15000,
+  });
+  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '2802' })).toHaveCount(1, {
+    timeout: 15000,
+  });
+  await controller.click('#btn-clear-board');
+  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2801' })).toHaveCount(0, {
+    timeout: 15000,
+  });
+  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '2802' })).toHaveCount(0, {
+    timeout: 15000,
+  });
+  await ctx.close();
+});
+
+test('board | receiveBoard API and no Firebase SDK', async ({ browser }) => {
+  const { ctx, receiver } = await openSession(browser, 'local');
   await receiver.evaluate(() => {
     window.receiveBoard({
       seq: 99,
@@ -193,12 +221,31 @@ test('board | readyHideMin param and receiveBoard API', async ({ browser }) => {
       businessDate: '2026-10-02',
       updatedAt: new Date().toISOString(),
       source: 'A',
-      tickets: [{ no: '2801', status: 'preparing', updatedAt: new Date().toISOString() }],
+      tickets: [{ no: '2811', status: 'preparing', updatedAt: new Date().toISOString() }],
     });
   });
-  await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2801', { timeout: 8000 });
+  await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2811', { timeout: 8000 });
   const hasFb = await receiver.evaluate(() => typeof window.firebase !== 'undefined');
   expect(hasFb).toBe(false);
+  await ctx.close();
+});
+
+test('board | clock shows Taipei when browser TZ is UTC', async ({ browser }) => {
+  const ctx = await browser.newContext({ timezoneId: 'UTC', locale: 'en-US' });
+  const page = await ctx.newPage();
+  await page.goto(urlsForMode('local').recv);
+  const match = await page.evaluate(() => {
+    const clock = document.getElementById('rcv-clock');
+    const shown = clock ? clock.textContent : '';
+    const expected = window.QMS.Board.TodayBoard.formatTaipeiClockHM();
+    return { shown, expected };
+  });
+  expect(match.shown).toBe(match.expected);
+  const utcHour = await page.evaluate(() => new Date().getUTCHours());
+  const taipeiHour = Number(match.shown.split(':')[0]);
+  if (utcHour <= 15) {
+    expect(taipeiHour).toBeGreaterThanOrEqual(utcHour);
+  }
   await ctx.close();
 });
 

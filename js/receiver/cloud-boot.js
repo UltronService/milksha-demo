@@ -57,7 +57,6 @@
         boardPollIntervalMs: modeResolved.config.boardPollIntervalMs,
         devicePollIntervalMs: modeResolved.config.devicePollIntervalMs,
         heartbeatIntervalMs: modeResolved.config.heartbeatIntervalMs,
-        readyHideMinutes: Number(params.get('readyHideMin') || 0),
         onStatusLine: function (line) {
           if (statusEl) {
             statusEl.textContent = line;

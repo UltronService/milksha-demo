@@ -8,6 +8,12 @@ import { URL } from 'node:url';
 
 const SIGN_SECRET = 'dev-milksha-public-test-key-2026';
 
+const STORE_TARGETS = {
+  s120030: 'milkshas120030',
+  s110012: 'milkshas110012',
+  s210008: 'milkshas210008',
+};
+
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
 const REGION = 'asia-east1';
@@ -195,6 +201,12 @@ const server = http.createServer(async (req, res) => {
         }
         if (!verifyPosSignature(body)) {
           return json(res, 400, { isSuccess: false, information: '簽章錯誤' });
+        }
+        const target = body.serviceSpecialData_Json.target || '';
+        const account = body.account || storeId;
+        const expectedTarget = STORE_TARGETS[account] || STORE_TARGETS[storeId];
+        if (expectedTarget && target && target !== expectedTarget) {
+          return json(res, 400, { isSuccess: false, information: '找不到目標叫號機' });
         }
         const nc = body.serviceSpecialData_Json?.data?.number_content || [];
         const tickets = numberToTickets(nc);

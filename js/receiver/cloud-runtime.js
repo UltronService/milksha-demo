@@ -11,6 +11,13 @@
 
   const VERSION = 'receiver-demo-2026-10-02';
 
+  function setSimulatedOfflineFlag(on) {
+    const stage = root.document && root.document.getElementById('rcv-stage');
+    if (stage) {
+      stage.setAttribute('data-simulated-offline', on ? '1' : '0');
+    }
+  }
+
   function bootReceiverCloud(options) {
     const storeId = options.storeId;
     const deviceId = options.deviceId || 'stb-01';
@@ -19,7 +26,6 @@
     const boardPollMs = options.boardPollIntervalMs || 2000;
     const devicePollMs = options.devicePollIntervalMs || 5000;
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
-    const readyHideMinutes = options.readyHideMinutes || 0;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
 
@@ -32,7 +38,6 @@
     let lastAckCommandId = '';
     let lastHandledCommandId = '';
     let pendingAckCommandId = '';
-    let readyAtById = {};
     let prevReadySet = new Set();
     let isFirstApply = true;
     let slowNetworkTimer = null;
@@ -64,49 +69,10 @@
       }
     }
 
-    function filterHiddenReady(numberContent) {
-      if (!readyHideMinutes || readyHideMinutes <= 0) {
-        return numberContent;
-      }
-      const cutoff = Date.now() - readyHideMinutes * 60 * 1000;
-      return numberContent.filter(function (row) {
-        const parsed = Validate.parseSourceType(row.source_type);
-        if (!parsed || parsed.zone !== 'ready') {
-          return true;
-        }
-        const id = Validate.itemId(parsed.sourceKey, row.number);
-        const readyAt = readyAtById[id];
-        if (!readyAt) {
-          return true;
-        }
-        return readyAt >= cutoff;
-      });
-    }
-
-    function touchReadyTimes(numberContent) {
-      const now = Date.now();
-      const nextReady = BoardSeq.readyIdSetFromContent(
-        numberContent,
-        Validate.parseSourceType,
-        Validate.itemId,
-      );
-      nextReady.forEach(function (id) {
-        if (!readyAtById[id]) {
-          readyAtById[id] = now;
-        }
-      });
-      Object.keys(readyAtById).forEach(function (k) {
-        if (!nextReady.has(k)) {
-          delete readyAtById[k];
-        }
-      });
-    }
-
     function applyNumberContent(numberContent, seq, opts) {
-      const filtered = filterHiddenReady(numberContent);
-      touchReadyTimes(filtered);
+      const list = Array.isArray(numberContent) ? numberContent : [];
       const nextReady = BoardSeq.readyIdSetFromContent(
-        filtered,
+        list,
         Validate.parseSourceType,
         Validate.itemId,
       );
@@ -118,7 +84,7 @@
         isEncrypt: false,
         serviceSpecialData_Json: {
           target: store.target,
-          data: { number_content: filtered, newsTicker_content: [], newsTickerSpeed: 0 },
+          data: { number_content: list, newsTicker_content: [], newsTickerSpeed: 0 },
         },
         merchant_id: store.merchant_id,
         account: store.account,
@@ -136,7 +102,7 @@
       if (typeof seq === 'number') {
         localSeq = seq;
       }
-      saveCache(localSeq, filtered);
+      saveCache(localSeq, list);
       onBoardAck({ seq: localSeq, response: res, newlyReady: shouldRing ? newly : [] });
       return res;
     }
@@ -202,9 +168,11 @@
       pendingAckCommandId = cmd.id;
       if (type === 'simulate_offline') {
         simulateOffline = true;
+        setSimulatedOfflineFlag(true);
       } else if (type === 'restore') {
         simulateOffline = false;
         networkDelayMs = 0;
+        setSimulatedOfflineFlag(false);
         pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
@@ -262,15 +230,8 @@
 
     function check0300Clear() {
       const bd = TodayBoard.taipeiBusinessDate();
-      const parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Asia/Taipei',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: false,
-      }).formatToParts(new Date());
-      const h = Number(parts.find(function (p) { return p.type === 'hour'; }).value);
-      const m = Number(parts.find(function (p) { return p.type === 'minute'; }).value);
-      if (h === 3 && m === 0 && last0300ClearDate !== bd) {
+      const hm = TodayBoard.taipeiHourMinute();
+      if (hm.hour === 3 && hm.minute === 0 && last0300ClearDate !== bd) {
         last0300ClearDate = bd;
         applyNumberContent([], localSeq, { silent: true });
       }
@@ -283,6 +244,7 @@
     }
 
     function start() {
+      setSimulatedOfflineFlag(false);
       const cached = loadCache();
       if (cached && Array.isArray(cached.numberContent)) {
         localSeq = Number(cached.seq) || 0;
@@ -358,8 +320,8 @@
       getLocalSeq: function () {
         return localSeq;
       },
-      getReadyHideMinutes: function () {
-        return readyHideMinutes;
+      isSimulatedOffline: function () {
+        return simulateOffline;
       },
     };
   }

@@ -31,6 +31,53 @@
   }
 
   /**
+   * @param {Date} [d]
+   * @returns {{ hour: number, minute: number }}
+   */
+  function taipeiHourMinute(d) {
+    const date = d || new Date();
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Taipei',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    }).formatToParts(date);
+    const h = parts.find(function (p) {
+      return p.type === 'hour';
+    });
+    const m = parts.find(function (p) {
+      return p.type === 'minute';
+    });
+    return {
+      hour: Number(h ? h.value : 0),
+      minute: Number(m ? m.value : 0),
+    };
+  }
+
+  /**
+   * Header clock HH:mm (24h) in Asia/Taipei, independent of device timezone.
+   * @param {Date} [d]
+   * @returns {string}
+   */
+  function formatTaipeiClockHM(d) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Taipei',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(d || new Date());
+    const h = parts.find(function (p) {
+      return p.type === 'hour';
+    });
+    const m = parts.find(function (p) {
+      return p.type === 'minute';
+    });
+    const hh = h ? h.value : '00';
+    const mm = m ? m.value : '00';
+    return hh + ':' + mm;
+  }
+
+  /**
    * @param {Array<{ no: string, status: string, updatedAt?: string }>} tickets
    * @param {{ preparingType?: string, readyType?: string }} [opts]
    * @returns {Array<{ source_type: string, number: string }>}
@@ -127,6 +174,8 @@
 
   QMS.Board.TodayBoard = {
     taipeiBusinessDate: taipeiBusinessDate,
+    taipeiHourMinute: taipeiHourMinute,
+    formatTaipeiClockHM: formatTaipeiClockHM,
     ticketsToNumberContent: ticketsToNumberContent,
     numberContentToTickets: numberContentToTickets,
     normalizeTodayBoard: normalizeTodayBoard,
