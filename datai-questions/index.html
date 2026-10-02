@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>要問達鈦的問題 — 迷客夏叫號試點</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --border: #d8d8d8;
+      --bg: #fafafa;
+      --card: #fff;
+      --accent: #2d5a3d;
+      --blocker: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .wrap { max-width: 52rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.25rem; }
+    h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+    .meta { color: var(--muted); font-size: 0.9rem; }
+    .doc-nav { font-size: 0.9rem; margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: #fff; border: 1px solid var(--border); border-radius: 6px; }
+    .doc-nav a { color: var(--accent); }
+    .lead { background: #eef3ef; padding: 0.75rem 1rem; border-radius: 6px; margin: 1rem 0; }
+    .diagram { margin: 1rem 0; padding: 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+    .diagram figcaption { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; }
+    .diagram svg { display: block; max-width: 100%; height: auto; }
+    .q-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+      margin: 1rem 0;
+    }
+    .q-card.blocker { border-left: 5px solid var(--blocker); background: #fff5f5; }
+    .q-head { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+    .q-id { font-weight: 700; font-size: 1.05rem; }
+    .badge { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; }
+    .badge-p0 { background: #fee2e2; color: var(--blocker); }
+    .badge-p1 { background: #fef3c7; color: #92400e; }
+    .badge-p2 { background: #e0e7ff; color: #3730a3; }
+    .answer-label { font-weight: 600; margin-top: 0.75rem; font-size: 0.95rem; }
+    .answer-blank {
+      min-height: 3.5rem;
+      margin-top: 0.35rem;
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    footer { margin-top: 2rem; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1rem; }
+    @media (max-width: 768px) {
+      body { font-size: 17px; }
+      h1 { font-size: 1.75rem; }
+      .q-card { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>要問達鈦的問題</h1>
+      <p class="meta">迷客夏叫號試點 · 新方案：POS → 店內上盒（HTTP）→ 雲端 · 會議用 · 2026-10-02</p>
+      <nav class="doc-nav">
+        <strong>相關：</strong>
+        <a href="../vendor-spec/">APK 規格 v0.3</a> ·
+        <a href="../spec/">API 討論規格</a> ·
+        <a href="../confirm/">簽認確認書</a>
+      </nav>
+    </header>
+
+    <p class="lead">請依序詢問；每題當場把答案寫在空白欄。若無法定案，請註明「待確認」與預計回覆日。<strong>第一題為阻擋題</strong>：若做不到，500 間店無法只設定一次規則。</p>
+
+    <figure class="diagram">
+      <figcaption>我們希望 POS 設定的樣子（一條規則套全國）</figcaption>
+      <svg viewBox="0 0 480 100" role="img">
+        <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2d5a3d"/></marker></defs>
+        <rect x="20" y="30" width="100" height="40" rx="4" fill="#fff" stroke="#333"/>
+        <text x="70" y="55" text-anchor="middle" font-size="11">POS</text>
+        <text x="70" y="68" text-anchor="middle" font-size="7">自己算 10.3.X.223</text>
+        <line x1="120" y1="50" x2="200" y2="50" stroke="#2d5a3d" stroke-width="2" marker-end="url(#a)"/>
+        <text x="160" y="42" text-anchor="middle" font-size="8">HTTP 整份名單</text>
+        <rect x="202" y="25" width="110" height="50" rx="4" fill="#eef3ef" stroke="#2d5a3d"/>
+        <text x="257" y="48" text-anchor="middle" font-size="10">上盒 .223:2757</text>
+        <text x="257" y="62" text-anchor="middle" font-size="8">回覆 + 螢幕</text>
+        <rect x="340" y="35" width="120" height="30" rx="4" fill="#f5f5f5" stroke="#999"/>
+        <text x="400" y="54" text-anchor="middle" font-size="9">同一設定全店共用</text>
+      </svg>
+    </figure>
+
+    <article class="q-card blocker" id="q1">
+      <div class="q-head">
+        <span class="q-id">Q1</span>
+        <span class="badge badge-p0">阻擋題</span>
+      </div>
+      <p>POS 能不能<strong>自動</strong>用「自己所在網段，把最後一碼改成 <strong>223</strong>」算出叫號上盒的位址？（例如 POS 在 10.3.5.21 → 送到 10.3.5.223）這樣 <strong>500 間店只設一次規則</strong>，不用每店 key 不同 IP。</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank" role="textbox" aria-label="Q1 答案空白"></div>
+    </article>
+
+    <article class="q-card" id="q2">
+      <div class="q-head"><span class="q-id">Q2</span><span class="badge badge-p1">高</span></div>
+      <p>店內走 <strong>HTTP（不加密）</strong> 是否可以？還是 POS 端規定一定要 HTTPS？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q3">
+      <div class="q-head"><span class="q-id">Q3</span><span class="badge badge-p1">高</span></div>
+      <p>新埠 <strong>2757</strong> 與路徑（整份名單 POST、健康檢查 GET）能否在 POS 後台<strong>一次設定、全門市共用</strong>？各店只差「算出來的 .223 位址」。</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q4">
+      <div class="q-head"><span class="q-id">Q4</span><span class="badge badge-p1">高</span></div>
+      <p>若上盒<strong>沒有在時限內回覆</strong>（或回覆失敗），POS 會不會<strong>自動重送</strong>？間隔多久、最多幾次？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q5">
+      <div class="q-head"><span class="q-id">Q5</span><span class="badge badge-p1">高</span></div>
+      <p>叫號上盒<strong>重開機</strong>約 1～2 分鐘送不到時，POS 會怎麼處理？會不會把這段時間的單堆積後一次重送整份名單？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q6">
+      <div class="q-head"><span class="q-id">Q6</span><span class="badge badge-p2">中</span></div>
+      <p>能否設定<strong>第二個送出位址</strong>當備援？（例如主 .223 失敗改送雲端 URL，或備援 IP）切換條件與誰優先？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q7">
+      <div class="q-head"><span class="q-id">Q7</span><span class="badge badge-p2">中</span></div>
+      <p>每次送的是<strong>整份名單</strong>還是仍可能混用「單筆異動」？若只有整份，尖峰大約多久送一次？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q8">
+      <div class="q-head"><span class="q-id">Q8</span><span class="badge badge-p2">中</span></div>
+      <p>Response 裡 <strong>isOK</strong> 與內層 <strong>isSuccess</strong>，達鈦端各自代表什麼？收到 isSuccess=false 但 isOK=true 時，POS 會重送嗎？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <article class="q-card" id="q9">
+      <div class="q-head"><span class="q-id">Q9</span><span class="badge badge-p2">中</span></div>
+      <p>舊 TCP <strong>2756</strong> 逐筆格式，迷客夏 POS 試點後是否<strong>完全停用</strong>？還是過渡期雙軌？</p>
+      <p class="answer-label">達鈦回覆</p>
+      <div class="answer-blank"></div>
+    </article>
+
+    <footer>現場填寫後請拍照或匯入共筆 · 奧創叫號專案 · 2026-10-02</footer>
+  </div>
+</body>
+</html>
