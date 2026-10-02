@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>迷客夏 · 叫號機接收端 Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #111;
+      }
+      .rcv-stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .rcv-viewport {
+        position: relative;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+      .rcv-board {
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        transform-origin: top left;
+      }
+      .rcv-hdr {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        height: 80px;
+        background: #fff;
+        border-bottom: 3px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+      }
+      .rcv-logo img {
+        height: 52px;
+        width: auto;
+        display: block;
+      }
+      .rcv-store {
+        font-size: 36px;
+        font-weight: 700;
+        color: #333;
+        letter-spacing: 2px;
+        text-align: center;
+        flex: 1;
+        padding: 0 16px;
+      }
+      .rcv-store small {
+        display: block;
+        font-size: 22px;
+        font-weight: 400;
+        color: #666;
+        letter-spacing: 0;
+      }
+      .rcv-clock {
+        font-size: 36px;
+        color: #555;
+        font-weight: 700;
+        min-width: 120px;
+        text-align: right;
+      }
+      .rcv-zone {
+        position: absolute;
+        padding: 0 20px;
+      }
+      .rcv-zone.ready {
+        left: 0;
+        background: #161616;
+        color: #fff;
+      }
+      .rcv-zone.prep {
+        background: #e4e4e4;
+        color: #555;
+        border-left: 3px solid #999;
+        border-top: 3px solid #999;
+      }
+      .rcv-ztitle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 900;
+        border-bottom: 3px solid #fff;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+      }
+      .rcv-zone.prep .rcv-ztitle {
+        border-bottom: 2px solid #999;
+      }
+      .rcv-pg {
+        border: 2px solid currentColor;
+        border-radius: 30px;
+        padding: 0 18px;
+        font-weight: 700;
+        font-size: 0.55em;
+      }
+      .rcv-grid {
+        display: grid;
+        gap: 10px;
+        padding-top: 4px;
+      }
+      .rcv-card {
+        display: flex;
+        align-items: center;
+        border-radius: 10px;
+        min-height: 0;
+      }
+      .rcv-card.r {
+        flex-direction: column;
+        justify-content: center;
+        border: 2px solid #3a3a3a;
+        background: #222;
+      }
+      .rcv-card.p {
+        gap: 8px;
+        padding-left: 8px;
+        background: #efefef;
+        border: 1px solid #c8c8c8;
+        min-width: 0;
+      }
+      .rcv-num {
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 2px;
+      }
+      .rcv-ready .rcv-num {
+        color: #fff;
+      }
+      .rcv-prep .rcv-num {
+        color: #6a6a6a;
+        font-weight: 700;
+        flex: 1;
+        white-space: nowrap;
+      }
+      .rcv-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 8px;
+        padding: 1px 10px;
+        font-weight: 700;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+      .rcv-tag .ic {
+        display: inline-block;
+        width: 1.2em;
+        height: 1.2em;
+        line-height: 1.2em;
+        text-align: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.55);
+        color: #000;
+        font-size: 0.8em;
+      }
+      .rcv-prog-wrap {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 6px;
+        height: 6px;
+        background: #444;
+      }
+      .rcv-zone.prep .rcv-prog-wrap {
+        background: #bbb;
+      }
+      .rcv-prog-bar {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: #fff;
+        transform-origin: left center;
+        will-change: transform;
+      }
+      .rcv-zone.prep .rcv-prog-bar {
+        background: #666;
+      }
+      .rcv-demo-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(400px, 94vw);
+        z-index: 200;
+        background: #fff;
+        border-left: 4px solid #333;
+        padding: 12px 14px;
+        overflow-y: auto;
+        font-size: 14px;
+        color: #222;
+        transform: translateX(100%);
+        transition: transform 0.25s ease-out;
+      }
+      .rcv-demo-panel.open {
+        transform: translateX(0);
+      }
+      .rcv-demo-panel h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-bottom: 2px solid #ccc;
+        padding-bottom: 6px;
+      }
+      .rcv-demo-panel label {
+        display: block;
+        margin: 8px 0 4px;
+        font-weight: 700;
+      }
+      .rcv-demo-panel textarea {
+        width: 100%;
+        min-height: 180px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .rcv-demo-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .rcv-demo-panel button,
+      .rcv-demo-panel select {
+        border: 2px solid #333;
+        border-radius: 8px;
+        padding: 6px 12px;
+        background: #f4f4f4;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .rcv-demo-panel button.primary {
+        background: #333;
+        color: #fff;
+      }
+      .rcv-res-summary {
+        margin: 6px 0 4px;
+        font-size: 13px;
+        line-height: 1.45;
+        font-weight: 700;
+      }
+      .rcv-res-badge {
+        display: inline-block;
+        margin-right: 8px;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        vertical-align: middle;
+      }
+      .rcv-res-badge.ok {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #a3d9a5;
+      }
+      .rcv-res-badge.fail {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f1aeb5;
+      }
+      .rcv-res-line {
+        font-weight: 600;
+        color: #333;
+      }
+      .rcv-demo-pre {
+        font-family: monospace;
+        font-size: 11px;
+        background: #f0f0f0;
+        border: 1px dashed #999;
+        padding: 8px;
+        max-height: 220px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .rcv-demo-handle {
+        position: fixed;
+        right: 0;
+        bottom: 20px;
+        z-index: 199;
+        padding: 10px 14px;
+        background: rgba(21, 101, 255, 0.9);
+        color: #fff;
+        border: none;
+        border-radius: 10px 0 0 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="rcv-stage" id="rcv-stage">
+      <div class="rcv-viewport" id="rcv-viewport">
+        <div class="rcv-board" id="rcv-board"></div>
+      </div>
+    </div>
+    <button type="button" class="rcv-demo-handle" id="rcv-demo-handle" hidden>⚙ 展示</button>
+    <aside class="rcv-demo-panel" id="rcv-demo-panel" hidden aria-label="展示控制">
+      <h2>接收端展示</h2>
+      <label for="rcv-store-select">門市（target 對照）</label>
+      <select id="rcv-store-select"></select>
+      <label for="rcv-request-json">Request JSON</label>
+      <textarea id="rcv-request-json" spellcheck="false"></textarea>
+      <div class="rcv-demo-row">
+        <button type="button" class="primary" id="rcv-btn-send">Send</button>
+        <label><input type="checkbox" id="rcv-offline" /> 模擬斷線</label>
+      </div>
+      <div class="rcv-demo-row">
+        <button type="button" id="rcv-btn-checkout">結帳→準備中</button>
+        <button type="button" id="rcv-btn-complete">完成→可取餐</button>
+        <button type="button" id="rcv-btn-clear">03:00 清空</button>
+      </div>
+      <label>Response</label>
+      <div class="rcv-res-summary" id="rcv-response-summary">（尚未推送）</div>
+      <pre class="rcv-demo-pre" id="rcv-response-out"></pre>
+    </aside>
+    <script>
+      (function () {
+        'use strict';
+
+        var W = 1920;
+        var H = 1080;
+        var HEADER = 80;
+        var READY_FRAC = 0.62;
+        var READY = { cols: 3, rows: 4, font: 140, tag: 30, titleH: 84, titleF: 50 };
+        var PREP = { cols: 2, rows: 9, font: 64, tag: 24, titleH: 84, titleF: 42 };
+        var PAGE_MS = 6000;
+
+        var STORES = [
+          {
+            id: 's120030',
+            name: '迷客夏臺南東安店',
+            merchant_id: 'milksha',
+            account: 's120030',
+            target: 'milkshas120030',
+          },
+          {
+            id: 's110012',
+            name: '迷客夏台北忠孝店',
+            merchant_id: 'milksha',
+            account: 's110012',
+            target: 'milkshas110012',
+          },
+          {
+            id: 's210008',
+            name: '迷客夏高雄三多店',
+            merchant_id: 'milksha',
+            account: 's210008',
+            target: 'milkshas210008',
+          },
+        ];
+
+        var SPEC_EXAMPLE_REQUEST = {
+          isEncrypt: false,
+          serviceSpecialData_Json: {
+            target: 'composec030020',
+            data: {
+              number_content: [
+                { source_type: 'From_Store_OK', number: '1488' },
+                { source_type: 'From_Store_Preparing', number: '1985' },
+              ],
+              newsTicker_content: ['歡迎光臨 COMPOSE 臺北信陽店', ''],
+              newsTickerSpeed: 8.0,
+            },
+          },
+          merchant_id: 'compose',
+          account: 'c030020',
+          timeStmp: '2026-07-17-13-17-00:2831',
+          serviceSpecialData_Json_Md5Hash: '8f4e7936a314a6b84af58116b272d0fe',
+          signature: 'Base64 簽章字串',
+        };
+
+        var SOURCE_DEFS = [
+          { prefix: 'From_Store_', key: 'store' },
+          { prefix: 'From_milksha_point_', key: 'point' },
+          { prefix: 'From_FoodPanda_', key: 'fp' },
+          { prefix: 'From_UberEat_', key: 'uber' },
+          { prefix: 'From_Udd_', key: 'udd' },
+        ];
+
+        var TAG = {
+          store: { t: '現場', bg: '#F2F2F2', fg: '#111', bd: '2px solid #111', icon: '店' },
+          point: { t: '迷點', bg: '#009E73', fg: '#000', bd: '2px solid #009E73', icon: '迷' },
+          fp: { t: '熊貓', bg: '#CC79A7', fg: '#000', bd: '2px solid #CC79A7', icon: '熊' },
+          uber: { t: 'Uber', bg: '#0072B2', fg: '#fff', bd: '2px solid #0072B2', icon: 'U' },
+          udd: { t: 'UDD', bg: '#E69F00', fg: '#000', bd: '2px solid #E69F00', icon: 'D' },
+        };
+
+        var VALID_TYPES = {};
+        for (var si = 0; si < SOURCE_DEFS.length; si += 1) {
+          var p = SOURCE_DEFS[si].prefix;
+          VALID_TYPES[p + 'OK'] = true;
+          VALID_TYPES[p + 'Preparing'] = true;
+        }
+
+        var MSG = {
+          ok: '資料顯示成功',
+          offline: '目標叫號機尚未連線',
+          notFound: '找不到目標叫號機',
+          format: '叫號資料格式錯誤',
+        };
+
+        var params = new URLSearchParams(window.location.search);
+        var demoMode = params.get('demo') === '1';
+        var storeId = params.get('store') || 's120030';
+
+        var stageEl = document.getElementById('rcv-stage');
+        var viewportEl = document.getElementById('rcv-viewport');
+        var boardEl = document.getElementById('rcv-board');
+        var demoHandle = document.getElementById('rcv-demo-handle');
+        var demoPanel = document.getElementById('rcv-demo-panel');
+        var storeSelect = document.getElementById('rcv-store-select');
+        var requestTa = document.getElementById('rcv-request-json');
+        var responseOut = document.getElementById('rcv-response-out');
+        var responseSummary = document.getElementById('rcv-response-summary');
+        var offlineCb = document.getElementById('rcv-offline');
+
+        var currentRows = [];
+        var metaById = {};
+        var readyPage = 0;
+        var prepPage = 0;
+        var readyTimer = null;
+        var prepTimer = null;
+        var clockTimer = null;
+        var scale = 1;
+        var nextSeq = 2000;
+
+        var zoneDom = { ready: null, prep: null };
+        var gridDom = { ready: null, prep: null };
+        var cardPool = { ready: [], prep: [] };
+
+        function findStore(id) {
+          for (var i = 0; i < STORES.length; i += 1) {
+            if (STORES[i].id === id) {
+              return STORES[i];
+            }
+          }
+          return STORES[0];
+        }
+
+        var boundStore = findStore(storeId);
+
+        function parseSourceType(st) {
+          if (!st || typeof st !== 'string') {
+            return null;
+          }
+          for (var i = 0; i < SOURCE_DEFS.length; i += 1) {
+            var def = SOURCE_DEFS[i];
+            if (st.indexOf(def.prefix) !== 0) {
+              continue;
+            }
+            var rest = st.slice(def.prefix.length);
+            if (rest === 'OK') {
+              return { sourceKey: def.key, zone: 'ready' };
+            }
+            if (rest === 'Preparing') {
+              return { sourceKey: def.key, zone: 'preparing' };
+            }
+            return null;
+          }
+          return null;
+        }
+
+        function itemId(sourceKey, number) {
+          return sourceKey + ':' + String(number);
+        }
+
+        function partition(numberContent) {
+          var ready = [];
+          var prep = [];
+          var readyIds = {};
+          if (!Array.isArray(numberContent)) {
+            return { ready: ready, preparing: prep, invalid: true };
+          }
+          var invalid = false;
+          for (var i = 0; i < numberContent.length; i += 1) {
+            var row = numberContent[i];
+            if (!row || typeof row !== 'object') {
+              invalid = true;
+              continue;
+            }
+            if (typeof row.number !== 'string') {
+              invalid = true;
+              continue;
+            }
+            if (!VALID_TYPES[row.source_type]) {
+              invalid = true;
+              continue;
+            }
+            var parsed = parseSourceType(row.source_type);
+            if (!parsed) {
+              invalid = true;
+              continue;
+            }
+            var entry = {
+              id: itemId(parsed.sourceKey, row.number),
+              sourceKey: parsed.sourceKey,
+              number: row.number,
+              source_type: row.source_type,
+            };
+            if (parsed.zone === 'ready') {
+              if (!readyIds[entry.id]) {
+                readyIds[entry.id] = true;
+                ready.push(entry);
+              }
+            } else if (!readyIds[entry.id]) {
+              prep.push(entry);
+            }
+          }
+          return { ready: ready, preparing: prep, invalid: invalid };
+        }
+
+        function tagHtml(sourceKey, sizePx) {
+          var s = TAG[sourceKey];
+          if (!s) {
+            return '';
+          }
+          return (
+            '<span class="rcv-tag" style="background:' +
+            s.bg +
+            ';color:' +
+            s.fg +
+            ';border:' +
+            s.bd +
+            ';font-size:' +
+            sizePx +
+            'px"><b class="ic">' +
+            s.icon +
+            '</b>' +
+            s.t +
+            '</span>'
+          );
+        }
+
+        function applyScale() {
+          var vw = window.innerWidth || W;
+          var vh = window.innerHeight || H;
+          scale = Math.min(vw / W, vh / H);
+          var viewW = Math.round(W * scale);
+          var viewH = Math.round(H * scale);
+          viewportEl.style.width = viewW + 'px';
+          viewportEl.style.height = viewH + 'px';
+          boardEl.style.width = W + 'px';
+          boardEl.style.height = H + 'px';
+          boardEl.style.transform = 'scale(' + scale + ')';
+        }
+
+        function formatClock() {
+          var d = new Date();
+          return (
+            String(d.getHours()).padStart(2, '0') +
+            ':' +
+            String(d.getMinutes()).padStart(2, '0')
+          );
+        }
+
+        function layoutZones() {
+          var contentH = H - HEADER;
+          var readyW = Math.round(W * READY_FRAC);
+          var prepW = W - readyW;
+          var readyLeft = 0;
+          var prepLeft = readyW;
+          return {
+            ready: { left: readyLeft, top: HEADER, width: readyW, height: contentH },
+            prep: { left: prepLeft, top: HEADER, width: prepW, height: contentH },
+          };
+        }
+
+        function buildShell() {
+          var geom = layoutZones();
+          boardEl.innerHTML =
+            '<header class="rcv-hdr">' +
+            '<div class="rcv-logo"><img src="../assets/logo.svg" alt="迷客夏 Milksha" /></div>' +
+            '<div class="rcv-store" id="rcv-store-label"></div>' +
+            '<div class="rcv-clock" id="rcv-clock"></div>' +
+            '</header>' +
+            '<section class="rcv-zone ready rcv-ready" id="rcv-zone-ready"></section>' +
+            '<section class="rcv-zone prep rcv-prep" id="rcv-zone-prep"></section>';
+
+          zoneDom.ready = document.getElementById('rcv-zone-ready');
+          zoneDom.prep = document.getElementById('rcv-zone-prep');
+          ['ready', 'prep'].forEach(function (z) {
+            var g = geom[z === 'ready' ? 'ready' : 'prep'];
+            var el = zoneDom[z];
+            el.style.left = g.left + 'px';
+            el.style.top = g.top + 'px';
+            el.style.width = g.width + 'px';
+            el.style.height = g.height + 'px';
+            var cfg = z === 'ready' ? READY : PREP;
+            el.innerHTML =
+              '<div class="rcv-ztitle" style="height:' +
+              cfg.titleH +
+              'px;font-size:' +
+              cfg.titleF +
+              'px">' +
+              (z === 'ready' ? '可取餐' : '準備中') +
+              '<span class="rcv-pg" id="rcv-pg-' +
+              z +
+              '"></span></div>' +
+              '<div class="rcv-grid" id="rcv-grid-' +
+              z +
+              '"></div>' +
+              '<div class="rcv-prog-wrap"><span class="rcv-prog-bar" id="rcv-prog-' +
+              z +
+              '"></span></div>';
+            gridDom[z] = document.getElementById('rcv-grid-' + z);
+            var grid = gridDom[z];
+            grid.style.gridTemplateColumns = 'repeat(' + cfg.cols + ', 1fr)';
+            var innerH = g.height - cfg.titleH - 20;
+            var rowH = Math.floor((innerH - 10 * (cfg.rows - 1)) / cfg.rows);
+            grid.style.gridTemplateRows = 'repeat(' + cfg.rows + ', ' + rowH + 'px)';
+          });
+          updateStoreLabel();
+        }
+
+        function updateStoreLabel() {
+          var el = document.getElementById('rcv-store-label');
+          if (!el) {
+            return;
+          }
+          el.innerHTML =
+            boundStore.name + '<small>' + boundStore.id + ' · ' + boundStore.target + '</small>';
+        }
+
+        function touchMeta(items) {
+          var now = Date.now();
+          for (var i = 0; i < items.length; i += 1) {
+            var it = items[i];
+            if (!metaById[it.id]) {
+              metaById[it.id] = { firstSeen: now + i };
+            }
+          }
+        }
+
+        function metaSeen(id) {
+          return metaById[id] ? metaById[id].firstSeen : 0;
+        }
+
+        function sortReady(items) {
+          return items.slice().sort(function (a, b) {
+            return metaSeen(b.id) - metaSeen(a.id);
+          });
+        }
+
+        function sortPrep(items) {
+          return items.slice().sort(function (a, b) {
+            return metaSeen(a.id) - metaSeen(b.id);
+          });
+        }
+
+        function pageSlice(items, page, perPage) {
+          var pages = Math.max(1, Math.ceil(items.length / perPage));
+          var p = Math.min(page, pages - 1);
+          if (p < 0) {
+            p = 0;
+          }
+          var start = p * perPage;
+          return { slice: items.slice(start, start + perPage), page: p, pages: pages };
+        }
+
+        function ensureCards(zone, count, cfg, isReady) {
+          var pool = cardPool[zone];
+          while (pool.length < count) {
+            var card = document.createElement('div');
+            card.className = 'rcv-card ' + (isReady ? 'r' : 'p');
+            card.innerHTML =
+              '<div class="rcv-tag-slot"></div><div class="rcv-num" style="font-size:' +
+              cfg.font +
+              'px"></div>';
+            pool.push(card);
+          }
+          var grid = gridDom[zone];
+          for (var i = 0; i < pool.length; i += 1) {
+            if (i < count) {
+              if (pool[i].parentNode !== grid) {
+                grid.appendChild(pool[i]);
+              }
+              pool[i].style.display = '';
+            } else {
+              pool[i].style.display = 'none';
+            }
+          }
+        }
+
+        function renderZone(zone, items, cfg, isReady) {
+          var perPage = cfg.cols * cfg.rows;
+          var sorted = isReady ? sortReady(items) : sortPrep(items);
+          var pg = zone === 'ready' ? readyPage : prepPage;
+          var info = pageSlice(sorted, pg, perPage);
+          if (zone === 'ready') {
+            readyPage = info.page;
+          } else {
+            prepPage = info.page;
+          }
+          var pgEl = document.getElementById('rcv-pg-' + zone);
+          if (pgEl) {
+            if (info.pages > 1) {
+              pgEl.textContent = info.page + 1 + '/' + info.pages;
+              pgEl.style.display = '';
+            } else {
+              pgEl.textContent = '';
+              pgEl.style.display = 'none';
+            }
+          }
+          var slots = perPage;
+          ensureCards(zone, slots, cfg, isReady);
+          var pool = cardPool[zone];
+          for (var i = 0; i < slots; i += 1) {
+            var card = pool[i];
+            var tagSlot = card.querySelector('.rcv-tag-slot');
+            var numEl = card.querySelector('.rcv-num');
+            if (i < info.slice.length) {
+              var it = info.slice[i];
+              tagSlot.innerHTML = tagHtml(it.sourceKey, cfg.tag);
+              numEl.textContent = it.number;
+              if (isReady) {
+                tagSlot.style.marginBottom = '4px';
+              }
+            } else {
+              tagSlot.innerHTML = '';
+              numEl.textContent = '';
+            }
+          }
+          return info.pages;
+        }
+
+        function pruneMeta(ready, prep) {
+          var live = {};
+          var all = ready.concat(prep);
+          for (var i = 0; i < all.length; i += 1) {
+            live[all[i].id] = true;
+          }
+          var keys = Object.keys(metaById);
+          for (var j = 0; j < keys.length; j += 1) {
+            if (!live[keys[j]]) {
+              delete metaById[keys[j]];
+            }
+          }
+        }
+
+        function renderBoard() {
+          var part = partition(currentRows);
+          touchMeta(part.ready.concat(part.preparing));
+          pruneMeta(part.ready, part.preparing);
+          renderZone('ready', part.ready, READY, true);
+          renderZone('prep', part.preparing, PREP, false);
+        }
+
+        function startPageTimers() {
+          if (readyTimer) {
+            clearInterval(readyTimer);
+          }
+          if (prepTimer) {
+            clearInterval(prepTimer);
+          }
+          readyTimer = setInterval(function () {
+            var part = partition(currentRows);
+            var per = READY.cols * READY.rows;
+            var pages = Math.max(1, Math.ceil(part.ready.length / per));
+            if (pages > 1) {
+              readyPage = (readyPage + 1) % pages;
+              renderZone('ready', part.ready, READY, true);
+            }
+          }, PAGE_MS);
+          prepTimer = setInterval(function () {
+            var part = partition(currentRows);
+            var per = PREP.cols * PREP.rows;
+            var pages = Math.max(1, Math.ceil(part.preparing.length / per));
+            if (pages > 1) {
+              prepPage = (prepPage + 1) % pages;
+              renderZone('prep', part.preparing, PREP, false);
+            }
+          }, PAGE_MS);
+        }
+
+        function innerResult(isSuccess, information) {
+          return JSON.stringify({ isSuccess: isSuccess, information: information });
+        }
+
+        function buildResponse(store, isSuccess, information) {
+          var inner = innerResult(isSuccess, information);
+          return {
+            merchant_id: store.merchant_id,
+            account: store.account,
+            isOK: true,
+            information: inner,
+            reslut: {
+              CallingNumberMasterResponse: {
+                result: inner,
+                statusCode: '200',
+              },
+            },
+            resultMd5: 'demo-md5-placeholder',
+            reesultMd5_ServerSignature: 'DEMO-NO-SIGNATURE',
+            isEncrypted: false,
+          };
+        }
+
+        function validateRequestBody(body) {
+          if (!body || typeof body !== 'object') {
+            return { error: MSG.format };
+          }
+          var ssd = body.serviceSpecialData_Json;
+          if (!ssd || typeof ssd !== 'object') {
+            return { error: MSG.format };
+          }
+          if (typeof ssd.target !== 'string' || !ssd.target) {
+            return { error: MSG.format };
+          }
+          if (!ssd.data || typeof ssd.data !== 'object') {
+            return { error: MSG.format };
+          }
+          if (!Array.isArray(ssd.data.number_content)) {
+            return { error: MSG.format };
+          }
+          var nc = ssd.data.number_content;
+          for (var i = 0; i < nc.length; i += 1) {
+            var row = nc[i];
+            if (!row || typeof row !== 'object') {
+              return { error: MSG.format };
+            }
+            if (typeof row.source_type !== 'string' || typeof row.number !== 'string') {
+              return { error: MSG.format };
+            }
+            if (!VALID_TYPES[row.source_type]) {
+              return { error: MSG.format };
+            }
+          }
+          return { ok: true, target: ssd.target, numberContent: nc };
+        }
+
+        function processPush(body) {
+          if (offlineCb && offlineCb.checked) {
+            return buildResponse(boundStore, false, MSG.offline);
+          }
+          var v = validateRequestBody(body);
+          if (v.error) {
+            return buildResponse(boundStore, false, v.error);
+          }
+          if (v.target !== boundStore.target) {
+            return buildResponse(boundStore, false, MSG.notFound);
+          }
+          var part = partition(v.numberContent);
+          if (part.invalid && v.numberContent.length > 0) {
+            return buildResponse(boundStore, false, MSG.format);
+          }
+          currentRows = v.numberContent.map(function (r) {
+            return { source_type: r.source_type, number: r.number };
+          });
+          readyPage = 0;
+          renderBoard();
+          return buildResponse(boundStore, true, MSG.ok);
+        }
+
+        function parseInnerResult(res) {
+          var innerSuccess = false;
+          var innerMsg = '';
+          try {
+            if (res && typeof res.information === 'string') {
+              var parsed = JSON.parse(res.information);
+              innerSuccess = parsed.isSuccess === true;
+              innerMsg = typeof parsed.information === 'string' ? parsed.information : '';
+            }
+          } catch (e) {
+            innerMsg = MSG.format;
+          }
+          return { innerSuccess: innerSuccess, innerMsg: innerMsg };
+        }
+
+        function renderResponseUi(res) {
+          if (!responseOut) {
+            return;
+          }
+          responseOut.textContent = JSON.stringify(res, null, 2);
+          if (!responseSummary) {
+            return;
+          }
+          var inner = parseInnerResult(res);
+          var isOk = res && res.isOK === true;
+          var badgeClass = inner.innerSuccess ? 'ok' : 'fail';
+          var badgeLabel = inner.innerSuccess ? '成功' : '失敗';
+          responseSummary.innerHTML =
+            '<span class="rcv-res-badge ' +
+            badgeClass +
+            '">' +
+            badgeLabel +
+            '</span>' +
+            '<span class="rcv-res-line">isOK: ' +
+            isOk +
+            ' · isSuccess: ' +
+            inner.innerSuccess +
+            ' · ' +
+            inner.innerMsg +
+            '</span>';
+        }
+
+        function pushFromObject(obj) {
+          var res = processPush(obj);
+          renderResponseUi(res);
+          return res;
+        }
+
+        function currentNumberContent() {
+          return currentRows.map(function (r) {
+            return { source_type: r.source_type, number: r.number };
+          });
+        }
+
+        function wrapPayload(numberContent) {
+          return {
+            isEncrypt: false,
+            serviceSpecialData_Json: {
+              target: boundStore.target,
+              data: {
+                number_content: numberContent,
+                newsTicker_content: [],
+                newsTickerSpeed: 0,
+              },
+            },
+            merchant_id: boundStore.merchant_id,
+            account: boundStore.account,
+            timeStmp: '2026-10-02-12-00-00:0000',
+            serviceSpecialData_Json_Md5Hash: 'demo',
+            signature: 'DEMO-NO-SIGNATURE',
+          };
+        }
+
+        function fakeCheckout() {
+          nextSeq += 1;
+          var num = String(nextSeq);
+          var rows = currentNumberContent();
+          rows.push({ source_type: 'From_Store_Preparing', number: num });
+          var req = wrapPayload(rows);
+          if (requestTa) {
+            requestTa.value = JSON.stringify(req, null, 2);
+          }
+          pushFromObject(req);
+        }
+
+        function fakeComplete() {
+          var rows = currentNumberContent();
+          var oldest = null;
+          var oldestTs = Infinity;
+          for (var i = 0; i < rows.length; i += 1) {
+            if (rows[i].source_type.indexOf('_Preparing') === -1) {
+              continue;
+            }
+            var parsed = parseSourceType(rows[i].source_type);
+            if (!parsed) {
+              continue;
+            }
+            var id = itemId(parsed.sourceKey, rows[i].number);
+            var ts = metaById[id] ? metaById[id].firstSeen : i;
+            if (ts < oldestTs) {
+              oldestTs = ts;
+              oldest = rows[i];
+            }
+          }
+          if (!oldest) {
+            return;
+          }
+          var newRows = [];
+          var moved = false;
+          for (var j = 0; j < rows.length; j += 1) {
+            var r = rows[j];
+            if (
+              !moved &&
+              r.source_type === oldest.source_type &&
+              r.number === oldest.number
+            ) {
+              var p = parseSourceType(r.source_type);
+              var okPrefix = 'From_Store_';
+              for (var di = 0; di < SOURCE_DEFS.length; di += 1) {
+                if (SOURCE_DEFS[di].key === p.sourceKey) {
+                  okPrefix = SOURCE_DEFS[di].prefix;
+                  break;
+                }
+              }
+              newRows.push({ source_type: okPrefix + 'OK', number: r.number });
+              moved = true;
+            } else {
+              newRows.push(r);
+            }
+          }
+          var req = wrapPayload(newRows);
+          if (requestTa) {
+            requestTa.value = JSON.stringify(req, null, 2);
+          }
+          pushFromObject(req);
+        }
+
+        function clearAll() {
+          var req = wrapPayload([]);
+          if (requestTa) {
+            requestTa.value = JSON.stringify(req, null, 2);
+          }
+          pushFromObject(req);
+        }
+
+        function initDemoPanel() {
+          if (!demoMode) {
+            return;
+          }
+          demoHandle.hidden = false;
+          demoPanel.hidden = false;
+          demoPanel.classList.add('open');
+
+          for (var i = 0; i < STORES.length; i += 1) {
+            var opt = document.createElement('option');
+            opt.value = STORES[i].id;
+            opt.textContent = STORES[i].name + ' (' + STORES[i].target + ')';
+            if (STORES[i].id === boundStore.id) {
+              opt.selected = true;
+            }
+            storeSelect.appendChild(opt);
+          }
+
+          requestTa.value = JSON.stringify(SPEC_EXAMPLE_REQUEST, null, 2);
+
+          demoHandle.addEventListener('click', function () {
+            demoPanel.classList.toggle('open');
+          });
+
+          storeSelect.addEventListener('change', function () {
+            boundStore = findStore(storeSelect.value);
+            storeId = boundStore.id;
+            updateStoreLabel();
+          });
+
+          document.getElementById('rcv-btn-send').addEventListener('click', function () {
+            try {
+              var body = JSON.parse(requestTa.value);
+              pushFromObject(body);
+            } catch (e) {
+              renderResponseUi(buildResponse(boundStore, false, MSG.format));
+            }
+          });
+
+          document.getElementById('rcv-btn-checkout').addEventListener('click', fakeCheckout);
+          document.getElementById('rcv-btn-complete').addEventListener('click', fakeComplete);
+          document.getElementById('rcv-btn-clear').addEventListener('click', clearAll);
+        }
+
+        window.receiverDemo = {
+          processPush: processPush,
+          pushFromObject: pushFromObject,
+          setStore: function (id) {
+            boundStore = findStore(id);
+            updateStoreLabel();
+          },
+          getBoundStore: function () {
+            return boundStore;
+          },
+          fakeCheckout: fakeCheckout,
+          fakeComplete: fakeComplete,
+          clearAll: clearAll,
+          setOffline: function (v) {
+            if (offlineCb) {
+              offlineCb.checked = v;
+            }
+          },
+          wrapPayload: wrapPayload,
+          MSG: MSG,
+        };
+
+        buildShell();
+        applyScale();
+        window.addEventListener('resize', applyScale);
+        document.getElementById('rcv-clock').textContent = formatClock();
+        clockTimer = setInterval(function () {
+          var c = document.getElementById('rcv-clock');
+          if (c) {
+            c.textContent = formatClock();
+          }
+        }, 10000);
+        startPageTimers();
+        initDemoPanel();
+        renderBoard();
+      })();
+    </script>
+  </body>
+</html>
