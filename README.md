@@ -2,6 +2,16 @@
 
 靜態網站，供門市 STB／大螢幕展示 **迷客夏** 雙區叫號：左（或上）**可取餐**、右（或下）**準備中**。資料來源標籤（現場／迷點／熊貓／Uber／UDD）、分區獨立 6 秒換頁、新可取餐全螢幕提示與提示音（每批最多 3 響）等行為與內部規格一致。
 
+## 文件頁（GitHub Pages）
+
+| 頁面 | 網址 |
+|------|------|
+| API 討論規格 | https://ultronservice.github.io/milksha-demo/spec/ |
+| 迷客夏簽認確認書 | https://ultronservice.github.io/milksha-demo/confirm/ |
+| APK 修改規格 v0.3（外包） | https://ultronservice.github.io/milksha-demo/vendor-spec/ |
+| 要問達鈦的問題 | https://ultronservice.github.io/milksha-demo/datai-questions/ |
+| 接收端展示 | https://ultronservice.github.io/milksha-demo/receiver-demo/ |
+
 ## 正式網址
 
 <https://ultronservice.github.io/milksha-demo/>

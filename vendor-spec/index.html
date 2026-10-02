@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APK 修改規格 v0.3（迷客夏・新方案）— 給外包</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --border: #d8d8d8;
+      --bg: #fafafa;
+      --card: #fff;
+      --accent: #2d5a3d;
+      --warn: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .wrap { max-width: 52rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    header { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.25rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem; line-height: 1.3; }
+    .meta { font-size: 0.9rem; color: var(--muted); }
+    .doc-nav { font-size: 0.9rem; margin: 0.75rem 0 0; padding: 0.65rem 0.85rem; background: #fff; border: 1px solid var(--border); border-radius: 6px; }
+    .doc-nav a { color: var(--accent); }
+    h2 { font-size: 1.2rem; margin: 2rem 0 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border); color: var(--accent); }
+    h2:first-of-type { border-top: none; margin-top: 0; }
+    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    p, li { margin: 0.4rem 0; }
+    ul, ol { padding-left: 1.35rem; }
+    .callout { background: #fffbeb; border-left: 4px solid #d97706; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 4px; }
+    .callout-warn { background: #fee2e2; border-left-color: var(--warn); }
+    .diagram { margin: 1rem 0; padding: 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow-x: auto; }
+    .diagram figcaption { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin: 0 0 0.5rem; }
+    .diagram svg { display: block; max-width: 100%; height: auto; min-width: 280px; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0.75rem 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--card); min-width: 480px; }
+    th, td { border: 1px solid var(--border); padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
+    th { background: #eef3ef; font-weight: 600; }
+    .tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; background: #fef3c7; color: #92400e; }
+    .reply-box { background: #f0f7ff; border: 2px solid #2563eb; border-radius: 8px; padding: 1rem 1.15rem; margin: 1.5rem 0; }
+    .reply-box h2 { border: none; margin-top: 0; padding-top: 0; color: #1e40af; }
+    .blank { min-height: 2.5rem; background: #f5f5f5; border-radius: 4px; margin-top: 0.35rem; }
+    footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+    @media (max-width: 768px) {
+      body { font-size: 17px; }
+      h1 { font-size: 1.75rem; }
+      h2 { font-size: 1.35rem; }
+      table { font-size: 16px; min-width: 520px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ultron 機上盒 APK 修改規格 v0.3（迷客夏・新方案）</h1>
+      <p class="meta"><strong>對象：</strong>外包 Android 廠商 · <strong>基準：</strong>v0.2 改版 · <strong>定案日：</strong>2026-10-02 · <strong>App：</strong>com.ultron.player</p>
+      <nav class="doc-nav" aria-label="相關文件">
+        <strong>文件索引：</strong>
+        <a href="../spec/">API 討論規格</a> ·
+        <a href="../confirm/">迷客夏簽認確認書</a> ·
+        <a href="../datai-questions/">要問達鈦的問題</a>
+      </nav>
+    </header>
+
+    <section id="summary">
+      <h2>0. 新方案白話摘要（2026-10-02 定案）</h2>
+      <p>試點改為：<strong>POS 在店內用一般 HTTP（不加密）</strong>把「整份叫號名單」送到<strong>該店叫號機上盒</strong>；上盒存好本機後依迷客夏格式<strong>回覆 POS</strong>，並把名單<strong>整份交給看板網頁</strong>；上盒再<strong>用加密連線上傳雲端</strong>（雲端細節由奧創後端負責，不在本頁展開）。</p>
+      <ul>
+        <li>一店一螢幕、一上盒；路由器固定 IP 尾碼 <strong>.223</strong>（例：10.3.X.223）。</li>
+        <li>新店內 API：<strong>2757 埠</strong>（可設定）；舊 <strong>2756</strong> 聯發逐筆格式<strong>保留不動</strong>，以免影響其他客戶。</li>
+        <li>營業日結束：<strong>台灣時間 03:00</strong> 全門市清空（v0.2 若寫 04:00 以本版為準）。</li>
+        <li>不做歷史區；號碼何時從畫面移除等規則<strong>待負責人決定</strong>，實作須可調整。</li>
+      </ul>
+      <figure class="diagram">
+        <figcaption>資料流（店內＋雲端，外包需實作粗框部分）</figcaption>
+        <svg viewBox="0 0 560 130" role="img" aria-label="POS 到上盒到螢幕與雲端">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2d5a3d"/></marker>
+          </defs>
+          <rect x="10" y="40" width="90" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="55" y="67" text-anchor="middle" font-size="11">店內 POS</text>
+          <line x1="100" y1="62" x2="145" y2="62" stroke="#2d5a3d" stroke-width="2" marker-end="url(#arr)"/>
+          <text x="122" y="54" text-anchor="middle" font-size="8">HTTP 整份名單</text>
+          <rect x="147" y="28" width="110" height="68" rx="4" fill="#eef3ef" stroke="#2d5a3d" stroke-width="2"/>
+          <text x="202" y="52" text-anchor="middle" font-size="11" font-weight="600">叫號機上盒 App</text>
+          <text x="202" y="68" text-anchor="middle" font-size="8">存本機→回 POS</text>
+          <text x="202" y="82" text-anchor="middle" font-size="8">→ 看板網頁</text>
+          <line x1="257" y1="55" x2="300" y2="55" stroke="#2d5a3d" stroke-width="2" marker-end="url(#arr)"/>
+          <rect x="302" y="40" width="88" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="346" y="67" text-anchor="middle" font-size="11">叫號螢幕</text>
+          <path d="M 55 88 L 55 108 L 202 108 L 202 96" fill="none" stroke="#666" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="128" y="104" font-size="8">回覆（迷客夏格式）</text>
+          <rect x="400" y="35" width="140" height="54" rx="4" fill="#f5f5f5" stroke="#999" stroke-dasharray="4 2"/>
+          <text x="470" y="58" text-anchor="middle" font-size="10">奧創雲端</text>
+          <text x="470" y="74" text-anchor="middle" font-size="8">HTTPS 補傳／驗簽紀錄</text>
+          <line x1="257" y1="78" x2="398" y2="62" stroke="#999" stroke-width="1.5" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+        </svg>
+      </figure>
+    </section>
+
+    <section id="scope">
+      <h2>1. 背景與範圍（相對 v0.2）</h2>
+      <p>迷客夏松山試點：POS 送整份名單＋杯貼掃描叫號（選項 B）仍成立。v0.3 <strong>新增</strong> HTTP 接收（2757）、迷客夏 Request／Response 回覆、本機持久化與雲端補傳；<strong>關閉</strong>轉送 .220–.230 其他上盒。</p>
+      <p><strong>廠商負責：</strong>常駐背景服務、HTTP 接收與健康檢查、本機儲存、回 POS、整份名單交網頁、掃描槍、2756 舊埠相容、修 CPU 空轉、Release 安全清理、設定項。</p>
+      <p><strong>不在範圍：</strong>叫號網頁版面／音效（奧創前端）；達鈦 POS 程式；路由器設定；雲端後台程式（奧創後端，但上盒須依接口上傳）。</p>
+    </section>
+
+    <section id="current">
+      <h2>2. 現況（v186，摘要）</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>項目</th><th>現在怎樣</th><th>主要問題</th></tr></thead>
+          <tbody>
+            <tr><td>接收方式</td><td>TCP 2756，一次一張單 JSON，無回覆</td><td>與迷客夏「整份名單＋簽章＋回覆」不同</td></tr>
+            <tr><td>生命週期</td><td>在 MainActivity 裡開 Server，非前景服務</td><td>易被系統回收；開機不穩</td></tr>
+            <tr><td>讀取</td><td>用「有沒有資料可讀」空轉輪詢</td><td>每條連線可能吃滿一顆 CPU</td></tr>
+            <tr><td>轉送</td><td>收到後轉送同網段 .220–.230</td><td>迷客夏一店一上盒，應關閉</td></tr>
+            <tr><td>網頁</td><td>逐筆呼叫看板，非整份名單</td><td>新方案要「一有變動就整份交給網頁」</td></tr>
+            <tr><td>斷電</td><td>畫面狀態不保留</td><td>新方案要求本機持久化、重開合併</td></tr>
+            <tr><td>正式版</td><td>10053／v186 曾指向測試網域；除錯上傳 Firestore</td><td>須一併修正（見第 8 節）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="changes">
+      <h2>3. 修改項目（現況 → 目標 → 驗收）</h2>
+
+      <h3>3.1 店內 HTTP 接收（2757）</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>僅 TCP 2756 逐筆</td><td>新增可設定的 <strong>2757</strong>；接受 <strong>POST 整份名單</strong>（迷客夏 Request 包裝）；提供 <strong>GET 健康檢查</strong>供達鈦與現場確認上盒在線</td><td>用測試工具對 10.3.X.223:2757 送整份名單，收到符合規格的 Response；GET 健康檢查回成功；2756 舊客戶連線仍可用</td></tr>
+            <tr><td>店內無 TLS</td><td>店內 HTTP 明文；上傳雲端才 HTTPS（上傳模組由奧創提供接口規格）</td><td>抓包確認店內為 HTTP；雲端連線為加密（與後端聯測）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.2 回覆 POS 與本機儲存</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>不回覆 POS</td><td>依《叫號機接收端 API 串接規格》回覆（含 isOK、information、內層 isSuccess 等拼字不可改）</td><td>比對 Response 欄位與範例；成功／格式錯誤／儲存失敗等情境各測一次</td></tr>
+            <tr><td>無本機佇列</td><td>每筆先寫入本機儲存，<strong>存成功才回成功</strong>；存失敗回失敗讓 POS 重送；斷電重開不可丟</td><td>送名單後立刻斷電重開，資料仍在；模擬寫入失敗時 POS 收到失敗</td></tr>
+            <tr><td>—</td><td><span class="tag">待確認</span> 規格裡「目標叫號機尚未連線」等訊息，在新方案（POS 直連上盒）下語意需與迷客夏對齊後調整回覆文案</td><td>定案後更新測試案例</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.3 簽章與防冒送</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>無驗簽</td><td>店內<strong>先不擋單</strong>；POS 簽章原樣隨上傳雲端，雲端只紀錄驗簽結果</td><td>送錯簽名仍可在店內顯示；雲端後台可查到驗簽失敗紀錄（與後端聯測）</td></tr>
+            <tr><td>—</td><td>驗簽金鑰<strong>不得</strong>寫進 App</td><td>反編譯／設定檔檢查無金鑰明文</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.4 斷網、重開、狀態合併</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>斷外網畫面可能空白</td><td>外網斷時<strong>畫面照常</strong>顯示；資料排隊存上盒，恢復後依流水號補傳；狀態<strong>只往前走</strong>，舊資料不可蓋掉新狀態</td><td>拔外網線操作 30 分鐘，客人畫面仍有號碼；恢復後雲端與本機一致且無狀態倒退</td></tr>
+            <tr><td>重開空白</td><td>重開先顯示本機上次名單，再與雲端同步合併（只往前走）；過程<strong>不顯示「更新中」</strong>；若仍斷網就顯示上次號碼</td><td>重開前後錄影；無「更新中」字樣；合併後號碼正確</td></tr>
+            <tr><td>重連可能補響</td><td>重連或整份重送<strong>不補響、不補語音</strong>；只有<strong>新出現</strong>的可取餐才響</td><td>重送整份名單後聲音次數不增加；新號碼可取餐才響</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.5 畫面與連線提示</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>可能顯示連線問題</td><td><strong>客人看的畫面</strong>不得出現「連線中斷」類提示；上盒定時向雲端報平安，後台顯示離線與最後連線時間</td><td>目視客人畫面；後台可見離線標記（與後端聯測）</td></tr>
+            <tr><td>04:00 或未統一</td><td>全門市 <strong>03:00（台灣時間）</strong> 清空；接收紀錄保留 <strong>7 天</strong> 後自動刪</td><td>調整測試時鐘或設定項驗證；紀錄第 8 天自動清除</td></tr>
+            <tr><td>可能有歷史區</td><td><strong>不做歷史區</strong>；可取餐何時移除等 <span class="tag">待負責人決定</span>（規格書：可取餐留到掃掉／空名單不清／準備中離開 60 秒等），須做成可設定</td><td>定案後跑對應 QA 案例</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.6 常駐服務、CPU、網頁整份名單</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>現況</th><th>要改成怎樣</th><th>怎麼驗收</th></tr></thead>
+          <tbody>
+            <tr><td>Activity 綁 Socket；CPU 空轉</td><td>前景服務常駐、開機自啟；<strong>修掉</strong>每連線空轉占滿一核心；阻塞式讀取</td><td>閒置 10 分鐘 CPU 平均 &lt; 1%；force-stop 後 60 秒內恢復；dumpsys 顯示前景服務</td></tr>
+            <tr><td>逐筆 getOrderStatus</td><td>名單<strong>任一變動</strong>即把<strong>整份</strong>交給看板網頁（接口由奧創前端與廠商對接，須低延遲）</td><td>測試頁或正式網頁收到整份快照；POS 送全量後一次更新</td></tr>
+            <tr><td>轉送 .220–.230</td><td><strong>關閉</strong>迷客夏路徑下的轉送（2756 行為可保留給其他客戶但須可關）</td><td>監聽同網段其他 IP，確認無轉送封包</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.7 掃描槍（沿用 v0.2，略述）</h3>
+      <p>杯貼「取餐號,訂單類型」：掃一次→可取餐（要響）；再掃→移除。斷 POS 時掃描仍可用；細節與 v0.2 §3.4–3.6 相同，但合併規則須配合「整份名單＋只往前走」。</p>
+
+      <h3>3.8 設定</h3>
+      <ul>
+        <li>HTTP 埠（預設 2757）、2756 開關、Store／target、營業日結束時間（預設 03:00）、是否啟用舊轉送等須可遠端或本機設定。</li>
+        <li>IP 尾碼應為 .223：非 .223 時可告警（維持 v0.2 橫幅邏輯），但<strong>不阻擋</strong>客人看板。</li>
+      </ul>
+    </section>
+
+    <section id="qa-summary">
+      <h2>4. 驗收清單摘要（對齊 QA v0.2）</h2>
+      <p>完整清單共 <strong>186</strong> 項，其中 <strong>107</strong> 項必過（P0）。新方案下約<strong>一半測項須改寫</strong>（例如 TCP 2756 逐筆、fullTicketStatus、ScanReport 回 POS 等），改寫前請以本 v0.3 為準。</p>
+      <div class="callout"><strong>必過重點（摘要）：</strong></div>
+      <ul>
+        <li><strong>服務與穩定：</strong>開機 60 秒內可收單；被殺後恢復；無 CPU 空轉；8 小時長測記憶體與 CPU 不超標（§6.5）。</li>
+        <li><strong>HTTP 2757：</strong>整份名單 POST、健康檢查 GET、Response 格式與儲存後才成功。</li>
+        <li><strong>斷網／重開：</strong>外網斷畫面不空；重開不丟單；不補響；客人畫面無斷線字樣。</li>
+        <li><strong>掃描：</strong>焦點、連掃、非法碼、Back 不可關 App、2 小時不休眠等（G 系列 P0）。</li>
+        <li><strong>安全：</strong>Release 不可除錯、正式勿指向測試伺服器、勿把訂單原文上傳除錯 log（見第 8 節）。</li>
+        <li><strong>升級：</strong>簽章金鑰問題未解前為<strong>阻擋項</strong>（I-05／I-12）。</li>
+        <li><strong>營業日：</strong>03:00 清空（C 系列）；空名單／移除規則待 Q-46 定案後重測。</li>
+      </ul>
+      <p>詳細案例編號見 QA 草稿「§3.1 規格書對照表」；HTTP 相關請新增／改寫對應編號並標 v0.3。</p>
+    </section>
+
+    <section id="datai">
+      <h2>5. 待達鈦／迷客夏確認（影響實作）</h2>
+      <ul>
+        <li>POS 能否用「所在網段、尾碼改 223」自動算出上盒位址（500 店只設一次）。</li>
+        <li>店內 HTTP 是否可接受；2757 與路徑能否全國統一設定。</li>
+        <li>沒收到回覆是否重送、間隔與次數；上盒重開 1–2 分鐘送不到時行為；是否支援第二備援位址。</li>
+      </ul>
+      <p>問題清單見 <a href="../datai-questions/">要問達鈦的問題</a>。</p>
+    </section>
+
+    <section id="extras">
+      <h2>6. 附帶修正（與叫號一併交付）</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>問題</th><th>要求</th><th>驗收</th></tr></thead>
+          <tbody>
+            <tr><td>正式版 10053 等指向 ultrontest.ddns.net</td><td>product release 指向正式 API 主機</td><td>反編譯 BuildConfig 或連線實測</td></tr>
+            <tr><td>v186 亦指向測試伺服器</td><td>升級後 APK 指向正確環境</td><td>同上</td></tr>
+            <tr><td>Release 仍開除錯、上傳 LianFaServerLog</td><td>關閉除錯模式；高頻原始訂單勿寫 Firestore（或改為可關閉、抽樣）</td><td>Release 包不可被 chrome inspect；Firestore 無大量 receiveData</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="delivery">
+      <h2>7. 交付與實機測試（沿用 v0.2 §6）</h2>
+      <p>仍須完成五個核心情境（重啟、斷線重連、未知號、正常流程、尖峰）之<strong>改寫版</strong>（改走 HTTP 整份名單）；交付 APK、變更說明、設定說明、規則單元測試報告。</p>
+    </section>
+
+    <section class="reply-box" id="vendor-reply">
+      <h2>8. 請外包回覆（必填）</h2>
+      <ol>
+        <li><strong>工期</strong>（工作天）<div class="blank" aria-label="工期空白"></div></li>
+        <li><strong>報價</strong><div class="blank" aria-label="報價空白"></div></li>
+        <li><strong>能否新增 HTTP 接收（2757）並常駐背景？</strong> 若否，請說明限制<div class="blank"></div></li>
+        <li><strong>以前簽署 v186 的簽章金鑰是否還在？</strong> 能否覆蓋升級？<div class="blank"></div></li>
+        <li><strong>如何把整份名單即時交給 WebView 網頁？</strong>（建議接口與風險）<div class="blank"></div></li>
+      </ol>
+    </section>
+
+    <footer>
+      APK 修改規格 v0.3 · 迷客夏新方案 · 2026-10-02 · 靜態文件頁
+    </footer>
+  </div>
+</body>
+</html>

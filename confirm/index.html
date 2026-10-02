@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏叫號機接收端串接確認書 v1.0.1 草案</title>
+  <title>迷客夏叫號機接收端串接確認書 v1.0.2 草案</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -55,6 +55,14 @@
       background: #f3f6f4;
       border-left: 4px solid var(--accent);
     }
+    .doc-nav {
+      font-size: 9pt;
+      margin-top: 0.65rem;
+      padding: 0.45rem 0.6rem;
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+    .doc-nav a { color: var(--accent); }
     h2 {
       font-size: 1.1rem;
       margin: 1.5rem 0 0.6rem;
@@ -198,6 +206,7 @@
         gap: 0.5rem;
       }
       .preamble { font-size: 16px; }
+      .doc-nav { font-size: 15px; }
       .table-scroll {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -251,26 +260,50 @@
     <header class="doc-head">
       <h1>迷客夏叫號機接收端串接確認書</h1>
       <div class="meta-grid">
-        <div><strong>版本</strong> v1.0.1 草案</div>
+        <div><strong>版本</strong> v1.0.2 草案</div>
         <div><strong>日期</strong> 2026-10-02</div>
         <div><strong>狀態</strong> 草案</div>
       </div>
       <p class="preamble">
-        本確認書供迷客夏資訊部與奧創對齊試點叫號<strong>接收端</strong>之合作範圍、串接規格與驗收方式。
+        本確認書供迷客夏資訊部與奧創對齊試點叫號之合作範圍、串接規格與驗收方式。
         技術欄位以迷客夏提供之《叫號機接收端 API 串接規格》及線上討論文件為準（欄位名稱與拼字不可自行修改）。
-        後端服務於本文統稱<strong>奧創接收端</strong>。
+        試點資料流：<strong>POS 在店內網路</strong>把整份名單送到<strong>該店叫號機上盒</strong>，上盒更新螢幕並依規格回覆 POS；奧創另維運雲端同步與後台（細節不於本頁展開）。
       </p>
+      <nav class="doc-nav" aria-label="相關文件">
+        <strong>文件索引：</strong>
+        <a href="../spec/">API 討論規格</a> ·
+        <a href="../vendor-spec/">APK 規格 v0.3</a> ·
+        <a href="../datai-questions/">要問達鈦的問題</a>
+      </nav>
     </header>
 
     <section id="sec-1">
       <h2>1. 合作範圍與分工</h2>
       <ul>
         <li><strong>迷客夏</strong>：資訊窗口（IT 聯絡人 Tammy）；協調達鈦 POS 端設定與試點門市；與奧創直接對接整合事宜。</li>
-        <li><strong>達鈦（POS 送端）</strong>：試點時<strong>僅更換 endpoint URL</strong> 至奧創提供之接收端位址；Request／Response JSON 結構與現行相同，不變更 payload 格式。</li>
-        <li><strong>奧創</strong>：建置並維運<strong>奧創接收端</strong>（接收 POS 外送之叫號名單、依規格回覆處理結果）；提供門市叫號大螢幕顯示（含現場機上盒與畫面應用）。</li>
+        <li><strong>達鈦（POS 送端）</strong>：試點時把叫號資料送到<strong>各店叫號機上盒</strong>（店內網路，位址規則例：同網段尾碼 <strong>.223</strong>、埠 <strong>2757</strong>，細節待達鈦確認）；Request／Response JSON 結構與現行迷客夏規格相同，不自行改欄位名稱。</li>
+        <li><strong>奧創</strong>：提供門市叫號機上盒 App 與大螢幕畫面；上盒接收 POS 名單、依規格回覆、更新顯示，並負責營運所需之雲端同步與後台（不於本頁描述技術細節）。</li>
       </ul>
-      <p><strong>2026-10-01 會議決議（試點接收端）：</strong>試點改由奧創自建 API 服務作為叫號接收端，承接 POS 外送；不再使用迷客夏現行接收 URL。外送 JSON 與達鈦／迷客夏現行相同；顯示與回覆仍依《叫號機接收端 API 串接規格》。本試點範圍<strong>不包含</strong>規格未定義之掃碼寫回 POS 或額外欄位。</p>
-      <p>迷客夏 Tammy（2026-09 對話）已確認：現況全達鈦門市 POS 打迷客夏 URL；試點目標為 POS 直接呼叫奧創接收端；結帳後外送準備中、店員於叫號控制屏完成或掃碼後再由 POS 外送可取餐狀態。</p>
+      <p><strong>2026-10-02 定案（試點）：</strong>POS → 店內上盒（HTTP 整份名單）→ 螢幕；上盒依《叫號機接收端 API 串接規格》回覆 POS。一店一螢幕、一上盒；舊轉送其他上盒功能關閉。本試點範圍<strong>不包含</strong>規格未定義之掃碼寫回 POS 或額外欄位。</p>
+      <figure class="diagram">
+        <figcaption>店內串接（簽認用）</figcaption>
+        <svg viewBox="0 0 520 110" role="img" aria-label="POS 到上盒到螢幕">
+          <defs><marker id="cf-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#1e3a2f"/></marker></defs>
+          <rect x="12" y="32" width="95" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="59" y="59" text-anchor="middle" font-size="12">門市 POS</text>
+          <line x1="107" y1="54" x2="155" y2="54" stroke="#1e3a2f" stroke-width="2" marker-end="url(#cf-arr)"/>
+          <text x="131" y="46" text-anchor="middle" font-size="8">店內 HTTP 整份名單</text>
+          <rect x="157" y="24" width="118" height="60" rx="4" fill="#eef3ef" stroke="#1e3a2f"/>
+          <text x="216" y="48" text-anchor="middle" font-size="11" font-weight="600">叫號機上盒</text>
+          <text x="216" y="64" text-anchor="middle" font-size="8">存檔後回覆 POS</text>
+          <line x1="275" y1="48" x2="318" y2="48" stroke="#1e3a2f" stroke-width="2" marker-end="url(#cf-arr)"/>
+          <rect x="320" y="32" width="95" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="367" y="59" text-anchor="middle" font-size="12">叫號螢幕</text>
+          <path d="M 59 80 L 59 98 L 216 98 L 216 84" fill="none" stroke="#666" stroke-width="1.5" marker-end="url(#cf-arr)"/>
+          <text x="137" y="94" font-size="8">Response（規格格式）</text>
+        </svg>
+      </figure>
+      <p>迷客夏 Tammy（2026-09 對話）已確認：現況全達鈦門市 POS 打迷客夏 URL；試點改由 POS 改送奧創端；結帳後外送準備中、店員完成或掃碼後再外送可取餐。v1.0.2 補充：試點以<strong>店內上盒</strong>為第一跳，非直接打雲端 URL。</p>
       <div class="confirm-row" aria-label="第 1 節確認">
         <div class="label">本節確認</div>
         <div class="confirm-options">
@@ -284,14 +317,14 @@
 
     <section id="sec-2">
       <h2>2. 串接規格</h2>
-      <p>串接內容依《叫號機接收端 API 串接規格》；完整欄位、範例與十種 <code>source_type</code> 說明<strong>以原文件為準</strong>。下列為雙方確認時需共同遵守之摘要（與討論文件一致）。</p>
+      <p>串接內容依《叫號機接收端 API 串接規格》；試點 v1.0.2 為 POS 在<strong>店內網路</strong>送整份名單至叫號機上盒，上盒依同規格回覆。完整欄位、範例與十種 <code>source_type</code> 說明<strong>以原文件為準</strong>。下列為雙方確認時需共同遵守之摘要。</p>
 
-      <h3>2.1 Request（POS → 奧創接收端）</h3>
+      <h3>2.1 Request（POS → 叫號機上盒）</h3>
       <p>主要欄位：<code>isEncrypt</code>、<code>serviceSpecialData_Json</code>（含 <code>target</code>、<code>data.number_content</code>、跑馬燈相關欄位）、<code>merchant_id</code>、<code>account</code>、<code>timeStmp</code>、<code>serviceSpecialData_Json_Md5Hash</code>、<code>signature</code>。</p>
       <p><code>number_content</code> 每筆含 <code>source_type</code>（完整字串比對）、<code>number</code>（<strong>必須以字串處理</strong>，不可轉整數）。</p>
       <p class="note-box"><strong>拼字特殊、不可修改：</strong>Request 之 <code>timeStmp</code>（非 timestamp）。</p>
 
-      <h3>2.2 Response（奧創接收端 → POS）</h3>
+      <h3>2.2 Response（叫號機上盒 → POS）</h3>
       <p>主要欄位：<code>merchant_id</code>、<code>account</code>、<code>isOK</code>、<code>information</code>、<code>reslut</code>（含 <code>CallingNumberMasterResponse.result</code>、<code>statusCode</code>）、<code>resultMd5</code>、<code>reesultMd5_ServerSignature</code>、<code>isEncrypted</code>。</p>
       <p class="note-box"><strong>拼字特殊、不可修改：</strong>Response 之 <code>reslut</code>、<code>reesultMd5_ServerSignature</code>。</p>
 
@@ -327,14 +360,18 @@
 
     <section id="sec-3">
       <h2>3. 顯示規則</h2>
-      <p>奧創接收端每次收到之 <code>number_content</code> 代表該 <code>target</code> 對應螢幕<strong>此刻應顯示的完整名單</strong>（整批覆寫，非單筆追加）。</p>
+      <p>奧創接收端每次收到之 <code>number_content</code> 代表該 <code>target</code> 對應螢幕<strong>此刻應顯示的完整名單</strong>（整批覆寫，非單筆追加）。上盒／螢幕行為如下。</p>
       <ul>
         <li><code>source_type</code> 為 <code>From_Store_Preparing</code>（及規格所列其他 <code>*_Preparing</code>）→ 顯示於<strong>準備中</strong>區塊。</li>
         <li><code>source_type</code> 為 <code>From_Store_OK</code>（及規格所列其他 <code>*_OK</code>）→ 顯示於<strong>可取餐</strong>區塊。</li>
         <li>本批 <code>number_content</code> 中未出現之舊號碼，應自畫面移除。</li>
         <li><code>number_content</code> 為<strong>空陣列</strong> → 清空叫號畫面（準備中與可取餐區塊）。</li>
         <li>每日 <strong>03:00（台灣時間）</strong> 自動清空<strong>所有門市</strong>叫號顯示狀態（營運日切換）。</li>
-        <li><code>newsTicker_content</code>、<code>newsTickerSpeed</code>：POS 仍可依規格外送；<strong>試點叫號大螢幕不顯示跑馬燈</strong>，接收端可忽略或僅留存不呈現（與 Tammy 對話：跑馬燈為可選、非試點必要）。</li>
+        <li><strong>外網中斷</strong>時，客人看到的叫號畫面<strong>照常顯示</strong>最後有效名單；恢復連線後狀態只往前走，不因舊資料覆蓋而倒退。</li>
+        <li><strong>重送整份名單或重新連線</strong>時，不補播提示音／語音；僅<strong>新出現</strong>的可取餐號碼才觸發響鈴（試點行為）。</li>
+        <li><strong>客人畫面</strong>不得顯示「連線中斷」等技術提示；離線監控由奧創後台標示（不於本頁描述）。</li>
+        <li><code>newsTicker_content</code>、<code>newsTickerSpeed</code>：POS 仍可依規格外送；<strong>試點叫號大螢幕不顯示跑馬燈</strong>，上盒可忽略或僅留存不呈現（與 Tammy 對話：跑馬燈為可選、非試點必要）。</li>
+        <li><strong>不做歷史區</strong>；號碼何時自畫面移除（可取餐留到掃掉、空名單是否清空、準備中離開名單 60 秒等）<strong>待迷客夏／負責人確認</strong>，確認前不寫死於本書。</li>
       </ul>
       <div class="confirm-row" aria-label="第 3 節確認">
         <div class="label">本節確認</div>
@@ -371,8 +408,8 @@
         <table>
           <thead><tr><th>項目</th><th>說明</th></tr></thead>
           <tbody>
-            <tr><td>測試環境 URL</td><td><em>待提供</em> — 供 Tammy 或奧創試送、達鈦整合前驗證（與正式環境分離）。</td></tr>
-            <tr><td>正式環境 URL</td><td><em>待提供</em> — 驗收通過後交付達鈦設定；達鈦僅更換 endpoint。</td></tr>
+            <tr><td>店內上盒位址</td><td><em>待與達鈦確認</em> — 例：各店 10.3.X.<strong>223</strong>、埠 <strong>2757</strong>；健康檢查供現場與達鈦確認上盒在線。</td></tr>
+            <tr><td>雲端試送／正式</td><td><em>待提供</em> — 若仍需雲端試送路徑，由奧創另提供（與店內設定分開）。</td></tr>
             <tr><td>試送</td><td>迷客夏 Tammy 可於測試環境試送；開發階段奧創自測呼叫可接受。</td></tr>
             <tr><td>試點門市</td><td><em>待確認</em> — 店編號、target、螢幕數量。</td></tr>
           </tbody>
@@ -380,15 +417,15 @@
       </div>
       <p><strong>切換步驟（摘要）：</strong></p>
       <ol>
-        <li>奧創提供測試 URL → 迷客夏／Tammy 試送 → 完成第 6 節驗收項目。</li>
+        <li>確認店內上盒位址規則與達鈦 POS 設定 → 試點門市試送 → 完成第 6 節驗收項目。</li>
         <li>確認 target／店編與現場螢幕連線正常。</li>
-        <li>奧創提供正式 URL → 迷客夏協調達鈦於試點門市更換 URL。</li>
+        <li>迷客夏協調達鈦於試點門市啟用店內上盒設定（全國共用規則為目標）。</li>
         <li>營運日監看：準備中／可取餐顯示、離線與錯誤回覆是否符合規格。</li>
         <li>必要時可於非尖峰時段回退至原迷客夏 URL（由迷客夏與達鈦執行）。</li>
       </ol>
       <figure class="diagram">
-        <figcaption>試點資料流（上線驗證用）</figcaption>
-        <svg viewBox="0 0 520 100" role="img" aria-label="POS 至奧創接收端至螢幕">
+        <figcaption>試點資料流（上線驗證用，店內第一跳）</figcaption>
+        <svg viewBox="0 0 520 100" role="img" aria-label="POS 至上盒至螢幕">
           <defs>
             <marker id="arrow-flow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
               <path d="M0,0 L8,4 L0,8 Z" fill="#1e3a2f"/>
@@ -397,10 +434,10 @@
           <rect x="8" y="28" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
           <text x="58" y="55" text-anchor="middle" font-size="12">門市 POS</text>
           <line x1="108" y1="50" x2="158" y2="50" stroke="#1e3a2f" stroke-width="2" marker-end="url(#arrow-flow)"/>
-          <text x="133" y="42" text-anchor="middle" font-size="8">外送名單</text>
+          <text x="133" y="42" text-anchor="middle" font-size="8">店內名單</text>
           <rect x="160" y="22" width="120" height="56" rx="4" fill="#eef3ef" stroke="#1e3a2f"/>
-          <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="600">奧創接收端</text>
-          <text x="220" y="64" text-anchor="middle" font-size="8">回覆顯示結果</text>
+          <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="600">叫號機上盒</text>
+          <text x="220" y="64" text-anchor="middle" font-size="8">回覆 POS</text>
           <line x1="280" y1="50" x2="330" y2="50" stroke="#1e3a2f" stroke-width="2" marker-end="url(#arrow-flow)"/>
           <text x="305" y="42" text-anchor="middle" font-size="8">更新畫面</text>
           <rect x="332" y="28" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
@@ -436,7 +473,7 @@
             <tr><td>5. 空陣列可清空畫面</td><td>外送 <code>number_content: []</code>；確認叫號區塊清空。</td><td></td><td></td></tr>
             <tr><td>6. 跑馬燈內容及速度更新</td><td>試送 <code>newsTicker_content</code>／<code>newsTickerSpeed</code>；確認接收端處理符合約定（試點螢幕不顯示跑馬燈）；必要時以 Response 紀錄為準。</td><td></td><td></td></tr>
             <tr><td>7. 找不到目標設備時正確回傳</td><td>使用未註冊之 <code>target</code> 試送；確認內層訊息為「找不到目標叫號機」。</td><td></td><td></td></tr>
-            <tr><td>8. 目標叫號機離線時正確回傳</td><td>模擬螢幕未連線；確認內層訊息為「目標叫號機尚未連線」。</td><td></td><td></td></tr>
+            <tr><td>8. 目標叫號機離線時正確回傳</td><td>依規格試送離線情境；確認 Response 結構正確。<strong>註：</strong>試點改 POS 直連店內上盒後，「尚未連線」語意<strong>待迷客夏確認</strong>是否仍沿用原訊息文字。</td><td></td><td></td></tr>
             <tr><td>9. Response 格式符合既有規格</td><td>比對欄位名稱、型別與 JSON 字串結構（含 <code>reslut</code>、<code>reesultMd5_ServerSignature</code> 拼字）。</td><td></td><td></td></tr>
           </tbody>
         </table>
@@ -455,7 +492,9 @@
     <section id="sec-7">
       <h2>7. 需迷客夏提供之資料</h2>
       <ul>
-        <li><strong>簽章方式</strong>與<strong>測試用憑證</strong>：透過安全管道提供（電子郵件、加密檔或雙方約定之方式），<strong>不於本網頁揭露</strong>。</li>
+        <li><strong>isOK 與 isSuccess 定義</strong>：外層 <code>isOK</code> 與內層 <code>isSuccess</code> 各代表什麼、POS 收到 false 時是否重送（<em>待迷客夏／達鈦確認</em>）。</li>
+        <li><strong>簽章演算法與金鑰發放</strong>：演算法、金鑰交付方式與<strong>測試用憑證</strong>（透過安全管道提供，<strong>不於本網頁揭露</strong>）。</li>
+        <li><strong>店數與每日單量</strong>：試點與全國上線規模、尖峰每店每小時大約幾單（供容量規劃）。</li>
         <li><strong>HTTP 方法</strong>（如 POST／GET）及 Content-Type 等連線細節（若規格未載明）。</li>
         <li><strong>試點門市清單</strong>：店編號、<code>account</code>、<code>target</code>、現場螢幕數量。</li>
         <li><strong>外送頻率、逾時與重試</strong>：POS 呼叫間隔、連線逾時秒數、失敗是否重送及次數上限（<em>待確認</em>）。</li>
@@ -521,6 +560,8 @@
     <section class="changelog" aria-labelledby="changelog-title">
       <h2 id="changelog-title" style="border: none; margin-top: 0;">變更紀錄</h2>
       <dl>
+        <dt>v1.0.2 · 2026-10-02</dt>
+        <dd>納入 10/2 定案：POS 店內送叫號上盒流程與圖、03:00 清空、7 日紀錄、斷網畫面照常、重連不補響、客人畫面不顯示斷線提示；增列待迷客夏確認（isOK／isSuccess、簽章、店數與單量、移除規則）。</dd>
         <dt>v1.0.1 · 2026-10-02</dt>
         <dd>手機版字體放大：小螢幕可讀字級、表格橫向捲動、確認勾選較易點選；桌面與 A4 列印版面不變。</dd>
         <dt>v1.0 · 2026-10-02</dt>
@@ -529,7 +570,7 @@
     </section>
 
     <footer class="doc-foot">
-      迷客夏叫號機接收端串接確認書 · v1.0.1 草案 · 2026-10-02
+      迷客夏叫號機接收端串接確認書 · v1.0.2 草案 · 2026-10-02
     </footer>
   </article>
 </body>
