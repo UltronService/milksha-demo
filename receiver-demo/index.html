@@ -251,6 +251,34 @@
         background: #333;
         color: #fff;
       }
+      .rcv-res-summary {
+        margin: 6px 0 4px;
+        font-size: 13px;
+        line-height: 1.45;
+        font-weight: 700;
+      }
+      .rcv-res-badge {
+        display: inline-block;
+        margin-right: 8px;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        vertical-align: middle;
+      }
+      .rcv-res-badge.ok {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #a3d9a5;
+      }
+      .rcv-res-badge.fail {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f1aeb5;
+      }
+      .rcv-res-line {
+        font-weight: 600;
+        color: #333;
+      }
       .rcv-demo-pre {
         font-family: monospace;
         font-size: 11px;
@@ -300,7 +328,8 @@
         <button type="button" id="rcv-btn-clear">03:00 清空</button>
       </div>
       <label>Response</label>
-      <pre class="rcv-demo-pre" id="rcv-response-out">（尚未推送）</pre>
+      <div class="rcv-res-summary" id="rcv-response-summary">（尚未推送）</div>
+      <pre class="rcv-demo-pre" id="rcv-response-out"></pre>
     </aside>
     <script>
       (function () {
@@ -400,6 +429,7 @@
         var storeSelect = document.getElementById('rcv-store-select');
         var requestTa = document.getElementById('rcv-request-json');
         var responseOut = document.getElementById('rcv-response-out');
+        var responseSummary = document.getElementById('rcv-response-summary');
         var offlineCb = document.getElementById('rcv-offline');
 
         var currentRows = [];
@@ -681,7 +711,13 @@
           }
           var pgEl = document.getElementById('rcv-pg-' + zone);
           if (pgEl) {
-            pgEl.textContent = info.pages > 1 ? info.page + 1 + '/' + info.pages : '';
+            if (info.pages > 1) {
+              pgEl.textContent = info.page + 1 + '/' + info.pages;
+              pgEl.style.display = '';
+            } else {
+              pgEl.textContent = '';
+              pgEl.style.display = 'none';
+            }
           }
           var slots = perPage;
           ensureCards(zone, slots, cfg, isReady);
@@ -833,11 +869,51 @@
           return buildResponse(boundStore, true, MSG.ok);
         }
 
+        function parseInnerResult(res) {
+          var innerSuccess = false;
+          var innerMsg = '';
+          try {
+            if (res && typeof res.information === 'string') {
+              var parsed = JSON.parse(res.information);
+              innerSuccess = parsed.isSuccess === true;
+              innerMsg = typeof parsed.information === 'string' ? parsed.information : '';
+            }
+          } catch (e) {
+            innerMsg = MSG.format;
+          }
+          return { innerSuccess: innerSuccess, innerMsg: innerMsg };
+        }
+
+        function renderResponseUi(res) {
+          if (!responseOut) {
+            return;
+          }
+          responseOut.textContent = JSON.stringify(res, null, 2);
+          if (!responseSummary) {
+            return;
+          }
+          var inner = parseInnerResult(res);
+          var isOk = res && res.isOK === true;
+          var badgeClass = inner.innerSuccess ? 'ok' : 'fail';
+          var badgeLabel = inner.innerSuccess ? '成功' : '失敗';
+          responseSummary.innerHTML =
+            '<span class="rcv-res-badge ' +
+            badgeClass +
+            '">' +
+            badgeLabel +
+            '</span>' +
+            '<span class="rcv-res-line">isOK: ' +
+            isOk +
+            ' · isSuccess: ' +
+            inner.innerSuccess +
+            ' · ' +
+            inner.innerMsg +
+            '</span>';
+        }
+
         function pushFromObject(obj) {
           var res = processPush(obj);
-          if (responseOut) {
-            responseOut.textContent = JSON.stringify(res, null, 2);
-          }
+          renderResponseUi(res);
           return res;
         }
 
@@ -973,8 +1049,7 @@
               var body = JSON.parse(requestTa.value);
               pushFromObject(body);
             } catch (e) {
-              var res = buildResponse(boundStore, false, MSG.format);
-              responseOut.textContent = JSON.stringify(res, null, 2);
+              renderResponseUi(buildResponse(boundStore, false, MSG.format));
             }
           });
 

@@ -12,6 +12,15 @@ const SUB = 'milksha-demo';
 const PORT = 8766;
 const BASE = `http://127.0.0.1:${PORT}/${SUB}/receiver-demo/`;
 
+const SAMPLE_ROWS = [
+  { source_type: 'From_Store_OK', number: '1488' },
+  { source_type: 'From_milksha_point_OK', number: 'P102' },
+  { source_type: 'From_FoodPanda_OK', number: 'F88' },
+  { source_type: 'From_Store_Preparing', number: '1985' },
+  { source_type: 'From_UberEat_Preparing', number: 'U42' },
+  { source_type: 'From_Udd_Preparing', number: 'D07' },
+];
+
 function prepareSite() {
   const dest = join(SITE_ROOT, SUB);
   rmSync(SITE_ROOT, { recursive: true, force: true });
@@ -48,25 +57,16 @@ function startServer() {
   });
 }
 
-async function populateBoard(page) {
-  await page.goto(BASE + '?demo=1&store=s120030', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.receiverDemo && window.receiverDemo.pushFromObject);
-  await page.evaluate(() => {
-    const d = window.receiverDemo;
-    const rows = [
-      { source_type: 'From_Store_OK', number: '1488' },
-      { source_type: 'From_milksha_point_OK', number: 'P102' },
-      { source_type: 'From_FoodPanda_OK', number: 'F88' },
-      { source_type: 'From_Store_Preparing', number: '1985' },
-      { source_type: 'From_UberEat_Preparing', number: 'U42' },
-      { source_type: 'From_Udd_Preparing', number: 'D07' },
-    ];
-    d.pushFromObject(d.wrapPayload(rows));
-    d.fakeCheckout();
-    d.fakeCheckout();
-  });
+async function loadBoard(page, demo) {
+  const query = demo ? '?demo=1&store=s120030' : '?store=s120030';
+  await page.goto(BASE + query, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.receiverDemo && window.receiverDemo.wrapPayload);
+  await page.evaluate((rows) => {
+    window.receiverDemo.setOffline(false);
+    window.receiverDemo.pushFromObject(window.receiverDemo.wrapPayload(rows));
+  }, SAMPLE_ROWS);
   await page.waitForSelector('.rcv-ready .rcv-num');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(350);
 }
 
 async function main() {
@@ -76,13 +76,14 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  await populateBoard(page);
+  await loadBoard(page, false);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({ path: join(ARTIFACTS, 'receiver-1920x1080-full.png') });
 
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.screenshot({ path: join(ARTIFACTS, 'receiver-1366x768.png') });
 
+  await loadBoard(page, true);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.evaluate(() => {
     document.getElementById('rcv-demo-panel').classList.add('open');
@@ -94,12 +95,37 @@ async function main() {
     ta.value = '{ not valid json';
     document.getElementById('rcv-btn-send').click();
   });
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(250);
   await page.screenshot({ path: join(ARTIFACTS, 'receiver-format-error.png') });
 
   await page.evaluate(() => window.receiverDemo.clearAll());
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(250);
   await page.screenshot({ path: join(ARTIFACTS, 'receiver-cleared.png') });
+
+  await loadBoard(page, true);
+  const readyBefore = await page.locator('.rcv-ready .rcv-num').filter({ hasText: /.+/ }).count();
+  await page.evaluate((rows) => {
+    window.receiverDemo.setOffline(true);
+    window.receiverDemo.pushFromObject(
+      window.receiverDemo.wrapPayload([{ source_type: 'From_Store_OK', number: '9999' }]),
+    );
+  }, SAMPLE_ROWS);
+  const readyAfter = await page.locator('.rcv-ready .rcv-num').filter({ hasText: /.+/ }).count();
+  if (readyAfter !== readyBefore) {
+    throw new Error(`Offline push changed board (${readyBefore} -> ${readyAfter})`);
+  }
+  await page.screenshot({ path: join(ARTIFACTS, 'receiver-not-connected.png') });
+
+  await page.evaluate(() => {
+    window.receiverDemo.setOffline(false);
+    const req = window.receiverDemo.wrapPayload([
+      { source_type: 'From_Store_OK', number: '7777' },
+    ]);
+    req.serviceSpecialData_Json.target = 'milkshawrongstore';
+    window.receiverDemo.pushFromObject(req);
+  });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: join(ARTIFACTS, 'receiver-target-not-found.png') });
 
   await browser.close();
   server.close();
