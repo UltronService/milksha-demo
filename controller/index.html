@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>叫號看板 · 控制端</title>
+    <link rel="stylesheet" href="controller.css" />
+    <script src="../js/board/today-board.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <h1>叫號看板控制端</h1>
+      <p class="sub">店內測試用操作面板</p>
+    </header>
+    <p id="local-mode-notice" class="local-notice" hidden data-testid="local-mode-notice">
+      目前是本機測試：控制頁和看板要在同一台電腦、同一個瀏覽器開兩個視窗才會連動。
+    </p>
+    <p id="user-banner" class="user-banner" hidden role="alert" data-testid="user-banner"></p>
+    <main class="grid" id="main-grid">
+      <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="1">
+        <button type="button" class="zone-toggle" aria-expanded="true">1. 連線與狀態</button>
+        <div class="zone-body">
+          <label>選擇門市
+            <select id="fld-store" data-testid="fld-store"></select>
+          </label>
+          <label>連線方式
+            <select id="fld-mode" data-testid="fld-mode">
+              <option value="local" selected>本機連動（同一瀏覽器）</option>
+              <option value="firestore">雲端連線測試</option>
+            </select>
+          </label>
+          <details class="advanced" id="advanced-settings">
+            <summary>進階設定</summary>
+            <label>看板裝置編號<input id="fld-device" value="stb-01" data-testid="fld-device" /></label>
+            <label>測試伺服器位址<input id="fld-gateway" placeholder="127.0.0.1:8787" data-testid="fld-gateway" /></label>
+            <label>測試用金鑰<input id="fld-key" data-testid="fld-key" /></label>
+            <label>存取碼<input id="fld-code" value="dev-controller-access-2026" data-testid="fld-code" /></label>
+            <label>離線判定（秒，無心跳）
+              <input id="fld-heartbeat-timeout" type="number" value="120" min="5" data-testid="fld-heartbeat-timeout" />
+            </label>
+          </details>
+          <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
+          <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
+          <dl class="status-dl">
+            <dt>台北時間</dt>
+            <dd id="status-taipei-time" data-testid="status-taipei-time">—</dd>
+            <dt>名單版本</dt>
+            <dd id="status-board-seq" data-testid="status-board-seq">—</dd>
+            <dt>最後心跳</dt>
+            <dd id="status-heartbeat-at" data-testid="status-heartbeat-at">—</dd>
+          </dl>
+          <div class="cols2">
+            <div>
+              <h3>準備中（最新）</h3>
+              <ul id="list-prep" data-testid="list-prep"></ul>
+            </div>
+            <div>
+              <h3>可取餐（最新）</h3>
+              <ul id="list-ready" data-testid="list-ready"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-pos" class="card zone" data-zone="pos" data-default-expanded="1">
+        <button type="button" class="zone-toggle" aria-expanded="true">2. 模擬 POS</button>
+        <div class="zone-body">
+          <label>號碼 <input id="fld-no" value="2001" data-testid="fld-no" /></label>
+          <label>來源
+            <select id="fld-source" data-testid="fld-source"></select>
+          </label>
+          <label>狀態
+            <select id="fld-status" data-testid="fld-status">
+              <option value="preparing">準備中</option>
+              <option value="ready">可取餐</option>
+            </select>
+          </label>
+          <div class="row">
+            <button type="button" id="btn-add-ticket" data-testid="btn-add-ticket" data-requires-connect="1">
+              新增訂單並送出
+            </button>
+            <button type="button" id="btn-one-ready" data-testid="btn-one-ready" data-requires-connect="1">
+              一鍵第一筆→可取餐
+            </button>
+          </div>
+          <label>取餐掃碼（號碼）
+            <input id="fld-pickup-scan" placeholder="掃描或輸入號碼" data-testid="fld-pickup-scan" />
+          </label>
+          <button type="button" id="btn-pickup-scan" data-testid="btn-pickup-scan" data-requires-connect="1">
+            掃碼取餐（移除可取餐）
+          </button>
+          <div class="row">
+            <button type="button" id="btn-send-board" data-testid="btn-send-board" data-requires-connect="1">送整份名單</button>
+            <button type="button" id="btn-clear-board" data-testid="btn-clear-board" data-requires-connect="1">送空名單</button>
+          </div>
+          <div class="row">
+            <button type="button" id="btn-gen-normal" data-testid="btn-gen-normal" data-requires-connect="1">自動產生（一般）</button>
+            <button type="button" id="btn-gen-peak" data-testid="btn-gen-peak" data-requires-connect="1">自動產生（尖峰）</button>
+          </div>
+          <textarea id="fld-tammy" rows="6" spellcheck="false" data-testid="fld-tammy"></textarea>
+          <button type="button" id="btn-send-tammy" data-testid="btn-send-tammy" data-requires-connect="1">送 Tammy JSON</button>
+          <fieldset class="bad-data">
+            <legend>錯誤資料測試</legend>
+            <div class="row">
+              <button type="button" id="btn-bad-sign" data-testid="btn-bad-sign" data-requires-connect="1">錯簽名</button>
+              <button type="button" id="btn-bad-store" data-testid="btn-bad-store" data-requires-connect="1">錯店編</button>
+              <button type="button" id="btn-bad-format" data-testid="btn-bad-format" data-requires-connect="1">格式錯誤</button>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <section id="sec-net" class="card zone" data-zone="net" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false">3. 模擬網路</button>
+        <div class="zone-body" hidden>
+          <div class="row">
+            <button type="button" id="btn-offline" data-testid="btn-offline" data-requires-connect="1">模擬斷網</button>
+            <button type="button" id="btn-restore" data-testid="btn-restore" data-requires-connect="1">恢復</button>
+          </div>
+          <label>變慢（毫秒）<input id="fld-delay" type="number" value="3000" data-testid="fld-delay" /></label>
+          <button type="button" id="btn-slow" data-testid="btn-slow" data-requires-connect="1">模擬變慢</button>
+          <button type="button" id="btn-cable-pull" data-testid="btn-cable-pull" data-requires-connect="1">拔線測試（暫停 API）</button>
+          <button type="button" id="btn-cable-restore" data-testid="btn-cable-restore" data-requires-connect="1">接回線路</button>
+        </div>
+      </section>
+
+      <section id="sec-special" class="card zone" data-zone="special" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false">4. 特殊狀況</button>
+        <div class="zone-body" hidden>
+          <div class="row">
+            <button type="button" id="btn-clear-now" data-testid="btn-clear-now" data-requires-connect="1">03:00 清空</button>
+            <button type="button" id="btn-reload" data-testid="btn-reload" data-requires-connect="1">要求重新整理</button>
+            <button type="button" id="btn-reboot" data-testid="btn-reboot" data-requires-connect="1">要求重開機</button>
+          </div>
+          <div class="row">
+            <button type="button" id="btn-dup-list" data-testid="btn-dup-list" data-requires-connect="1">重送同一份名單</button>
+            <button type="button" id="btn-late-old" data-testid="btn-late-old" data-requires-connect="1">注入過舊 seq</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-log" class="card wide zone" data-zone="log" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false">5. 紀錄</button>
+        <div class="zone-body" hidden>
+          <label>篩選關鍵字 <input id="log-filter" placeholder="posReceiver / 指令…" data-testid="log-filter" /></label>
+          <div class="row">
+            <button type="button" id="btn-refresh-logs" data-testid="btn-refresh-logs" data-requires-connect="1">
+              合併雲端 receive_logs / commands
+            </button>
+            <button type="button" id="btn-export-json" data-testid="btn-export-json">匯出 JSON</button>
+            <button type="button" id="btn-export-csv" data-testid="btn-export-csv">匯出 CSV</button>
+            <button type="button" id="btn-clear-log" data-testid="btn-clear-log">清除本機紀錄</button>
+          </div>
+          <ul id="log-list" data-testid="log-list"></ul>
+        </div>
+      </section>
+    </main>
+    <script src="../config/firebase.js"></script>
+    <script src="../js/transport/paths.js"></script>
+    <script src="../js/transport/firestore-value.js"></script>
+    <script src="../js/transport/board-seq.js"></script>
+    <script src="../js/transport/config-resolve.js"></script>
+    <script src="../js/transport/auth-session.js"></script>
+    <script src="../js/vendor/md5.min.js"></script>
+    <script src="../js/transport/milksha-md5.js"></script>
+    <script src="../js/transport/milksha-pos-sign.js"></script>
+    <script src="../js/transport/cloud-api.js"></script>
+    <script src="../js/transport/firestore-rest.js"></script>
+    <script src="../js/transport/local-cloud-shim.js"></script>
+    <script src="../js/transport/local-transport.js"></script>
+    <script src="../js/transport/firestore-transport.js"></script>
+    <script src="../js/transport/create-transport.js"></script>
+    <script src="../js/receiver/validate-request.js"></script>
+    <script src="controller-app.js"></script>
+  </body>
+</html>

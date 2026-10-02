@@ -304,9 +304,10 @@
         cursor: pointer;
       }
     </style>
+    <script src="../js/board/today-board.js"></script>
   </head>
   <body>
-    <div class="rcv-stage" id="rcv-stage">
+    <div class="rcv-stage" id="rcv-stage" data-testid="rcv-guest-stage" data-simulated-offline="0">
       <div class="rcv-viewport" id="rcv-viewport">
         <div class="rcv-board" id="rcv-board"></div>
       </div>
@@ -327,6 +328,7 @@
         <button type="button" id="rcv-btn-complete">完成→可取餐</button>
         <button type="button" id="rcv-btn-clear">03:00 清空</button>
       </div>
+      <p class="rcv-demo-row" id="rcv-cloud-status" style="font-size:12px;color:#666"></p>
       <label>Response</label>
       <div class="rcv-res-summary" id="rcv-response-summary">（尚未推送）</div>
       <pre class="rcv-demo-pre" id="rcv-response-out"></pre>
@@ -563,12 +565,19 @@
         }
 
         function formatClock() {
-          var d = new Date();
-          return (
-            String(d.getHours()).padStart(2, '0') +
-            ':' +
-            String(d.getMinutes()).padStart(2, '0')
-          );
+          if (window.QMS && window.QMS.Board && window.QMS.Board.TodayBoard.formatTaipeiClockHM) {
+            return window.QMS.Board.TodayBoard.formatTaipeiClockHM();
+          }
+          return new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Taipei',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+          })
+            .format(new Date())
+            .replace(/^(\d{1,2}):(\d{2})$/, function (_m, h, m) {
+              return String(h).padStart(2, '0') + ':' + m;
+            });
         }
 
         function layoutZones() {
@@ -846,8 +855,11 @@
           return { ok: true, target: ssd.target, numberContent: nc };
         }
 
-        function processPush(body) {
-          if (offlineCb && offlineCb.checked) {
+        var guestPrevReady = {};
+
+        function processPush(body, pushOpts) {
+          var opts = pushOpts || {};
+          if (!opts.skipOfflineCheck && demoMode && offlineCb && offlineCb.checked) {
             return buildResponse(boundStore, false, MSG.offline);
           }
           var v = validateRequestBody(body);
@@ -911,9 +923,19 @@
             '</span>';
         }
 
-        function pushFromObject(obj) {
-          var res = processPush(obj);
-          renderResponseUi(res);
+        function pushFromObject(obj, opts) {
+          var o = opts || {};
+          var res = processPush(obj, o);
+          if (o.newlyReadyIds && o.newlyReadyIds.length && window.QMS && window.QMS.Receiver.RingHost) {
+            for (var ri = 0; ri < o.newlyReadyIds.length; ri += 1) {
+              var parts = String(o.newlyReadyIds[ri]).split(':');
+              var num = parts.length > 1 ? parts[1] : parts[0];
+              window.QMS.Receiver.RingHost.playReadyRing(num);
+            }
+          }
+          if (demoMode) {
+            renderResponseUi(res);
+          }
           return res;
         }
 
@@ -1089,11 +1111,29 @@
           if (c) {
             c.textContent = formatClock();
           }
-        }, 10000);
+        }, 1000);
         startPageTimers();
         initDemoPanel();
         renderBoard();
       })();
     </script>
+    <script src="../config/firebase.js"></script>
+    <script src="../js/board/today-board.js"></script>
+    <script src="../js/transport/paths.js"></script>
+    <script src="../js/transport/firestore-value.js"></script>
+    <script src="../js/transport/board-seq.js"></script>
+    <script src="../js/transport/config-resolve.js"></script>
+    <script src="../js/transport/auth-session.js"></script>
+    <script src="../js/transport/pos-sign.js"></script>
+    <script src="../js/transport/cloud-api.js"></script>
+    <script src="../js/transport/firestore-rest.js"></script>
+    <script src="../js/transport/local-cloud-shim.js"></script>
+    <script src="../js/transport/local-transport.js"></script>
+    <script src="../js/transport/firestore-transport.js"></script>
+    <script src="../js/transport/create-transport.js"></script>
+    <script src="../js/receiver/validate-request.js"></script>
+    <script src="../js/receiver/ring-host.js"></script>
+    <script src="../js/receiver/cloud-runtime.js"></script>
+    <script src="../js/receiver/cloud-boot.js"></script>
   </body>
 </html>
