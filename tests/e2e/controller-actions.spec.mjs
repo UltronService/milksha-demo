@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, connectController, resetCloudState, freshContext } from './harness.mjs';
+import {
+  urlsForMode,
+  connectController,
+  resetCloudState,
+  freshContext,
+  guestBoardStyleFingerprint,
+} from './harness.mjs';
 
 const MODES = ['local', 'firestore'];
 
@@ -113,7 +119,14 @@ for (const mode of MODES) {
     const { ctx, receiver, controller } = await openSession(browser, mode);
     await controller.fill('#fld-no', '2501');
     await controller.click('#btn-add-ticket');
+    const stylesBefore = await guestBoardStyleFingerprint(receiver);
     await controller.click('#btn-offline');
+    await controller.waitForTimeout(1500);
+    const stylesAfter = await guestBoardStyleFingerprint(receiver);
+    expect(stylesAfter.stageSimulatedOffline).toBe('0');
+    expect(stylesAfter.offlineClassNames).toEqual([]);
+    expect(stylesAfter.stage).toEqual(stylesBefore.stage);
+    expect(stylesAfter.board).toEqual(stylesBefore.board);
     const guestText = await receiver.locator('[data-testid="rcv-guest-stage"]').innerText();
     expect(guestText).not.toContain('尚未連線');
     expect(guestText).not.toContain('斷線');

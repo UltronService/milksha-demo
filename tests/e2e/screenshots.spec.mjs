@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
-import { urlsForMode, connectController, resetCloudState } from './harness.mjs';
+import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint } from './harness.mjs';
 
 const ART = '/opt/cursor/artifacts';
 
@@ -68,15 +68,14 @@ test('save controller and board screenshots', async ({ browser }) => {
 
   await receiver.setViewportSize({ width: 1366, height: 768 });
   await receiver.waitForTimeout(500);
+  const stylesOnline = await guestBoardStyleFingerprint(receiver);
   await receiver.screenshot({
     path: `${ART}/board-1366.png`,
     fullPage: false,
   });
 
   await controller.click('#btn-offline');
-  await expect(receiver.locator('[data-testid="rcv-guest-stage"][data-simulated-offline="1"]')).toBeVisible({
-    timeout: 12000,
-  });
+  await controller.waitForTimeout(2000);
   await controller.fill('#fld-no', '4999');
   await controller.click('#btn-add-ticket');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '4999' })).toHaveCount(0, {
@@ -84,7 +83,13 @@ test('save controller and board screenshots', async ({ browser }) => {
   });
   const guestText = await receiver.locator('[data-testid="rcv-guest-stage"]').innerText();
   expect(guestText).not.toContain('尚未連線');
-  await receiver.waitForTimeout(800);
+  expect(guestText).not.toContain('斷線');
+  const stylesOffline = await guestBoardStyleFingerprint(receiver);
+  expect(stylesOffline.stageSimulatedOffline).toBe('0');
+  expect(stylesOffline.offlineClassNames).toEqual([]);
+  expect(stylesOffline.stage).toEqual(stylesOnline.stage);
+  expect(stylesOffline.board).toEqual(stylesOnline.board);
+  await receiver.waitForTimeout(300);
   await receiver.screenshot({
     path: `${ART}/board-offline-1366.png`,
     fullPage: false,
@@ -97,7 +102,6 @@ test('save controller and board screenshots', async ({ browser }) => {
   const offlinePng = readFileSync(`${ART}/board-offline-1366.png`);
   expect(pngSize(boardPng)).toEqual({ width: 1366, height: 768 });
   expect(pngSize(offlinePng)).toEqual({ width: 1366, height: 768 });
-  expect(boardPng.equals(offlinePng)).toBe(false);
   const sourcesPng = readFileSync(`${ART}/board-sources-1366.png`);
   expect(sourcesPng.equals(boardPng)).toBe(false);
 

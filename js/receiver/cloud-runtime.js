@@ -11,10 +11,41 @@
 
   const VERSION = 'receiver-demo-2026-10-02';
 
-  function setSimulatedOfflineFlag(on) {
-    const stage = root.document && root.document.getElementById('rcv-stage');
+  function isDemoMode() {
+    try {
+      return new URLSearchParams(root.location.search).get('demo') === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Offline is visible only in demo panel (?demo=1) and controller — never on the guest board. */
+  function setSimulatedOfflineFlag(on, demoApi) {
+    if (demoApi && typeof demoApi.setOffline === 'function') {
+      demoApi.setOffline(on);
+    }
+    const doc = root.document;
+    if (!doc) {
+      return;
+    }
+    const stage = doc.getElementById('rcv-stage');
     if (stage) {
-      stage.setAttribute('data-simulated-offline', on ? '1' : '0');
+      stage.setAttribute('data-simulated-offline', '0');
+    }
+    if (!isDemoMode()) {
+      return;
+    }
+    const panel = doc.getElementById('rcv-demo-panel');
+    if (panel) {
+      panel.setAttribute('data-simulated-offline', on ? '1' : '0');
+    }
+    const statusEl = doc.getElementById('rcv-cloud-status');
+    if (statusEl) {
+      if (on) {
+        statusEl.textContent = '模擬斷線中（僅展示面板）';
+      } else if (String(statusEl.textContent).indexOf('模擬斷線') >= 0) {
+        statusEl.textContent = '';
+      }
     }
   }
 
@@ -173,11 +204,11 @@
       pendingAckCommandId = cmd.id;
       if (type === 'simulate_offline') {
         simulateOffline = true;
-        setSimulatedOfflineFlag(true);
+        setSimulatedOfflineFlag(true, demoApi);
       } else if (type === 'restore') {
         simulateOffline = false;
         networkDelayMs = 0;
-        setSimulatedOfflineFlag(false);
+        setSimulatedOfflineFlag(false, demoApi);
         suppressRingOnNextApply = true;
         pollBoard();
       } else if (type === 'slow') {

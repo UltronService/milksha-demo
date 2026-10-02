@@ -133,6 +133,38 @@ export async function freshContext(browser) {
   return ctx;
 }
 
+/** Guest-visible board styles (excludes clock text). */
+export async function guestBoardStyleFingerprint(page) {
+  return page.evaluate(() => {
+    const pick = (el) => {
+      if (!el) return null;
+      const s = getComputedStyle(el);
+      return {
+        color: s.color,
+        backgroundColor: s.backgroundColor,
+        outline: s.outline,
+        outlineWidth: s.outlineWidth,
+        boxShadow: s.boxShadow,
+        opacity: s.opacity,
+        filter: s.filter,
+        border: s.border,
+      };
+    };
+    const stage = document.getElementById('rcv-stage');
+    const board = document.querySelector('.rcv-board');
+    const offlineClass = [];
+    document.querySelectorAll('.rcv-board [class*="offline"], .rcv-stage [class*="offline"]').forEach((el) => {
+      offlineClass.push(el.className);
+    });
+    return {
+      stageSimulatedOffline: stage ? stage.getAttribute('data-simulated-offline') : null,
+      stage: pick(stage),
+      board: pick(board),
+      offlineClassNames: offlineClass,
+    };
+  });
+}
+
 export async function connectController(page, mode) {
   if (mode === 'firestore') {
     await page.selectOption('#fld-mode', 'firestore');
