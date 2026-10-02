@@ -114,6 +114,7 @@ test('firestore mode controller → receiver board', async ({ browser }) => {
   await controller.click('#btn-connect');
   await expect(controller.locator('#online-state')).toContainText('已連線', { timeout: 8000 });
   await controller.selectOption('#fld-status', 'preparing');
+  await new Promise((r) => setTimeout(r, 2500));
   await controller.click('#btn-add-ticket');
 
   await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2001', {

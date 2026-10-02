@@ -25,11 +25,14 @@
       }
     }
 
+    const Validate = QMS.Receiver && QMS.Receiver.Validate;
+    const boundStore = Validate ? Validate.findStore(storeId) : null;
     const shim = QMS.Transport.createLocalCloudShim({
       storeId: storeId,
       storage: storage,
       config: config,
       broadcast: broadcast,
+      boundTarget: boundStore ? boundStore.target : '',
     });
 
     const session = {
@@ -42,9 +45,9 @@
     };
 
     const cloudApi = QMS.Transport.createCloudApi(config, session);
-    cloudApi.heartbeat = shim.api.heartbeat;
+    cloudApi.boxHeartbeat = shim.api.boxHeartbeat;
     cloudApi.devCommand = shim.api.devCommand;
-    cloudApi.posIngest = shim.api.posIngest;
+    cloudApi.posReceiver = shim.api.posReceiver;
 
     function destroy() {
       if (channel) {
@@ -61,7 +64,9 @@
       readBoard: shim.readBoard,
       readDevice: shim.readDevice,
       listDevices: shim.listDevices,
-      readLogs: shim.readLogs,
+      readReceiveLogs: shim.readReceiveLogs,
+      readCommands: shim.readCommands,
+      debugSetBoard: shim.debugSetBoard,
       destroy: destroy,
     };
   }

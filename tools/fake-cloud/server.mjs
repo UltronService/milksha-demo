@@ -3,7 +3,10 @@
  * Fake milksha-cloud for Playwright / local firestore mode (gateway ?gateway=127.0.0.1:PORT).
  */
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { URL } from 'node:url';
+
+const SIGN_SECRET = 'dev-milksha-public-test-key-2026';
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -81,13 +84,35 @@ function numberToTickets(nc) {
   }));
 }
 
-function sign(body, secret) {
-  const payload = JSON.stringify(body.serviceSpecialData_Json || {});
-  let hash = 0;
-  const mix = payload + '|' + secret;
-  for (let i = 0; i < mix.length; i++) hash = (hash << 5) - hash + mix.charCodeAt(i);
-  hash |= 0;
-  return 'DEV-SIGN-' + Math.abs(hash).toString(16);
+function md5Hex(text) {
+  return crypto.createHash('md5').update(text, 'utf8').digest('hex');
+}
+
+function verifyPosSignature(body) {
+  const canon = `${body.merchant_id}|${body.account}|${body.timeStmp}|${body.serviceSpecialData_Json_Md5Hash}`;
+  const expected = crypto.createHmac('sha256', SIGN_SECRET).update(canon, 'utf8').digest('base64');
+  return body.signature === expected;
+}
+
+function receiveLogKey(storeId, id) {
+  return `stores/${storeId}/receive_logs/${id}`;
+}
+
+function commandLogKey(storeId, id) {
+  return `stores/${storeId}/commands/${id}`;
+}
+
+function storeHasOnlineBox(storeId) {
+  const prefix = `stores/${storeId}/devices/`;
+  const now = Date.now();
+  for (const [k, v] of docs.entries()) {
+    if (!k.startsWith(prefix)) continue;
+    if (v.online && v.lastSeen) {
+      const age = now - Date.parse(v.lastSeen);
+      if (age < 120000) return true;
+    }
+  }
+  return false;
 }
 
 function corsHeaders() {
@@ -150,12 +175,49 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname.startsWith(fnPrefix)) {
-      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
       const name = url.pathname.slice(fnPrefix.length);
       const body = await readBody(req);
-      const storeId = body.storeId || 's120030';
+      const storeId = body.storeId || body.account || 's120030';
 
-      if (name === 'heartbeat') {
+      if (name === 'posReceiver') {
+        if (!body.serviceSpecialData_Json) {
+          return json(res, 400, { isSuccess: false, information: '叫號資料格式錯誤' });
+        }
+        const jsonStr = JSON.stringify(body.serviceSpecialData_Json);
+        const hash = md5Hex(jsonStr);
+        if (body.serviceSpecialData_Json_Md5Hash && body.serviceSpecialData_Json_Md5Hash !== hash) {
+          return json(res, 400, { isSuccess: false, information: 'Md5Hash 不符' });
+        }
+        if (!verifyPosSignature(body)) {
+          return json(res, 400, { isSuccess: false, information: '簽章錯誤' });
+        }
+        const nc = body.serviceSpecialData_Json?.data?.number_content || [];
+        const tickets = numberToTickets(nc);
+        const board = {
+          storeId,
+          businessDate: taipeiDate(),
+          seq: nextSeq(storeId),
+          updatedAt: new Date().toISOString(),
+          source: 'A',
+          tickets,
+          clearedAt: tickets.length ? null : new Date().toISOString(),
+        };
+        docs.set(boardKey(storeId), board);
+        const online = storeHasOnlineBox(storeId);
+        const info = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
+          at: new Date().toISOString(),
+          kind: 'posReceiver',
+          isSuccess: online,
+          information: info,
+          seq: board.seq,
+        });
+        return json(res, 200, { isSuccess: online, information: info, seq: board.seq });
+      }
+
+      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
+
+      if (name === 'boxHeartbeat') {
         const dk = deviceKey(storeId, body.deviceId || 'stb-01');
         const prev = docs.get(dk) || {};
         docs.set(dk, {
@@ -193,31 +255,13 @@ const server = http.createServer(async (req, res) => {
           });
         }
         docs.set(dk, { ...prev, pendingCommand: cmd });
+        docs.set(commandLogKey(storeId, cmd.id), {
+          at: new Date().toISOString(),
+          type: body.type,
+          deviceId: body.deviceId,
+          commandId: cmd.id,
+        });
         return json(res, 200, { ok: true, commandId: cmd.id });
-      }
-
-      if (name === 'posIngest') {
-        const secret = 'dev-public-fake-secret';
-        const expected = sign(body, secret);
-        if (body.signature !== expected && body.signature !== 'DEMO-NO-SIGNATURE') {
-          return json(res, 400, { ok: false, reason: 'invalid signature' });
-        }
-        const nc = body?.serviceSpecialData_Json?.data?.number_content || [];
-        const tickets = numberToTickets(nc);
-        const board = {
-          storeId,
-          businessDate: taipeiDate(),
-          seq: nextSeq(storeId),
-          updatedAt: new Date().toISOString(),
-          source: 'A',
-          tickets,
-          clearedAt: tickets.length ? null : new Date().toISOString(),
-        };
-        docs.set(boardKey(storeId), board);
-        const logList = logs.get(storeId) || [];
-        logList.unshift({ at: new Date().toISOString(), kind: 'posIngest', seq: board.seq });
-        logs.set(storeId, logList.slice(0, 100));
-        return json(res, 200, { ok: true, seq: board.seq });
       }
 
       return json(res, 404, { error: 'unknown fn ' + name });

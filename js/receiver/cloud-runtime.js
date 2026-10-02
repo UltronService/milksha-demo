@@ -1,5 +1,5 @@
 /**
- * Receiver cloud sync — today_board tickets, device pendingCommand, cloud heartbeat.
+ * Receiver cloud sync — single tick timer, device poll while simulated offline.
  */
 (function (root) {
   'use strict';
@@ -11,9 +11,6 @@
 
   const VERSION = 'receiver-demo-2026-10-02';
 
-  /**
-   * @param {object} options
-   */
   function bootReceiverCloud(options) {
     const storeId = options.storeId;
     const deviceId = options.deviceId || 'stb-01';
@@ -28,16 +25,18 @@
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
-    let boardTimer = null;
-    let deviceTimer = null;
-    let heartbeatTimer = null;
+    let tickTimer = null;
+    let tickMs = 0;
     let simulateOffline = false;
     let networkDelayMs = 0;
-    let lastCommandId = '';
+    let lastAckCommandId = '';
+    let lastHandledCommandId = '';
+    let pendingAckCommandId = '';
     let readyAtById = {};
     let prevReadySet = new Set();
     let isFirstApply = true;
     let slowNetworkTimer = null;
+    let last0300ClearDate = '';
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
@@ -185,7 +184,7 @@
           onStatusLine('board: 無名單');
           return;
         }
-        const marker = board.updateTime || board.data.updatedAt || '';
+        const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
         if (marker && marker === lastBoardUpdateTime) {
           return;
         }
@@ -199,6 +198,8 @@
     async function handleCommand(cmd) {
       const type = cmd.type;
       const params = cmd.params || {};
+      lastHandledCommandId = cmd.id;
+      pendingAckCommandId = cmd.id;
       if (type === 'simulate_offline') {
         simulateOffline = true;
       } else if (type === 'restore') {
@@ -215,11 +216,7 @@
         } else {
           root.location.reload();
         }
-      } else if (type === 'clear_now' || type === 'clear_0300') {
-        /* cloud clears board; receiver will pick up on next poll */
       }
-      lastCommandId = cmd.id;
-      await sendHeartbeat();
     }
 
     async function pollDevice() {
@@ -229,7 +226,7 @@
           return;
         }
         const pending = dev.data.pendingCommand;
-        if (pending && pending.id && pending.id !== lastCommandId) {
+        if (pending && pending.id && pending.id !== lastHandledCommandId) {
           await handleCommand(pending);
         }
       } catch (e) {
@@ -238,21 +235,42 @@
     }
 
     async function sendHeartbeat() {
-      if (!cloudApi || !cloudApi.heartbeat) {
+      if (!cloudApi || !cloudApi.boxHeartbeat) {
         return;
       }
       try {
-        await cloudApi.heartbeat({
+        const ack = pendingAckCommandId || lastAckCommandId || undefined;
+        await cloudApi.boxHeartbeat({
           storeId: storeId,
           deviceId: deviceId,
           appVersion: VERSION,
           boardSeq: localSeq,
           pendingUploads: 0,
           simulatedOffline: simulateOffline,
-          ackCommandId: lastCommandId || undefined,
+          ackCommandId: ack,
         });
+        if (pendingAckCommandId) {
+          lastAckCommandId = pendingAckCommandId;
+          pendingAckCommandId = '';
+        }
       } catch (e) {
         onStatusLine('heartbeat 失敗');
+      }
+    }
+
+    function check0300Clear() {
+      const bd = TodayBoard.taipeiBusinessDate();
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Taipei',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      }).formatToParts(new Date());
+      const h = Number(parts.find(function (p) { return p.type === 'hour'; }).value);
+      const m = Number(parts.find(function (p) { return p.type === 'minute'; }).value);
+      if (h === 3 && m === 0 && last0300ClearDate !== bd) {
+        last0300ClearDate = bd;
+        applyNumberContent([], localSeq, { silent: true });
       }
     }
 
@@ -286,29 +304,47 @@
         pollDevice();
       });
 
-      boardTimer = setInterval(pollBoard, boardPollMs);
-      deviceTimer = setInterval(pollDevice, devicePollMs);
-      heartbeatTimer = setInterval(sendHeartbeat, heartbeatMs);
+      tickTimer = setInterval(function () {
+        tickMs += 1000;
+        if (tickMs % devicePollMs === 0) {
+          pollDevice();
+        }
+        if (tickMs % boardPollMs === 0) {
+          pollBoard();
+        }
+        if (tickMs % heartbeatMs === 0) {
+          sendHeartbeat();
+        }
+        if (tickMs % 60000 === 0) {
+          check0300Clear();
+        }
+      }, 1000);
     }
 
     function destroy() {
-      if (boardTimer) {
-        clearInterval(boardTimer);
-      }
-      if (deviceTimer) {
-        clearInterval(deviceTimer);
-      }
-      if (heartbeatTimer) {
-        clearInterval(heartbeatTimer);
+      if (tickTimer) {
+        clearInterval(tickTimer);
+        tickTimer = null;
       }
       if (slowNetworkTimer) {
         clearTimeout(slowNetworkTimer);
+      }
+      if (transport.destroy) {
+        transport.destroy();
       }
     }
 
     function receiveBoard(payload) {
       if (payload && payload.tickets) {
         return tryApplyTodayBoard({ data: payload });
+      }
+      if (payload && payload.request) {
+        const v = Validate.validateRequestBody(payload.request);
+        if (v.error) {
+          return { ignored: true, reason: v.error };
+        }
+        const seq = typeof payload.seq === 'number' ? payload.seq : localSeq + 1;
+        return applyNumberContent(v.numberContent, seq, { silent: payload.silent });
       }
       return null;
     }

@@ -16,12 +16,12 @@
         <h2>1. 連線設定</h2>
         <label>店編號 <input id="fld-store" value="s120030" /></label>
         <label>模式
-          <select id="fld-mode"><option value="local">local</option><option value="firestore">firestore</option></select>
+          <select id="fld-mode"><option value="local" selected>local</option><option value="firestore">firestore</option></select>
         </label>
         <label>裝置 ID（看板）<input id="fld-device" value="stb-01" /></label>
         <label>Gateway <input id="fld-gateway" placeholder="127.0.0.1:8787" /></label>
         <label>API Key <input id="fld-key" /></label>
-        <label>accessCode <input id="fld-code" value="dev-code" /></label>
+        <label>accessCode <input id="fld-code" value="dev-controller-access-2026" /></label>
         <button type="button" id="btn-connect" class="primary">連線</button>
         <p id="online-state" class="hint">尚未連線</p>
         <div class="cols2">
@@ -79,7 +79,9 @@
     <script src="../js/transport/board-seq.js"></script>
     <script src="../js/transport/config-resolve.js"></script>
     <script src="../js/transport/auth-session.js"></script>
-    <script src="../js/transport/pos-sign.js"></script>
+    <script src="../js/vendor/md5.min.js"></script>
+    <script src="../js/transport/milksha-md5.js"></script>
+    <script src="../js/transport/milksha-pos-sign.js"></script>
     <script src="../js/transport/cloud-api.js"></script>
     <script src="../js/transport/firestore-rest.js"></script>
     <script src="../js/transport/local-cloud-shim.js"></script>

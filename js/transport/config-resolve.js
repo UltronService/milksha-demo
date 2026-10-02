@@ -48,9 +48,14 @@
       functionsBaseUrl: functionsBaseUrl,
       identityToolkitBaseUrl: identityToolkitBaseUrl,
       secureTokenBaseUrl: b.secureTokenBaseUrl || 'https://securetoken.googleapis.com/v1',
-      posIngestFunctionName: b.posIngestFunctionName || 'posIngest',
-      logsCollectionPathTemplate: b.logsCollectionPathTemplate || 'stores/{storeId}/logs',
-      posSignSecret: b.posSignSecret || 'dev-public-fake-secret',
+      posReceiverFunctionName: b.posReceiverFunctionName || 'posReceiver',
+      boxHeartbeatFunctionName: b.boxHeartbeatFunctionName || 'boxHeartbeat',
+      boxUploadFunctionName: b.boxUploadFunctionName || 'boxUpload',
+      receiveLogsPathTemplate: b.receiveLogsPathTemplate || 'stores/{storeId}/receive_logs',
+      commandsPathTemplate: b.commandsPathTemplate || 'stores/{storeId}/commands',
+      ingestEventsPathTemplate: b.ingestEventsPathTemplate || 'stores/{storeId}/ingest_events',
+      posSignSecret: b.posSignSecret || 'dev-milksha-public-test-key-2026',
+      defaultControllerAccessCode: b.defaultControllerAccessCode || 'dev-controller-access-2026',
       useEmulator: Boolean(firestoreEmulatorHost),
     };
   }

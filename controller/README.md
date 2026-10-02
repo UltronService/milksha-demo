@@ -1,25 +1,30 @@
 # 叫號看板控制端 `/controller/`
 
-## 資料格式（與 milksha-cloud 定案一致）
+預設 **local** 模式（同一台電腦開看板 + 控制端即可 E2E）。
 
-| 路徑 | 說明 |
+## 雲端函式（milksha-cloud）
+
+| 函式 | 用途 |
 |------|------|
-| `stores/{storeId}/board/today_board` | 看板整份名單（唯讀 REST，Bearer） |
-| `stores/{storeId}/devices/{deviceId}` | 機上盒狀態與 `pendingCommand`（唯讀 REST） |
-| `stores/{storeId}/logs` | **待後端確認** 路徑模板，預設可讀操作紀錄 |
+| `devLogin` | 取得 custom token |
+| `posReceiver` | 入口 A：POS 送單（Milksha Request + HMAC 簽章） |
+| `boxHeartbeat` | 機上盒報平安 |
+| `boxUpload` | 入口 B（保留） |
+| `devCommand` | 遠端指令 |
 
-`today_board` 欄位：`storeId`、`businessDate`（台北 YYYY-MM-DD）、`seq`、`updatedAt`、`source`（`A`/`B`/`system`）、`tickets[]`（`no`、`status`: `preparing`/`ready`、`updatedAt`）、`clearedAt`。
+## Firestore 路徑
 
-寫入僅能經雲端函式（Bearer）：`devLogin`、`heartbeat`、`devCommand`、`posIngest`（名稱與 body **待後端確認**）。
+- 看板：`stores/{storeId}/board/today_board`
+- 裝置：`stores/{storeId}/devices/{deviceId}`
+- 接收紀錄：`stores/{storeId}/receive_logs`
+- 指令紀錄：`stores/{storeId}/commands`
+- 入口 B 事件：`stores/{storeId}/ingest_events`
 
-## 模式
+## 簽章（測試環境）
 
-- **local**：同瀏覽器 `localStorage` + 內建 shim，格式與 Firestore 相同。
-- **firestore**：REST 讀取 + 函式寫入。預設模擬器；測試可設 `?gateway=127.0.0.1:8787` 對 `tools/fake-cloud/`。
+- 金鑰：`dev-milksha-public-test-key-2026`（`config/firebase.js` 可改）
+- `Base64(HMAC-SHA256(key, merchant_id|account|timeStmp|serviceSpecialData_Json_Md5Hash))`
 
-## 待與後端對齊
+## 模擬器
 
-- `posIngest` 函式名稱與 Request body
-- 簽章算法與正式金鑰
-- 紀錄集合路徑與查詢方式
-- 雲端函式區域、正式 `projectId` / `apiKey`
+見 [docs/EMULATOR.md](../docs/EMULATOR.md)。本機假雲端：`npm run fake-cloud`。

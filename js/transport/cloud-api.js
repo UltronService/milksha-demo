@@ -1,5 +1,5 @@
 /**
- * Cloud Functions writes (heartbeat, devCommand, posIngest).
+ * Cloud Functions: devLogin, devCommand, boxHeartbeat, posReceiver, boxUpload.
  */
 (function (root) {
   'use strict';
@@ -17,11 +17,14 @@
       return base.replace(/\/?$/, '/') + name;
     }
 
-    async function postJson(name, body) {
-      const headers = await session.authHeaders();
+    async function postJson(name, body, withAuth) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (withAuth) {
+        Object.assign(headers, await session.authHeaders());
+      }
       const res = await fetch(fnUrl(name), {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+        headers: headers,
         body: JSON.stringify(body),
       });
       const text = await res.text();
@@ -39,16 +42,25 @@
       return json;
     }
 
+    const boxHeartbeatName = config.boxHeartbeatFunctionName || 'boxHeartbeat';
+    const posReceiverName = config.posReceiverFunctionName || 'posReceiver';
+    const boxUploadName = config.boxUploadFunctionName || 'boxUpload';
+
     return {
-      heartbeat: function (body) {
-        return postJson('heartbeat', body);
+      devLogin: function (body) {
+        return postJson('devLogin', body, false);
+      },
+      boxHeartbeat: function (body) {
+        return postJson(boxHeartbeatName, body, true);
       },
       devCommand: function (body) {
-        return postJson('devCommand', body);
+        return postJson('devCommand', body, true);
       },
-      posIngest: function (body) {
-        const name = config.posIngestFunctionName || 'posIngest';
-        return postJson(name, body);
+      posReceiver: function (body) {
+        return postJson(posReceiverName, body, false);
+      },
+      boxUpload: function (body) {
+        return postJson(boxUploadName, body, true);
       },
     };
   }

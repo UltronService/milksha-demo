@@ -6,7 +6,7 @@
 
   const QMS = (root.QMS = root.QMS || {});
   const TodayBoard = QMS.Board.TodayBoard;
-  const PosSign = QMS.Transport.PosSign;
+  const PosSign = QMS.Transport.MilkshaPosSign;
   const Paths = QMS.Transport.Paths;
 
   function boardKey(storeId) {
@@ -17,8 +17,12 @@
     return 'milksha:local:device:' + storeId + ':' + deviceId;
   }
 
-  function logsKey(storeId) {
-    return 'milksha:local:logs:' + storeId;
+  function receiveLogsKey(storeId) {
+    return 'milksha:local:receive_logs:' + storeId;
+  }
+
+  function commandsLogsKey(storeId) {
+    return 'milksha:local:commands:' + storeId;
   }
 
   function readJson(storage, key) {
@@ -39,6 +43,7 @@
    */
   function createLocalCloudShim(options) {
     const storeId = options.storeId;
+    const boundTarget = options.boundTarget || '';
     const storage = options.storage || root.localStorage;
     const config = options.config || {};
     const channel = options.broadcast || function () {};
@@ -48,13 +53,32 @@
       return (cur && cur.seq ? Number(cur.seq) : 0) + 1;
     }
 
-    function appendLog(entry) {
-      const key = logsKey(storeId);
+    function appendReceiveLog(entry) {
+      const key = receiveLogsKey(storeId);
       const list = readJson(storage, key) || [];
-      list.unshift(
-        Object.assign({ at: new Date().toISOString() }, entry),
-      );
+      list.unshift(Object.assign({ at: new Date().toISOString() }, entry));
       writeJson(storage, key, list.slice(0, 200));
+    }
+
+    function appendCommandLog(entry) {
+      const key = commandsLogsKey(storeId);
+      const list = readJson(storage, key) || [];
+      list.unshift(Object.assign({ at: new Date().toISOString() }, entry));
+      writeJson(storage, key, list.slice(0, 200));
+    }
+
+    function storeHasOnlineBox() {
+      const prefix = 'milksha:local:device:' + storeId + ':';
+      const now = Date.now();
+      for (let i = 0; i < storage.length; i += 1) {
+        const k = storage.key(i);
+        if (!k || k.indexOf(prefix) !== 0) continue;
+        const data = readJson(storage, k);
+        if (data && data.online && data.lastSeen) {
+          if (now - Date.parse(data.lastSeen) < 120000) return true;
+        }
+      }
+      return false;
     }
 
     const sessionStub = {
@@ -64,7 +88,7 @@
     };
 
     const api = {
-      heartbeat: async function (body) {
+      boxHeartbeat: async function (body) {
         const devId = body.deviceId || 'stb-01';
         const doc = readJson(storage, deviceKey(storeId, devId)) || {};
         const merged = Object.assign(doc, {
@@ -79,7 +103,6 @@
         });
         writeJson(storage, deviceKey(storeId, devId), merged);
         channel({ type: 'device', storeId: storeId, deviceId: devId });
-        appendLog({ kind: 'heartbeat', body: body });
         return { ok: true };
       },
       devCommand: async function (body) {
@@ -99,29 +122,45 @@
         doc.pendingCommand = cmd;
         writeJson(storage, deviceKey(storeId, devId), doc);
         channel({ type: 'command', storeId: storeId, deviceId: devId });
-        appendLog({ kind: 'devCommand', body: body, command: cmd });
+        appendCommandLog({ kind: 'devCommand', body: body, command: cmd });
         return { ok: true, commandId: cmd.id };
       },
-      posIngest: async function (body) {
-        const secret = config.posSignSecret || 'dev-public-fake-secret';
-        const expected = PosSign.signRequest(body, secret);
-        if (body.signature !== expected && body.signature !== 'DEMO-NO-SIGNATURE') {
-          appendLog({ kind: 'posIngest', ok: false, reason: 'bad signature' });
-          const err = new Error('invalid signature');
-          err.response = { ok: false, reason: 'invalid signature' };
+      posReceiver: async function (body) {
+        if (!body || !body.serviceSpecialData_Json) {
+          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '叫號資料格式錯誤' });
+          const err = new Error('format');
+          err.response = { isSuccess: false, information: '叫號資料格式錯誤' };
           throw err;
         }
-        const nc =
-          body &&
-          body.serviceSpecialData_Json &&
-          body.serviceSpecialData_Json.data &&
-          body.serviceSpecialData_Json.data.number_content;
+        const secret = config.posSignSecret || 'dev-milksha-public-test-key-2026';
+        const valid = await PosSign.verifyPosBody(body, secret);
+        if (!valid) {
+          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '簽章錯誤' });
+          const err = new Error('invalid signature');
+          err.response = { isSuccess: false, information: '簽章錯誤' };
+          throw err;
+        }
+        const target = body.serviceSpecialData_Json.target || '';
+        if (boundTarget && target && target !== boundTarget) {
+          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '找不到目標叫號機' });
+          const err = new Error('wrong store');
+          err.response = { isSuccess: false, information: '找不到目標叫號機' };
+          throw err;
+        }
+        const nc = body.serviceSpecialData_Json.data && body.serviceSpecialData_Json.data.number_content;
         const tickets = TodayBoard.numberContentToTickets(nc || []);
         const board = TodayBoard.buildTodayBoard(storeId, nextSeq(), tickets, 'A');
         writeJson(storage, boardKey(storeId), board);
         channel({ type: 'board', storeId: storeId });
-        appendLog({ kind: 'posIngest', ok: true, seq: board.seq });
-        return { ok: true, seq: board.seq };
+        const online = storeHasOnlineBox();
+        const information = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        appendReceiveLog({
+          kind: 'posReceiver',
+          isSuccess: online,
+          information: information,
+          seq: board.seq,
+        });
+        return { isSuccess: online, information: information, seq: board.seq };
       },
     };
 
@@ -171,10 +210,22 @@
       return out;
     }
 
-    function readLogs() {
-      return (readJson(storage, logsKey(storeId)) || []).map(function (entry, idx) {
-        return { id: 'log-' + idx, data: entry, updateTime: entry.at || '' };
+    function readReceiveLogs() {
+      return (readJson(storage, receiveLogsKey(storeId)) || []).map(function (entry, idx) {
+        return { id: 'rcv-' + idx, data: entry, updateTime: entry.at || '' };
       });
+    }
+
+    function readCommands() {
+      return (readJson(storage, commandsLogsKey(storeId)) || []).map(function (entry, idx) {
+        return { id: 'cmd-' + idx, data: entry, updateTime: entry.at || '' };
+      });
+    }
+
+    function debugSetBoard(board) {
+      writeJson(storage, boardKey(storeId), board);
+      channel({ type: 'board', storeId: storeId });
+      return { ok: true };
     }
 
     return {
@@ -185,7 +236,9 @@
       readBoard: readBoard,
       readDevice: readDevice,
       listDevices: listDevices,
-      readLogs: readLogs,
+      readReceiveLogs: readReceiveLogs,
+      readCommands: readCommands,
+      debugSetBoard: debugSetBoard,
       paths: Paths,
     };
   }

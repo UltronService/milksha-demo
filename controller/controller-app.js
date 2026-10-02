@@ -3,7 +3,7 @@
 
   const Validate = window.QMS.Receiver.Validate;
   const TodayBoard = window.QMS.Board.TodayBoard;
-  const PosSign = window.QMS.Transport.PosSign;
+  const PosSign = window.QMS.Transport.MilkshaPosSign;
 
   let transport = null;
   let tickets = [];
@@ -85,25 +85,56 @@
         data: { number_content: numberContent, newsTicker_content: [], newsTickerSpeed: 0 },
       },
       merchant_id: s.merchant_id,
-      account: s.account,
+      account: document.getElementById('fld-store').value.trim() || s.account,
       timeStmp: '2026-10-02-12-00-00:0000',
       serviceSpecialData_Json_Md5Hash: 'demo',
       signature: 'pending',
     };
   }
 
-  async function posSend(numberContent, wrongSign) {
+  async function posSend(numberContent, wrongSign, wrongStore) {
     const body = wrapRequest(numberContent);
+    if (wrongStore) {
+      body.serviceSpecialData_Json.target = 'wrong-target-000';
+      body.account = 'wrong-store';
+    }
     const secret = buildConfig().posSignSecret;
-    const signed = PosSign.applySignature(body, secret, wrongSign);
+    const signed = await PosSign.applyPosSignature(body, secret, wrongSign);
     try {
-      const res = await transport.cloudApi.posIngest(signed);
-      pushLog({ summary: 'posIngest ok seq=' + (res.seq || '?') });
+      const res = await transport.cloudApi.posReceiver(signed);
+      pushLog({
+        kind: 'posReceiver',
+        summary:
+          'posReceiver isSuccess=' +
+          res.isSuccess +
+          ' · ' +
+          (res.information || '') +
+          (res.seq ? ' seq=' + res.seq : ''),
+        payload: signed,
+        response: res,
+      });
       await refreshBoardLists();
       return res;
     } catch (e) {
-      pushLog({ summary: 'posIngest 失敗 ' + (e.message || '') });
+      const info = e.response && e.response.information ? e.response.information : e.message;
+      pushLog({ kind: 'posReceiver', summary: 'posReceiver 失敗 · ' + info, response: e.response });
       throw e;
+    }
+  }
+
+  async function mergeCloudLogs() {
+    if (!transport || !transport.readReceiveLogs) return;
+    try {
+      const rcv = await transport.readReceiveLogs(30);
+      const cmds = transport.readCommands ? await transport.readCommands(30) : [];
+      rcv.forEach(function (row) {
+        pushLog({ kind: 'cloud-receive', summary: JSON.stringify(row.data), cloud: true });
+      });
+      cmds.forEach(function (row) {
+        pushLog({ kind: 'cloud-command', summary: JSON.stringify(row.data), cloud: true });
+      });
+    } catch (e) {
+      /* ignore */
     }
   }
 
@@ -224,6 +255,14 @@
     renderLogs();
   });
 
+  const defaultCode =
+    (window.MILKSHA_FIREBASE_CONFIG && window.MILKSHA_FIREBASE_CONFIG.defaultControllerAccessCode) ||
+    'dev-controller-access-2026';
+  document.getElementById('fld-code').value = defaultCode;
+  const modeParam = new URLSearchParams(window.location.search).get('mode');
+  if (!modeParam || modeParam === 'local') {
+    document.getElementById('fld-mode').value = 'local';
+  }
   document.getElementById('fld-tammy').value = JSON.stringify(Validate.TAMMY_SAMPLE_REQUEST, null, 2);
   loadLogs();
 })();

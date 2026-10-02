@@ -306,7 +306,7 @@
     </style>
   </head>
   <body>
-    <div class="rcv-stage" id="rcv-stage">
+    <div class="rcv-stage" id="rcv-stage" data-testid="rcv-guest-stage">
       <div class="rcv-viewport" id="rcv-viewport">
         <div class="rcv-board" id="rcv-board"></div>
       </div>
@@ -847,8 +847,11 @@
           return { ok: true, target: ssd.target, numberContent: nc };
         }
 
-        function processPush(body) {
-          if (offlineCb && offlineCb.checked) {
+        var guestPrevReady = {};
+
+        function processPush(body, pushOpts) {
+          var opts = pushOpts || {};
+          if (!opts.skipOfflineCheck && demoMode && offlineCb && offlineCb.checked) {
             return buildResponse(boundStore, false, MSG.offline);
           }
           var v = validateRequestBody(body);
@@ -912,9 +915,19 @@
             '</span>';
         }
 
-        function pushFromObject(obj) {
-          var res = processPush(obj);
-          renderResponseUi(res);
+        function pushFromObject(obj, opts) {
+          var o = opts || {};
+          var res = processPush(obj, o);
+          if (o.newlyReadyIds && o.newlyReadyIds.length && window.QMS && window.QMS.Receiver.RingHost) {
+            for (var ri = 0; ri < o.newlyReadyIds.length; ri += 1) {
+              var parts = String(o.newlyReadyIds[ri]).split(':');
+              var num = parts.length > 1 ? parts[1] : parts[0];
+              window.QMS.Receiver.RingHost.playReadyRing(num);
+            }
+          }
+          if (demoMode) {
+            renderResponseUi(res);
+          }
           return res;
         }
 
@@ -1111,6 +1124,7 @@
     <script src="../js/transport/firestore-transport.js"></script>
     <script src="../js/transport/create-transport.js"></script>
     <script src="../js/receiver/validate-request.js"></script>
+    <script src="../js/receiver/ring-host.js"></script>
     <script src="../js/receiver/cloud-runtime.js"></script>
     <script src="../js/receiver/cloud-boot.js"></script>
   </body>

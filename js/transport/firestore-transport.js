@@ -54,13 +54,22 @@
       return client.listDocuments(Paths.devicesCollectionPath(storeId));
     }
 
-    async function readLogs(limit) {
-      const path = Paths.logsCollectionPath(config.logsCollectionPathTemplate, storeId);
-      const docs = await client.listDocuments(path);
+    async function readReceiveLogs(limit) {
+      const path = Paths.receiveLogsPath(config.receiveLogsPathTemplate, storeId);
+      const items = await client.listDocuments(path);
       if (typeof limit === 'number' && limit > 0) {
-        return docs.slice(0, limit);
+        return items.slice(0, limit);
       }
-      return docs;
+      return items;
+    }
+
+    async function readCommands(limit) {
+      const path = Paths.commandsPath(config.commandsPathTemplate, storeId);
+      const items = await client.listDocuments(path);
+      if (typeof limit === 'number' && limit > 0) {
+        return items.slice(0, limit);
+      }
+      return items;
     }
 
     function destroy() {
@@ -75,7 +84,8 @@
       readBoard: readBoard,
       readDevice: readDevice,
       listDevices: listDevices,
-      readLogs: readLogs,
+      readReceiveLogs: readReceiveLogs,
+      readCommands: readCommands,
       destroy: destroy,
     };
   }

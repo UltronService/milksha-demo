@@ -1,5 +1,5 @@
 /**
- * Firestore paths（與 milksha-cloud 定案格式對齊；紀錄路徑可設定）。
+ * Firestore paths（milksha-cloud 定案）。
  */
 (function (root) {
   'use strict';
@@ -21,18 +21,28 @@
     return 'stores/' + encodeURIComponent(storeId) + '/devices';
   }
 
-  /**
-   * @param {string} template e.g. stores/{storeId}/logs
-   * @param {string} storeId
-   */
-  function logsCollectionPath(template, storeId) {
-    return String(template || 'stores/{storeId}/logs').replace('{storeId}', encodeURIComponent(storeId));
+  function tpl(template, storeId) {
+    return String(template || '').replace(/\{storeId\}/g, encodeURIComponent(storeId));
+  }
+
+  function receiveLogsPath(template, storeId) {
+    return tpl(template || 'stores/{storeId}/receive_logs', storeId);
+  }
+
+  function commandsPath(template, storeId) {
+    return tpl(template || 'stores/{storeId}/commands', storeId);
+  }
+
+  function ingestEventsPath(template, storeId) {
+    return tpl(template || 'stores/{storeId}/ingest_events', storeId);
   }
 
   QMS.Transport.Paths = {
     todayBoardPath: todayBoardPath,
     deviceDocPath: deviceDocPath,
     devicesCollectionPath: devicesCollectionPath,
-    logsCollectionPath: logsCollectionPath,
+    receiveLogsPath: receiveLogsPath,
+    commandsPath: commandsPath,
+    ingestEventsPath: ingestEventsPath,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);
