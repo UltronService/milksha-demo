@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>迷客夏叫號機接收端串接確認書 v1.0 草案</title>
+  <title>迷客夏叫號機接收端串接確認書 v1.0.1 草案</title>
   <style>
     :root {
       --text: #1a1a1a;
@@ -182,6 +182,50 @@
       color: var(--muted);
       text-align: center;
     }
+    @media screen and (max-width: 768px) {
+      body { font-size: 17px; }
+      .doc {
+        margin: 0;
+        padding: 12px 14px 18px;
+        box-shadow: none;
+      }
+      h1 { font-size: 1.75rem; }
+      h2 { font-size: 1.35rem; }
+      h3 { font-size: 1.2rem; }
+      .meta-grid {
+        grid-template-columns: 1fr;
+        font-size: 16px;
+        gap: 0.5rem;
+      }
+      .preamble { font-size: 16px; }
+      .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0.5rem 0;
+      }
+      .table-scroll table {
+        font-size: 17px;
+        min-width: 100%;
+      }
+      .note-box,
+      .confirm-row,
+      .remark-caption { font-size: 17px; }
+      .changelog { font-size: 15px; }
+      pre { font-size: 14px; }
+      .diagram figcaption { font-size: 14px; }
+      .confirm-options label {
+        min-height: 44px;
+        padding: 6px 4px;
+        gap: 0.5rem;
+      }
+      .confirm-options input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+        flex-shrink: 0;
+      }
+      .sign-grid { grid-template-columns: 1fr; }
+    }
     @page {
       size: A4;
       margin: 12mm 14mm;
@@ -207,7 +251,7 @@
     <header class="doc-head">
       <h1>迷客夏叫號機接收端串接確認書</h1>
       <div class="meta-grid">
-        <div><strong>版本</strong> v1.0 草案</div>
+        <div><strong>版本</strong> v1.0.1 草案</div>
         <div><strong>日期</strong> 2026-10-02</div>
         <div><strong>狀態</strong> 草案</div>
       </div>
@@ -258,15 +302,17 @@
       </ul>
 
       <h3>2.4 建議內層回傳訊息（四種，文字依規格）</h3>
-      <table>
-        <thead><tr><th>情境</th><th>內層 JSON（示意）</th></tr></thead>
-        <tbody>
-          <tr><td>成功</td><td><code>{ "isSuccess": true, "information": "資料顯示成功" }</code></td></tr>
-          <tr><td>目標未連線</td><td><code>{ "isSuccess": false, "information": "目標叫號機尚未連線" }</code></td></tr>
-          <tr><td>找不到設備</td><td><code>{ "isSuccess": false, "information": "找不到目標叫號機" }</code></td></tr>
-          <tr><td>資料錯誤</td><td><code>{ "isSuccess": false, "information": "叫號資料格式錯誤" }</code></td></tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>情境</th><th>內層 JSON（示意）</th></tr></thead>
+          <tbody>
+            <tr><td>成功</td><td><code>{ "isSuccess": true, "information": "資料顯示成功" }</code></td></tr>
+            <tr><td>目標未連線</td><td><code>{ "isSuccess": false, "information": "目標叫號機尚未連線" }</code></td></tr>
+            <tr><td>找不到設備</td><td><code>{ "isSuccess": false, "information": "找不到目標叫號機" }</code></td></tr>
+            <tr><td>資料錯誤</td><td><code>{ "isSuccess": false, "information": "叫號資料格式錯誤" }</code></td></tr>
+          </tbody>
+        </table>
+      </div>
       <p>簽章、MD5 計算範圍、加密與 HTTP 方法等細節<strong>以原規格及雙方另行列印之技術附件為準</strong>（見第 7 節待提供項目）。</p>
       <div class="confirm-row" aria-label="第 2 節確認">
         <div class="label">本節確認</div>
@@ -321,15 +367,17 @@
 
     <section id="sec-5">
       <h2>5. 測試與上線</h2>
-      <table>
-        <thead><tr><th>項目</th><th>說明</th></tr></thead>
-        <tbody>
-          <tr><td>測試環境 URL</td><td><em>待提供</em> — 供 Tammy 或奧創試送、達鈦整合前驗證（與正式環境分離）。</td></tr>
-          <tr><td>正式環境 URL</td><td><em>待提供</em> — 驗收通過後交付達鈦設定；達鈦僅更換 endpoint。</td></tr>
-          <tr><td>試送</td><td>迷客夏 Tammy 可於測試環境試送；開發階段奧創自測呼叫可接受。</td></tr>
-          <tr><td>試點門市</td><td><em>待確認</em> — 店編號、target、螢幕數量。</td></tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>項目</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td>測試環境 URL</td><td><em>待提供</em> — 供 Tammy 或奧創試送、達鈦整合前驗證（與正式環境分離）。</td></tr>
+            <tr><td>正式環境 URL</td><td><em>待提供</em> — 驗收通過後交付達鈦設定；達鈦僅更換 endpoint。</td></tr>
+            <tr><td>試送</td><td>迷客夏 Tammy 可於測試環境試送；開發階段奧創自測呼叫可接受。</td></tr>
+            <tr><td>試點門市</td><td><em>待確認</em> — 店編號、target、螢幕數量。</td></tr>
+          </tbody>
+        </table>
+      </div>
       <p><strong>切換步驟（摘要）：</strong></p>
       <ol>
         <li>奧創提供測試 URL → 迷客夏／Tammy 試送 → 完成第 6 節驗收項目。</li>
@@ -375,22 +423,24 @@
     <section id="sec-6">
       <h2>6. 驗收項目</h2>
       <p>新接收端需完成下列九項測試（文字依《叫號機接收端 API 串接規格》第 5 章）。</p>
-      <table>
-        <thead>
-          <tr><th>項目</th><th>測試方式</th><th>確認人</th><th>結果</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>1. 準備中號碼正常顯示</td><td>測試環境試送含 <code>From_Store_Preparing</code>（或其他 <code>*_Preparing</code>）；目視螢幕準備中區塊。</td><td></td><td></td></tr>
-          <tr><td>2. 可取餐號碼正常顯示</td><td>試送含 <code>From_Store_OK</code>（或其他 <code>*_OK</code>）；目視可取餐區塊。</td><td></td><td></td></tr>
-          <tr><td>3. 多筆號碼同時顯示</td><td>單次外送多筆 <code>number_content</code>；確認兩區塊同時正確列出。</td><td></td><td></td></tr>
-          <tr><td>4. 號碼狀態切換</td><td>同一號碼由 Preparing 改為 OK（或自名單移除）；確認區塊移動符合整批覆寫規則。</td><td></td><td></td></tr>
-          <tr><td>5. 空陣列可清空畫面</td><td>外送 <code>number_content: []</code>；確認叫號區塊清空。</td><td></td><td></td></tr>
-          <tr><td>6. 跑馬燈內容及速度更新</td><td>試送 <code>newsTicker_content</code>／<code>newsTickerSpeed</code>；確認接收端處理符合約定（試點螢幕不顯示跑馬燈）；必要時以 Response 紀錄為準。</td><td></td><td></td></tr>
-          <tr><td>7. 找不到目標設備時正確回傳</td><td>使用未註冊之 <code>target</code> 試送；確認內層訊息為「找不到目標叫號機」。</td><td></td><td></td></tr>
-          <tr><td>8. 目標叫號機離線時正確回傳</td><td>模擬螢幕未連線；確認內層訊息為「目標叫號機尚未連線」。</td><td></td><td></td></tr>
-          <tr><td>9. Response 格式符合既有規格</td><td>比對欄位名稱、型別與 JSON 字串結構（含 <code>reslut</code>、<code>reesultMd5_ServerSignature</code> 拼字）。</td><td></td><td></td></tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>項目</th><th>測試方式</th><th>確認人</th><th>結果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1. 準備中號碼正常顯示</td><td>測試環境試送含 <code>From_Store_Preparing</code>（或其他 <code>*_Preparing</code>）；目視螢幕準備中區塊。</td><td></td><td></td></tr>
+            <tr><td>2. 可取餐號碼正常顯示</td><td>試送含 <code>From_Store_OK</code>（或其他 <code>*_OK</code>）；目視可取餐區塊。</td><td></td><td></td></tr>
+            <tr><td>3. 多筆號碼同時顯示</td><td>單次外送多筆 <code>number_content</code>；確認兩區塊同時正確列出。</td><td></td><td></td></tr>
+            <tr><td>4. 號碼狀態切換</td><td>同一號碼由 Preparing 改為 OK（或自名單移除）；確認區塊移動符合整批覆寫規則。</td><td></td><td></td></tr>
+            <tr><td>5. 空陣列可清空畫面</td><td>外送 <code>number_content: []</code>；確認叫號區塊清空。</td><td></td><td></td></tr>
+            <tr><td>6. 跑馬燈內容及速度更新</td><td>試送 <code>newsTicker_content</code>／<code>newsTickerSpeed</code>；確認接收端處理符合約定（試點螢幕不顯示跑馬燈）；必要時以 Response 紀錄為準。</td><td></td><td></td></tr>
+            <tr><td>7. 找不到目標設備時正確回傳</td><td>使用未註冊之 <code>target</code> 試送；確認內層訊息為「找不到目標叫號機」。</td><td></td><td></td></tr>
+            <tr><td>8. 目標叫號機離線時正確回傳</td><td>模擬螢幕未連線；確認內層訊息為「目標叫號機尚未連線」。</td><td></td><td></td></tr>
+            <tr><td>9. Response 格式符合既有規格</td><td>比對欄位名稱、型別與 JSON 字串結構（含 <code>reslut</code>、<code>reesultMd5_ServerSignature</code> 拼字）。</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="confirm-row" aria-label="第 6 節確認">
         <div class="label">本節確認</div>
         <div class="confirm-options">
@@ -471,13 +521,15 @@
     <section class="changelog" aria-labelledby="changelog-title">
       <h2 id="changelog-title" style="border: none; margin-top: 0;">變更紀錄</h2>
       <dl>
+        <dt>v1.0.1 · 2026-10-02</dt>
+        <dd>手機版字體放大：小螢幕可讀字級、表格橫向捲動、確認勾選較易點選；桌面與 A4 列印版面不變。</dd>
         <dt>v1.0 · 2026-10-02</dt>
         <dd>初版草案：建立串接確認書，對齊 2026-10-01 會議決議、Tammy 對話與《叫號機接收端 API 串接規格》欄位摘要。</dd>
       </dl>
     </section>
 
     <footer class="doc-foot">
-      迷客夏叫號機接收端串接確認書 · v1.0 草案 · 2026-10-02
+      迷客夏叫號機接收端串接確認書 · v1.0.1 草案 · 2026-10-02
     </footer>
   </article>
 </body>
