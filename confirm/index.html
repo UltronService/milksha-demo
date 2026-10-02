@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>迷客夏叫號機接收端串接確認書 v1.0 草案</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #4a4a4a;
+      --border: #c8c8c8;
+      --accent: #1e3a2f;
+      --confirm-bg: #f8f9fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      font-size: 11pt;
+      line-height: 1.55;
+      color: var(--text);
+      background: #ececec;
+    }
+    .doc {
+      max-width: 210mm;
+      margin: 1rem auto;
+      padding: 14mm 16mm 18mm;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    header.doc-head {
+      border-bottom: 3px double var(--accent);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.35rem 1rem;
+      font-size: 10pt;
+      color: var(--muted);
+    }
+    .meta-grid strong { color: var(--text); }
+    .preamble {
+      font-size: 10pt;
+      margin: 0.75rem 0 0;
+      padding: 0.5rem 0.65rem;
+      background: #f3f6f4;
+      border-left: 4px solid var(--accent);
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin: 1.5rem 0 0.6rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--accent);
+      page-break-after: avoid;
+    }
+    h3 { font-size: 1rem; margin: 1rem 0 0.4rem; }
+    p { margin: 0.4rem 0; }
+    ul, ol { margin: 0.35rem 0; padding-left: 1.35rem; }
+    li { margin: 0.25rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+      margin: 0.5rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.45rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eef3ef; font-weight: 600; }
+    code {
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 0.88em;
+      background: #f5f5f5;
+      padding: 0.05rem 0.2rem;
+      border-radius: 2px;
+    }
+    pre {
+      font-size: 8.5pt;
+      background: #f5f5f5;
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.65rem;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+    .note-box {
+      font-size: 9.5pt;
+      padding: 0.45rem 0.6rem;
+      background: #fffbeb;
+      border: 1px solid #e5c76b;
+      margin: 0.5rem 0;
+    }
+    .diagram {
+      margin: 0.75rem 0;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .diagram figcaption {
+      font-size: 9pt;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+      text-align: left;
+    }
+    .diagram svg { max-width: 100%; height: auto; }
+    .confirm-row {
+      margin-top: 0.85rem;
+      padding: 0.55rem 0.65rem;
+      background: var(--confirm-bg);
+      border: 1px dashed var(--border);
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+    .confirm-row .label { font-weight: 600; margin-bottom: 0.35rem; }
+    .confirm-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .confirm-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: default;
+    }
+    .confirm-options input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+    }
+    .remark-line {
+      border-bottom: 1px solid #999;
+      min-height: 1.4rem;
+      margin-top: 0.25rem;
+    }
+    .remark-caption { font-size: 8.5pt; color: var(--muted); }
+    .sign-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .sign-block {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      min-height: 7rem;
+    }
+    .sign-block h3 { margin-top: 0; font-size: 1rem; }
+    .sign-field { margin: 0.65rem 0; }
+    .sign-field .line {
+      border-bottom: 1px solid #333;
+      min-height: 1.5rem;
+      margin-top: 0.2rem;
+    }
+    .changelog {
+      margin-top: 1.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      font-size: 9pt;
+      color: var(--muted);
+    }
+    .changelog dt { font-weight: 600; color: var(--text); margin-top: 0.35rem; }
+    .changelog dd { margin: 0.15rem 0 0 0; }
+    footer.doc-foot {
+      margin-top: 1rem;
+      font-size: 8.5pt;
+      color: var(--muted);
+      text-align: center;
+    }
+    @page {
+      size: A4;
+      margin: 12mm 14mm;
+    }
+    @media print {
+      body { background: #fff; }
+      .doc {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      h2, .confirm-row, table, .diagram, .sign-block { break-inside: avoid; }
+      .confirm-options input[type="checkbox"] {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <article class="doc">
+    <header class="doc-head">
+      <h1>迷客夏叫號機接收端串接確認書</h1>
+      <div class="meta-grid">
+        <div><strong>版本</strong> v1.0 草案</div>
+        <div><strong>日期</strong> 2026-10-02</div>
+        <div><strong>狀態</strong> 草案</div>
+      </div>
+      <p class="preamble">
+        本確認書供迷客夏資訊部與奧創對齊試點叫號<strong>接收端</strong>之合作範圍、串接規格與驗收方式。
+        技術欄位以迷客夏提供之《叫號機接收端 API 串接規格》及線上討論文件為準（欄位名稱與拼字不可自行修改）。
+        後端服務於本文統稱<strong>奧創接收端</strong>。
+      </p>
+    </header>
+
+    <section id="sec-1">
+      <h2>1. 合作範圍與分工</h2>
+      <ul>
+        <li><strong>迷客夏</strong>：資訊窗口（IT 聯絡人 Tammy）；協調達鈦 POS 端設定與試點門市；與奧創直接對接整合事宜。</li>
+        <li><strong>達鈦（POS 送端）</strong>：試點時<strong>僅更換 endpoint URL</strong> 至奧創提供之接收端位址；Request／Response JSON 結構與現行相同，不變更 payload 格式。</li>
+        <li><strong>奧創</strong>：建置並維運<strong>奧創接收端</strong>（接收 POS 外送之叫號名單、依規格回覆處理結果）；提供門市叫號大螢幕顯示（含現場機上盒與畫面應用）。</li>
+      </ul>
+      <p><strong>2026-10-01 會議決議（試點接收端）：</strong>試點改由奧創自建 API 服務作為叫號接收端，承接 POS 外送；不再使用迷客夏現行接收 URL。外送 JSON 與達鈦／迷客夏現行相同；顯示與回覆仍依《叫號機接收端 API 串接規格》。本試點範圍<strong>不包含</strong>規格未定義之掃碼寫回 POS 或額外欄位。</p>
+      <p>迷客夏 Tammy（2026-09 對話）已確認：現況全達鈦門市 POS 打迷客夏 URL；試點目標為 POS 直接呼叫奧創接收端；結帳後外送準備中、店員於叫號控制屏完成或掃碼後再由 POS 外送可取餐狀態。</p>
+      <div class="confirm-row" aria-label="第 1 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s1-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s1-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line" role="textbox" aria-label="備註空白欄"></div>
+      </div>
+    </section>
+
+    <section id="sec-2">
+      <h2>2. 串接規格</h2>
+      <p>串接內容依《叫號機接收端 API 串接規格》；完整欄位、範例與十種 <code>source_type</code> 說明<strong>以原文件為準</strong>。下列為雙方確認時需共同遵守之摘要（與討論文件一致）。</p>
+
+      <h3>2.1 Request（POS → 奧創接收端）</h3>
+      <p>主要欄位：<code>isEncrypt</code>、<code>serviceSpecialData_Json</code>（含 <code>target</code>、<code>data.number_content</code>、跑馬燈相關欄位）、<code>merchant_id</code>、<code>account</code>、<code>timeStmp</code>、<code>serviceSpecialData_Json_Md5Hash</code>、<code>signature</code>。</p>
+      <p><code>number_content</code> 每筆含 <code>source_type</code>（完整字串比對）、<code>number</code>（<strong>必須以字串處理</strong>，不可轉整數）。</p>
+      <p class="note-box"><strong>拼字特殊、不可修改：</strong>Request 之 <code>timeStmp</code>（非 timestamp）。</p>
+
+      <h3>2.2 Response（奧創接收端 → POS）</h3>
+      <p>主要欄位：<code>merchant_id</code>、<code>account</code>、<code>isOK</code>、<code>information</code>、<code>reslut</code>（含 <code>CallingNumberMasterResponse.result</code>、<code>statusCode</code>）、<code>resultMd5</code>、<code>reesultMd5_ServerSignature</code>、<code>isEncrypted</code>。</p>
+      <p class="note-box"><strong>拼字特殊、不可修改：</strong>Response 之 <code>reslut</code>、<code>reesultMd5_ServerSignature</code>。</p>
+
+      <h3>2.3 外層 isOK 與內層 isSuccess</h3>
+      <ul>
+        <li><code>isOK = true</code>：表示 API 層級已正常完成處理。</li>
+        <li><code>information</code> 與 <code>CallingNumberMasterResponse.result</code> 為 <strong>JSON 字串</strong>，解析後之 <code>isSuccess</code> 表示是否<strong>成功顯示至叫號機</strong>；<code>information</code> 為成功或失敗訊息文字。</li>
+      </ul>
+
+      <h3>2.4 建議內層回傳訊息（四種，文字依規格）</h3>
+      <table>
+        <thead><tr><th>情境</th><th>內層 JSON（示意）</th></tr></thead>
+        <tbody>
+          <tr><td>成功</td><td><code>{ "isSuccess": true, "information": "資料顯示成功" }</code></td></tr>
+          <tr><td>目標未連線</td><td><code>{ "isSuccess": false, "information": "目標叫號機尚未連線" }</code></td></tr>
+          <tr><td>找不到設備</td><td><code>{ "isSuccess": false, "information": "找不到目標叫號機" }</code></td></tr>
+          <tr><td>資料錯誤</td><td><code>{ "isSuccess": false, "information": "叫號資料格式錯誤" }</code></td></tr>
+        </tbody>
+      </table>
+      <p>簽章、MD5 計算範圍、加密與 HTTP 方法等細節<strong>以原規格及雙方另行列印之技術附件為準</strong>（見第 7 節待提供項目）。</p>
+      <div class="confirm-row" aria-label="第 2 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s2-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s2-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-3">
+      <h2>3. 顯示規則</h2>
+      <p>奧創接收端每次收到之 <code>number_content</code> 代表該 <code>target</code> 對應螢幕<strong>此刻應顯示的完整名單</strong>（整批覆寫，非單筆追加）。</p>
+      <ul>
+        <li><code>source_type</code> 為 <code>From_Store_Preparing</code>（及規格所列其他 <code>*_Preparing</code>）→ 顯示於<strong>準備中</strong>區塊。</li>
+        <li><code>source_type</code> 為 <code>From_Store_OK</code>（及規格所列其他 <code>*_OK</code>）→ 顯示於<strong>可取餐</strong>區塊。</li>
+        <li>本批 <code>number_content</code> 中未出現之舊號碼，應自畫面移除。</li>
+        <li><code>number_content</code> 為<strong>空陣列</strong> → 清空叫號畫面（準備中與可取餐區塊）。</li>
+        <li>每日 <strong>03:00（台灣時間）</strong> 自動清空<strong>所有門市</strong>叫號顯示狀態（營運日切換）。</li>
+        <li><code>newsTicker_content</code>、<code>newsTickerSpeed</code>：POS 仍可依規格外送；<strong>試點叫號大螢幕不顯示跑馬燈</strong>，接收端可忽略或僅留存不呈現（與 Tammy 對話：跑馬燈為可選、非試點必要）。</li>
+      </ul>
+      <div class="confirm-row" aria-label="第 3 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s3-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s3-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-4">
+      <h2>4. 門市與設備</h2>
+      <ul>
+        <li><strong>target 與門市對應</strong>：Request 內 <code>serviceSpecialData_Json.target</code> 為目標叫號機識別值（規格範例 <code>composec030020</code>）。<code>target</code> 與門市／螢幕之命名規則<strong>待確認</strong>（是否為 <code>merchant_id</code> + <code>account</code> 等組合，由迷客夏提供清單）。</li>
+        <li><strong>機上盒（STB）</strong>：以<strong>店編號</strong>綁定；設定與驗收時並列<strong>店名</strong>供人工確認，避免編號誤植。</li>
+        <li><strong>一店多螢幕</strong>：若同一門市有多台叫號螢幕，對應之 <code>target</code> 數量與 POS 外送策略<strong>待確認</strong>（單一 target 多台同步，或多 target 分屏等）。</li>
+      </ul>
+      <div class="confirm-row" aria-label="第 4 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s4-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s4-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-5">
+      <h2>5. 測試與上線</h2>
+      <table>
+        <thead><tr><th>項目</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>測試環境 URL</td><td><em>待提供</em> — 供 Tammy 或奧創試送、達鈦整合前驗證（與正式環境分離）。</td></tr>
+          <tr><td>正式環境 URL</td><td><em>待提供</em> — 驗收通過後交付達鈦設定；達鈦僅更換 endpoint。</td></tr>
+          <tr><td>試送</td><td>迷客夏 Tammy 可於測試環境試送；開發階段奧創自測呼叫可接受。</td></tr>
+          <tr><td>試點門市</td><td><em>待確認</em> — 店編號、target、螢幕數量。</td></tr>
+        </tbody>
+      </table>
+      <p><strong>切換步驟（摘要）：</strong></p>
+      <ol>
+        <li>奧創提供測試 URL → 迷客夏／Tammy 試送 → 完成第 6 節驗收項目。</li>
+        <li>確認 target／店編與現場螢幕連線正常。</li>
+        <li>奧創提供正式 URL → 迷客夏協調達鈦於試點門市更換 URL。</li>
+        <li>營運日監看：準備中／可取餐顯示、離線與錯誤回覆是否符合規格。</li>
+        <li>必要時可於非尖峰時段回退至原迷客夏 URL（由迷客夏與達鈦執行）。</li>
+      </ol>
+      <figure class="diagram">
+        <figcaption>試點資料流（上線驗證用）</figcaption>
+        <svg viewBox="0 0 520 100" role="img" aria-label="POS 至奧創接收端至螢幕">
+          <defs>
+            <marker id="arrow-flow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#1e3a2f"/>
+            </marker>
+          </defs>
+          <rect x="8" y="28" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="58" y="55" text-anchor="middle" font-size="12">門市 POS</text>
+          <line x1="108" y1="50" x2="158" y2="50" stroke="#1e3a2f" stroke-width="2" marker-end="url(#arrow-flow)"/>
+          <text x="133" y="42" text-anchor="middle" font-size="8">外送名單</text>
+          <rect x="160" y="22" width="120" height="56" rx="4" fill="#eef3ef" stroke="#1e3a2f"/>
+          <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="600">奧創接收端</text>
+          <text x="220" y="64" text-anchor="middle" font-size="8">回覆顯示結果</text>
+          <line x1="280" y1="50" x2="330" y2="50" stroke="#1e3a2f" stroke-width="2" marker-end="url(#arrow-flow)"/>
+          <text x="305" y="42" text-anchor="middle" font-size="8">更新畫面</text>
+          <rect x="332" y="28" width="100" height="44" rx="4" fill="#fff" stroke="#333"/>
+          <text x="382" y="55" text-anchor="middle" font-size="12">叫號螢幕</text>
+          <path d="M 58 72 L 58 88 L 220 88 L 220 78" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#arrow-flow)"/>
+          <text x="140" y="84" font-size="8">Response</text>
+        </svg>
+      </figure>
+      <div class="confirm-row" aria-label="第 5 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s5-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s5-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-6">
+      <h2>6. 驗收項目</h2>
+      <p>新接收端需完成下列九項測試（文字依《叫號機接收端 API 串接規格》第 5 章）。</p>
+      <table>
+        <thead>
+          <tr><th>項目</th><th>測試方式</th><th>確認人</th><th>結果</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1. 準備中號碼正常顯示</td><td>測試環境試送含 <code>From_Store_Preparing</code>（或其他 <code>*_Preparing</code>）；目視螢幕準備中區塊。</td><td></td><td></td></tr>
+          <tr><td>2. 可取餐號碼正常顯示</td><td>試送含 <code>From_Store_OK</code>（或其他 <code>*_OK</code>）；目視可取餐區塊。</td><td></td><td></td></tr>
+          <tr><td>3. 多筆號碼同時顯示</td><td>單次外送多筆 <code>number_content</code>；確認兩區塊同時正確列出。</td><td></td><td></td></tr>
+          <tr><td>4. 號碼狀態切換</td><td>同一號碼由 Preparing 改為 OK（或自名單移除）；確認區塊移動符合整批覆寫規則。</td><td></td><td></td></tr>
+          <tr><td>5. 空陣列可清空畫面</td><td>外送 <code>number_content: []</code>；確認叫號區塊清空。</td><td></td><td></td></tr>
+          <tr><td>6. 跑馬燈內容及速度更新</td><td>試送 <code>newsTicker_content</code>／<code>newsTickerSpeed</code>；確認接收端處理符合約定（試點螢幕不顯示跑馬燈）；必要時以 Response 紀錄為準。</td><td></td><td></td></tr>
+          <tr><td>7. 找不到目標設備時正確回傳</td><td>使用未註冊之 <code>target</code> 試送；確認內層訊息為「找不到目標叫號機」。</td><td></td><td></td></tr>
+          <tr><td>8. 目標叫號機離線時正確回傳</td><td>模擬螢幕未連線；確認內層訊息為「目標叫號機尚未連線」。</td><td></td><td></td></tr>
+          <tr><td>9. Response 格式符合既有規格</td><td>比對欄位名稱、型別與 JSON 字串結構（含 <code>reslut</code>、<code>reesultMd5_ServerSignature</code> 拼字）。</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="confirm-row" aria-label="第 6 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s6-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s6-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-7">
+      <h2>7. 需迷客夏提供之資料</h2>
+      <ul>
+        <li><strong>簽章方式</strong>與<strong>測試用憑證</strong>：透過安全管道提供（電子郵件、加密檔或雙方約定之方式），<strong>不於本網頁揭露</strong>。</li>
+        <li><strong>HTTP 方法</strong>（如 POST／GET）及 Content-Type 等連線細節（若規格未載明）。</li>
+        <li><strong>試點門市清單</strong>：店編號、<code>account</code>、<code>target</code>、現場螢幕數量。</li>
+        <li><strong>外送頻率、逾時與重試</strong>：POS 呼叫間隔、連線逾時秒數、失敗是否重送及次數上限（<em>待確認</em>）。</li>
+        <li><strong>聯絡窗口與可聯絡時段</strong>：試點期間迷客夏 IT／達鈦支援時間。</li>
+      </ul>
+      <div class="confirm-row" aria-label="第 7 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s7-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s7-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-8">
+      <h2>8. 營運與資料</h2>
+      <ul>
+        <li><strong>接收紀錄</strong>：奧創接收端保留試送／營運請求之摘要紀錄（如 target、<code>timeStmp</code>、處理結果），<strong>保留 7 日後自動刪除</strong>；不作為迷客夏官方帳務或訂單留存（迷客夏已表示不留存叫號資料）。</li>
+        <li><strong>事故聯絡</strong>：試點期間雙方值班聯絡人與管道<strong>待確認</strong>。</li>
+        <li><strong>回應時效</strong>：一般障礙回應與修復目標<strong>待確認</strong>（建議另附 SLA 或試點支援表）。</li>
+      </ul>
+      <div class="confirm-row" aria-label="第 8 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s8-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s8-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section id="sec-9">
+      <h2>9. 簽核</h2>
+      <p>雙方代表確認上述內容後簽署（得另以 PDF 用印本為準）。</p>
+      <div class="sign-grid">
+        <div class="sign-block">
+          <h3>迷客夏</h3>
+          <div class="sign-field">姓名<div class="line"></div></div>
+          <div class="sign-field">職稱<div class="line"></div></div>
+          <div class="sign-field">日期<div class="line"></div></div>
+        </div>
+        <div class="sign-block">
+          <h3>奧創</h3>
+          <div class="sign-field">姓名<div class="line"></div></div>
+          <div class="sign-field">職稱<div class="line"></div></div>
+          <div class="sign-field">日期<div class="line"></div></div>
+        </div>
+      </div>
+      <div class="confirm-row" aria-label="第 9 節確認">
+        <div class="label">本節確認</div>
+        <div class="confirm-options">
+          <label><input type="checkbox" name="s9-agree" aria-label="同意"> 同意</label>
+          <label><input type="checkbox" name="s9-revise" aria-label="需修改"> 需修改</label>
+        </div>
+        <div class="remark-caption">備註</div>
+        <div class="remark-line"></div>
+      </div>
+    </section>
+
+    <section class="changelog" aria-labelledby="changelog-title">
+      <h2 id="changelog-title" style="border: none; margin-top: 0;">變更紀錄</h2>
+      <dl>
+        <dt>v1.0 · 2026-10-02</dt>
+        <dd>初版草案：建立串接確認書，對齊 2026-10-01 會議決議、Tammy 對話與《叫號機接收端 API 串接規格》欄位摘要。</dd>
+      </dl>
+    </section>
+
+    <footer class="doc-foot">
+      迷客夏叫號機接收端串接確認書 · v1.0 草案 · 2026-10-02
+    </footer>
+  </article>
+</body>
+</html>
