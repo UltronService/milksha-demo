@@ -13,6 +13,36 @@
     return v !== null && v !== '' ? v : fallback;
   }
 
+  function isDevEndpointOverrideAllowed() {
+    try {
+      const loc = root.location;
+      if (!loc) {
+        return false;
+      }
+      const host = String(loc.hostname || '');
+      if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') {
+        return true;
+      }
+      const b = root.MILKSHA_FIREBASE_CONFIG || {};
+      if (b.allowUrlEndpointOverrides) {
+        return true;
+      }
+      if (b.fakeGatewayHost) {
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
+
+  function pickDevEndpointParam(params, key, fallback) {
+    if (!isDevEndpointOverrideAllowed()) {
+      return fallback;
+    }
+    return pickParam(params, key, fallback);
+  }
+
   function sharedTiming(base) {
     const b = base || {};
     return {
@@ -49,14 +79,18 @@
   function resolveFirebaseConfig(params, base) {
     const b = base || root.MILKSHA_FIREBASE_CONFIG || {};
     const saved = CloudSettings ? CloudSettings.load() : {};
-    const projectId = pickParam(params, 'project', saved.projectId || b.projectId || '');
-    const apiKey = pickParam(params, 'key', saved.apiKey || b.apiKey || '');
-    const region = pickParam(params, 'region', saved.region || b.region || 'asia-east1');
-    const fakeGateway = pickParam(params, 'gateway', saved.gateway || b.fakeGatewayHost || '');
-    const emulatorPrefix = pickParam(params, 'emulatorPrefix', saved.emulatorPrefix || b.emulatorPrefix || '');
-    let firestoreEmulatorHost = pickParam(params, 'firestore', b.firestoreEmulatorHost || '');
-    let functionsBaseUrl = pickParam(params, 'functions', b.functionsBaseUrl || '');
-    let identityToolkitBaseUrl = pickParam(params, 'identity', b.identityToolkitBaseUrl || '');
+    const projectId = pickDevEndpointParam(params, 'project', saved.projectId || b.projectId || '');
+    const apiKey = pickDevEndpointParam(params, 'key', saved.apiKey || b.apiKey || '');
+    const region = pickDevEndpointParam(params, 'region', saved.region || b.region || 'asia-east1');
+    const fakeGateway = pickDevEndpointParam(params, 'gateway', saved.gateway || b.fakeGatewayHost || '');
+    const emulatorPrefix = pickDevEndpointParam(
+      params,
+      'emulatorPrefix',
+      saved.emulatorPrefix || b.emulatorPrefix || '',
+    );
+    let firestoreEmulatorHost = pickDevEndpointParam(params, 'firestore', b.firestoreEmulatorHost || '');
+    let functionsBaseUrl = pickDevEndpointParam(params, 'functions', b.functionsBaseUrl || '');
+    let identityToolkitBaseUrl = pickDevEndpointParam(params, 'identity', b.identityToolkitBaseUrl || '');
     let firestoreRestBase = '';
     let useEmulator = false;
 
@@ -128,11 +162,14 @@
     }
 
     if (mode === 'firestore') {
+      const devOverrides = isDevEndpointOverrideAllowed();
       const merged = Object.assign({}, saved, {
-        projectId: saved.projectId || pickParam(p, 'project', b.projectId || 'milksha-qms-dev'),
-        apiKey: saved.apiKey || pickParam(p, 'key', b.apiKey || ''),
-        gateway: saved.gateway || pickParam(p, 'gateway', ''),
-        emulatorPrefix: saved.emulatorPrefix || pickParam(p, 'emulatorPrefix', ''),
+        projectId: saved.projectId || pickDevEndpointParam(p, 'project', b.projectId || 'milksha-qms-dev'),
+        apiKey: saved.apiKey || pickDevEndpointParam(p, 'key', b.apiKey || ''),
+        gateway: devOverrides ? saved.gateway || pickParam(p, 'gateway', '') : saved.gateway || '',
+        emulatorPrefix: devOverrides
+          ? saved.emulatorPrefix || pickParam(p, 'emulatorPrefix', '')
+          : saved.emulatorPrefix || '',
         useEmulator: true,
       });
       if (merged.gateway) {
@@ -141,7 +178,7 @@
             project: merged.projectId,
             key: merged.apiKey,
             gateway: merged.gateway,
-            emulatorPrefix: merged.emulatorPrefix || pickParam(p, 'emulatorPrefix', '__emulator'),
+            emulatorPrefix: merged.emulatorPrefix || pickDevEndpointParam(p, 'emulatorPrefix', '__emulator'),
           }),
           b,
         );
@@ -178,4 +215,5 @@
   QMS.Transport.resolveFirebaseConfig = resolveFirebaseConfig;
   QMS.Transport.resolveModeFromUrl = resolveModeFromUrl;
   QMS.Transport.resolveConfigForMode = resolveConfigForMode;
+  QMS.Transport.isDevEndpointOverrideAllowed = isDevEndpointOverrideAllowed;
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

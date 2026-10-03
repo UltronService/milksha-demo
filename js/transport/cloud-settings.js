@@ -146,6 +146,15 @@
     return false;
   }
 
+  function clearCfgHashFromUrl() {
+    const path = root.location.pathname + root.location.search;
+    if (root.history && root.history.replaceState) {
+      root.history.replaceState(null, '', path);
+      return;
+    }
+    root.location.hash = '';
+  }
+
   function applyHashImport(storage) {
     const frag = root.location.hash || '';
     if (frag.indexOf('cfg=') < 0) {
@@ -153,15 +162,11 @@
     }
     const parsed = decodeCfgHash(frag);
     if (!parsed || !parsed.projectId) {
+      clearCfgHashFromUrl();
       return false;
     }
     save(stripBoardCfgFields(parsed), storage);
-    const path = root.location.pathname + root.location.search;
-    if (root.history && root.history.replaceState) {
-      root.history.replaceState(null, '', path);
-    } else {
-      root.location.hash = '';
-    }
+    clearCfgHashFromUrl();
     return true;
   }
 

@@ -17,6 +17,7 @@ import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
+const FAKE_DEV_ACCESS_CODE = 'fake-milksha-controller-access-code';
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -270,6 +271,12 @@ const server = http.createServer(async (req, res) => {
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       const body = await readBody(req);
+      if (String(body.accessCode || '') !== FAKE_DEV_ACCESS_CODE) {
+        return json(res, 401, {
+          code: 'invalid_access_code',
+          message: 'wrong access code for fake cloud',
+        });
+      }
       return json(res, 200, { customToken: `fake-${body.storeId}-${body.role}` });
     }
 

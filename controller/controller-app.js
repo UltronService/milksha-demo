@@ -416,6 +416,11 @@
   }
 
   async function posSend(numberContent, wrongSign, wrongStore) {
+    if (posInFlight) {
+      return { isSuccess: false, information: '上一筆叫號仍在送出中' };
+    }
+    posInFlight = true;
+    setPosButtonsDisabled(true);
     const body = wrapRequest(numberContent);
     if (wrongStore) {
       body.serviceSpecialData_Json.target = 'wrong-target-000';
@@ -426,6 +431,8 @@
     if (!secret) {
       showUserBanner('請在進階設定輸入測試環境專用 POS 金鑰');
       pushLog({ kind: 'posReceiver', summary: '叫號失敗 · 未設定 POS 金鑰' });
+      posInFlight = false;
+      setPosButtonsDisabled(false);
       return { isSuccess: false, information: '未設定 POS 金鑰' };
     }
     const signed = await PosSign.applyPosSignature(body, secret, wrongSign);
@@ -466,6 +473,9 @@
       const info = e.response && e.response.information ? e.response.information : e.message;
       pushLog({ kind: 'posReceiver', summary: 'posReceiver 失敗 · ' + info, response: e.response });
       throw e;
+    } finally {
+      posInFlight = false;
+      setPosButtonsDisabled(false);
     }
   }
 
@@ -563,11 +573,47 @@
     }, 4000);
   }
 
+  let connectInFlight = false;
+  let posInFlight = false;
+
+  function setConnectButtonDisabled(disabled) {
+    const btn = document.getElementById('btn-connect');
+    if (btn) {
+      btn.disabled = disabled;
+    }
+  }
+
+  function setPosButtonsDisabled(disabled) {
+    [
+      'btn-add-ticket',
+      'btn-one-ready',
+      'btn-all-ready',
+      'btn-clear-board',
+      'btn-wrong-sign',
+      'btn-wrong-store',
+      'btn-pos-raw',
+      'btn-bulk-ready',
+      'btn-send-nc',
+    ].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.disabled = disabled;
+      }
+    });
+  }
+
   async function connect() {
+    if (connectInFlight) {
+      return;
+    }
+    connectInFlight = true;
+    setConnectButtonDisabled(true);
     const mode = document.getElementById('fld-mode').value;
     if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
       showUserBanner('請先在進階設定填寫雲端設定與存取碼');
       syncCloudUi();
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
       return;
     }
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
@@ -576,6 +622,8 @@
     const config = buildConfig(mode);
     if ((mode === 'cloud' || mode === 'firestore') && !config.functionsBaseUrl) {
       showUserBanner('雲端連線設定不完整');
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
       return;
     }
     transport = window.QMS.Transport.createTransport(transportMode, {
@@ -585,15 +633,29 @@
       deviceId: 'controller-web',
       accessCode: accessCode,
     });
-    if (transport.session && transport.session.ensureIdToken) {
-      await transport.session.ensureIdToken();
+    try {
+      if (transport.session && transport.session.ensureIdToken) {
+        await transport.session.ensureIdToken();
+      }
+      setConnectedState(true, mode);
+      pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
+      await refreshBoardLists();
+      await pollDevice();
+      startPolling();
+      await mergeCloudLogs();
+    } catch (e) {
+      setConnectedState(false, '');
+      const code = e.response && e.response.code ? String(e.response.code) : '';
+      if (e.status === 401 || code === 'invalid_access_code') {
+        alert('存取碼錯誤，請重新確認後再連線。');
+      } else {
+        pushLog({ summary: '連線失敗 ' + (e.message || 'unknown') });
+      }
+      throw e;
+    } finally {
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
     }
-    setConnectedState(true, mode);
-    pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
-    await refreshBoardLists();
-    await pollDevice();
-    startPolling();
-    await mergeCloudLogs();
   }
 
   async function sendCommand(type, params) {

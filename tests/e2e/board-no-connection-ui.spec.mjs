@@ -66,7 +66,6 @@ function cloudSettingsInitScript() {
           gateway: '',
         }),
       );
-      localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
     } catch {
       /* ignore */
     }
@@ -108,7 +107,6 @@ test.describe('guest board never shows connection status', () => {
           localStorage.clear();
           sessionStorage.setItem('__e2e_init', '1');
         }
-        localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
       } catch {
         /* ignore */
       }

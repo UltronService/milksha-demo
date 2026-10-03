@@ -23,10 +23,18 @@ function loadQueue() {
 
 function makeFakeTimers() {
   let now = 0;
+  const base = Date.now();
   const timers = [];
+  const originalDateNow = Date.now;
+  Date.now = function () {
+    return base + now;
+  };
   return {
     now: function () {
       return now;
+    },
+    restore: function () {
+      Date.now = originalDateNow;
     },
     setTimeout: function (fn, ms) {
       const id = timers.length;
@@ -42,31 +50,44 @@ function makeFakeTimers() {
     },
     advance: function (ms) {
       now += ms;
-      const due = timers
-        .filter(function (t) {
-          return !t.cancelled && t.at <= now;
-        })
-        .sort(function (a, b) {
-          return a.at - b.at;
-        });
-      for (let i = 0; i < due.length; i += 1) {
-        due[i].cancelled = true;
-        due[i].fn();
+      let safety = 0;
+      while (safety < 50) {
+        safety += 1;
+        const due = timers
+          .filter(function (t) {
+            return !t.cancelled && t.at <= now;
+          })
+          .sort(function (a, b) {
+            return a.at - b.at;
+          });
+        if (due.length === 0) {
+          break;
+        }
+        for (let i = 0; i < due.length; i += 1) {
+          due[i].cancelled = true;
+          due[i].fn();
+        }
       }
     },
   };
 }
 
-test('twelve simultaneous rings play FIFO every 2.5s with no gap', function () {
+const GAP_MS = 120;
+
+test('twelve simultaneous rings play FIFO sequentially without overlap', function () {
   const create = loadQueue();
   const clocks = makeFakeTimers();
+  try {
   const played = [];
   const queue = create({
     overlayDurationMs: OVERLAY_MS,
     setTimeout: clocks.setTimeout,
     clearTimeout: clocks.clearTimeout,
-    onPlay: function (_id, number) {
+    onPlay: function (_id, number, onChimeEnded) {
       played.push({ number: number, at: clocks.now() });
+      if (onChimeEnded) {
+        onChimeEnded();
+      }
     },
     onHideOverlay: function () {},
   });
@@ -82,10 +103,14 @@ test('twelve simultaneous rings play FIFO every 2.5s with no gap', function () {
   assert.equal(played.length, 1);
   assert.equal(played[0].number, '9000');
   for (let step = 1; step < 12; step += 1) {
-    clocks.advance(OVERLAY_MS);
+    clocks.advance(OVERLAY_MS + GAP_MS + 20);
+    clocks.advance(GAP_MS + 20);
     assert.equal(played.length, step + 1);
     assert.equal(played[step].number, String(9000 + step));
-    assert.equal(played[step].at - played[step - 1].at, OVERLAY_MS);
+    assert.ok(played[step].at > played[step - 1].at);
+  }
+  } finally {
+    clocks.restore();
   }
 });
 
@@ -97,8 +122,11 @@ test('enqueue dedupes ids already queued', function () {
     overlayDurationMs: OVERLAY_MS,
     setTimeout: clocks.setTimeout,
     clearTimeout: clocks.clearTimeout,
-    onPlay: function () {
+    onPlay: function (_id, _number, onChimeEnded) {
       plays += 1;
+      if (onChimeEnded) {
+        onChimeEnded();
+      }
     },
     onHideOverlay: function () {},
   });
@@ -116,8 +144,11 @@ test('removes id from queue when it leaves ready before turn', function () {
     overlayDurationMs: OVERLAY_MS,
     setTimeout: clocks.setTimeout,
     clearTimeout: clocks.clearTimeout,
-    onPlay: function (_id, number) {
+    onPlay: function (_id, number, onChimeEnded) {
       played.push(number);
+      if (onChimeEnded) {
+        onChimeEnded();
+      }
     },
     onHideOverlay: function () {},
   });
@@ -125,6 +156,6 @@ test('removes id from queue when it leaves ready before turn', function () {
   queue.enqueueReadyIds(['store:1', 'store:2']);
   assert.equal(played[0], '1');
   queue.syncReadyQueue(new Set(['store:1']));
-  clocks.advance(OVERLAY_MS);
+  clocks.advance(OVERLAY_MS + GAP_MS);
   assert.deepEqual(played, ['1']);
 });

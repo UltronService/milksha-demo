@@ -71,7 +71,7 @@ test('HTTP Date before 03:00 Taipei rolls business day back', function () {
   assert.equal(r.businessDate, '2026-10-02');
 });
 
-test('no board businessDate and unreadable HTTP Date does not use box clock', function () {
+test('no board businessDate and unreadable HTTP Date falls back to box clock', function () {
   const TB = loadTodayBoard();
   TB.clearSessionBusinessDate();
   const r = TB.resolveSessionBusinessDate({
@@ -79,8 +79,9 @@ test('no board businessDate and unreadable HTTP Date does not use box clock', fu
     httpDateHeader: '',
     httpDateReadable: false,
   });
-  assert.equal(r.ok, false);
-  assert.equal(TB.hasSessionBusinessDate(), false);
+  assert.equal(r.ok, true);
+  assert.equal(r.source, 'box_clock');
+  assert.match(r.businessDate, /^\d{4}-\d{2}-\d{2}$/);
 });
 
 test('isCurrentBusinessDate uses session not device clock', function () {

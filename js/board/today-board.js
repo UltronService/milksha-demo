@@ -117,7 +117,44 @@
         return { ok: true, businessDate: fromHttp, source: 'http_date' };
       }
     }
+    const boxBd = taipeiBusinessDate();
+    if (boxBd) {
+      return { ok: true, businessDate: boxBd, source: 'box_clock' };
+    }
     return { ok: false };
+  }
+
+  function businessDateDayIndex(ymd) {
+    const parts = String(ymd || '').split('-');
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const da = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(da)) {
+      return NaN;
+    }
+    return Math.floor(Date.UTC(y, mo - 1, da) / 86400000);
+  }
+
+  /**
+   * @param {string} trustedBusinessDate from cloud board or HTTP Date
+   * @param {string} [localBusinessDate] from box clock (default now)
+   */
+  function isClockSkewedFromTrusted(trustedBusinessDate, localBusinessDate) {
+    const trusted = normalizeBusinessDateString(trustedBusinessDate);
+    const local = normalizeBusinessDateString(localBusinessDate || taipeiBusinessDate());
+    if (!trusted || !local) {
+      return false;
+    }
+    const localYear = Number(local.split('-')[0]);
+    if (localYear < 2000) {
+      return true;
+    }
+    const trustedIdx = businessDateDayIndex(trusted);
+    const localIdx = businessDateDayIndex(local);
+    if (!Number.isFinite(trustedIdx) || !Number.isFinite(localIdx)) {
+      return false;
+    }
+    return Math.abs(trustedIdx - localIdx) > 1;
   }
 
   /**
@@ -341,6 +378,8 @@
     clearSessionBusinessDate: clearSessionBusinessDate,
     businessDateFromHttpDate: businessDateFromHttpDate,
     resolveSessionBusinessDate: resolveSessionBusinessDate,
+    businessDateDayIndex: businessDateDayIndex,
+    isClockSkewedFromTrusted: isClockSkewedFromTrusted,
     isSameBusinessDate: isSameBusinessDate,
     isCacheBusinessDateCurrent: isCacheBusinessDateCurrent,
     isCurrentBusinessDate: isCurrentBusinessDate,

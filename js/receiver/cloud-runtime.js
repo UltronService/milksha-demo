@@ -73,6 +73,9 @@
     let slowNetworkTimer = null;
     let lastSessionBusinessDate = '';
     let suppressRingOnNextApply = false;
+    let lastResolvedBusinessDate = '';
+    let lastResolvedSource = '';
+    let clockSkewSilentRefetchPending = false;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
@@ -127,15 +130,56 @@
         if (chimePolicy) {
           chimePolicy.onBusinessDateRoll();
         }
-        clearGuestBoard(true);
+        clearGuestBoard({ silent: true });
       }
       lastSessionBusinessDate = nextBd;
       TodayBoard.setSessionBusinessDate(nextBd);
     }
 
-    function clearGuestBoard(silent) {
-      applyNumberContent([], localSeq, { silent: silent });
-      saveCache(localSeq, []);
+    function dropStaleCacheIfBusinessDayMismatch(resolvedBusinessDate) {
+      const cached = loadCache();
+      if (!cached || !cached.businessDate) {
+        return;
+      }
+      if (!TodayBoard.isSameBusinessDate(cached.businessDate, resolvedBusinessDate)) {
+        try {
+          root.localStorage.removeItem(cacheKey);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+
+    function noteResolvedBusinessDate(resolved) {
+      if (!resolved || !resolved.ok) {
+        return;
+      }
+      const nextBd = resolved.businessDate;
+      const nextSource = resolved.source;
+      if (
+        lastResolvedBusinessDate &&
+        lastResolvedBusinessDate !== nextBd &&
+        (lastResolvedSource === 'box_clock' || clockSkewSilentRefetchPending)
+      ) {
+        suppressRingOnNextApply = true;
+        clockSkewSilentRefetchPending = false;
+      }
+      if (nextSource === 'board' || nextSource === 'http_date') {
+        if (TodayBoard.isClockSkewedFromTrusted(nextBd)) {
+          clockSkewSilentRefetchPending = true;
+        }
+      }
+      lastResolvedBusinessDate = nextBd;
+      lastResolvedSource = nextSource;
+    }
+
+    function clearGuestBoard(opts) {
+      const o = opts || {};
+      applyNumberContent([], localSeq, {
+        silent: o.silent !== false,
+        preserveFirstBatchFlag: true,
+        skipCacheWrite: true,
+      });
     }
 
     function applyNumberContent(numberContent, seq, opts) {
@@ -148,6 +192,7 @@
       const ringOpts = {
         silent: Boolean(opts && opts.silent),
         suppressRing: suppressRingOnNextApply,
+        preserveFirstBatchFlag: Boolean(opts && opts.preserveFirstBatchFlag),
       };
       if (suppressRingOnNextApply) {
         suppressRingOnNextApply = false;
@@ -179,7 +224,9 @@
       if (typeof seq === 'number') {
         localSeq = seq;
       }
-      saveCache(localSeq, list);
+      if (!(opts && opts.skipCacheWrite) && TodayBoard.hasSessionBusinessDate()) {
+        saveCache(localSeq, list);
+      }
       onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
     }
@@ -202,6 +249,8 @@
       if (!resolved.ok) {
         return { ignored: true, reason: 'no_business_date' };
       }
+      noteResolvedBusinessDate(resolved);
+      dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
         return { ignored: true, reason: Validate.MSG.stale };
@@ -350,9 +399,19 @@
       }
     }
 
+    let runtimeAuthKickDone = false;
+
     async function ensureAuth() {
+      if (runtimeAuthKickDone) {
+        return;
+      }
+      runtimeAuthKickDone = true;
       if (transport.session && transport.session.ensureIdToken) {
-        await transport.session.ensureIdToken();
+        try {
+          await transport.session.ensureIdToken();
+        } catch (e) {
+          /* guest board: auth handled in cloud-boot */
+        }
       }
     }
 
@@ -360,12 +419,16 @@
       setSimulatedOfflineFlag(false);
       TodayBoard.clearSessionBusinessDate();
       lastSessionBusinessDate = '';
+      lastResolvedBusinessDate = '';
+      lastResolvedSource = '';
+      clockSkewSilentRefetchPending = false;
 
-      ensureAuth().then(function () {
+      const kick = function () {
         sendHeartbeat();
         pollBoard();
         pollDevice();
-      });
+      };
+      ensureAuth().then(kick).catch(kick);
 
       tickTimer = setInterval(function () {
         tickMs += 1000;

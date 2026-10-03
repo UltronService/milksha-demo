@@ -9,6 +9,49 @@
 
   const STORAGE_PREFIX = 'milksha:auth:';
 
+  function isDevHttpAllowed() {
+    if (QMS.Transport.isDevEndpointOverrideAllowed) {
+      return QMS.Transport.isDevEndpointOverrideAllowed();
+    }
+    try {
+      const host = root.location && root.location.hostname;
+      return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function assertSecureAccessCodeChannel() {
+    try {
+      const loc = root.location;
+      if (!loc || loc.protocol !== 'http:') {
+        return;
+      }
+      if (isDevHttpAllowed()) {
+        return;
+      }
+      const err = new Error('access code requires https');
+      err.status = 400;
+      err.response = { code: 'insecure_transport', message: 'access code requires https' };
+      throw err;
+    } catch (e) {
+      if (e && e.status) {
+        throw e;
+      }
+      /* ignore */
+    }
+  }
+
+  function authHttpError(res, json, fallbackMessage) {
+    const err = new Error(fallbackMessage || 'auth failed ' + res.status);
+    err.status = res.status;
+    err.response =
+      json && typeof json === 'object'
+        ? json
+        : { code: 'auth_failed', message: fallbackMessage || 'auth failed' };
+    return err;
+  }
+
   /**
    * @param {object} config
    * @param {object} creds
@@ -21,6 +64,10 @@
     let idToken = '';
     let refreshToken = '';
     let expiresAtMs = 0;
+    let authStopped = false;
+    let devLoginAttempts = 0;
+    /** @type {Promise<string> | null} */
+    let devLoginInFlight = null;
 
     function loadStored() {
       try {
@@ -48,6 +95,17 @@
       }
     }
 
+    function clearStored() {
+      idToken = '';
+      refreshToken = '';
+      expiresAtMs = 0;
+      try {
+        storage.removeItem(storageKey);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
     loadStored();
 
     function functionsUrl(name) {
@@ -55,7 +113,19 @@
       return base.replace(/\/?$/, '/') + name;
     }
 
-    async function devLogin() {
+    function throwIfAuthStopped() {
+      if (!authStopped) {
+        return;
+      }
+      const err = new Error('auth stopped');
+      err.status = 401;
+      err.response = { code: 'auth_stopped', message: 'auth stopped' };
+      throw err;
+    }
+
+    async function devLoginOnce() {
+      throwIfAuthStopped();
+      assertSecureAccessCodeChannel();
       const body = {
         storeId: creds.storeId,
         role: creds.role,
@@ -67,14 +137,40 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        throw new Error('devLogin failed ' + res.status);
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (e) {
+        json = null;
       }
-      const json = await res.json();
-      if (!json.customToken) {
-        throw new Error('devLogin missing customToken');
+      if (!res.ok) {
+        devLoginAttempts += 1;
+        if (res.status === 403) {
+          authStopped = true;
+        }
+        if (res.status === 401 && devLoginAttempts >= 2) {
+          authStopped = true;
+        }
+        throw authHttpError(res, json, 'devLogin failed ' + res.status);
+      }
+      if (!json || !json.customToken) {
+        const err = new Error('devLogin missing customToken');
+        err.status = res.status || 500;
+        err.response = json || { code: 'invalid_response', message: 'devLogin missing customToken' };
+        throw err;
       }
       return json.customToken;
+    }
+
+    async function devLogin() {
+      if (devLoginInFlight) {
+        return devLoginInFlight;
+      }
+      devLoginInFlight = devLoginOnce().finally(function () {
+        devLoginInFlight = null;
+      });
+      return devLoginInFlight;
     }
 
     async function signInWithCustomToken(customToken) {
@@ -87,10 +183,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: customToken, returnSecureToken: true }),
       });
-      if (!res.ok) {
-        throw new Error('signInWithCustomToken failed ' + res.status);
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (e) {
+        json = null;
       }
-      const json = await res.json();
+      if (!res.ok) {
+        throw authHttpError(res, json, 'signInWithCustomToken failed ' + res.status);
+      }
       idToken = json.idToken || '';
       refreshToken = json.refreshToken || '';
       const expiresIn = Number(json.expiresIn || 3600);
@@ -101,7 +203,10 @@
 
     async function refreshIdToken() {
       if (!refreshToken) {
-        throw new Error('no refresh token');
+        const err = new Error('no refresh token');
+        err.status = 401;
+        err.response = { code: 'no_refresh_token', message: 'no refresh token' };
+        throw err;
       }
       const url =
         (config.secureTokenBaseUrl || 'https://securetoken.googleapis.com/v1').replace(/\/?$/, '') +
@@ -113,10 +218,16 @@
         body:
           'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken),
       });
-      if (!res.ok) {
-        throw new Error('token refresh failed ' + res.status);
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (e) {
+        json = null;
       }
-      const json = await res.json();
+      if (!res.ok) {
+        throw authHttpError(res, json, 'token refresh failed ' + res.status);
+      }
       idToken = json.id_token || json.idToken || '';
       refreshToken = json.refresh_token || json.refreshToken || refreshToken;
       const expiresIn = Number(json.expires_in || json.expiresIn || 3600);
@@ -126,6 +237,8 @@
     }
 
     async function ensureIdToken() {
+      throwIfAuthStopped();
+      assertSecureAccessCodeChannel();
       if (idToken && Date.now() < expiresAtMs) {
         return idToken;
       }
@@ -150,6 +263,14 @@
       authHeaders: authHeaders,
       refreshIdToken: refreshIdToken,
       devLogin: devLogin,
+      clearStored: clearStored,
+      resetAuthRetryState: function () {
+        authStopped = false;
+        devLoginAttempts = 0;
+      },
+      isAuthStopped: function () {
+        return authStopped;
+      },
       getIdToken: function () {
         return idToken;
       },

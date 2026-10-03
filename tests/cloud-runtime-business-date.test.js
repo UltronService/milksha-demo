@@ -59,7 +59,7 @@ function loadCloudRuntimeHarness() {
   return { sandbox: sandbox, storage: storage };
 }
 
-test('cloud runtime ignores board without businessDate and keeps cache', async function () {
+test('cloud runtime applies board via box_clock when cloud omits businessDate', async function () {
   const { sandbox, storage } = loadCloudRuntimeHarness();
   const cacheKey = 'milksha:receiver-cache:s120030';
   const cachePayload = {
@@ -109,9 +109,8 @@ test('cloud runtime ignores board without businessDate and keeps cache', async f
   await new Promise(function (r) {
     setTimeout(r, 20);
   });
-  assert.equal(pushCalls, 0);
-  assert.equal(storage[cacheKey], JSON.stringify(cachePayload));
-  assert.equal(sandbox.QMS.Board.TodayBoard.hasSessionBusinessDate(), false);
+  assert.equal(pushCalls, 1);
+  assert.equal(sandbox.QMS.Board.TodayBoard.hasSessionBusinessDate(), true);
 });
 
 test('cloud runtime applies board when HTTP Date is readable', async function () {
@@ -158,4 +157,57 @@ test('cloud runtime applies board when HTTP Date is readable', async function ()
   });
   assert.equal(pushCalls, 1);
   assert.equal(sandbox.QMS.Board.TodayBoard.getSessionBusinessDate(), '2026-10-03');
+});
+
+test('first cloud batch after boot stays silent when stale cache cleared on roll', async function () {
+  const { sandbox, storage } = loadCloudRuntimeHarness();
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  storage[cacheKey] = JSON.stringify({
+    seq: 1,
+    numberContent: [{ source_type: 'From_Store_OK', number: '11' }],
+    businessDate: '2026-10-01',
+    savedAt: 1,
+  });
+  const ringIds = [];
+  const demo = {
+    pushFromObject: function (_req, opts) {
+      if (opts && opts.newlyReadyIds) {
+        ringIds.push(opts.newlyReadyIds.slice());
+      }
+      return { isOK: true };
+    },
+  };
+  const transport = {
+    session: { ensureIdToken: async function () {} },
+    readBoard: async function () {
+      return {
+        data: {
+          storeId: 's120030',
+          businessDate: '2026-10-03',
+          seq: 2,
+          updatedAt: '2026-10-03T00:00:00.000Z',
+          source: 'A',
+          tickets: [{ no: '22', status: 'ready', updatedAt: '2026-10-03T00:00:00.000Z' }],
+        },
+        updateTime: '2026-10-03T00:00:00.000Z',
+        httpDate: '',
+        httpDateReadable: false,
+      };
+    },
+    readDevice: async function () {
+      return null;
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: transport,
+    receiverDemo: demo,
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 30);
+  });
+  const flat = ringIds.flat();
+  assert.equal(flat.length, 0);
 });

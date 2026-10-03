@@ -43,15 +43,27 @@
      * @param {{ silent?: boolean, suppressRing?: boolean }} [opts]
      * @returns {string[]}
      */
+    function numberFromItemId(id) {
+      const parts = String(id).split(':');
+      return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+    }
+
+    function chimeDedupeKey(id) {
+      const bd = getBusinessDate();
+      return bd + '#' + numberFromItemId(id);
+    }
+
     function pickRingIds(prevReady, nextReady, opts) {
       if (!getBusinessDate()) {
         return [];
       }
       syncBusinessDate();
       if (isFirstBatch) {
-        isFirstBatch = false;
+        if (!(opts && opts.preserveFirstBatchFlag)) {
+          isFirstBatch = false;
+        }
         nextReady.forEach(function (id) {
-          chimedIds.add(id);
+          chimedIds.add(chimeDedupeKey(id));
         });
         return [];
       }
@@ -62,9 +74,10 @@
       const ringIds = [];
       for (let i = 0; i < newly.length; i += 1) {
         const id = newly[i];
-        if (!chimedIds.has(id)) {
+        const key = chimeDedupeKey(id);
+        if (!chimedIds.has(key)) {
           ringIds.push(id);
-          chimedIds.add(id);
+          chimedIds.add(key);
         }
       }
       return ringIds;

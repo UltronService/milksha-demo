@@ -147,7 +147,18 @@ export async function freshContext(browser) {
         localStorage.clear();
         localStorage.setItem('__e2e_init', '1');
       }
-      localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: 'milksha-qms-dev',
+          apiKey: 'fake-api-key-for-emulator',
+          accessCode: 'fake-milksha-controller-access-code',
+          region: 'asia-east1',
+          useEmulator: true,
+          gateway: '',
+          emulatorPrefix: '',
+        }),
+      );
     } catch {
       /* ignore */
     }

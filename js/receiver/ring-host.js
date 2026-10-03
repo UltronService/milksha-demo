@@ -21,10 +21,10 @@
       overlayDurationMs: QMS.Receiver.READY_RING_OVERLAY_MS || 2500,
       setTimeout: root.setTimeout.bind(root),
       clearTimeout: root.clearTimeout.bind(root),
-      onPlay: function (_id, number) {
+      onPlay: function (_id, number, onChimeEnded) {
         recordRingTelemetry(number);
         showRingOverlayForQueue(number);
-        playWebChime();
+        playWebChime(onChimeEnded);
       },
       onHideOverlay: function () {
         hideRingOverlay();
@@ -60,7 +60,9 @@
     return sharedAudioContext;
   }
 
-  function hookGestureUnlockOnce() {
+  const CHIME_DURATION_S = 0.15;
+
+  function hookGestureUnlock() {
     if (gestureUnlockHooked || !root.document) {
       return;
     }
@@ -80,13 +82,18 @@
         ringQueue.unlockAudioFromGesture();
       }
     };
-    root.document.addEventListener('pointerdown', unlock, { once: true, passive: true });
+    const opts = { passive: true };
+    root.document.addEventListener('pointerdown', unlock, opts);
+    root.document.addEventListener('keydown', unlock, opts);
+    root.document.addEventListener('touchstart', unlock, opts);
   }
 
-  function playWebChime() {
+  function playWebChime(onEnded) {
+    const done = typeof onEnded === 'function' ? onEnded : function () {};
     try {
       const ctx = getSharedAudioContext();
       if (!ctx) {
+        done();
         return;
       }
       const resumePromise =
@@ -96,7 +103,7 @@
           if (ringQueue) {
             ringQueue.notifyAudioBlocked();
           }
-          hookGestureUnlockOnce();
+          hookGestureUnlock();
           return;
         }
         const o = ctx.createOscillator();
@@ -105,8 +112,11 @@
         g.connect(ctx.destination);
         o.frequency.value = 880;
         g.gain.value = 0.08;
+        o.onended = function () {
+          done();
+        };
         o.start();
-        o.stop(ctx.currentTime + 0.15);
+        o.stop(ctx.currentTime + CHIME_DURATION_S);
       };
       if (resumePromise && typeof resumePromise.then === 'function') {
         resumePromise
@@ -115,7 +125,7 @@
             if (ringQueue) {
               ringQueue.notifyAudioBlocked();
             }
-            hookGestureUnlockOnce();
+            hookGestureUnlock();
           });
         return;
       }
@@ -124,7 +134,8 @@
       if (ringQueue) {
         ringQueue.notifyAudioBlocked();
       }
-      hookGestureUnlockOnce();
+      hookGestureUnlock();
+      done();
     }
   }
 

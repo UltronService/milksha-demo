@@ -4,14 +4,11 @@
 (function (root) {
   'use strict';
 
-  const AUTH_RETRY_BASE_MS = 2000;
-  const AUTH_RETRY_MAX_MS = 60000;
-
   function readCreds(params) {
     const storeId = params.get('store') || 's120030';
     const deviceId = params.get('device') || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
     const saved = root.QMS.Transport.CloudSettings.load();
-    const code = saved.accessCode || root.localStorage.getItem('milksha:accessCode') || '';
+    const code = saved.accessCode || '';
     if (params.get('device')) {
       root.localStorage.setItem('milksha:deviceId', deviceId);
     }
@@ -44,7 +41,7 @@
       response && response.code != null
         ? String(response.code)
         : response && response.error != null
-          ? String(response.error)
+          ? String(response.error) // TODO: remove legacy `error` after milksha-cloud PR #4 deploy
           : '';
     const tag = code || status || 'auth';
     stage.setAttribute('data-auth-error', tag);
@@ -73,6 +70,14 @@
     stage.removeAttribute('data-auth-error');
     stage.removeAttribute('data-auth-debug-code');
     stage.removeAttribute('data-auth-debug-status');
+    stage.removeAttribute('data-auth-stopped');
+  }
+
+  function setAuthStopped() {
+    const stage = guestAuthDebugStage();
+    if (stage) {
+      stage.setAttribute('data-auth-stopped', '1');
+    }
   }
 
   function boot() {
@@ -110,52 +115,55 @@
       accessCode: creds.accessCode,
     });
 
-    let authRetryAttempt = 0;
-    let authRetryTimer = null;
-    let cloudStarted = false;
+    let authHalted = false;
+    let auth401Retried = false;
 
-    function scheduleAuthRetry() {
-      if (!transport.session || !transport.session.ensureIdToken) {
+    function handleAuthFailure(err) {
+      setGuestAuthDebug(err);
+      const status = err && err.status ? Number(err.status) : 0;
+      const sessionStopped =
+        transport.session && transport.session.isAuthStopped && transport.session.isAuthStopped();
+      if (status === 403 || sessionStopped) {
+        authHalted = true;
+        setAuthStopped();
         return;
       }
-      if (authRetryTimer) {
-        return;
+      if (status === 401) {
+        if (!auth401Retried && transport.session && transport.session.clearStored) {
+          auth401Retried = true;
+          transport.session.clearStored();
+          root.setTimeout(runEnsureIdToken, 0);
+          return;
+        }
+        authHalted = true;
+        setAuthStopped();
       }
-      const delay = Math.min(
-        AUTH_RETRY_BASE_MS * Math.pow(2, authRetryAttempt),
-        AUTH_RETRY_MAX_MS,
-      );
-      authRetryAttempt += 1;
-      authRetryTimer = root.setTimeout(function () {
-        authRetryTimer = null;
-        transport.session
-          .ensureIdToken()
-          .then(function () {
-            authRetryAttempt = 0;
-            clearGuestAuthDebug();
-          })
-          .catch(function (err) {
-            setGuestAuthDebug(err);
-            scheduleAuthRetry();
-          });
-      }, delay);
     }
 
+    let ensureAuthInFlight = false;
+
     function runEnsureIdToken() {
+      if (authHalted || ensureAuthInFlight) {
+        return;
+      }
       if (!transport.session || !transport.session.ensureIdToken) {
         return;
       }
+      ensureAuthInFlight = true;
       transport.session
         .ensureIdToken()
         .then(function () {
-          authRetryAttempt = 0;
           clearGuestAuthDebug();
         })
         .catch(function (err) {
-          setGuestAuthDebug(err);
-          scheduleAuthRetry();
+          handleAuthFailure(err);
+        })
+        .finally(function () {
+          ensureAuthInFlight = false;
         });
     }
+
+    let cloudStarted = false;
 
     function waitDemo() {
       if (!root.receiverDemo) {

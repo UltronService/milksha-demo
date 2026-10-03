@@ -88,6 +88,36 @@ test('silent and suppressRing skip chime', function () {
   );
 });
 
+test('stale cache clear preserves first-batch silent flag', function () {
+  const create = loadChimePolicy();
+  const policy = create({
+    getBusinessDate: function () {
+      return '2026-10-02';
+    },
+    newlyReadyIds: newlyReadyIds,
+  });
+  policy.pickRingIds(new Set(), new Set(['store:1']), { preserveFirstBatchFlag: true });
+  assertRingEqual(policy.pickRingIds(new Set(), new Set(['store:1', 'store:2'])), []);
+  assertRingEqual(
+    policy.pickRingIds(new Set(['store:1', 'store:2']), new Set(['store:1', 'store:2', 'store:3'])),
+    ['store:3'],
+  );
+});
+
+test('same number different source rings once per business day', function () {
+  const create = loadChimePolicy();
+  const policy = create({
+    getBusinessDate: function () {
+      return '2026-10-02';
+    },
+    newlyReadyIds: newlyReadyIds,
+  });
+  policy.pickRingIds(new Set(), new Set(['store:77']));
+  let prev = new Set(['store:77']);
+  let next = new Set(['store:77', 'point:77']);
+  assertRingEqual(policy.pickRingIds(prev, next), []);
+});
+
 test('after 03:00 business-day roll chimed set clears and ready can chime again', function () {
   const create = loadChimePolicy();
   let bd = '2026-10-02';
