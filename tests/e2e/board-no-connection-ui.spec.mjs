@@ -230,7 +230,7 @@ test.describe('guest board never shows connection status', () => {
     await receiver.goto(recv);
     await expect(receiver.locator('[data-testid="rcv-setup-gate"]')).toBeHidden({ timeout: 10000 });
     await expect(receiver.locator('[data-testid="rcv-guest-stage"]')).toBeVisible();
-    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-upload-stopped', '1');
     await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-code', 'invalid_access_code');
     await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-status', '403');
     await receiver.waitForTimeout(1500);
@@ -255,7 +255,7 @@ test.describe('guest board never shows connection status', () => {
     await receiver.goto(recv);
     await expect(receiver.locator('[data-testid="rcv-setup-gate"]')).toBeHidden({ timeout: 10000 });
     await expect(receiver.locator('[data-testid="rcv-guest-stage"]')).toBeVisible();
-    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-upload-stopped', '1');
     await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-code', 'forbidden');
     await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-status', '403');
     await assertBootNoDataBoard(receiver);
