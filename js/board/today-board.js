@@ -117,10 +117,6 @@
         return { ok: true, businessDate: fromHttp, source: 'http_date' };
       }
     }
-    const boxBd = taipeiBusinessDate();
-    if (boxBd) {
-      return { ok: true, businessDate: boxBd, source: 'box_clock' };
-    }
     return { ok: false };
   }
 
@@ -185,6 +181,33 @@
       return false;
     }
     return isSameBusinessDate(cachedBusinessDate, sessionBusinessDate);
+  }
+
+  /**
+   * Boot-only (offline / before cloud): show cached numbers when box clock is plausible
+   * and its Taipei business day matches cache.businessDate. Never used for live cloud apply.
+   * @param {{ businessDate?: string, boardUpdatedAt?: string }} cache
+   * @param {Date} [now]
+   */
+  function shouldShowBootCache(cache, now) {
+    if (!cache || typeof cache !== 'object') {
+      return false;
+    }
+    const bd = normalizeBusinessDateString(cache.businessDate);
+    const updatedAtRaw = String(cache.boardUpdatedAt || '').trim();
+    if (!bd || !updatedAtRaw) {
+      return false;
+    }
+    const updatedAtMs = Date.parse(updatedAtRaw);
+    if (Number.isNaN(updatedAtMs)) {
+      return false;
+    }
+    const clock = now instanceof Date ? now : new Date();
+    if (clock.getTime() < updatedAtMs) {
+      return false;
+    }
+    const boxBd = taipeiBusinessDate(clock);
+    return isSameBusinessDate(boxBd, bd);
   }
 
   /**
@@ -382,6 +405,7 @@
     isClockSkewedFromTrusted: isClockSkewedFromTrusted,
     isSameBusinessDate: isSameBusinessDate,
     isCacheBusinessDateCurrent: isCacheBusinessDateCurrent,
+    shouldShowBootCache: shouldShowBootCache,
     isCurrentBusinessDate: isCurrentBusinessDate,
     taipeiHourMinute: taipeiHourMinute,
     formatTaipeiClockHM: formatTaipeiClockHM,

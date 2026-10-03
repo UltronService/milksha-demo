@@ -101,9 +101,10 @@
       }
     }
 
-    function saveCache(seq, numberContent) {
+    function saveCache(seq, numberContent, boardUpdatedAt) {
       const bd = TodayBoard.getSessionBusinessDate();
-      if (!bd) {
+      const updatedAt = String(boardUpdatedAt || '').trim();
+      if (!bd || !updatedAt) {
         return;
       }
       try {
@@ -113,12 +114,33 @@
             seq: seq,
             numberContent: numberContent,
             businessDate: bd,
-            savedAt: Date.now(),
+            boardUpdatedAt: updatedAt,
           }),
         );
       } catch (e) {
         /* ignore */
       }
+    }
+
+    function tryApplyBootCache() {
+      const cached = loadCache();
+      if (!TodayBoard.shouldShowBootCache(cached)) {
+        return false;
+      }
+      const bd = String(cached.businessDate || '');
+      TodayBoard.setSessionBusinessDate(bd);
+      lastSessionBusinessDate = bd;
+      if (typeof cached.seq === 'number') {
+        localSeq = cached.seq;
+      }
+      const list = Array.isArray(cached.numberContent) ? cached.numberContent : [];
+      applyNumberContent(list, localSeq, {
+        silent: true,
+        preserveFirstBatchFlag: true,
+        skipCacheWrite: true,
+        bootCacheRestore: true,
+      });
+      return true;
     }
 
     function noteSessionBusinessDateRoll(nextBusinessDate) {
@@ -159,7 +181,7 @@
       if (
         lastResolvedBusinessDate &&
         lastResolvedBusinessDate !== nextBd &&
-        (lastResolvedSource === 'box_clock' || clockSkewSilentRefetchPending)
+        clockSkewSilentRefetchPending
       ) {
         suppressRingOnNextApply = true;
         clockSkewSilentRefetchPending = false;
@@ -225,7 +247,7 @@
         localSeq = seq;
       }
       if (!(opts && opts.skipCacheWrite) && TodayBoard.hasSessionBusinessDate()) {
-        saveCache(localSeq, list);
+        saveCache(localSeq, list, opts && opts.boardUpdatedAt);
       }
       onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
@@ -265,8 +287,9 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
-        return applyNumberContent(numberContent, seq, opts);
+        return applyNumberContent(numberContent, seq, applyOpts);
       };
       if (networkDelayMs > 0) {
         return new Promise(function (resolve) {
@@ -422,6 +445,8 @@
       lastResolvedBusinessDate = '';
       lastResolvedSource = '';
       clockSkewSilentRefetchPending = false;
+
+      tryApplyBootCache();
 
       const kick = function () {
         sendHeartbeat();

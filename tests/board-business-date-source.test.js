@@ -71,7 +71,7 @@ test('HTTP Date before 03:00 Taipei rolls business day back', function () {
   assert.equal(r.businessDate, '2026-10-02');
 });
 
-test('no board businessDate and unreadable HTTP Date falls back to box clock', function () {
+test('no board businessDate and unreadable HTTP Date does not resolve session day', function () {
   const TB = loadTodayBoard();
   TB.clearSessionBusinessDate();
   const r = TB.resolveSessionBusinessDate({
@@ -79,9 +79,63 @@ test('no board businessDate and unreadable HTTP Date falls back to box clock', f
     httpDateHeader: '',
     httpDateReadable: false,
   });
-  assert.equal(r.ok, true);
-  assert.equal(r.source, 'box_clock');
-  assert.match(r.businessDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(r.ok, false);
+  assert.equal(TB.hasSessionBusinessDate(), false);
+});
+
+test('shouldShowBootCache allows today cache when clock is after cloud updatedAt', function () {
+  const TB = loadTodayBoard();
+  const cacheUpdatedAt = '2026-10-03T08:00:00.000Z';
+  const now = new Date('2026-10-03T12:00:00.000Z');
+  const boxBd = TB.taipeiBusinessDate(now);
+  assert.equal(
+    TB.shouldShowBootCache(
+      { businessDate: boxBd, boardUpdatedAt: cacheUpdatedAt },
+      now,
+    ),
+    true,
+  );
+});
+
+test('shouldShowBootCache rejects clock before cache updatedAt (1970)', function () {
+  const TB = loadTodayBoard();
+  const cacheUpdatedAt = '2026-10-03T08:00:00.000Z';
+  const now = new Date('1970-01-01T00:00:00.000Z');
+  assert.equal(
+    TB.shouldShowBootCache(
+      { businessDate: '2026-10-03', boardUpdatedAt: cacheUpdatedAt },
+      now,
+    ),
+    false,
+  );
+});
+
+test('shouldShowBootCache rejects firmware clock before cloud write (2021)', function () {
+  const TB = loadTodayBoard();
+  const cacheUpdatedAt = '2026-10-03T08:00:00.000Z';
+  const now = new Date('2021-06-01T12:00:00.000Z');
+  assert.equal(
+    TB.shouldShowBootCache(
+      { businessDate: '2026-10-03', boardUpdatedAt: cacheUpdatedAt },
+      now,
+    ),
+    false,
+  );
+});
+
+test('shouldShowBootCache rejects different business day without mutating cache', function () {
+  const TB = loadTodayBoard();
+  const cacheUpdatedAt = '2026-10-02T08:00:00.000Z';
+  const now = new Date('2026-10-03T12:00:00.000Z');
+  const boxBd = TB.taipeiBusinessDate(now);
+  assert.notEqual(boxBd, '2026-10-02');
+  assert.equal(
+    TB.shouldShowBootCache(
+      { businessDate: '2026-10-02', boardUpdatedAt: cacheUpdatedAt },
+      now,
+    ),
+    false,
+  );
 });
 
 test('isCurrentBusinessDate uses session not device clock', function () {
