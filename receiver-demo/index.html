@@ -54,6 +54,11 @@
         --rcv-ring-inner-w: calc(
           min(92vw, 900px) - 2 * clamp(32px, 6vw, 80px) - 2 * clamp(4px, 0.6vw, 8px)
         );
+        /* 6975672 @ 1920×1080: digit-row slot from design num-size only (not glyph measure). */
+        --rcv-ring-digit-row-w-6975672: calc(var(--rcv-ring-num-size) * 672.640625 / 280);
+        --rcv-ring-box-w-6975672: calc(
+          2 * var(--rcv-ring-pad-x) + 2 * var(--rcv-ring-border-w) + var(--rcv-ring-digit-row-w-6975672)
+        );
         /* Caps 4-digit width on non-1920 viewports (1920 uses 6975672 uncapped font). */
         --rcv-ring-font-fit-ratio: 0.309;
       }
@@ -103,23 +108,27 @@
         font-variant-numeric: tabular-nums;
         color: #000;
       }
-      /* 6975672 geometry at 1920×1080 (JS sets data-rcv-ring-6975672; media is fallback). */
+      /* 6975672 geometry at 1920×1080: fixed border-box width from tokens only. */
       html[data-rcv-ring-6975672='1'] #rcv-ring-box {
-        width: auto !important;
-        max-width: var(--rcv-ring-box-max);
-        min-width: 0 !important;
+        width: var(--rcv-ring-box-w-6975672);
+        min-width: var(--rcv-ring-box-w-6975672);
+        max-width: var(--rcv-ring-box-w-6975672);
       }
       html[data-rcv-ring-6975672='1'] .rcv-ring-num {
-        font-size: var(--rcv-ring-num-size) !important;
+        font-size: var(--rcv-ring-num-size);
+        max-width: 100%;
+        overflow: hidden;
       }
       @media (min-width: 1900px) and (max-width: 1940px) {
         #rcv-ring-box {
-          width: auto;
-          max-width: var(--rcv-ring-box-max);
-          min-width: 0;
+          width: var(--rcv-ring-box-w-6975672);
+          min-width: var(--rcv-ring-box-w-6975672);
+          max-width: var(--rcv-ring-box-w-6975672);
         }
         .rcv-ring-num {
           font-size: var(--rcv-ring-num-size);
+          max-width: 100%;
+          overflow: hidden;
         }
       }
       @media (max-width: 1899px), (min-width: 1941px) {
