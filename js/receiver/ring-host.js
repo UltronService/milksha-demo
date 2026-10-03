@@ -18,6 +18,10 @@
 
   const RESUME_TIMEOUT_MS = 2500;
   const CHIME_DURATION_S = 0.15;
+  /** Match receiver-demo/index.html 6975672 layout media query. */
+  const RING_LAYOUT_VW_MIN = 1900;
+  const RING_LAYOUT_VW_MAX = 1940;
+  let ringResizeHooked = false;
 
   const ringQueue =
     QMS.Receiver.createReadyRingQueue &&
@@ -176,26 +180,99 @@
     root.document.addEventListener('touchstart', unlock, opts);
   }
 
+  function is6975672LayoutActive() {
+    const docEl = root.document.documentElement;
+    return Boolean(docEl && docEl.getAttribute('data-rcv-ring-6975672') === '1');
+  }
+
   function syncRing6975672LayoutFlag() {
     const docEl = root.document.documentElement;
     if (!docEl) {
       return;
     }
     const vw = Number(root.innerWidth || docEl.clientWidth || 0);
-    if (vw >= 1850 && vw <= 1950) {
+    const numEl = root.document.getElementById('rcv-ring-num');
+    if (vw >= RING_LAYOUT_VW_MIN && vw <= RING_LAYOUT_VW_MAX) {
       docEl.setAttribute('data-rcv-ring-6975672', '1');
-    } else if (!docEl.hasAttribute('data-rcv-ring-6975672')) {
+    } else {
       docEl.removeAttribute('data-rcv-ring-6975672');
+      if (numEl) {
+        numEl.style.fontSize = '';
+      }
     }
+  }
+
+  function measureRingInnerContentWidth(box) {
+    const cs = root.getComputedStyle(box);
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const padR = parseFloat(cs.paddingRight) || 0;
+    const borL = parseFloat(cs.borderLeftWidth) || 0;
+    const borR = parseFloat(cs.borderRightWidth) || 0;
+    return box.clientWidth - padL - padR - borL - borR;
+  }
+
+  function measureRingTextWidth(numEl) {
+    const range = root.document.createRange();
+    range.selectNodeContents(numEl);
+    return range.getBoundingClientRect().width;
+  }
+
+  /** One measure + one adjust at 1920 layout; 280px unless text overflows inner padding. */
+  function shrinkFitRingNumber() {
+    const numEl = root.document.getElementById('rcv-ring-num');
+    const box = root.document.getElementById('rcv-ring-box');
+    if (!numEl || !box) {
+      return;
+    }
+    if (!is6975672LayoutActive()) {
+      numEl.style.fontSize = '';
+      return;
+    }
+    numEl.style.fontSize = '';
+    const maxPx = parseFloat(root.getComputedStyle(numEl).fontSize) || 0;
+    if (!Number.isFinite(maxPx) || maxPx <= 0) {
+      return;
+    }
+    const innerW = measureRingInnerContentWidth(box);
+    const textW = measureRingTextWidth(numEl);
+    if (innerW <= 0 || textW <= innerW + 1) {
+      return;
+    }
+    const fitPx = Math.max(8, maxPx * (innerW / textW) * 0.998);
+    numEl.style.fontSize = String(fitPx) + 'px';
+  }
+
+  function installRingResizeHook() {
+    if (ringResizeHooked) {
+      return;
+    }
+    ringResizeHooked = true;
+    let resizeTimer = null;
+    root.addEventListener('resize', function () {
+      if (resizeTimer) {
+        root.clearTimeout(resizeTimer);
+      }
+      resizeTimer = root.setTimeout(function () {
+        resizeTimer = null;
+        const ov = root.document.getElementById('rcv-ring-ov');
+        if (!ov || parseFloat(ov.style.opacity || '0') <= 0) {
+          return;
+        }
+        syncRing6975672LayoutFlag();
+        shrinkFitRingNumber();
+      }, 120);
+    });
   }
 
   function showRingOverlayForQueue(number) {
     const ov = ensureOverlay();
+    installRingResizeHook();
     const numEl = root.document.getElementById('rcv-ring-num');
     if (numEl) {
       numEl.textContent = number;
     }
     syncRing6975672LayoutFlag();
+    shrinkFitRingNumber();
     ov.style.opacity = '1';
   }
 
@@ -207,6 +284,10 @@
     const docEl = root.document.documentElement;
     if (docEl) {
       docEl.removeAttribute('data-rcv-ring-6975672');
+    }
+    const numEl = root.document.getElementById('rcv-ring-num');
+    if (numEl) {
+      numEl.style.fontSize = '';
     }
   }
 

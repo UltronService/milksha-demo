@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { urlsForMode } from './harness.mjs';
 
-const ART = '/opt/cursor/artifacts/screenshots';
+const ART = process.env.MILKSHA_E2E_ARTIFACTS || '';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE_ROOT = '/tmp/wt-6975672';
 const RING_DIGITS = '8888';
@@ -64,9 +64,11 @@ async function showRing8888(page) {
       RH.playReadyRing(num);
     }
   }, RING_DIGITS);
+  await page.waitForTimeout(400);
 }
 
 test('board ready 8888 screenshots at key viewports', async ({ browser }) => {
+  test.skip(!ART, 'Set MILKSHA_E2E_ARTIFACTS to write screenshot artifacts');
   mkdirSync(ART, { recursive: true });
   const { recv } = urlsForMode('local');
   for (const vp of VIEWPORTS) {
@@ -75,7 +77,6 @@ test('board ready 8888 screenshots at key viewports', async ({ browser }) => {
     await page.setViewportSize(vp);
     await page.goto(recv);
     await showRing8888(page);
-    await page.waitForTimeout(400);
     await expect(page.locator('.rcv-ring-num')).toHaveText(RING_DIGITS);
     await page.screenshot({
       path: `${ART}/board-ready-8888-${vp.tag}.png`,
@@ -86,6 +87,7 @@ test('board ready 8888 screenshots at key viewports', async ({ browser }) => {
 });
 
 test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
+  test.skip(!ART, 'Set MILKSHA_E2E_ARTIFACTS to write screenshot artifacts');
   test.skip(
     !existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html')),
     '6975672 worktree missing (run global-setup or git worktree add)',
@@ -98,7 +100,6 @@ test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto(`${base}/receiver-demo/?mode=local&store=s120030`);
     await showRing8888(page);
-    await page.waitForTimeout(400);
     await page.screenshot({
       path: `${ART}/board-ready-8888-6975672-baseline-1920x1080.png`,
       fullPage: false,
@@ -107,4 +108,51 @@ test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
   } finally {
     server.close();
   }
+});
+
+test('1920 head compare current vs 6975672 baseline (8888)', async ({ browser }) => {
+  test.skip(!ART, 'Set MILKSHA_E2E_ARTIFACTS to write screenshot artifacts');
+  test.skip(
+    !existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html')),
+    '6975672 worktree missing',
+  );
+  mkdirSync(ART, { recursive: true });
+  const { recv } = urlsForMode('local');
+  const currentPath = `${ART}/board-ring-head-current-1920x1080-8888.png`;
+  const baselinePath = `${ART}/board-ring-head-baseline-6975672-1920x1080-8888.png`;
+  const comparePath = `${ART}/board-ring-compare-current-vs-6975672-1920x1080-8888.png`;
+
+  const ctxCurrent = await browser.newContext({ deviceScaleFactor: 1 });
+  const currentPage = await ctxCurrent.newPage();
+  await currentPage.setViewportSize({ width: 1920, height: 1080 });
+  await currentPage.goto(recv);
+  await showRing8888(currentPage);
+  await currentPage.screenshot({ path: currentPath, fullPage: false });
+  await ctxCurrent.close();
+
+  const { server, base } = await startStaticSite(BASELINE_ROOT);
+  try {
+    const ctxBase = await browser.newContext({ deviceScaleFactor: 1 });
+    const basePage = await ctxBase.newPage();
+    await basePage.setViewportSize({ width: 1920, height: 1080 });
+    await basePage.goto(`${base}/receiver-demo/?mode=local&store=s120030`);
+    await showRing8888(basePage);
+    await basePage.screenshot({ path: baselinePath, fullPage: false });
+    await ctxBase.close();
+  } finally {
+    server.close();
+  }
+
+  const currentB64 = readFileSync(currentPath).toString('base64');
+  const baselineB64 = readFileSync(baselinePath).toString('base64');
+  const ctxCmp = await browser.newContext({ viewport: { width: 3840, height: 1080 } });
+  const cmpPage = await ctxCmp.newPage();
+  await cmpPage.setContent(
+    `<!DOCTYPE html><body style="margin:0;background:#111;display:flex;align-items:flex-start;">` +
+      `<img alt="current" src="data:image/png;base64,${currentB64}" width="1920" height="1080" />` +
+      `<img alt="6975672" src="data:image/png;base64,${baselineB64}" width="1920" height="1080" />` +
+      `</body>`,
+  );
+  await cmpPage.screenshot({ path: comparePath, fullPage: false });
+  await ctxCmp.close();
 });

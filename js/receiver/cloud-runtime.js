@@ -57,7 +57,6 @@
     const boardPollMs = options.boardPollIntervalMs || 2000;
     const devicePollMs = options.devicePollIntervalMs || 5000;
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
-    const uploadHaltHeartbeatIntervalMs = options.uploadHaltHeartbeatIntervalMs || 300000;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);

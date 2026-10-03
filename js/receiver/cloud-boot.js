@@ -307,7 +307,6 @@
         const devHooks = devTestHooksAllowed();
         const testDevicePollMs = devHooks ? Number(params.get('testDevicePollMs')) : NaN;
         const testHeartbeatMs = devHooks ? Number(params.get('testHeartbeatMs')) : NaN;
-        const testUploadHaltHeartbeatMs = devHooks ? Number(params.get('testUploadHaltHeartbeatMs')) : NaN;
         const enableTestPollHook = devHooks && params.has('testDevicePollMs');
         if (enableTestPollHook) {
           root.__receiverAuthBlockedForTests = function () {
@@ -334,10 +333,6 @@
             Number.isFinite(testHeartbeatMs) && testHeartbeatMs >= 200
               ? testHeartbeatMs
               : modeResolved.config.heartbeatIntervalMs,
-          uploadHaltHeartbeatIntervalMs:
-            Number.isFinite(testUploadHaltHeartbeatMs) && testUploadHaltHeartbeatMs >= 200
-              ? testUploadHaltHeartbeatMs
-              : undefined,
           onStatusLine: function (line) {
             if (statusEl) {
               statusEl.textContent = line;
