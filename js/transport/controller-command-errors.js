@@ -60,7 +60,12 @@
   function connectUserMessage(err) {
     const status = err && err.status ? Number(err.status) : 0;
     const code = resolveErrorCode(err, {});
-    if (code === 'invalid_access_code' || code === 'invalid_token' || status === 401) {
+    if (
+      code === 'invalid_access_code' ||
+      code === 'invalid_token' ||
+      code === 'unauthorized' ||
+      status === 401
+    ) {
       return USER_MSG_CONNECT_ACCESS;
     }
     if (status === 403 || code === 'forbidden') {

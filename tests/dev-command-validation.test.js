@@ -192,6 +192,55 @@ test('devCommand mismatched store id returns 403 forbidden', async function () {
   }
 });
 
+test('boxHeartbeat ack clears pendingCommand when clearOnAck enabled', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    await fetch(`http://127.0.0.1:${PORT}/test/reset`, { method: 'POST' });
+    await fetch(`http://127.0.0.1:${PORT}/test/pendingCommandMode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clearOnAck: true }),
+    });
+    const cmdRes = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({ storeId: 's120030', deviceId: 'stb-01', type: 'reload', params: {} }),
+    });
+    assert.equal(cmdRes.status, 200);
+    const cmdJson = await cmdRes.json();
+    const hbRes = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/boxHeartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        appVersion: 'test',
+        boardSeq: 0,
+        pendingUploads: 0,
+        simulatedOffline: false,
+        ackCommandId: cmdJson.commandId,
+      }),
+    });
+    assert.equal(hbRes.status, 200);
+    const docRes = await fetch(
+      `http://127.0.0.1:${PORT}/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/devices/stb-01`,
+      { headers: { Authorization: 'Bearer fake-id-token' } },
+    );
+    const doc = await docRes.json();
+    const fields = doc.fields || {};
+    const pc = fields.pendingCommand;
+    const cleared =
+      pc === undefined || (pc && typeof pc === 'object' && 'nullValue' in pc && pc.nullValue === null);
+    assert.equal(cleared, true);
+  } finally {
+    proc.kill();
+  }
+});
+
 test('forbidden token returns 403 on devCommand', async function () {
   const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },

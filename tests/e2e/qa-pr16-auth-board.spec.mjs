@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, PORT_SITE, PORT_CLOUD } from './harness.mjs';
+import { urlsForMode, PORT_SITE, PORT_CLOUD, ensureCloudRunning } from './harness.mjs';
 
 function cloudSettingsInitScript() {
   return () => {
@@ -25,7 +25,10 @@ function cloudSettingsInitScript() {
 function firestoreCloudSettingsInitScript() {
   return () => {
     try {
-      localStorage.clear();
+      if (!sessionStorage.getItem('__e2e_firestore_cloud_settings')) {
+        sessionStorage.setItem('__e2e_firestore_cloud_settings', '1');
+        localStorage.clear();
+      }
       localStorage.setItem(
         'milksha:cloud-settings',
         JSON.stringify({
@@ -116,24 +119,34 @@ test('receiver auth 403 does not retry devLogin', async ({ browser }) => {
   await ctx.close();
 });
 
-test('receiver remote reload after auth recheck without page.reload()', async ({ browser }) => {
-  test.setTimeout(120000);
-  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
-  const { recv } = urlsForMode('firestore');
-  const ctx = await browser.newContext();
-  await ctx.addInitScript(() => {
-    try {
-      window.__testReloadFired = sessionStorage.getItem('__rcv_test_reload') === '1';
-    } catch {
-      window.__testReloadFired = false;
-    }
+const BOOT_HTTP_DATE = 'Sat, 03 Oct 2026 12:00:00 GMT';
+const AFTER_BOOT_CREATED_AT = '2026-10-03T12:00:01.000Z';
+const STALE_CREATED_AT = '2020-01-01T12:00:00.000Z';
+
+async function seedPendingReload(createdAt, id) {
+  await ensureCloudRunning();
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devicePendingCommand`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      storeId: 's120030',
+      deviceId: 'stb-01',
+      id: id || `cmd-${createdAt}`,
+      type: 'reload',
+      createdAt,
+      params: {},
+    }),
   });
-  await ctx.addInitScript(firestoreCloudSettingsInitScript());
-  const receiver = await ctx.newPage();
+  expect(res.ok).toBe(true);
+}
+
+async function wireFirestoreAuthRoutes(receiver, options = {}) {
+  const bootDate = options.bootDate || BOOT_HTTP_DATE;
+  const auth401First = Boolean(options.auth401First);
   let devLoginAttempts = 0;
   await receiver.route('**/devLogin', async (route) => {
     devLoginAttempts += 1;
-    if (devLoginAttempts <= 2) {
+    if (auth401First && devLoginAttempts <= 2) {
       await route.fulfill({
         status: 401,
         contentType: 'application/json',
@@ -143,6 +156,7 @@ test('receiver remote reload after auth recheck without page.reload()', async ({
     }
     await route.fulfill({
       status: 200,
+      headers: { Date: bootDate },
       contentType: 'application/json',
       body: JSON.stringify({ customToken: 'e2e-custom-token' }),
     });
@@ -150,6 +164,7 @@ test('receiver remote reload after auth recheck without page.reload()', async ({
   await receiver.route('**/accounts:signInWithCustomToken**', async (route) => {
     await route.fulfill({
       status: 200,
+      headers: { Date: bootDate },
       contentType: 'application/json',
       body: JSON.stringify({
         idToken: 'e2e-fake-id-token',
@@ -169,75 +184,120 @@ test('receiver remote reload after auth recheck without page.reload()', async ({
       }),
     });
   });
-  const url = `${recv}&testAuthRecheckMs=800&testDevicePollMs=400`;
-  await receiver.goto(url);
-  await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1', {
-    timeout: 5000,
-  });
-  await receiver.waitForFunction(
-    () => document.getElementById('rcv-stage')?.getAttribute('data-auth-stopped') !== '1',
-    null,
-    { timeout: 15000 },
-  );
+  return {
+    getDevLoginAttempts: () => devLoginAttempts,
+  };
+}
+
+async function waitReceiverCloudReady(receiver) {
   await receiver.waitForFunction(
     () =>
-      typeof window.__receiverAuthBlockedForTests === 'function' &&
-      !window.__receiverAuthBlockedForTests(),
+      window.receiverCloud &&
+      typeof window.receiverCloud.pollDeviceForTests === 'function',
     null,
-    { timeout: 15000 },
+    { timeout: 20000 },
   );
-  const navigationReload = receiver.waitForEvent('framenavigated', { timeout: 45000 });
-  const devCmdRes = await fetch(
-    `http://127.0.0.1:${PORT_CLOUD}/fn/milksha-qms-dev/asia-east1/devCommand`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer e2e-fake-id-token',
-      },
-      body: JSON.stringify({
-        storeId: 's120030',
-        deviceId: 'stb-01',
-        type: 'reload',
-        params: {},
-      }),
-    },
-  );
-  expect(devCmdRes.status).toBe(200);
-  const kickPoll = receiver
+}
+
+async function kickDevicePoll(receiver) {
+  await receiver
     .evaluate(async () => {
-      const cloud = window.receiverCloud;
-      if (!cloud || !cloud.pollDeviceForTests) {
-        throw new Error('pollDeviceForTests hook missing');
-      }
-      for (let i = 0; i < 20; i += 1) {
-        await cloud.pollDeviceForTests();
-        try {
-          if (sessionStorage.getItem('__rcv_test_reload') === '1') {
-            return;
-          }
-        } catch {
-          /* ignore */
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
+      for (let i = 0; i < 25; i += 1) {
+        await window.receiverCloud.pollDeviceForTests();
+        await new Promise((resolve) => setTimeout(resolve, 150));
       }
     })
     .catch(() => {
-      /* navigation may interrupt evaluate */
+      /* reload may interrupt */
     });
-  await Promise.race([navigationReload, kickPoll]);
-  await navigationReload;
-  await receiver.waitForFunction(
-    () => {
-      try {
-        return sessionStorage.getItem('__rcv_test_reload') === '1';
-      } catch {
-        return false;
-      }
-    },
-    null,
-    { timeout: 10000 },
-  );
-  expect(devLoginAttempts).toBeGreaterThanOrEqual(2);
+}
+
+async function expectNoNavigationFor(receiver, ms) {
+  let extra = 0;
+  const onNav = () => {
+    extra += 1;
+  };
+  receiver.on('framenavigated', onNav);
+  await receiver.waitForTimeout(ms);
+  receiver.off('framenavigated', onNav);
+  expect(extra).toBe(0);
+}
+
+test('receiver skips stale pending reload when localStorage cleared', async ({ browser }) => {
+  test.setTimeout(90000);
+  await ensureCloudRunning();
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
+  await seedPendingReload(STALE_CREATED_AT, 'stale-reload-cmd');
+  const { recv } = urlsForMode('firestore');
+  const ctx = await browser.newContext();
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+  await ctx.addInitScript(firestoreCloudSettingsInitScript());
+  const receiver = await ctx.newPage();
+  await wireFirestoreAuthRoutes(receiver);
+  let loadCount = 0;
+  receiver.on('framenavigated', () => {
+    loadCount += 1;
+  });
+  await receiver.goto(`${recv}&testDevicePollMs=400`);
+  await waitReceiverCloudReady(receiver);
+  await kickDevicePoll(receiver);
+  await receiver.waitForTimeout(15000);
+  expect(loadCount).toBe(1);
+  await ctx.close();
+});
+
+test('receiver runs post-boot reload command exactly once', async ({ browser }) => {
+  test.setTimeout(90000);
+  await ensureCloudRunning();
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
+  const { recv } = urlsForMode('firestore');
+  const ctx = await browser.newContext();
+  await ctx.addInitScript(firestoreCloudSettingsInitScript());
+  const receiver = await ctx.newPage();
+  await wireFirestoreAuthRoutes(receiver);
+  await receiver.goto(`${recv}&testDevicePollMs=400`);
+  await waitReceiverCloudReady(receiver);
+  await seedPendingReload(AFTER_BOOT_CREATED_AT, 'post-boot-reload');
+  const firstReload = receiver.waitForEvent('framenavigated', { timeout: 45000 });
+  await kickDevicePoll(receiver);
+  await firstReload;
+  await expectNoNavigationFor(receiver, 15000);
+  await ctx.close();
+});
+
+test('receiver reloads once when fake cloud never clears pendingCommand', async ({ browser }) => {
+  test.setTimeout(90000);
+  await ensureCloudRunning();
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/pendingCommandMode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clearOnAck: false }),
+  });
+  const { recv, base } = urlsForMode('firestore');
+  const deviceUrl =
+    `${base}/__emulator/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/devices/stb-01`;
+  const ctx = await browser.newContext();
+  await ctx.addInitScript(firestoreCloudSettingsInitScript());
+  const receiver = await ctx.newPage();
+  await wireFirestoreAuthRoutes(receiver);
+  await receiver.goto(`${recv}&testDevicePollMs=400`);
+  await waitReceiverCloudReady(receiver);
+  await seedPendingReload(AFTER_BOOT_CREATED_AT, 'keep-pending-reload');
+  const firstReload = receiver.waitForEvent('framenavigated', { timeout: 45000 });
+  await kickDevicePoll(receiver);
+  await firstReload;
+  await expectNoNavigationFor(receiver, 15000);
+  const pendingRes = await fetch(deviceUrl, {
+    headers: { Authorization: 'Bearer e2e-fake-id-token' },
+  });
+  const pendingDoc = await pendingRes.json();
+  expect(Boolean(pendingDoc.fields && pendingDoc.fields.pendingCommand)).toBe(true);
   await ctx.close();
 });

@@ -29,6 +29,20 @@ export function startCloud() {
   });
 }
 
+export async function ensureCloudRunning() {
+  try {
+    const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/health`);
+    if (res.ok) {
+      return;
+    }
+  } catch {
+    /* start fresh */
+  }
+  cloudProc = null;
+  startCloud();
+  await waitCloudReady();
+}
+
 export async function resetCloudState() {
   try {
     await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });

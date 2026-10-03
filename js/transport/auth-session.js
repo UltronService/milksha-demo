@@ -68,6 +68,8 @@
     let expiresAtMs = 0;
     let authStopped = false;
     let devLoginAttempts = 0;
+    /** UTC ms floored to second; from HTTP Date on devLogin / signIn (not device clock). */
+    let bootServerTimeMs = 0;
     /** @type {Promise<string> | null} */
     let devLoginInFlight = null;
 
@@ -115,6 +117,25 @@
       return base.replace(/\/?$/, '/') + name;
     }
 
+    function captureBootServerTimeFromResponse(res) {
+      if (!res || !res.headers || !res.headers.get) {
+        return;
+      }
+      try {
+        const raw = res.headers.get('date') || res.headers.get('Date') || '';
+        if (!raw) {
+          return;
+        }
+        const parsed = Date.parse(String(raw));
+        if (!Number.isFinite(parsed)) {
+          return;
+        }
+        bootServerTimeMs = Math.floor(parsed / 1000) * 1000;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
     function throwIfAuthStopped() {
       if (!authStopped) {
         return;
@@ -159,6 +180,7 @@
       }
       devLoginAttempts = 0;
       authStopped = false;
+      captureBootServerTimeFromResponse(res);
       if (!json || !json.customToken) {
         const err = new Error('devLogin missing customToken');
         err.status = res.status || 500;
@@ -199,6 +221,7 @@
       if (!res.ok) {
         throw authHttpError(res, json, 'signInWithCustomToken failed ' + res.status);
       }
+      captureBootServerTimeFromResponse(res);
       idToken = json.idToken || '';
       refreshToken = json.refreshToken || '';
       const expiresIn = Number(json.expiresIn || 3600);
@@ -291,6 +314,9 @@
       },
       getIdToken: function () {
         return idToken;
+      },
+      getBootServerTimeMs: function () {
+        return bootServerTimeMs;
       },
     };
   }

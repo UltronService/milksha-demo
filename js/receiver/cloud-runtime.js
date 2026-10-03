@@ -81,6 +81,118 @@
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
+    const handledCmdStorageKey = 'milksha:lastHandledCmd:' + storeId + ':' + deviceId;
+    const RELOAD_ACK_TIMEOUT_MS = 2500;
+
+    function commandServerCreatedAt(cmd) {
+      if (!cmd || typeof cmd !== 'object') {
+        return '';
+      }
+      const v = cmd.createdAt != null ? cmd.createdAt : cmd.issuedAt;
+      return v != null ? String(v) : '';
+    }
+
+    function readStoredHandledCommandId() {
+      try {
+        return root.localStorage.getItem(handledCmdStorageKey) || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function restorePersistedCommandGuards() {
+      try {
+        const id = readStoredHandledCommandId();
+        if (!id) {
+          return;
+        }
+        lastHandledCommandId = id;
+        lastAckCommandId = id;
+        pendingAckCommandId = id;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    function persistHandledCommandRecord(cmd) {
+      const id = cmd && cmd.id ? String(cmd.id) : '';
+      if (!id) {
+        return;
+      }
+      try {
+        root.localStorage.setItem(handledCmdStorageKey, id);
+      } catch (e) {
+        /* ignore */
+      }
+      lastHandledCommandId = id;
+      lastAckCommandId = id;
+    }
+
+    function awaitPersistHandledCommandRecord(cmd) {
+      persistHandledCommandRecord(cmd);
+      return Promise.resolve();
+    }
+
+    function floorUtcToSecondMs(value) {
+      const parsed = Date.parse(String(value || ''));
+      if (!Number.isFinite(parsed)) {
+        return 0;
+      }
+      return Math.floor(parsed / 1000) * 1000;
+    }
+
+    function getBootServerTimeMs() {
+      if (!transport.session || !transport.session.getBootServerTimeMs) {
+        return 0;
+      }
+      return transport.session.getBootServerTimeMs();
+    }
+
+    function shouldSkipReloadRebootByBootServerTime(cmd) {
+      const type = cmd && cmd.type ? String(cmd.type) : '';
+      if (type !== 'reload' && type !== 'reboot') {
+        return false;
+      }
+      const bootMs = getBootServerTimeMs();
+      if (!bootMs) {
+        return false;
+      }
+      const cmdAt = commandServerCreatedAt(cmd);
+      if (!cmdAt) {
+        return false;
+      }
+      const cmdSecMs = floorUtcToSecondMs(cmdAt);
+      const bootSecMs = bootMs;
+      return cmdSecMs <= bootSecMs;
+    }
+
+    function shouldSkipDeviceCommand(cmd) {
+      if (!cmd || !cmd.id) {
+        return true;
+      }
+      const id = String(cmd.id);
+      const storedId = readStoredHandledCommandId();
+      if (id === lastHandledCommandId || id === storedId) {
+        return true;
+      }
+      if (shouldSkipReloadRebootByBootServerTime(cmd)) {
+        return true;
+      }
+      return false;
+    }
+
+    async function flushCommandAckBeforeReload() {
+      try {
+        await Promise.race([
+          sendHeartbeat(),
+          new Promise(function (resolve) {
+            root.setTimeout(resolve, RELOAD_ACK_TIMEOUT_MS);
+          }),
+        ]);
+      } catch (e) {
+        /* ignore */
+      }
+    }
 
     const chimePolicy =
       QMS.Receiver.createBoardChimePolicy &&
@@ -403,6 +515,33 @@
     async function handleCommand(cmd) {
       const type = cmd.type;
       const params = cmd.params || {};
+      if (type === 'reload' || type === 'reboot') {
+        pendingAckCommandId = cmd.id ? String(cmd.id) : '';
+        await awaitPersistHandledCommandRecord(cmd);
+        await flushCommandAckBeforeReload();
+        if (type === 'reload') {
+          if (enableTestReloadSpy) {
+            root.__testReloadFired = true;
+            try {
+              root.sessionStorage.setItem('__rcv_test_reload', '1');
+            } catch (e) {
+              /* ignore */
+            }
+            const stage = root.document && root.document.getElementById('rcv-stage');
+            if (stage) {
+              stage.setAttribute('data-test-remote-reload', '1');
+            }
+          }
+          root.location.reload();
+          return;
+        }
+        if (root.AndroidBridge && typeof root.AndroidBridge.reboot === 'function') {
+          root.AndroidBridge.reboot();
+        } else {
+          root.location.reload();
+        }
+        return;
+      }
       lastHandledCommandId = cmd.id;
       pendingAckCommandId = cmd.id;
       if (type === 'simulate_offline') {
@@ -431,26 +570,6 @@
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
         applyNumberContent([], localSeq, { silent: true });
-      } else if (type === 'reload') {
-        if (enableTestReloadSpy) {
-          root.__testReloadFired = true;
-          try {
-            root.sessionStorage.setItem('__rcv_test_reload', '1');
-          } catch (e) {
-            /* ignore */
-          }
-          const stage = root.document && root.document.getElementById('rcv-stage');
-          if (stage) {
-            stage.setAttribute('data-test-remote-reload', '1');
-          }
-        }
-        root.location.reload();
-      } else if (type === 'reboot') {
-        if (root.AndroidBridge && typeof root.AndroidBridge.reboot === 'function') {
-          root.AndroidBridge.reboot();
-        } else {
-          root.location.reload();
-        }
       }
     }
 
@@ -475,9 +594,13 @@
           return;
         }
         const pending = dev.data.pendingCommand;
-        if (pending && pending.id && pending.id !== lastHandledCommandId) {
-          await handleCommand(pending);
+        if (!pending || !pending.id) {
+          return;
         }
+        if (shouldSkipDeviceCommand(pending)) {
+          return;
+        }
+        await handleCommand(pending);
       } catch (e) {
         if (isFirestoreAbortError(e)) {
           return;
@@ -530,6 +653,7 @@
     }
 
     function start() {
+      restorePersistedCommandGuards();
       setSimulatedOfflineFlag(false);
       TodayBoard.clearSessionBusinessDate();
       lastSessionBusinessDate = '';

@@ -36,6 +36,10 @@ test('connect user message prefers response code over http status', function () 
     E.connectUserMessage({ status: 401, response: { code: 'invalid_token', message: 'expired' } }),
     E.USER_MSG_CONNECT_ACCESS,
   );
+  assert.equal(
+    E.connectUserMessage({ status: 403, response: { error: 'unauthorized' } }),
+    E.USER_MSG_CONNECT_ACCESS,
+  );
   assert.equal(E.connectUserMessage({ status: 503, response: { code: 'unavailable' } }), E.USER_MSG_CONNECT_CLOUD);
 });
 

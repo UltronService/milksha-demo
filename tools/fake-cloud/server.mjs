@@ -30,6 +30,8 @@ const logs = new Map();
 
 let posReceiverEntryAEnabled =
   process.env.POS_RECEIVER_A === undefined || process.env.POS_RECEIVER_A !== '0';
+/** When false, boxHeartbeat ack does not clear pendingCommand (production-like 7-day retention). */
+let pendingCommandClearOnAck = true;
 const POS_MAX_AGE_MS = Number(process.env.POS_RECEIVER_MAX_AGE_MS || 10 * 60 * 1000);
 
 function encodeFields(obj) {
@@ -259,8 +261,36 @@ const server = http.createServer(async (req, res) => {
       docs.clear();
       logs.clear();
       posReceiverEntryAEnabled = true;
+      pendingCommandClearOnAck = true;
       seedE2eDevice();
       return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
+      const body = await readBody(req);
+      const store = body.storeId || 's120030';
+      const device = body.deviceId || 'stb-01';
+      const dk = deviceKey(store, device);
+      if (!docs.has(dk)) {
+        seedE2eDevice();
+      }
+      const createdAt = body.createdAt || new Date().toISOString();
+      const cmd = {
+        id: body.id || `cmd-test-${Date.now()}`,
+        type: body.type || 'reload',
+        params: body.params && typeof body.params === 'object' ? body.params : {},
+        createdAt,
+        issuedAt: createdAt,
+      };
+      const prev = docs.get(dk) || {};
+      docs.set(dk, { ...prev, pendingCommand: cmd });
+      return json(res, 200, { ok: true, commandId: cmd.id });
+    }
+    if (url.pathname === '/test/pendingCommandMode' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.clearOnAck === 'boolean') {
+        pendingCommandClearOnAck = body.clearOnAck;
+      }
+      return json(res, 200, { ok: true, clearOnAck: pendingCommandClearOnAck });
     }
     if (url.pathname === '/test/seed-board' && req.method === 'POST') {
       const body = await readBody(req);
@@ -365,6 +395,15 @@ const server = http.createServer(async (req, res) => {
           return json(res, 404, apiError('device_not_found', 'device not found'));
         }
         const prev = docs.get(dk) || {};
+        let nextPending = prev.pendingCommand || null;
+        if (
+          pendingCommandClearOnAck &&
+          hb.ackCommandId &&
+          nextPending &&
+          nextPending.id === hb.ackCommandId
+        ) {
+          nextPending = null;
+        }
         docs.set(dk, {
           ...prev,
           lastSeen: new Date().toISOString(),
@@ -374,7 +413,7 @@ const server = http.createServer(async (req, res) => {
           pendingUploads: hb.pendingUploads || 0,
           simulatedOffline: Boolean(hb.simulatedOffline),
           lastAckCommandId: hb.ackCommandId || prev.lastAckCommandId || '',
-          pendingCommand: prev.pendingCommand || null,
+          pendingCommand: nextPending,
         });
         return json(res, 200, { ok: true });
       }
@@ -405,11 +444,13 @@ const server = http.createServer(async (req, res) => {
           return json(res, 404, apiError('device_not_found', 'device not found'));
         }
         const prev = docs.get(dk) || {};
+        const issuedAt = new Date().toISOString();
         const cmd = {
           id: `cmd-${Date.now()}`,
           type: cmdBody.type,
           params: cmdBody.params || {},
-          issuedAt: new Date().toISOString(),
+          createdAt: issuedAt,
+          issuedAt: issuedAt,
         };
         if (cmdBody.type === 'clear_now') {
           docs.set(boardKey(cmdBody.storeId), {

@@ -4,7 +4,18 @@
 (function (root) {
   'use strict';
 
+  function devTestHooksAllowed() {
+    const QMS = root.QMS;
+    if (!QMS || !QMS.Transport || !QMS.Transport.isDevEndpointOverrideAllowed) {
+      return false;
+    }
+    return QMS.Transport.isDevEndpointOverrideAllowed();
+  }
+
   function authSlowRecheckMs(params) {
+    if (!devTestHooksAllowed()) {
+      return 10 * 60 * 1000;
+    }
     const testMs = Number(params.get('testAuthRecheckMs'));
     if (Number.isFinite(testMs) && testMs >= 100) {
       return testMs;
@@ -213,8 +224,9 @@
           return;
         }
         cloudStarted = true;
-        const testDevicePollMs = Number(params.get('testDevicePollMs'));
-        const enableTestPollHook = params.has('testDevicePollMs');
+        const devHooks = devTestHooksAllowed();
+        const testDevicePollMs = devHooks ? Number(params.get('testDevicePollMs')) : NaN;
+        const enableTestPollHook = devHooks && params.has('testDevicePollMs');
         if (enableTestPollHook) {
           root.__receiverAuthBlockedForTests = function () {
             return Boolean(
