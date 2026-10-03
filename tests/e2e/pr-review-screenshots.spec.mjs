@@ -58,10 +58,9 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
 
   await receiver.setViewportSize(VIEW);
-  await expect(receiver.locator('#rcv-empty-board-hint')).toBeVisible({ timeout: 10000 });
-  await receiver.screenshot({ path: `${ART}/board-empty-1920.png`, fullPage: false });
-
   await controller.click('#btn-clear-board');
+  await expect(receiver.locator('#rcv-empty-board-hint')).toBeVisible({ timeout: 15000 });
+  await receiver.screenshot({ path: `${ART}/board-empty-1920.png`, fullPage: false });
   for (let i = 0; i < 12; i += 1) {
     await controller.fill('#fld-no', String(7100 + i));
     await controller.selectOption('#fld-status', 'ready');
