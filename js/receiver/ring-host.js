@@ -293,13 +293,13 @@
       return;
     }
     tuneRingFontToRefMargins(numEl, box, maxPx, innerW);
-    enforceRingAtLeastDoubleReady(numEl, box, innerW);
     const innerW2 = measureRingInnerContentWidth(box);
     const maxPx2 = parseFloat(root.getComputedStyle(numEl).fontSize) || maxPx;
     const textW2 = measureRingTextWidth(numEl);
     if (textW2 > innerW2 + 1) {
       applyShrinkToWidth(numEl, maxPx2, innerW2, innerW2);
     }
+    enforceRingAtLeastDoubleReady(numEl, box, innerW2);
   }
 
   function avgGlyphSideMarginFrac(box, numEl) {
@@ -326,11 +326,11 @@
     let px = parseFloat(root.getComputedStyle(numEl).fontSize) || 8;
     numEl.style.fontSize = String(px) + 'px';
     let guard = 0;
-    while (measureGlyphHeight(numEl) < minH - 0.5 && guard < 80) {
+    while (measureGlyphHeight(numEl) < minH - 0.5 && guard < 120) {
       guard += 1;
-      px += 1;
+      px += 0.5;
       numEl.style.fontSize = String(px) + 'px';
-      if (measureRingTextWidth(numEl) > innerW + 1) {
+      if (measureRingTextWidth(numEl) > innerW + 2) {
         break;
       }
     }
