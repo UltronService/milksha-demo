@@ -180,9 +180,21 @@
     root.document.addEventListener('touchstart', unlock, opts);
   }
 
-  function is6975672LayoutActive() {
+  function matches6975672Viewport() {
+    try {
+      if (typeof root.matchMedia === 'function') {
+        return root.matchMedia('(min-width: 1900px) and (max-width: 1940px)').matches;
+      }
+    } catch {
+      /* ignore */
+    }
     const docEl = root.document.documentElement;
-    return Boolean(docEl && docEl.getAttribute('data-rcv-ring-6975672') === '1');
+    const vw = Number(root.innerWidth || (docEl ? docEl.clientWidth : 0) || 0);
+    return vw >= RING_LAYOUT_VW_MIN && vw <= RING_LAYOUT_VW_MAX;
+  }
+
+  function is6975672LayoutActive() {
+    return matches6975672Viewport();
   }
 
   function syncRing6975672LayoutFlag() {
@@ -192,7 +204,7 @@
     }
     const vw = Number(root.innerWidth || docEl.clientWidth || 0);
     const numEl = root.document.getElementById('rcv-ring-num');
-    if (vw >= RING_LAYOUT_VW_MIN && vw <= RING_LAYOUT_VW_MAX) {
+    if (matches6975672Viewport()) {
       docEl.setAttribute('data-rcv-ring-6975672', '1');
     } else {
       docEl.removeAttribute('data-rcv-ring-6975672');
@@ -217,15 +229,29 @@
     return range.getBoundingClientRect().width;
   }
 
-  /** One measure + one adjust at 1920 layout; 280px unless text overflows inner padding. */
+  function applyShrinkToWidth(numEl, maxPx, innerW, targetTextW) {
+    if (!Number.isFinite(maxPx) || maxPx <= 0 || innerW <= 0 || targetTextW <= 0) {
+      return;
+    }
+    const textW = measureRingTextWidth(numEl);
+    if (textW <= targetTextW + 1) {
+      return;
+    }
+    let fitPx = Math.max(8, maxPx * (targetTextW / textW) * 0.998);
+    numEl.style.fontSize = String(fitPx) + 'px';
+    const afterW = measureRingTextWidth(numEl);
+    if (afterW > targetTextW + 1) {
+      const curPx = parseFloat(root.getComputedStyle(numEl).fontSize) || fitPx;
+      fitPx = Math.max(8, curPx * (targetTextW / afterW) * 0.998);
+      numEl.style.fontSize = String(fitPx) + 'px';
+    }
+  }
+
+  /** One measure + at most one adjust; 1920 uses 280px unless overflow; other widths enforce 4% min side margin. */
   function shrinkFitRingNumber() {
     const numEl = root.document.getElementById('rcv-ring-num');
     const box = root.document.getElementById('rcv-ring-box');
     if (!numEl || !box) {
-      return;
-    }
-    if (!is6975672LayoutActive()) {
-      numEl.style.fontSize = '';
       return;
     }
     numEl.style.fontSize = '';
@@ -234,12 +260,20 @@
       return;
     }
     const innerW = measureRingInnerContentWidth(box);
-    const textW = measureRingTextWidth(numEl);
-    if (innerW <= 0 || textW <= innerW + 1) {
+    if (innerW <= 0) {
       return;
     }
-    const fitPx = Math.max(8, maxPx * (innerW / textW) * 0.998);
-    numEl.style.fontSize = String(fitPx) + 'px';
+    if (is6975672LayoutActive()) {
+      applyShrinkToWidth(numEl, maxPx, innerW, innerW);
+      return;
+    }
+    const boxW = box.getBoundingClientRect().width;
+    if (!Number.isFinite(boxW) || boxW <= 0) {
+      return;
+    }
+    const minSideMarginPx = 0.04 * boxW;
+    const targetTextW = innerW - 2 * minSideMarginPx;
+    applyShrinkToWidth(numEl, maxPx, innerW, targetTextW);
   }
 
   function installRingResizeHook() {
@@ -284,14 +318,11 @@
     if (ov) {
       ov.style.opacity = '0';
     }
-    const docEl = root.document.documentElement;
-    if (docEl) {
-      docEl.removeAttribute('data-rcv-ring-6975672');
-    }
     const numEl = root.document.getElementById('rcv-ring-num');
     if (numEl) {
       numEl.style.fontSize = '';
     }
+    syncRing6975672LayoutFlag();
   }
 
   function recordRingTelemetry(number) {
