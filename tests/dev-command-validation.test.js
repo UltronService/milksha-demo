@@ -192,6 +192,33 @@ test('devCommand mismatched store id returns 403 forbidden', async function () {
   }
 });
 
+test('fake-cloud devCommand stores issuedAt as ISO timestamp string', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    await fetch(`http://127.0.0.1:${PORT}/test/reset`, { method: 'POST' });
+    const cmdRes = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({ storeId: 's120030', deviceId: 'stb-01', type: 'reload', params: {} }),
+    });
+    assert.equal(cmdRes.status, 200);
+    const docRes = await fetch(
+      `http://127.0.0.1:${PORT}/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/devices/stb-01`,
+      { headers: { Authorization: 'Bearer fake-id-token' } },
+    );
+    const doc = await docRes.json();
+    const issued = doc.fields.pendingCommand.mapValue.fields.issuedAt.stringValue;
+    assert.ok(/^\d{4}-\d{2}-\d{2}T/.test(issued));
+    assert.equal(doc.fields.pendingCommand.mapValue.fields.issuedAtMs, undefined);
+  } finally {
+    proc.kill();
+  }
+});
+
 test('boxHeartbeat ack clears pendingCommand when clearOnAck enabled', async function () {
   const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },

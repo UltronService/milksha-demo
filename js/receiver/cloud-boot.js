@@ -147,6 +147,41 @@
     let slowRecheckTimer = null;
     const slowRecheckMs = authSlowRecheckMs(params);
 
+    if (devTestHooksAllowed()) {
+      root.__forceReceiverAuthRecheck = function (opts) {
+        const options = opts && typeof opts === 'object' ? opts : {};
+        authHalted = false;
+        if (slowRecheckTimer) {
+          root.clearTimeout(slowRecheckTimer);
+          slowRecheckTimer = null;
+        }
+        if (options.clearSession && transport.session && transport.session.clearStored) {
+          transport.session.clearStored();
+        }
+        runEnsureIdToken();
+      };
+      root.__receiverAttemptDevLoginForTests = function () {
+        if (!transport.session || !transport.session.devLogin) {
+          return Promise.resolve();
+        }
+        authHalted = false;
+        return transport.session
+          .devLogin()
+          .then(function () {
+            if (transport.session && transport.session.resetAuthRetryState) {
+              transport.session.resetAuthRetryState();
+            }
+            if (transport.session && transport.session.clearUploadHalt) {
+              transport.session.clearUploadHalt();
+            }
+            clearGuestAuthDebug();
+          })
+          .catch(function (err) {
+            handleAuthFailure(err);
+          });
+      };
+    }
+
     function scheduleSlowAuthRecheck() {
       if (slowRecheckTimer) {
         return;
@@ -210,6 +245,9 @@
           if (transport.session && transport.session.resetAuthRetryState) {
             transport.session.resetAuthRetryState();
           }
+          if (transport.session && transport.session.clearUploadHalt) {
+            transport.session.clearUploadHalt();
+          }
           clearGuestAuthDebug();
         })
         .catch(function (err) {
@@ -235,6 +273,8 @@
         cloudStarted = true;
         const devHooks = devTestHooksAllowed();
         const testDevicePollMs = devHooks ? Number(params.get('testDevicePollMs')) : NaN;
+        const testHeartbeatMs = devHooks ? Number(params.get('testHeartbeatMs')) : NaN;
+        const testUploadHaltHeartbeatMs = devHooks ? Number(params.get('testUploadHaltHeartbeatMs')) : NaN;
         const enableTestPollHook = devHooks && params.has('testDevicePollMs');
         if (enableTestPollHook) {
           root.__receiverAuthBlockedForTests = function () {
@@ -257,7 +297,14 @@
             Number.isFinite(testDevicePollMs) && testDevicePollMs >= 200
               ? testDevicePollMs
               : modeResolved.config.devicePollIntervalMs,
-          heartbeatIntervalMs: modeResolved.config.heartbeatIntervalMs,
+          heartbeatIntervalMs:
+            Number.isFinite(testHeartbeatMs) && testHeartbeatMs >= 200
+              ? testHeartbeatMs
+              : modeResolved.config.heartbeatIntervalMs,
+          uploadHaltHeartbeatIntervalMs:
+            Number.isFinite(testUploadHaltHeartbeatMs) && testUploadHaltHeartbeatMs >= 200
+              ? testUploadHaltHeartbeatMs
+              : undefined,
           onStatusLine: function (line) {
             if (statusEl) {
               statusEl.textContent = line;

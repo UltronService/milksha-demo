@@ -101,7 +101,7 @@ test('reload defers when heartbeat fails then runs after cloud is reachable', as
   await cloud.pollDeviceForTests();
   assert.equal(reloadFired, false, 'reload must not run while cloud unreachable');
   cloudUp = true;
-  await transport.cloudApi.boxHeartbeat({});
+  await cloud.sendHeartbeatForTests();
   await cloud.pollDeviceForTests();
   assert.equal(reloadFired, true, 'reload runs after cloud is reachable again');
   assert.ok(deviceReads >= 2);

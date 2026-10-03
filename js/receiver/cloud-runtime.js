@@ -57,6 +57,7 @@
     const boardPollMs = options.boardPollIntervalMs || 2000;
     const devicePollMs = options.devicePollIntervalMs || 5000;
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
+    const uploadHaltHeartbeatIntervalMs = options.uploadHaltHeartbeatIntervalMs || 300000;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
@@ -79,6 +80,7 @@
     let lastResolvedSource = '';
     let clockSkewSilentRefetchPending = false;
     let cloudReachable = true;
+    let lastHeartbeatSucceeded = true;
     /** @type {object|null} */
     let deferredReloadCommand = null;
 
@@ -463,7 +465,7 @@
         transport.session.isUploadHalted &&
         transport.session.isUploadHalted()
       ) {
-        return 300000;
+        return uploadHaltHeartbeatIntervalMs;
       }
       return heartbeatMs;
     }
@@ -478,11 +480,15 @@
     }
 
     async function tryFlushDeferredReloadCommand() {
-      if (!deferredReloadCommand || !cloudReachable || simulateOffline) {
+      if (!deferredReloadCommand || simulateOffline || !lastHeartbeatSucceeded) {
         return;
       }
       const cmd = deferredReloadCommand;
       deferredReloadCommand = null;
+      if (shouldSkipDeviceCommand(cmd)) {
+        await acknowledgeSkippedPendingCommand(cmd);
+        return;
+      }
       await handleCommand(cmd);
     }
 
@@ -540,7 +546,15 @@
       const type = cmd.type;
       const params = cmd.params || {};
       if (type === 'reload' || type === 'reboot') {
-        if (!cloudReachable || simulateOffline) {
+        if (shouldSkipReloadRebootByBootServerTime(cmd)) {
+          await acknowledgeSkippedPendingCommand(cmd);
+          return;
+        }
+        if (simulateOffline) {
+          deferredReloadCommand = cmd;
+          return;
+        }
+        if (!lastHeartbeatSucceeded) {
           deferredReloadCommand = cmd;
           return;
         }
@@ -674,11 +688,11 @@
           lastAckCommandId = pendingAckCommandId;
           pendingAckCommandId = '';
         }
-        if (transport.session && transport.session.clearUploadHalt) {
-          transport.session.clearUploadHalt();
-        }
+        lastHeartbeatSucceeded = true;
         markCloudReachable();
+        tryFlushDeferredReloadCommand();
       } catch (e) {
+        lastHeartbeatSucceeded = false;
         markCloudUnreachable();
         onStatusLine('heartbeat 失敗');
       }
@@ -773,6 +787,9 @@
       },
     };
     if (options.enableTestPollHook) {
+      api.sendHeartbeatForTests = function () {
+        return sendHeartbeat();
+      };
       api.pollDeviceForTests = async function () {
         const blocked = authBlocksBoardSync();
         let pendingId = '';
