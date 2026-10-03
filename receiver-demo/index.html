@@ -43,23 +43,34 @@
           'Noto Sans TC', sans-serif;
         --rcv-ready-num-px: 140;
         --rcv-board-design-width: 1920;
+        /* 6975672 @ 1920×1080 border-box (measured; not derived from inner slot). */
+        --rcv-ring-box-w-6975672: 848.640625px;
         --rcv-ring-num-size: max(
           calc(var(--rcv-ready-num-px) * 2px),
           calc(var(--rcv-ready-num-px) * 2 * 100vw / var(--rcv-board-design-width))
         );
         --rcv-ring-label-size: clamp(32px, 3.2vw, 64px);
-        --rcv-ring-box-max: min(92vw, 900px);
-        --rcv-ring-pad-x: clamp(32px, 6vw, 80px);
-        --rcv-ring-border-w: clamp(4px, 0.6vw, 8px);
+        --rcv-ring-box-scaled-6975672: calc(848.640625 * 100vw / var(--rcv-board-design-width));
+        --rcv-ring-box-scaled-m2: calc(900 * 100vw / var(--rcv-board-design-width));
+        --rcv-ring-box-wide-w: min(
+          92vw,
+          max(var(--rcv-ring-box-scaled-6975672), var(--rcv-ring-box-scaled-m2))
+        );
+        --rcv-ring-box-max: var(--rcv-ring-box-wide-w);
+        --rcv-ring-pad-x: clamp(
+          32px,
+          6vw,
+          calc(80 * 100vw / var(--rcv-board-design-width))
+        );
+        --rcv-ring-border-w: clamp(
+          4px,
+          0.6vw,
+          calc(8 * 100vw / var(--rcv-board-design-width))
+        );
         --rcv-ring-inner-w: calc(
-          min(92vw, 900px) - 2 * clamp(32px, 6vw, 80px) - 2 * clamp(4px, 0.6vw, 8px)
+          var(--rcv-ring-box-wide-w) - 2 * var(--rcv-ring-pad-x) - 2 * var(--rcv-ring-border-w)
         );
-        /* 6975672 @ 1920×1080: fixed inner slot (border-box width = pad + border + this). */
-        --rcv-ring-inner-w-6975672: 672.640625px;
-        --rcv-ring-box-w-6975672: calc(
-          2 * var(--rcv-ring-pad-x) + 2 * var(--rcv-ring-border-w) + var(--rcv-ring-inner-w-6975672)
-        );
-        /* Caps 4-digit width on non-1920 viewports (1920 uses JS shrink-to-fit from 280px). */
+        /* Caps 4-digit width on non-1920 viewports (1920 uses fixed 280px when it fits). */
         --rcv-ring-font-fit-ratio: 0.315;
       }
       @media (min-width: 1300px) {
@@ -99,6 +110,7 @@
         box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
         max-width: var(--rcv-ring-box-max);
         box-sizing: border-box;
+        flex-shrink: 0;
       }
       .rcv-ring-label {
         font-size: var(--rcv-ring-label-size);
@@ -139,8 +151,10 @@
       }
       @media (max-width: 1899px), (min-width: 1941px) {
         #rcv-ring-box {
-          width: var(--rcv-ring-box-max);
-          min-width: var(--rcv-ring-box-max);
+          width: var(--rcv-ring-box-wide-w);
+          min-width: var(--rcv-ring-box-wide-w);
+          max-width: var(--rcv-ring-box-wide-w);
+          box-sizing: border-box;
         }
       }
       .rcv-viewport {

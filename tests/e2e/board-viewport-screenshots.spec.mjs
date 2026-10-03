@@ -4,10 +4,11 @@ import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { urlsForMode } from './harness.mjs';
+import { BASELINE_WORKTREE, ensure6975672Worktree } from './baseline-6975672.mjs';
 
 const ART = process.env.MILKSHA_E2E_ARTIFACTS || '';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const BASELINE_ROOT = '/tmp/wt-6975672';
+const BASELINE_ROOT = BASELINE_WORKTREE;
 const RING_DIGITS = '8888';
 
 const VIEWPORTS = [
@@ -88,10 +89,8 @@ test('board ready 8888 screenshots at key viewports', async ({ browser }) => {
 
 test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
   test.skip(!ART, 'Set MILKSHA_E2E_ARTIFACTS to write screenshot artifacts');
-  test.skip(
-    !existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html')),
-    '6975672 worktree missing (run global-setup or git worktree add)',
-  );
+  ensure6975672Worktree();
+  expect(existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html'))).toBe(true);
   mkdirSync(ART, { recursive: true });
   const { server, base } = await startStaticSite(BASELINE_ROOT);
   try {
@@ -112,10 +111,8 @@ test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
 
 test('1920 head compare current vs 6975672 baseline (8888)', async ({ browser }) => {
   test.skip(!ART, 'Set MILKSHA_E2E_ARTIFACTS to write screenshot artifacts');
-  test.skip(
-    !existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html')),
-    '6975672 worktree missing',
-  );
+  ensure6975672Worktree();
+  expect(existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html'))).toBe(true);
   mkdirSync(ART, { recursive: true });
   const { recv } = urlsForMode('local');
   const currentPath = `${ART}/board-ring-head-current-1920x1080-8888.png`;

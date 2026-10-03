@@ -1,5 +1,6 @@
+// @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
-export default {
+module.exports = {
   testDir: 'tests/e2e',
   timeout: 90000,
   workers: 1,

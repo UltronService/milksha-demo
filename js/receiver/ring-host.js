@@ -21,6 +21,8 @@
   /** Match receiver-demo/index.html 6975672 layout media query. */
   const RING_LAYOUT_VW_MIN = 1900;
   const RING_LAYOUT_VW_MAX = 1940;
+  /** 1920×1080 @ 6975672, 8888: per-side margin / border-box width (white inner edge → glyph). */
+  const RING_REF_SIDE_MARGIN_FRAC = 0.09426840719533077;
   let ringResizeHooked = false;
 
   const ringQueue =
@@ -215,18 +217,38 @@
   }
 
   function measureRingInnerContentWidth(box) {
+    const boxR = box.getBoundingClientRect();
     const cs = root.getComputedStyle(box);
     const padL = parseFloat(cs.paddingLeft) || 0;
     const padR = parseFloat(cs.paddingRight) || 0;
     const borL = parseFloat(cs.borderLeftWidth) || 0;
     const borR = parseFloat(cs.borderRightWidth) || 0;
-    return box.clientWidth - padL - padR - borL - borR;
+    const innerL = boxR.left + padL + borL;
+    const innerR = boxR.right - padR - borR;
+    return innerR - innerL;
   }
 
   function measureRingTextWidth(numEl) {
     const range = root.document.createRange();
     range.selectNodeContents(numEl);
     return range.getBoundingClientRect().width;
+  }
+
+  function measureGlyphSideMarginsPx(box, numEl) {
+    const boxR = box.getBoundingClientRect();
+    const cs = root.getComputedStyle(box);
+    const borL = parseFloat(cs.borderLeftWidth) || 0;
+    const borR = parseFloat(cs.borderRightWidth) || 0;
+    const whiteInnerL = boxR.left + borL;
+    const whiteInnerR = boxR.right - borR;
+    const range = root.document.createRange();
+    range.selectNodeContents(numEl);
+    const numR = range.getBoundingClientRect();
+    return {
+      boxW: boxR.width,
+      marginL: numR.left - whiteInnerL,
+      marginR: whiteInnerR - numR.right,
+    };
   }
 
   function applyShrinkToWidth(numEl, maxPx, innerW, targetTextW) {
@@ -264,16 +286,59 @@
       return;
     }
     if (is6975672LayoutActive()) {
-      applyShrinkToWidth(numEl, maxPx, innerW, innerW);
+      const textW = measureRingTextWidth(numEl);
+      if (textW > innerW + 1) {
+        applyShrinkToWidth(numEl, maxPx, innerW, innerW);
+      }
       return;
     }
-    const boxW = box.getBoundingClientRect().width;
-    if (!Number.isFinite(boxW) || boxW <= 0) {
+    tuneRingFontToRefMargins(numEl, box, maxPx, innerW);
+    const innerW2 = measureRingInnerContentWidth(box);
+    const maxPx2 = parseFloat(root.getComputedStyle(numEl).fontSize) || maxPx;
+    const textW2 = measureRingTextWidth(numEl);
+    if (textW2 > innerW2 + 1) {
+      applyShrinkToWidth(numEl, maxPx2, innerW2, innerW2);
+    }
+  }
+
+  function avgGlyphSideMarginFrac(box, numEl) {
+    const margins = measureGlyphSideMarginsPx(box, numEl);
+    if (margins.boxW <= 0) {
+      return 0;
+    }
+    return (margins.marginL + margins.marginR) / (2 * margins.boxW);
+  }
+
+  /** Binary-search font size so glyph side margins track 6975672 @1920 reference. */
+  function tuneRingFontToRefMargins(numEl, box, designPx, innerW) {
+    if (!Number.isFinite(designPx) || designPx <= 0 || innerW <= 0) {
       return;
     }
-    const minSideMarginPx = 0.04 * boxW;
-    const targetTextW = innerW - 2 * minSideMarginPx;
-    applyShrinkToWidth(numEl, maxPx, innerW, targetTextW);
+    let hi = designPx;
+    numEl.style.fontSize = String(hi) + 'px';
+    while (hi < innerW * 2) {
+      const next = Math.min(innerW * 2, hi + 6);
+      numEl.style.fontSize = String(next) + 'px';
+      if (measureRingTextWidth(numEl) > innerW + 1) {
+        break;
+      }
+      hi = next;
+      if (next >= innerW * 2) {
+        break;
+      }
+    }
+    let lo = 8;
+    for (let i = 0; i < 14; i += 1) {
+      const mid = (lo + hi) / 2;
+      numEl.style.fontSize = String(mid) + 'px';
+      const frac = avgGlyphSideMarginFrac(box, numEl);
+      if (frac > RING_REF_SIDE_MARGIN_FRAC) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    numEl.style.fontSize = String(lo) + 'px';
   }
 
   function installRingResizeHook() {

@@ -214,6 +214,19 @@
       }, waitMs);
     }
 
+    function syncAuthUiFromSession() {
+      if (!transport.session) {
+        return;
+      }
+      const halted =
+        transport.session.isUploadHalted && transport.session.isUploadHalted();
+      const stopped =
+        transport.session.isAuthStopped && transport.session.isAuthStopped();
+      if (!halted && !stopped) {
+        clearGuestAuthDebug();
+      }
+    }
+
     function handleAuthFailure(err) {
       setGuestAuthDebug(err);
       const status = err && err.status ? Number(err.status) : 0;
@@ -277,9 +290,7 @@
             transport.session.clearUploadHalt();
           }
           clearGuestAuthDebug();
-          if (root.__receiverSyncAuthUi) {
-            root.__receiverSyncAuthUi();
-          }
+          syncAuthUiFromSession();
         })
         .catch(function (err) {
           handleAuthFailure(err);
@@ -338,23 +349,12 @@
               statusEl.textContent = line;
             }
           },
+          onAuthFailure: handleAuthFailure,
+          onSyncAuthUi: syncAuthUiFromSession,
         });
         cloud.start();
         root.receiveBoard = cloud.receiveBoard;
         root.receiverCloud = cloud;
-        root.__receiverHandleAuthFailure = handleAuthFailure;
-        root.__receiverSyncAuthUi = function () {
-          if (!transport.session) {
-            return;
-          }
-          const halted =
-            transport.session.isUploadHalted && transport.session.isUploadHalted();
-          const stopped =
-            transport.session.isAuthStopped && transport.session.isAuthStopped();
-          if (!halted && !stopped) {
-            clearGuestAuthDebug();
-          }
-        };
       };
       startCloud();
       runEnsureIdToken();

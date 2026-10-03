@@ -13,19 +13,24 @@ export const PORT_CLOUD = 8787;
 let cloudProc;
 let siteServer;
 
+function stopOwnedCloud() {
+  if (cloudProc && cloudProc.exitCode === null) {
+    cloudProc.kill('SIGTERM');
+  }
+  cloudProc = null;
+}
+
 export function startCloud() {
   if (cloudProc && cloudProc.exitCode === null) {
     return;
   }
-  try {
-    execSync('pkill -f "fake-cloud/server.mjs" 2>/dev/null || true', { stdio: 'ignore' });
-    execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
-  } catch {
-    /* ignore */
-  }
+  stopOwnedCloud();
   cloudProc = spawn(execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT_CLOUD) },
     stdio: 'ignore',
+  });
+  cloudProc.on('exit', () => {
+    cloudProc = null;
   });
 }
 
@@ -45,13 +50,8 @@ export async function ensureCloudRunning() {
 
 /** Kill any stale fake-cloud and start the current workspace server.mjs. */
 export async function restartCloud() {
-  cloudProc = null;
-  try {
-    execSync('pkill -f "fake-cloud/server.mjs" 2>/dev/null || true', { stdio: 'ignore' });
-    execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
-  } catch {
-    /* ignore */
-  }
+  stopOwnedCloud();
+  await new Promise((r) => setTimeout(r, 150));
   startCloud();
   await waitCloudReady();
 }
@@ -147,8 +147,11 @@ export async function startSite() {
 }
 
 export function stopHarness() {
-  if (siteServer) siteServer.close();
-  if (cloudProc) cloudProc.kill();
+  if (siteServer) {
+    siteServer.close();
+    siteServer = null;
+  }
+  stopOwnedCloud();
 }
 
 export function urlsForMode(mode) {

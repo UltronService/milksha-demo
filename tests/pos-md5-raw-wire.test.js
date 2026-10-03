@@ -10,7 +10,7 @@ const { spawn } = require('node:child_process');
 const { join } = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
-const PORT = 18790;
+const PORT = 18791;
 
 function loadWireSign() {
   const sandbox = {

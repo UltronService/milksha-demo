@@ -374,22 +374,10 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
   await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
   const { recv } = urlsForMode('firestore');
   let heartbeatCalls = 0;
-  let devLoginMode = 'ok';
   const ctx = await browser.newContext();
   await ctx.addInitScript(firestoreCloudSettingsInitScript());
   const receiver = await ctx.newPage();
-  await wireFirestoreAuthRoutes(receiver);
-  await receiver.route('**/devLogin', async (route) => {
-    if (devLoginMode === 'forbidden') {
-      await route.fulfill({
-        status: 403,
-        contentType: 'application/json',
-        body: JSON.stringify({ code: 'invalid_access_code', message: 'wrong' }),
-      });
-      return;
-    }
-    await route.continue();
-  });
+  await wireFirestoreAuthRoutes(receiver, { devLoginToFakeCloud: true });
   await receiver.route('**/accounts:signInWithCustomToken**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -415,12 +403,12 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
   });
   await expect(receiver.locator('.rcv-ready .rcv-num').filter({ hasText: '5566' })).toBeVisible();
   await waitReceiverCloudReady(receiver);
-  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
+  const wrongCodeRes = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ accessCode: 'wrong-access-code-for-e2e' }),
   });
-  devLoginMode = 'forbidden';
+  expect(wrongCodeRes.ok).toBe(true);
   await receiver.evaluate(() => {
     const authKey = Object.keys(localStorage).find((k) => k.startsWith('milksha:auth:'));
     if (authKey) {
@@ -428,6 +416,9 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
       parsed.expiresAtMs = Date.now() - 1000;
       parsed.refreshToken = '';
       localStorage.setItem(authKey, JSON.stringify(parsed));
+    }
+    if (typeof window.__forceReceiverAuthRecheck === 'function') {
+      window.__forceReceiverAuthRecheck({ clearSession: true });
     }
   });
   await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-upload-stopped', '1', {
@@ -457,7 +448,6 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
     },
   );
   expect(probeLogin.ok).toBe(true);
-  devLoginMode = 'ok';
   await receiver.waitForTimeout(1100);
   await expect
     .poll(

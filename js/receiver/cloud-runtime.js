@@ -59,6 +59,8 @@
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
+    const onAuthFailure = options.onAuthFailure || function () {};
+    const onSyncAuthUi = options.onSyncAuthUi || function () {};
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
     const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
 
@@ -478,9 +480,7 @@
     }
 
     function notifyAuthFailure(err) {
-      if (root.__receiverHandleAuthFailure) {
-        root.__receiverHandleAuthFailure(err);
-      }
+      onAuthFailure(err);
     }
 
     function isAuthHttpError(err) {
@@ -753,9 +753,7 @@
 
       tickTimer = setInterval(function () {
         tickMs += 1000;
-        if (root.__receiverSyncAuthUi) {
-          root.__receiverSyncAuthUi();
-        }
+        onSyncAuthUi();
         if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
         }
