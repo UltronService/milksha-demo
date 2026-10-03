@@ -12,32 +12,20 @@
     return String(n).padStart(2, '0');
   }
 
+  const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+  /** Wall clock in Asia/Taipei (UTC+8, no DST) from instant; ms 0–999 padded to 4 digits. */
   function formatTimeStmp(d) {
     const date = d || new Date();
-    const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Taipei',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    }).formatToParts(date);
-    function pick(type) {
-      const p = parts.find(function (x) {
-        return x.type === type;
-      });
-      return p ? p.value : '00';
-    }
-    const y = pick('year');
-    const mo = pick('month');
-    const da = pick('day');
-    const h = pick('hour');
-    const mi = pick('minute');
-    const s = pick('second');
-    const ms = String(date.getMilliseconds()).padStart(4, '0');
-    return y + '-' + mo + '-' + da + '-' + h + '-' + mi + '-' + s + ':' + ms;
+    const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
+    const y = shifted.getUTCFullYear();
+    const mo = pad2(shifted.getUTCMonth() + 1);
+    const da = pad2(shifted.getUTCDate());
+    const h = pad2(shifted.getUTCHours());
+    const mi = pad2(shifted.getUTCMinutes());
+    const s = pad2(shifted.getUTCSeconds());
+    const ms4 = String(date.getUTCMilliseconds()).padStart(4, '0');
+    return y + '-' + mo + '-' + da + '-' + h + '-' + mi + '-' + s + ':' + ms4;
   }
 
   function md5ServiceJson(serviceSpecialData_Json) {

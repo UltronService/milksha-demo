@@ -22,11 +22,15 @@
     if (!ts || typeof ts !== 'string') {
       return null;
     }
-    const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2}):(\d+)$/.exec(ts);
+    const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2}):(\d{1,4})$/.exec(ts);
     if (!m) {
       return null;
     }
-    const ms = Number(String(m[7]).slice(0, 3)) || 0;
+    const fracNum = Number(m[7]);
+    if (!Number.isFinite(fracNum) || fracNum < 0 || fracNum > 9999) {
+      return null;
+    }
+    const ms = fracNum <= 999 ? fracNum : fracNum % 1000;
     const y = m[1];
     const mo = m[2];
     const da = m[3];

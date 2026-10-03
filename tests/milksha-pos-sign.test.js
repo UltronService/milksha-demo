@@ -25,6 +25,43 @@ function loadSign() {
   return sandbox.QMS.Transport.MilkshaPosSign;
 }
 
+function loadValidate() {
+  const sandbox = { globalThis: {}, window: {} };
+  sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
+  vm.runInNewContext(
+    fs.readFileSync(path.join(ROOT, 'js/transport/pos-receiver-validate.js'), 'utf8'),
+    sandbox,
+  );
+  return sandbox.QMS.Transport.PosReceiverValidate;
+}
+
+test('formatTimeStmp uses Asia/Taipei wall time independent of process TZ', function () {
+  const prev = process.env.TZ;
+  process.env.TZ = 'America/New_York';
+  try {
+    const S = loadSign();
+    const instant = new Date('2026-10-03T01:15:00.123Z');
+    assert.equal(S.formatTimeStmp(instant), '2026-10-03-09-15-00:0123');
+  } finally {
+    if (prev === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = prev;
+    }
+  }
+});
+
+test('parseTimeStmp mirrors fake-cloud (Taipei +08, 1-4 digit fractional)', async function () {
+  const browser = loadValidate();
+  const { parseTimeStmp: nodeParse } = await import('../tools/fake-cloud/pos-validate.mjs');
+  const ts = '2026-10-03-09-15-00:0123';
+  const expected = new Date('2026-10-03T01:15:00.123Z').getTime();
+  assert.equal(browser.parseTimeStmp(ts).getTime(), expected);
+  assert.equal(nodeParse(ts).getTime(), expected);
+  assert.equal(nodeParse('2026-10-03-09-15-00:2831').getTime(), nodeParse('2026-10-03-09-15-00:831').getTime());
+});
+
 test('HMAC signature matches node reference', async function () {
   const S = loadSign();
   const body = {
