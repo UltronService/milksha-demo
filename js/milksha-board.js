@@ -13,6 +13,7 @@
   const OVERLAY_HOLD_MS = 2200;
   const OVERLAY_OUT_MS = 300;
   const MAX_POP_PER_PUSH = 3;
+  const EMPTY_BOARD_MESSAGE = '目前沒有號碼';
 
   const SOURCE_DEFS = [
     { prefix: 'From_Store_', key: 'store' },
@@ -158,6 +159,17 @@
     const popIds = newlyReadyIds.slice(0, MAX_POP_PER_PUSH);
     const silentFreshIds = newlyReadyIds.slice(MAX_POP_PER_PUSH);
     return { popIds: popIds, silentFreshIds: silentFreshIds };
+  }
+
+  /**
+   * @param {Array<unknown>} ready
+   * @param {Array<unknown>} preparing
+   * @returns {boolean}
+   */
+  function isBoardFullyEmpty(ready, preparing) {
+    const r = Array.isArray(ready) ? ready : [];
+    const p = Array.isArray(preparing) ? preparing : [];
+    return r.length === 0 && p.length === 0;
   }
 
   /**
@@ -448,11 +460,27 @@
       readyPage = clampPage(readyPage, readyPages);
       prepPage = clampPage(prepPage, prepPages);
 
+      const boardFullyEmpty = isBoardFullyEmpty(readyItems, prepItems);
       const readySlice = slicePage(readyItems, readyPage, readyPer);
       const prepSlice = slicePage(prepItems, prepPage, prepPer);
 
-      function zoneHtml(cls, x, y, w, hh, title, sub, page, totalPages, zcfg, slice, isReady, progStart) {
-        const showPager = totalPages > 1;
+      function zoneHtml(
+        cls,
+        x,
+        y,
+        w,
+        hh,
+        title,
+        sub,
+        page,
+        totalPages,
+        zcfg,
+        slice,
+        isReady,
+        progStart,
+        boardFullyEmpty,
+      ) {
+        const showPager = !boardFullyEmpty && totalPages > 1;
         let z =
           '<div class="milksha-zone ' +
           cls +
@@ -487,44 +515,52 @@
             '</span>';
         }
         z += '</div>';
-        z +=
-          '<div class="milksha-grid" style="grid-template-columns:repeat(' +
-          zcfg.cols +
-          ',minmax(0,1fr));grid-template-rows:repeat(' +
-          zcfg.rows +
-          ',1fr);height:' +
-          (hh - zcfg.titleH - 24) +
-          'px">';
-        for (let i = 0; i < zcfg.cols * zcfg.rows; i += 1) {
-          const item = slice[i];
-          if (!item) {
-            z += '<div class="milksha-card ' + (isReady ? 'r' : 'p') + '"></div>';
-            continue;
+        const bodyH = hh - zcfg.titleH - 24;
+        if (boardFullyEmpty) {
+          z +=
+            '<div class="milksha-zone-body milksha-zone-body--idle" style="height:' +
+            bodyH +
+            'px"></div>';
+        } else {
+          z +=
+            '<div class="milksha-grid" style="grid-template-columns:repeat(' +
+            zcfg.cols +
+            ',minmax(0,1fr));grid-template-rows:repeat(' +
+            zcfg.rows +
+            ',1fr);height:' +
+            bodyH +
+            'px">';
+          for (let i = 0; i < zcfg.cols * zcfg.rows; i += 1) {
+            const item = slice[i];
+            if (!item) {
+              z += '<div class="milksha-card ' + (isReady ? 'r' : 'p') + '"></div>';
+              continue;
+            }
+            const fresh = isReady && freshUntil[item.id] && freshUntil[item.id] > Date.now();
+            if (isReady) {
+              z +=
+                '<div class="milksha-card r' +
+                (fresh ? ' fresh' : '') +
+                '"><div>' +
+                renderTagHtml(item.sourceKey, zcfg.tagSize) +
+                '</div><div class="milksha-num" style="font-size:' +
+                zcfg.font +
+                'px">' +
+                item.number +
+                '</div></div>';
+            } else {
+              z +=
+                '<div class="milksha-card p">' +
+                renderTagHtml(item.sourceKey, zcfg.tagSize) +
+                '<span class="milksha-num" style="font-size:' +
+                zcfg.font +
+                'px">' +
+                item.number +
+                '</span></div>';
+            }
           }
-          const fresh = isReady && freshUntil[item.id] && freshUntil[item.id] > Date.now();
-          if (isReady) {
-            z +=
-              '<div class="milksha-card r' +
-              (fresh ? ' fresh' : '') +
-              '"><div>' +
-              renderTagHtml(item.sourceKey, zcfg.tagSize) +
-              '</div><div class="milksha-num" style="font-size:' +
-              zcfg.font +
-              'px">' +
-              item.number +
-              '</div></div>';
-          } else {
-            z +=
-              '<div class="milksha-card p">' +
-              renderTagHtml(item.sourceKey, zcfg.tagSize) +
-              '<span class="milksha-num" style="font-size:' +
-              zcfg.font +
-              'px">' +
-              item.number +
-              '</span></div>';
-          }
+          z += '</div>';
         }
-        z += '</div>';
         if (showPager) {
           const pw = progressWidth(progStart);
           z +=
@@ -562,6 +598,7 @@
         readySlice,
         true,
         readyPageStartedAt,
+        boardFullyEmpty,
       );
       html += zoneHtml(
         'milksha-prep prep',
@@ -569,7 +606,7 @@
         vert ? hH + rH : hH,
         pW,
         pH,
-        '準備中',
+        '製作中',
         'Preparing',
         prepPage,
         prepPages,
@@ -577,7 +614,19 @@
         prepSlice,
         false,
         prepPageStartedAt,
+        boardFullyEmpty,
       );
+
+      if (boardFullyEmpty) {
+        html +=
+          '<div class="milksha-empty-board-hint" style="top:' +
+          hH +
+          'px;height:' +
+          (cfg.H - hH) +
+          'px">' +
+          EMPTY_BOARD_MESSAGE +
+          '</div>';
+      }
 
       boardEl.innerHTML = html;
     }
@@ -633,7 +682,7 @@
     /**
      * @param {Array<{ source_type: string, number: string }>} numberContent
      */
-    function applyPayload(numberContent) {
+    function applyPayload(numberContent, opts) {
       const now = Date.now();
       const parts = partitionNumberContent(numberContent);
       const newReadyIds = detectNewlyReady(prevReadyIdSet, parts.ready);
@@ -641,11 +690,12 @@
       for (let nr = 0; nr < parts.ready.length; nr += 1) {
         nextReadyIdSet.add(parts.ready[nr].id);
       }
+      const silentApply = Boolean(opts && opts.silent);
       const chimePolicy = ensureBoardChimePolicy();
       let ringIds = [];
       if (chimePolicy) {
-        ringIds = chimePolicy.pickRingIds(prevReadyIdSet, nextReadyIdSet, {});
-      } else if (!isFirstPayload && newReadyIds.length > 0) {
+        ringIds = chimePolicy.pickRingIds(prevReadyIdSet, nextReadyIdSet, { silent: silentApply });
+      } else if (!isFirstPayload && !silentApply && newReadyIds.length > 0) {
         ringIds = newReadyIds;
       }
 
@@ -702,7 +752,7 @@
       readyItems = nextReady;
       prepItems = nextPrep;
 
-      if (ringIds.length > 0) {
+      if (!silentApply && ringIds.length > 0) {
         readyPage = 0;
         readyPageStartedAt = now;
         const split = splitPopQueue(ringIds);
@@ -711,7 +761,7 @@
         }
         runPopQueue();
       }
-      if (newReadyIds.length > 0) {
+      if (!silentApply && newReadyIds.length > 0) {
         for (let f = 0; f < newReadyIds.length; f += 1) {
           freshUntil[newReadyIds[f]] = now + FRESH_BORDER_MS;
         }
@@ -792,6 +842,8 @@
     splitPopQueue: splitPopQueue,
     makeItemId: makeItemId,
     MAX_POP_PER_PUSH: MAX_POP_PER_PUSH,
+    EMPTY_BOARD_MESSAGE: EMPTY_BOARD_MESSAGE,
+    isBoardFullyEmpty: isBoardFullyEmpty,
     bootMilkshaBoard: bootMilkshaBoard,
   };
   QMS.bootMilkshaBoard = bootMilkshaBoard;

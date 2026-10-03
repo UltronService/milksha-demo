@@ -185,6 +185,21 @@
       .rcv-zone.prep .rcv-prog-wrap {
         background: #bbb;
       }
+      .rcv-empty-board-hint {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 52px;
+        font-weight: 700;
+        color: #8a8a8a;
+        letter-spacing: 4px;
+        pointer-events: none;
+        z-index: 2;
+      }
       .rcv-prog-bar {
         display: block;
         height: 100%;
@@ -632,7 +647,8 @@
             '<div class="rcv-clock" id="rcv-clock"></div>' +
             '</header>' +
             '<section class="rcv-zone ready rcv-ready" id="rcv-zone-ready"></section>' +
-            '<section class="rcv-zone prep rcv-prep" id="rcv-zone-prep"></section>';
+            '<section class="rcv-zone prep rcv-prep" id="rcv-zone-prep"></section>' +
+            '<div class="rcv-empty-board-hint" id="rcv-empty-board-hint" hidden></div>';
 
           zoneDom.ready = document.getElementById('rcv-zone-ready');
           zoneDom.prep = document.getElementById('rcv-zone-prep');
@@ -650,7 +666,7 @@
               'px;font-size:' +
               cfg.titleF +
               'px">' +
-              (z === 'ready' ? '可取餐' : '準備中') +
+              (z === 'ready' ? '可取餐' : '製作中') +
               '<span class="rcv-pg" id="rcv-pg-' +
               z +
               '"></span></div>' +
@@ -668,6 +684,10 @@
             grid.style.gridTemplateRows = 'repeat(' + cfg.rows + ', ' + rowH + 'px)';
           });
           updateStoreLabel();
+          var emptyHintEl = document.getElementById('rcv-empty-board-hint');
+          if (emptyHintEl) {
+            emptyHintEl.textContent = EMPTY_BOARD_HINT;
+          }
         }
 
         function updateStoreLabel() {
@@ -795,10 +815,61 @@
           }
         }
 
+        var EMPTY_BOARD_HINT = '目前沒有號碼';
+
+        function syncEmptyHint(boardEmpty, contentTop, contentHeight) {
+          var hint = document.getElementById('rcv-empty-board-hint');
+          if (!hint) {
+            return;
+          }
+          if (boardEmpty) {
+            hint.hidden = false;
+            hint.style.top = contentTop + 'px';
+            hint.style.height = contentHeight + 'px';
+          } else {
+            hint.hidden = true;
+          }
+        }
+
         function renderBoard() {
           var part = partition(currentRows);
+          var boardEmpty = part.ready.length === 0 && part.preparing.length === 0;
           touchMeta(part.ready.concat(part.preparing));
           pruneMeta(part.ready, part.preparing);
+          var geom = layoutZones();
+          var contentTop = HEADER;
+          var contentHeight = geom.ready.height;
+          syncEmptyHint(boardEmpty, contentTop, contentHeight);
+          if (boardEmpty) {
+            ['ready', 'prep'].forEach(function (z) {
+              var pgEl = document.getElementById('rcv-pg-' + z);
+              if (pgEl) {
+                pgEl.textContent = '';
+                pgEl.style.display = 'none';
+              }
+              var pool = cardPool[z];
+              for (var ci = 0; ci < pool.length; ci += 1) {
+                pool[ci].style.display = 'none';
+                var tagSlot = pool[ci].querySelector('.rcv-tag-slot');
+                var numEl = pool[ci].querySelector('.rcv-num');
+                if (tagSlot) {
+                  tagSlot.innerHTML = '';
+                }
+                if (numEl) {
+                  numEl.textContent = '';
+                }
+              }
+              if (gridDom[z]) {
+                gridDom[z].style.display = 'none';
+              }
+            });
+            return;
+          }
+          ['ready', 'prep'].forEach(function (z) {
+            if (gridDom[z]) {
+              gridDom[z].style.display = '';
+            }
+          });
           renderZone('ready', part.ready, READY, true);
           renderZone('prep', part.preparing, PREP, false);
         }
