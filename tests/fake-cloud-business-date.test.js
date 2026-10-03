@@ -79,7 +79,8 @@ test('fake-cloud boxHeartbeat returns 404 for unknown device', async function ()
     );
     assert.equal(res.status, 404);
     const json = await res.json();
-    assert.equal(json.error, 'device_not_found');
+    assert.equal(json.code, 'device_not_found');
+    assert.equal(json.error, undefined);
   } finally {
     proc.kill();
   }

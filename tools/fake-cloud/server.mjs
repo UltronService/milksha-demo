@@ -172,6 +172,11 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+/** @param {string} code @param {string} message */
+function apiError(code, message) {
+  return { code, message };
+}
+
 function readRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -193,17 +198,25 @@ function readBody(req) {
 function requireAuth(req) {
   const h = req.headers.authorization || '';
   if (!h.startsWith('Bearer ')) {
-    return { ok: false, status: 401, body: { error: 'invalid_token', message: 'login expired, please sign in again' } };
+    return {
+      ok: false,
+      status: 401,
+      body: apiError('invalid_token', 'login expired, please sign in again'),
+    };
   }
   const token = h.slice(7).trim();
   if (token === 'expired-test-token') {
-    return { ok: false, status: 401, body: { error: 'invalid_token', message: 'login expired, please sign in again' } };
+    return {
+      ok: false,
+      status: 401,
+      body: apiError('invalid_token', 'login expired, please sign in again'),
+    };
   }
   if (token === 'forbidden-test-token') {
     return {
       ok: false,
       status: 403,
-      body: { error: 'forbidden', message: 'no permission for this store' },
+      body: apiError('forbidden', 'no permission for this store'),
     };
   }
   return { ok: true };
@@ -316,12 +329,12 @@ const server = http.createServer(async (req, res) => {
       if (name === 'boxHeartbeat') {
         const hv = validateBoxHeartbeatBody(body);
         if (!hv.ok) {
-          return json(res, httpStatusForApiErrorCode(hv.code), { error: hv.code, message: hv.message });
+          return json(res, httpStatusForApiErrorCode(hv.code), apiError(hv.code, hv.message));
         }
         const hb = hv.body;
         const dk = deviceKey(hb.storeId, hb.deviceId);
         if (!docs.has(dk)) {
-          return json(res, 404, { error: 'device_not_found', message: 'device not found' });
+          return json(res, 404, apiError('device_not_found', 'device not found'));
         }
         const prev = docs.get(dk) || {};
         docs.set(dk, {
@@ -341,23 +354,20 @@ const server = http.createServer(async (req, res) => {
       if (name === 'boxUpload' || name === 'boxUpload/') {
         const uv = validateBoxUploadBody(body);
         if (!uv.ok) {
-          return json(res, httpStatusForApiErrorCode(uv.code), { error: uv.code, message: uv.message });
+          return json(res, httpStatusForApiErrorCode(uv.code), apiError(uv.code, uv.message));
         }
-        return json(res, 501, {
-          error: 'not_implemented',
-          message: 'boxUpload (entry B) is not implemented in fake-cloud; use milksha-cloud.',
-        });
+        return json(res, 501, apiError('not_implemented', 'boxUpload is not implemented in fake-cloud.'));
       }
 
       if (name === 'devCommand') {
         const cv = validateDevCommandBody(body);
         if (!cv.ok) {
-          return json(res, httpStatusForApiErrorCode(cv.code), { error: cv.code, message: cv.message });
+          return json(res, httpStatusForApiErrorCode(cv.code), apiError(cv.code, cv.message));
         }
         const cmdBody = cv.body;
         const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
         if (!docs.has(dk)) {
-          return json(res, 404, { error: 'device_not_found', message: 'device not found' });
+          return json(res, 404, apiError('device_not_found', 'device not found'));
         }
         const prev = docs.get(dk) || {};
         const cmd = {
@@ -387,7 +397,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 200, { ok: true, commandId: cmd.id });
       }
 
-      return json(res, 404, { error: 'unknown fn ' + name });
+      return json(res, 404, apiError('not_found', 'Cloud function not found.'));
     }
 
     const docPrefix = `/v1/projects/${PROJECT}/databases/(default)/documents/`;
@@ -428,7 +438,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404);
     res.end('not found');
   } catch (e) {
-    json(res, 500, { error: 'internal_error', message: 'internal_error' });
+    json(res, 500, apiError('internal_error', 'An internal error occurred.'));
   }
 });
 

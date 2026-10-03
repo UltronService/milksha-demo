@@ -73,7 +73,7 @@
         if (!payload.ok) {
           const err = new Error(payload.message || 'invalid heartbeat');
           err.status = 400;
-          err.response = { error: payload.code, message: payload.message };
+          err.response = { code: payload.code, message: payload.message };
           return Promise.reject(err);
         }
         return postJson(boxHeartbeatName, payload.body, true);
@@ -84,7 +84,7 @@
         if (!payload.ok) {
           const err = new Error(payload.message || 'invalid command');
           err.status = 400;
-          err.response = { error: payload.code, message: payload.message };
+          err.response = { code: payload.code, message: payload.message };
           return Promise.reject(err);
         }
         return postJson('devCommand', payload.body, true);

@@ -36,7 +36,11 @@ test('devCommand retries once on 401 after refresh', async function () {
   const fetch401ThenOk = async function () {
     devCommandCalls += 1;
     if (devCommandCalls === 1) {
-      return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'invalid_token' }) };
+      return {
+        ok: false,
+        status: 401,
+        text: async () => JSON.stringify({ code: 'invalid_token', message: 'login expired' }),
+      };
     }
     return { ok: true, status: 200, text: async () => JSON.stringify({ ok: true }) };
   };
@@ -61,7 +65,11 @@ test('devCommand does not refresh on 403', async function () {
   };
   const fetch403 = async function () {
     devCommandCalls += 1;
-    return { ok: false, status: 403, text: async () => JSON.stringify({ error: 'forbidden' }) };
+    return {
+      ok: false,
+      status: 403,
+      text: async () => JSON.stringify({ code: 'forbidden', message: 'no permission' }),
+    };
   };
   const create = loadCloudApi(fetch403);
   const api = create({ functionsBaseUrl: 'https://example.test/fn/' }, session);

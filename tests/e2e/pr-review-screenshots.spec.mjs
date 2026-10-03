@@ -87,13 +87,13 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
   await controller.setViewportSize(VIEW);
   await openNetZone(controller);
 
-  await rejectDevCommand(controller, 403, { error: 'forbidden', message: 'forbidden' });
+  await rejectDevCommand(controller, 403, { code: 'forbidden', message: 'no permission for this store' });
   await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403);
   await controller.screenshot({ path: `${ART}/controller-alert-403-1920.png`, fullPage: false });
   await controller.getByTestId('command-error-close').click();
 
-  await rejectDevCommand(controller, 401, { error: 'invalid_token', message: 'login expired' });
+  await rejectDevCommand(controller, 401, { code: 'invalid_token', message: 'login expired, please sign in again' });
   await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401);
   await controller.locator('details').filter({ hasText: '詳細內容' }).click();

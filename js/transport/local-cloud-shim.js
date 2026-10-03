@@ -97,7 +97,7 @@
         if (!hv.ok) {
           const err = new Error('boxHeartbeat');
           err.status = 400;
-          err.response = { error: hv.code, message: hv.message };
+          err.response = { code: hv.code, message: hv.message };
           throw err;
         }
         const hb = hv.body;
@@ -122,7 +122,7 @@
         if (!cv.ok) {
           const err = new Error('devCommand');
           err.status = 400;
-          err.response = { error: cv.code, message: cv.message };
+          err.response = { code: cv.code, message: cv.message };
           throw err;
         }
         const cmdBody = cv.body;
@@ -131,7 +131,7 @@
         if (!existing) {
           const err = new Error('devCommand');
           err.status = 404;
-          err.response = { error: 'device_not_found', message: 'device not found' };
+          err.response = { code: 'device_not_found', message: 'device not found' };
           throw err;
         }
         const doc = existing;

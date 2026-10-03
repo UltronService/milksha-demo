@@ -614,7 +614,7 @@
       presentDevCommandError(
         {
           status: 400,
-          response: { error: built.code, message: built.message },
+          response: { code: built.code, message: built.message },
         },
         built.code,
       );

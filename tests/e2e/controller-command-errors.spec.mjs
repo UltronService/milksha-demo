@@ -48,13 +48,13 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await expect(controller.locator('#online-state')).toContainText('已連線', { timeout: 20000 });
   await openNetZone(controller);
 
-  await rejectDevCommand(controller, 403, { error: 'forbidden', message: 'forbidden' });
+  await rejectDevCommand(controller, 403, { code: 'forbidden', message: 'no permission for this store' });
   await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403);
   await controller.screenshot({ path: `${ART}/controller-alert-403.png`, fullPage: false });
   await controller.getByTestId('command-error-close').click();
 
-  await rejectDevCommand(controller, 401, { error: 'invalid_token', message: 'login expired' });
+  await rejectDevCommand(controller, 401, { code: 'invalid_token', message: 'login expired, please sign in again' });
   await controller.click('#btn-restore');
   const alert = controller.getByTestId('command-error-alert');
   await expect(alert).toBeVisible();
@@ -62,7 +62,7 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await expect(controller.getByTestId('command-error-message')).not.toContainText('401');
   await controller.screenshot({ path: `${ART}/controller-alert-401.png`, fullPage: false });
 
-  await rejectDevCommand(controller, 404, { error: 'device_not_found', message: 'device not found' });
+  await rejectDevCommand(controller, 404, { code: 'device_not_found', message: 'device not found' });
   await controller.getByTestId('command-error-close').click();
   await expect(alert).toBeHidden();
   await controller.click('#btn-restore');
@@ -84,12 +84,15 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
 
   await controller.getByTestId('command-error-close').click();
   await controller.fill('#fld-device', 'stb-01');
-  await rejectDevCommand(controller, 400, { error: 'invalid_command_params', message: 'bad params' });
+  await rejectDevCommand(controller, 400, { code: 'invalid_command_params', message: 'bad params' });
   await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_400);
+  await expect(controller.getByTestId('command-error-message')).not.toContainText('bad params');
+  const detail400 = await controller.getByTestId('command-error-detail').textContent();
+  expect(detail400).toMatch(/bad params/);
   await controller.screenshot({ path: `${ART}/controller-alert-400.png`, fullPage: false });
 
-  await rejectDevCommand(controller, 500, { error: 'internal_error', message: 'internal_error' });
+  await rejectDevCommand(controller, 500, { code: 'internal_error', message: 'An internal error occurred.' });
   await controller.getByTestId('command-error-close').click();
   await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_500);

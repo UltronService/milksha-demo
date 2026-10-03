@@ -110,7 +110,8 @@ test('invalid_device_id returns 400 from fake-cloud', async function () {
     });
     assert.equal(res.status, 400);
     const json = await res.json();
-    assert.equal(json.error, 'invalid_device_id');
+    assert.equal(json.code, 'invalid_device_id');
+    assert.equal(json.error, undefined);
   } finally {
     proc.kill();
   }
@@ -138,7 +139,8 @@ test('boxHeartbeat extra field returns invalid_body from fake-cloud', async func
     });
     assert.equal(res.status, 400);
     const json = await res.json();
-    assert.equal(json.error, 'invalid_body');
+    assert.equal(json.code, 'invalid_body');
+    assert.equal(json.error, undefined);
   } finally {
     proc.kill();
   }
@@ -158,7 +160,8 @@ test('boxUpload missing posPayload returns invalid_body', async function () {
     });
     assert.equal(res.status, 400);
     const json = await res.json();
-    assert.equal(json.error, 'invalid_body');
+    assert.equal(json.code, 'invalid_body');
+    assert.equal(json.error, undefined);
   } finally {
     proc.kill();
   }
@@ -182,6 +185,9 @@ test('forbidden token returns 403 on devCommand', async function () {
       }),
     });
     assert.equal(res.status, 403);
+    const json = await res.json();
+    assert.equal(json.code, 'forbidden');
+    assert.equal(json.error, undefined);
   } finally {
     proc.kill();
   }

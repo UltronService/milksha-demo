@@ -25,6 +25,10 @@
    */
   function resolveErrorCode(err, opts) {
     const response = err && err.response ? err.response : null;
+    if (response && response.code != null && String(response.code)) {
+      return String(response.code);
+    }
+    // TODO: remove legacy `error` fallback after milksha-cloud PR #4 deploys.
     if (response && response.error != null && String(response.error)) {
       return String(response.error);
     }
@@ -63,20 +67,14 @@
     if (code === 'invalid_device_id') {
       return USER_MSG_INVALID_DEVICE_ID;
     }
-    if (code === 'invalid_command_params' || code === 'invalid_body') {
+    if (code === 'invalid_command_params' || code === 'invalid_body' || code === 'payload_too_large') {
       return USER_MSG_400_INVALID;
     }
     if (code === 'internal_error' || status === 500) {
       return USER_MSG_INTERNAL_ERROR;
     }
-    if (status === 400) {
+    if (status === 400 || status === 413) {
       return USER_MSG_400_INVALID;
-    }
-    if (response && response.message) {
-      return String(response.message);
-    }
-    if (err && err.message) {
-      return USER_MSG_INTERNAL_ERROR;
     }
     return USER_MSG_INTERNAL_ERROR;
   }
