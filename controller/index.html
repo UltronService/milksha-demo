@@ -16,6 +16,38 @@
       目前是本機測試：控制頁和看板要在同一台電腦、同一個瀏覽器開兩個視窗才會連動。
     </p>
     <p id="user-banner" class="user-banner" hidden role="alert" data-testid="user-banner"></p>
+    <div
+      id="command-error-alert"
+      class="controller-alert controller-alert-error"
+      hidden
+      role="alert"
+      data-testid="command-error-alert"
+    >
+      <span class="controller-alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+          <path
+            fill="currentColor"
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+          />
+        </svg>
+      </span>
+      <div class="controller-alert-body">
+        <p class="controller-alert-message" data-testid="command-error-message"></p>
+        <details class="controller-alert-details">
+          <summary>詳細內容</summary>
+          <pre class="controller-alert-detail-pre" data-testid="command-error-detail"></pre>
+        </details>
+      </div>
+      <button
+        type="button"
+        class="controller-alert-close"
+        id="command-error-close"
+        aria-label="關閉"
+        data-testid="command-error-close"
+      >
+        ×
+      </button>
+    </div>
     <main class="grid" id="main-grid">
       <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="1">
         <button type="button" class="zone-toggle" aria-expanded="true">1. 連線與狀態</button>
@@ -161,11 +193,11 @@
         <button type="button" class="zone-toggle" aria-expanded="false">3. 模擬網路</button>
         <div class="zone-body" hidden>
           <div class="row">
-            <button type="button" id="btn-offline" data-testid="btn-offline" data-requires-connect="1">模擬斷網</button>
-            <button type="button" id="btn-restore" data-testid="btn-restore" data-requires-connect="1">恢復</button>
+            <button type="button" id="btn-offline" data-testid="btn-offline" data-requires-connect="1" data-dev-command="1">模擬斷網</button>
+            <button type="button" id="btn-restore" data-testid="btn-restore" data-requires-connect="1" data-dev-command="1">恢復</button>
           </div>
           <label>變慢（毫秒）<input id="fld-delay" type="number" value="3000" data-testid="fld-delay" /></label>
-          <button type="button" id="btn-slow" data-testid="btn-slow" data-requires-connect="1">模擬變慢</button>
+          <button type="button" id="btn-slow" data-testid="btn-slow" data-requires-connect="1" data-dev-command="1">模擬變慢</button>
           <button type="button" id="btn-cable-pull" data-testid="btn-cable-pull" data-requires-connect="1">拔線測試（暫停 API）</button>
           <button type="button" id="btn-cable-restore" data-testid="btn-cable-restore" data-requires-connect="1">接回線路</button>
         </div>
@@ -175,9 +207,9 @@
         <button type="button" class="zone-toggle" aria-expanded="false">4. 特殊狀況</button>
         <div class="zone-body" hidden>
           <div class="row">
-            <button type="button" id="btn-clear-now" data-testid="btn-clear-now" data-requires-connect="1">03:00 清空</button>
-            <button type="button" id="btn-reload" data-testid="btn-reload" data-requires-connect="1">要求重新整理</button>
-            <button type="button" id="btn-reboot" data-testid="btn-reboot" data-requires-connect="1">要求重開機</button>
+            <button type="button" id="btn-clear-now" data-testid="btn-clear-now" data-requires-connect="1" data-dev-command="1">03:00 清空</button>
+            <button type="button" id="btn-reload" data-testid="btn-reload" data-requires-connect="1" data-dev-command="1">要求重新整理</button>
+            <button type="button" id="btn-reboot" data-testid="btn-reboot" data-requires-connect="1" data-dev-command="1">要求重開機</button>
           </div>
           <div class="row">
             <button type="button" id="btn-dup-list" data-testid="btn-dup-list" data-requires-connect="1">重送同一份名單</button>
@@ -217,6 +249,7 @@
     <script src="../js/transport/milksha-pos-wire.js"></script>
     <script src="../js/transport/json-raw.js"></script>
     <script src="../js/transport/dev-command-validation.js"></script>
+    <script src="../js/transport/controller-command-errors.js"></script>
     <script src="../js/transport/cloud-api.js"></script>
     <script src="../js/transport/firestore-rest.js"></script>
     <script src="../js/transport/pos-receiver-validate.js"></script>

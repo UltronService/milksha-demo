@@ -25,14 +25,19 @@
   let pauseCloud = false;
   let pollTimer = null;
   let clockTimer = null;
+  let commandInFlight = false;
 
   const LOG_KEY = 'milksha:controller:logs';
+  const CmdErrors = window.QMS.Transport.ControllerCommandErrors;
 
   window.__controllerTelemetry = {
     connected: false,
     lastBoardSeq: 0,
     pauseCloud: false,
     lastPosResponse: null,
+    isCommandInFlight: function () {
+      return commandInFlight;
+    },
   };
 
   function loadLogs() {
@@ -187,6 +192,59 @@
     }
     el.textContent = text;
     el.hidden = false;
+  }
+
+  function setCommandButtonsDisabled(disabled) {
+    const nodes = document.querySelectorAll('[data-dev-command="1"]');
+    for (let i = 0; i < nodes.length; i += 1) {
+      nodes[i].disabled = Boolean(disabled);
+    }
+  }
+
+  function hideCommandErrorAlert() {
+    const box = document.getElementById('command-error-alert');
+    if (!box) {
+      return;
+    }
+    box.hidden = true;
+    const msg = document.querySelector('[data-testid="command-error-message"]');
+    const detail = document.querySelector('[data-testid="command-error-detail"]');
+    if (msg) {
+      msg.textContent = '';
+    }
+    if (detail) {
+      detail.textContent = '';
+    }
+  }
+
+  function showCommandErrorAlert(opts) {
+    const box = document.getElementById('command-error-alert');
+    const msgEl = document.querySelector('[data-testid="command-error-message"]');
+    const detailEl = document.querySelector('[data-testid="command-error-detail"]');
+    if (!box || !msgEl || !detailEl) {
+      return;
+    }
+    msgEl.textContent = opts.userMessage || '';
+    const status = opts.status ? Number(opts.status) : 0;
+    if (CmdErrors && CmdErrors.formatErrorDetailText) {
+      detailEl.textContent = CmdErrors.formatErrorDetailText(status, opts.response);
+    } else {
+      detailEl.textContent = JSON.stringify({ httpStatus: status, response: opts.response || {} }, null, 2);
+    }
+    box.hidden = false;
+  }
+
+  function presentDevCommandError(err, validationCode) {
+    const status = err && err.status ? Number(err.status) : 0;
+    const response = err && err.response ? err.response : null;
+    const userMessage =
+      CmdErrors && CmdErrors.devCommandUserMessage
+        ? CmdErrors.devCommandUserMessage(err, { validationCode: validationCode })
+        : err && err.message
+          ? String(err.message)
+          : '指令送出失敗';
+    showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
+    pushLog({ summary: '指令失敗 · ' + userMessage, kind: 'command' });
   }
 
   function requireConnect() {
@@ -539,6 +597,9 @@
   }
 
   async function sendCommand(type, params) {
+    if (commandInFlight) {
+      return;
+    }
     const DevCmd = window.QMS.Transport.DevCommandValidation;
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
     const built = DevCmd
@@ -550,19 +611,28 @@
         })
       : { ok: true, body: { storeId: storeId(), deviceId: deviceId, type: type, params: params || {} } };
     if (!built.ok) {
-      showUserBanner(built.message || '指令參數不正確');
-      pushLog({ summary: '指令未送出 · ' + (built.message || built.code), kind: 'command' });
+      presentDevCommandError(
+        {
+          status: 400,
+          response: { error: built.code, message: built.message },
+        },
+        built.code,
+      );
       return;
     }
+    commandInFlight = true;
+    setCommandButtonsDisabled(true);
     try {
       await cloudCall(function () {
         return transport.cloudApi.devCommand(built.body);
       });
+      hideCommandErrorAlert();
       pushLog({ summary: '指令 ' + type, kind: 'command' });
     } catch (e) {
-      const msg = DevCmd ? DevCmd.formatHttpError(e) : e.message;
-      showUserBanner(msg);
-      pushLog({ summary: '指令失敗 · ' + msg, kind: 'command' });
+      presentDevCommandError(e);
+    } finally {
+      commandInFlight = false;
+      setCommandButtonsDisabled(false);
     }
   }
 
@@ -897,6 +967,11 @@
     renderLogs();
   });
 
+  const commandErrorClose = document.getElementById('command-error-close');
+  if (commandErrorClose) {
+    commandErrorClose.addEventListener('click', hideCommandErrorAlert);
+  }
+
   fillCloudForm(CloudSettings.load());
   const params = new URLSearchParams(window.location.search);
   const modeParam = params.get('mode');
@@ -928,6 +1003,13 @@
     },
     getTransport: function () {
       return transport;
+    },
+    setDevCommandHandler: function (fn) {
+      if (!transport || !transport.cloudApi) {
+        return false;
+      }
+      transport.cloudApi.devCommand = fn;
+      return true;
     },
   };
 })();

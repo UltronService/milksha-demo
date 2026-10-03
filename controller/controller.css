@@ -38,6 +38,86 @@ body {
   font-weight: 700;
   font-size: 1rem;
 }
+
+.controller-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 12px 16px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.controller-alert[hidden] {
+  display: none !important;
+}
+
+.controller-alert-error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #262626;
+}
+
+.controller-alert-icon {
+  flex: 0 0 auto;
+  color: #ff4d4f;
+  margin-top: 2px;
+}
+
+.controller-alert-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.controller-alert-message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.controller-alert-details {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.controller-alert-details summary {
+  cursor: pointer;
+  color: #595959;
+  font-weight: 600;
+}
+
+.controller-alert-detail-pre {
+  margin: 8px 0 0;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.controller-alert-close {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.controller-alert-close:hover {
+  color: #595959;
+}
+
+button[data-dev-command='1']:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .advanced {
   margin: 10px 0;
   padding: 8px;
