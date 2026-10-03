@@ -50,7 +50,26 @@ test('controller connect 401 shows access code alert', async ({ browser }) => {
   await ctx.close();
 });
 
-test('controller connect 403 shows permission alert', async ({ browser }) => {
+test('controller connect 403 invalid_access_code shows access code alert', async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const controller = await ctx.newPage();
+  let attempts = 0;
+  await controller.route('**/devLogin', async (route) => {
+    attempts += 1;
+    await route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'invalid_access_code', message: 'wrong access code' }),
+    });
+  });
+  await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
+  await controller.click('#btn-connect');
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401, { timeout: 10000 });
+  expect(attempts).toBe(1);
+  await ctx.close();
+});
+
+test('controller connect 403 forbidden shows permission alert', async ({ browser }) => {
   const ctx = await browser.newContext();
   const controller = await ctx.newPage();
   await controller.route('**/devLogin', async (route) => {
@@ -63,6 +82,26 @@ test('controller connect 403 shows permission alert', async ({ browser }) => {
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
   await controller.click('#btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
+  await ctx.close();
+});
+
+test('controller connect 403 forbidden does not retry devLogin', async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const controller = await ctx.newPage();
+  let attempts = 0;
+  await controller.route('**/devLogin', async (route) => {
+    attempts += 1;
+    await route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'forbidden', message: 'no store access' }),
+    });
+  });
+  await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
+  await controller.click('#btn-connect');
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
+  await controller.waitForTimeout(1500);
+  expect(attempts).toBe(1);
   await ctx.close();
 });
 

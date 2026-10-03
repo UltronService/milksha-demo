@@ -42,10 +42,10 @@
         --rcv-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei',
           'Noto Sans TC', sans-serif;
         --rcv-ready-num-px: 140;
-        --rcv-ring-num-size: clamp(
+        --rcv-board-design-width: 1920;
+        --rcv-ring-num-size: max(
           calc(var(--rcv-ready-num-px) * 2px),
-          14vw,
-          calc(var(--rcv-ready-num-px) * 2.75px)
+          calc(var(--rcv-ready-num-px) * 2 * 100vw / var(--rcv-board-design-width))
         );
         --rcv-ring-label-size: clamp(32px, 3.2vw, 64px);
       }
@@ -685,12 +685,12 @@
           boardEl.style.transform = 'scale(' + scale + ')';
         }
 
-        var guestClockState = { hidden: false, anchorCloudMs: null, anchorWallMs: null };
+        var guestClockState = { hidden: false, anchorCloudMs: null, anchorPerfMs: null };
 
         function guestClockDate() {
-          if (guestClockState.anchorCloudMs != null && guestClockState.anchorWallMs != null) {
+          if (guestClockState.anchorCloudMs != null && guestClockState.anchorPerfMs != null) {
             return new Date(
-              guestClockState.anchorCloudMs + (Date.now() - guestClockState.anchorWallMs),
+              guestClockState.anchorCloudMs + (performance.now() - guestClockState.anchorPerfMs),
             );
           }
           return new Date();
@@ -1323,11 +1323,11 @@
             guestClockState.hidden = o.hidden === true;
             if (o.clearCloudAnchor) {
               guestClockState.anchorCloudMs = null;
-              guestClockState.anchorWallMs = null;
+              guestClockState.anchorPerfMs = null;
             }
             if (typeof o.timeMs === 'number' && Number.isFinite(o.timeMs)) {
               guestClockState.anchorCloudMs = o.timeMs;
-              guestClockState.anchorWallMs = Date.now();
+              guestClockState.anchorPerfMs = performance.now();
             }
             refreshGuestClock();
           },

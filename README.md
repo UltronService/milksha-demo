@@ -52,6 +52,17 @@ npx --yes serve -l 4173 .
 店長試用步驟見 [docs/OWNER-TRIAL.md](docs/OWNER-TRIAL.md)。  
 工程本機測試仍用 **本機連動** 或 **本機模擬雲端** + `npm run fake-cloud`（見 [docs/EMULATOR.md](docs/EMULATOR.md)）。
 
+### 機上盒認證（401）
+
+- **401**：`devLogin` 會再試一次；若仍失敗或 **refresh token 收到 401**，一般雲端輪詢（看板／裝置／heartbeat）會停止，並標記 `data-auth-stopped`。
+- 之後每 **10 分鐘**自動再試登入（工程測試可用 `?testAuthRecheckMs=` 縮短間隔）。
+- **停止期間不會收到遠端 reload 指令**；重新登入成功後恢復輪詢，才會處理遠端 `reload`。
+- **403**：不重試，維持停止直到使用者修正存取碼／權限。
+
+### 叫號提示音佇列
+
+- FIFO，僅在號碼離開「可取餐」時從佇列移除；**不會**因佇列長度而靜默丟棄最舊項目（僅保留極大的安全上限以防記憶體異常）。
+
 ## 測試
 
 ```bash

@@ -31,6 +31,21 @@ function loadCloudSettings() {
   return { CS: sandbox.QMS.Transport.CloudSettings, storage, sandbox };
 }
 
+test('malformed cfg hash is cleared from url', function () {
+  const { CS, sandbox } = loadCloudSettings();
+  let cleared = false;
+  sandbox.history = {
+    replaceState: function () {
+      cleared = true;
+      sandbox.location.hash = '';
+    },
+  };
+  sandbox.location.hash = '#cfg=%%%not-valid-cfg%%%';
+  assert.equal(CS.applyHashImport(), false);
+  assert.equal(cleared, true);
+  assert.equal(sandbox.location.hash, '');
+});
+
 test('cloud settings round-trip and hash import', function () {
   const { CS, sandbox } = loadCloudSettings();
   CS.save({

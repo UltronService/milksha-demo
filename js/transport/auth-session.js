@@ -157,6 +157,8 @@
         }
         throw authHttpError(res, json, 'devLogin failed ' + res.status);
       }
+      devLoginAttempts = 0;
+      authStopped = false;
       if (!json || !json.customToken) {
         const err = new Error('devLogin missing customToken');
         err.status = res.status || 500;
@@ -202,6 +204,8 @@
       const expiresIn = Number(json.expiresIn || 3600);
       expiresAtMs = Date.now() + expiresIn * 1000 - 60000;
       persist();
+      devLoginAttempts = 0;
+      authStopped = false;
       return idToken;
     }
 
@@ -231,8 +235,13 @@
         json = null;
       }
       if (!res.ok) {
+        if (res.status === 401) {
+          authStopped = true;
+        }
         throw authHttpError(res, json, 'token refresh failed ' + res.status);
       }
+      devLoginAttempts = 0;
+      authStopped = false;
       idToken = json.id_token || json.idToken || '';
       refreshToken = json.refresh_token || json.refreshToken || refreshToken;
       const expiresIn = Number(json.expires_in || json.expiresIn || 3600);
@@ -243,6 +252,9 @@
 
     async function ensureIdToken() {
       throwIfAuthStopped();
+      if (!idToken && !refreshToken) {
+        loadStored();
+      }
       if (idToken && Date.now() < expiresAtMs) {
         return idToken;
       }
@@ -250,7 +262,9 @@
         try {
           return await refreshIdToken();
         } catch (e) {
-          /* fall through */
+          if (e && Number(e.status) === 401) {
+            throw e;
+          }
         }
       }
       const custom = await devLogin();

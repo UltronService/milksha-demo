@@ -228,6 +228,22 @@ function requireAuth(req) {
   return { ok: true };
 }
 
+/** @param {string} token */
+function storeIdForAuthToken(token) {
+  const t = String(token || '').trim();
+  if (!t || t === 'expired-test-token' || t === 'forbidden-test-token') {
+    return '';
+  }
+  if (t === 'fake-id-token' || t === 'e2e-fake-id-token') {
+    return 's120030';
+  }
+  const m = /^fake-([^-]+)-/.exec(t);
+  if (m && m[1]) {
+    return m[1];
+  }
+  return 's120030';
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost');
   try {
@@ -272,7 +288,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       const body = await readBody(req);
       if (String(body.accessCode || '') !== FAKE_DEV_ACCESS_CODE) {
-        return json(res, 401, {
+        return json(res, 403, {
           code: 'invalid_access_code',
           message: 'wrong access code for fake cloud',
         });
@@ -377,6 +393,13 @@ const server = http.createServer(async (req, res) => {
           return json(res, httpStatusForApiErrorCode(cv.code), apiError(cv.code, cv.message));
         }
         const cmdBody = cv.body;
+        const bearer = (req.headers.authorization || '').startsWith('Bearer ')
+          ? (req.headers.authorization || '').slice(7).trim()
+          : '';
+        const authStoreId = storeIdForAuthToken(bearer);
+        if (authStoreId && cmdBody.storeId !== authStoreId) {
+          return json(res, 403, apiError('forbidden', 'store id does not match token store'));
+        }
         const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
         if (!docs.has(dk)) {
           return json(res, 404, apiError('device_not_found', 'device not found'));

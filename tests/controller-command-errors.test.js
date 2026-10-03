@@ -19,6 +19,26 @@ function loadCmdErrors() {
   return sandbox.QMS.Transport.ControllerCommandErrors;
 }
 
+test('connect user message prefers response code over http status', function () {
+  const E = loadCmdErrors();
+  assert.equal(
+    E.connectUserMessage({
+      status: 403,
+      response: { code: 'invalid_access_code', message: 'wrong access code' },
+    }),
+    E.USER_MSG_CONNECT_ACCESS,
+  );
+  assert.equal(
+    E.connectUserMessage({ status: 403, response: { code: 'forbidden', message: 'no permission' } }),
+    E.USER_MSG_CONNECT_FORBIDDEN,
+  );
+  assert.equal(
+    E.connectUserMessage({ status: 401, response: { code: 'invalid_token', message: 'expired' } }),
+    E.USER_MSG_CONNECT_ACCESS,
+  );
+  assert.equal(E.connectUserMessage({ status: 503, response: { code: 'unavailable' } }), E.USER_MSG_CONNECT_CLOUD);
+});
+
 test('devCommand user messages map by response code', function () {
   const E = loadCmdErrors();
   assert.equal(E.devCommandUserMessage({ status: 401 }), E.USER_MSG_401);

@@ -4,7 +4,13 @@
 (function (root) {
   'use strict';
 
-  const AUTH_SLOW_RECHECK_MS = 10 * 60 * 1000;
+  function authSlowRecheckMs(params) {
+    const testMs = Number(params.get('testAuthRecheckMs'));
+    if (Number.isFinite(testMs) && testMs >= 100) {
+      return testMs;
+    }
+    return 10 * 60 * 1000;
+  }
 
   function readCreds(params) {
     const storeId = params.get('store') || 's120030';
@@ -120,6 +126,7 @@
     let authHalted = false;
     let auth401Retried = false;
     let slowRecheckTimer = null;
+    const slowRecheckMs = authSlowRecheckMs(params);
 
     function scheduleSlowAuthRecheck() {
       if (slowRecheckTimer) {
@@ -133,7 +140,7 @@
           transport.session.resetAuthRetryState();
         }
         runEnsureIdToken();
-      }, AUTH_SLOW_RECHECK_MS);
+      }, slowRecheckMs);
     }
 
     function handleAuthFailure(err) {
@@ -178,6 +185,11 @@
       transport.session
         .ensureIdToken()
         .then(function () {
+          authHalted = false;
+          auth401Retried = false;
+          if (transport.session && transport.session.resetAuthRetryState) {
+            transport.session.resetAuthRetryState();
+          }
           clearGuestAuthDebug();
         })
         .catch(function (err) {
@@ -201,13 +213,29 @@
           return;
         }
         cloudStarted = true;
+        const testDevicePollMs = Number(params.get('testDevicePollMs'));
+        const enableTestPollHook = params.has('testDevicePollMs');
+        if (enableTestPollHook) {
+          root.__receiverAuthBlockedForTests = function () {
+            return Boolean(
+              transport.session &&
+                transport.session.isAuthStopped &&
+                transport.session.isAuthStopped(),
+            );
+          };
+        }
         const cloud = QMS.Receiver.bootReceiverCloud({
           storeId: creds.storeId,
           deviceId: creds.deviceId,
           transport: transport,
           receiverDemo: root.receiverDemo,
+          enableTestPollHook: enableTestPollHook,
+          enableTestReloadSpy: enableTestPollHook,
           boardPollIntervalMs: modeResolved.config.boardPollIntervalMs,
-          devicePollIntervalMs: modeResolved.config.devicePollIntervalMs,
+          devicePollIntervalMs:
+            Number.isFinite(testDevicePollMs) && testDevicePollMs >= 200
+              ? testDevicePollMs
+              : modeResolved.config.devicePollIntervalMs,
           heartbeatIntervalMs: modeResolved.config.heartbeatIntervalMs,
           onStatusLine: function (line) {
             if (statusEl) {

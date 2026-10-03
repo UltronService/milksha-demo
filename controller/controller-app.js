@@ -237,18 +237,12 @@
   function presentConnectError(err) {
     const status = err && err.status ? Number(err.status) : 0;
     const response = err && err.response ? err.response : null;
-    const code =
-      response && response.code != null
-        ? String(response.code)
-        : response && response.error != null
-          ? String(response.error)
-          : '';
-    let userMessage = '雲端暫時出錯。請稍後再連線。';
-    if (status === 403 || code === 'forbidden') {
-      userMessage = '這個帳號沒有這間店的權限。請檢查店號。';
-    } else if (status === 401 || code === 'invalid_access_code' || code === 'invalid_token') {
-      userMessage = '存取碼錯誤。請重新確認，再連線。';
-    }
+    const userMessage =
+      CmdErrors && CmdErrors.connectUserMessage
+        ? CmdErrors.connectUserMessage(err)
+        : err && err.message
+          ? String(err.message)
+          : '雲端暫時出錯。請稍後再連線。';
     showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
     pushLog({ summary: '連線失敗 · ' + userMessage });
   }

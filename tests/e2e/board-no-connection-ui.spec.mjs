@@ -197,7 +197,9 @@ test.describe('guest board never shows connection status', () => {
     await receiver.goto(recv);
     await expect(receiver.locator('[data-testid="rcv-setup-gate"]')).toBeHidden({ timeout: 10000 });
     await expect(receiver.locator('[data-testid="rcv-guest-stage"]')).toBeVisible();
-    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-error', /invalid_token|401|auth/);
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-code', 'invalid_token');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-status', '401');
     await assertBootNoDataBoard(receiver);
     await assertGuestBoardHasNoConnectionUi(receiver);
     mkdirSync(COMMITTED_DIR, { recursive: true });
@@ -209,7 +211,34 @@ test.describe('guest board never shows connection status', () => {
     await ctx.close();
   });
 
-  test('auth 403 keeps board visible without setup gate', async ({ browser }) => {
+  test('auth 403 invalid_access_code keeps board visible without setup gate', async ({ browser }) => {
+    const { base } = urlsForMode('local');
+    const recv =
+      `${base}/receiver-demo/?mode=cloud&store=s120030&device=stb-01`;
+    const ctx = await browser.newContext({ deviceScaleFactor: 1 });
+    await ctx.addInitScript(cloudSettingsInitScript());
+    const receiver = await ctx.newPage();
+    let attempts = 0;
+    await receiver.route('**/devLogin', (route) => {
+      attempts += 1;
+      route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'invalid_access_code', message: 'wrong access code' }),
+      });
+    });
+    await receiver.goto(recv);
+    await expect(receiver.locator('[data-testid="rcv-setup-gate"]')).toBeHidden({ timeout: 10000 });
+    await expect(receiver.locator('[data-testid="rcv-guest-stage"]')).toBeVisible();
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-code', 'invalid_access_code');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-status', '403');
+    await receiver.waitForTimeout(1500);
+    expect(attempts).toBe(1);
+    await ctx.close();
+  });
+
+  test('auth 403 forbidden keeps board visible without setup gate', async ({ browser }) => {
     const { base } = urlsForMode('local');
     const recv =
       `${base}/receiver-demo/?mode=cloud&store=s120030&device=stb-01`;
@@ -226,7 +255,9 @@ test.describe('guest board never shows connection status', () => {
     await receiver.goto(recv);
     await expect(receiver.locator('[data-testid="rcv-setup-gate"]')).toBeHidden({ timeout: 10000 });
     await expect(receiver.locator('[data-testid="rcv-guest-stage"]')).toBeVisible();
-    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-error', /forbidden|403|auth/);
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-code', 'forbidden');
+    await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-debug-status', '403');
     await assertBootNoDataBoard(receiver);
     await assertGuestBoardHasNoConnectionUi(receiver);
     await ctx.close();

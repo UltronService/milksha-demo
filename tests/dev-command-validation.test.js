@@ -167,6 +167,31 @@ test('boxUpload missing posPayload returns invalid_body', async function () {
   }
 });
 
+test('devCommand mismatched store id returns 403 forbidden', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's999999',
+        deviceId: 'stb-01',
+        type: 'restore',
+        params: {},
+      }),
+    });
+    assert.equal(res.status, 403);
+    const json = await res.json();
+    assert.equal(json.code, 'forbidden');
+  } finally {
+    proc.kill();
+  }
+});
+
 test('forbidden token returns 403 on devCommand', async function () {
   const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },

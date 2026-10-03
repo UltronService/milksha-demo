@@ -1,5 +1,6 @@
 /**
- * FIFO ready-ring queue: overlay + chime per item, sequential (no overlap), bounded.
+ * FIFO ready-ring queue: overlay + chime per item, sequential (no overlap).
+ * Queue length is not capped: entries leave only when their id leaves the ready set.
  */
 (function (root) {
   'use strict';
@@ -9,7 +10,8 @@
 
   const DEFAULT_OVERLAY_MS = 2500;
   const DEFAULT_GAP_MS = 0;
-  const MAX_QUEUE_LEN = 32;
+  /** Safety bound only; never silently drop — see README chime queue notes. */
+  const MAX_QUEUE_LEN = 65536;
 
   /**
    * @param {{
@@ -38,6 +40,7 @@
     let currentReadySet = new Set();
     let draining = false;
     let drainTimer = null;
+    let safetyTimer = null;
     let audioBlocked = false;
 
     function idToNumber(id) {
@@ -74,6 +77,10 @@
         clearTimeoutFn(drainTimer);
         drainTimer = null;
       }
+      if (safetyTimer != null) {
+        clearTimeoutFn(safetyTimer);
+        safetyTimer = null;
+      }
     }
 
     function finishDrain() {
@@ -96,7 +103,7 @@
         return;
       }
       const item = queue[0];
-      const startedAt = Date.now();
+      const startedAt = root.performance && root.performance.now ? root.performance.now() : Date.now();
       let advanced = false;
 
       function scheduleAdvanceAfterChime() {
@@ -105,7 +112,8 @@
         }
         advanced = true;
         clearDrainTimer();
-        const elapsed = Date.now() - startedAt;
+        const nowTick = root.performance && root.performance.now ? root.performance.now() : Date.now();
+        const elapsed = nowTick - startedAt;
         const dwellRemain = Math.max(0, overlayMs - elapsed);
         drainTimer = setTimeoutFn(function () {
           drainTimer = null;
@@ -126,9 +134,12 @@
       } catch (e) {
         scheduleAdvanceAfterChime();
       }
-      drainTimer = setTimeoutFn(function () {
-        scheduleAdvanceAfterChime();
-      }, overlayMs + gapMs + 800);
+      if (!advanced) {
+        safetyTimer = setTimeoutFn(function () {
+          safetyTimer = null;
+          scheduleAdvanceAfterChime();
+        }, overlayMs + gapMs + 800);
+      }
     }
 
     function scheduleDrain() {
@@ -167,14 +178,11 @@
         if (!currentReadySet.has(id)) {
           continue;
         }
+        if (queue.length >= maxQueueLen) {
+          continue;
+        }
         queue.push({ id: id, number: idToNumber(id) });
         queuedIds.add(id);
-        while (queue.length > maxQueueLen) {
-          const dropped = queue.shift();
-          if (dropped) {
-            queuedIds.delete(dropped.id);
-          }
-        }
       }
       scheduleDrain();
     }

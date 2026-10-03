@@ -193,3 +193,51 @@ test('autoplay blocked keeps full queue until gesture unlock plays one head', fu
   assert.equal(playCalls, 4);
   assert.equal(queue.getQueueIds().length, 1);
 });
+
+test('synchronous chime end callback does not double-play next item', function () {
+  const create = loadQueue();
+  const clocks = makeFakeTimers();
+  let playCalls = 0;
+  const queue = create({
+    overlayDurationMs: OVERLAY_MS,
+    setTimeout: clocks.setTimeout,
+    clearTimeout: clocks.clearTimeout,
+    onPlay: function (_id, _number, onChimeEnded) {
+      playCalls += 1;
+      if (onChimeEnded) {
+        onChimeEnded();
+      }
+    },
+    onHideOverlay: function () {},
+  });
+  queue.syncReadyQueue(new Set(['store:1', 'store:2']));
+  queue.enqueueReadyIds(['store:1', 'store:2']);
+  assert.equal(playCalls, 1);
+  clocks.advance(OVERLAY_MS);
+  assert.equal(playCalls, 2);
+});
+
+test('async chime end callback plays next item once after overlay', function () {
+  const create = loadQueue();
+  const clocks = makeFakeTimers();
+  let playCalls = 0;
+  let pendingEnd = null;
+  const queue = create({
+    overlayDurationMs: OVERLAY_MS,
+    setTimeout: clocks.setTimeout,
+    clearTimeout: clocks.clearTimeout,
+    onPlay: function (_id, _number, onChimeEnded) {
+      playCalls += 1;
+      pendingEnd = onChimeEnded;
+    },
+    onHideOverlay: function () {},
+  });
+  queue.syncReadyQueue(new Set(['store:1', 'store:2']));
+  queue.enqueueReadyIds(['store:1', 'store:2']);
+  assert.equal(playCalls, 1);
+  if (pendingEnd) {
+    pendingEnd();
+  }
+  clocks.advance(OVERLAY_MS);
+  assert.equal(playCalls, 2);
+});

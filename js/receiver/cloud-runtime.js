@@ -59,6 +59,8 @@
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
+    const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
+    const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
@@ -344,7 +346,18 @@
       return run();
     }
 
+    function authBlocksCloudWork() {
+      return (
+        transport.session &&
+        transport.session.isAuthStopped &&
+        transport.session.isAuthStopped()
+      );
+    }
+
     async function pollBoard() {
+      if (authBlocksCloudWork()) {
+        return;
+      }
       if (simulateOffline) {
         try {
           const board = await transport.readBoard();
@@ -419,6 +432,18 @@
       } else if (type === 'clear_now') {
         applyNumberContent([], localSeq, { silent: true });
       } else if (type === 'reload') {
+        if (enableTestReloadSpy) {
+          root.__testReloadFired = true;
+          try {
+            root.sessionStorage.setItem('__rcv_test_reload', '1');
+          } catch (e) {
+            /* ignore */
+          }
+          const stage = root.document && root.document.getElementById('rcv-stage');
+          if (stage) {
+            stage.setAttribute('data-test-remote-reload', '1');
+          }
+        }
         root.location.reload();
       } else if (type === 'reboot') {
         if (root.AndroidBridge && typeof root.AndroidBridge.reboot === 'function') {
@@ -429,7 +454,21 @@
       }
     }
 
+    function isFirestoreAbortError(err) {
+      if (!err) {
+        return false;
+      }
+      if (err.name === 'AbortError') {
+        return true;
+      }
+      const msg = err.message ? String(err.message) : '';
+      return msg.indexOf('aborted') !== -1;
+    }
+
     async function pollDevice() {
+      if (authBlocksCloudWork()) {
+        return;
+      }
       try {
         const dev = await transport.readDevice(deviceId);
         if (!dev || !dev.data) {
@@ -440,11 +479,17 @@
           await handleCommand(pending);
         }
       } catch (e) {
+        if (isFirestoreAbortError(e)) {
+          return;
+        }
         onStatusLine('device 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
 
     async function sendHeartbeat() {
+      if (authBlocksCloudWork()) {
+        return;
+      }
       if (!cloudApi || !cloudApi.boxHeartbeat) {
         return;
       }
@@ -504,7 +549,7 @@
 
       tickTimer = setInterval(function () {
         tickMs += 1000;
-        if (tickMs % devicePollMs === 0) {
+        if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
         }
         if (tickMs % boardPollMs === 0) {
@@ -544,7 +589,7 @@
       return null;
     }
 
-    return {
+    const api = {
       start: start,
       destroy: destroy,
       receiveBoard: receiveBoard,
@@ -555,6 +600,29 @@
         return simulateOffline;
       },
     };
+    if (options.enableTestPollHook) {
+      api.pollDeviceForTests = async function () {
+        const blocked = authBlocksCloudWork();
+        let pendingId = '';
+        if (!blocked) {
+          try {
+            const dev = await transport.readDevice(deviceId);
+            const pending = dev && dev.data ? dev.data.pendingCommand : null;
+            pendingId = pending && pending.id ? String(pending.id) : '';
+          } catch (e) {
+            pendingId = '';
+          }
+        }
+        await pollDevice();
+        return {
+          authBlocked: blocked,
+          pendingId: pendingId,
+          lastHandledCommandId: lastHandledCommandId,
+          reloadFired: Boolean(root.__testReloadFired),
+        };
+      };
+    }
+    return api;
   }
 
   QMS.Receiver.bootReceiverCloud = bootReceiverCloud;
