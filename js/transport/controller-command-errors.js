@@ -49,7 +49,7 @@
     const response = err && err.response ? err.response : null;
     const code = resolveErrorCode(err, opts);
 
-    if (status === 401 || code === 'invalid_token') {
+    if (status === 401 || status === 403 || code === 'invalid_token' || code === 'forbidden') {
       return USER_MSG_401;
     }
     if (code === 'device_not_found') {
@@ -58,7 +58,7 @@
     if (code === 'invalid_device_id') {
       return USER_MSG_INVALID_DEVICE_ID;
     }
-    if (code === 'invalid_command_params') {
+    if (code === 'invalid_command_params' || code === 'invalid_body') {
       return USER_MSG_400_INVALID;
     }
     if (code === 'internal_error' || status === 500) {
@@ -70,7 +70,10 @@
     if (response && response.message) {
       return String(response.message);
     }
-    return err && err.message ? String(err.message) : '指令送出失敗，請稍後再試。';
+    if (err && err.message) {
+      return USER_MSG_INTERNAL_ERROR;
+    }
+    return USER_MSG_INTERNAL_ERROR;
   }
 
   function redactValue(key, value) {

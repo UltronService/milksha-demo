@@ -51,6 +51,11 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await expect(controller.locator('#online-state')).toContainText('已連線', { timeout: 20000 });
   await openNetZone(controller);
 
+  await rejectDevCommand(controller, 403, { error: 'forbidden', message: 'forbidden' });
+  await controller.click('#btn-restore');
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401);
+  await controller.getByTestId('command-error-close').click();
+
   await rejectDevCommand(controller, 401, { error: 'invalid_token', message: 'login expired' });
   await controller.click('#btn-restore');
   const alert = controller.getByTestId('command-error-alert');

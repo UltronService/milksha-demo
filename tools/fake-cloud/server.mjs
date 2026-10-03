@@ -10,7 +10,8 @@ import { extractRawJsonField } from './json-raw.mjs';
 import {
   validateDevCommandBody,
   validateBoxHeartbeatBody,
-  httpStatusForDevCommandCode,
+  validateBoxUploadBody,
+  httpStatusForApiErrorCode,
 } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 
@@ -168,6 +169,13 @@ function requireAuth(req) {
   if (token === 'expired-test-token') {
     return { ok: false, status: 401, body: { error: 'invalid_token', message: 'login expired, please sign in again' } };
   }
+  if (token === 'forbidden-test-token') {
+    return {
+      ok: false,
+      status: 403,
+      body: { error: 'forbidden', message: 'login expired, please sign in again' },
+    };
+  }
   return { ok: true };
 }
 
@@ -263,7 +271,7 @@ const server = http.createServer(async (req, res) => {
       if (name === 'boxHeartbeat') {
         const hv = validateBoxHeartbeatBody(body);
         if (!hv.ok) {
-          return json(res, httpStatusForDevCommandCode(hv.code), { error: hv.code, message: hv.message });
+          return json(res, httpStatusForApiErrorCode(hv.code), { error: hv.code, message: hv.message });
         }
         const hb = hv.body;
         const dk = deviceKey(hb.storeId, hb.deviceId);
@@ -283,6 +291,10 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (name === 'boxUpload' || name === 'boxUpload/') {
+        const uv = validateBoxUploadBody(body);
+        if (!uv.ok) {
+          return json(res, httpStatusForApiErrorCode(uv.code), { error: uv.code, message: uv.message });
+        }
         return json(res, 501, {
           error: 'not_implemented',
           message: 'boxUpload (entry B) is not implemented in fake-cloud; use milksha-cloud.',
@@ -292,7 +304,7 @@ const server = http.createServer(async (req, res) => {
       if (name === 'devCommand') {
         const cv = validateDevCommandBody(body);
         if (!cv.ok) {
-          return json(res, httpStatusForDevCommandCode(cv.code), { error: cv.code, message: cv.message });
+          return json(res, httpStatusForApiErrorCode(cv.code), { error: cv.code, message: cv.message });
         }
         const cmdBody = cv.body;
         const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
@@ -365,7 +377,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404);
     res.end('not found');
   } catch (e) {
-    json(res, 500, { error: String(e) });
+    json(res, 500, { error: 'internal_error', message: 'internal_error' });
   }
 });
 

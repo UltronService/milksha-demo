@@ -116,6 +116,77 @@ test('invalid_device_id returns 400 from fake-cloud', async function () {
   }
 });
 
+test('boxHeartbeat extra field returns invalid_body from fake-cloud', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/boxHeartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        appVersion: 'x',
+        boardSeq: 0,
+        pendingUploads: 0,
+        simulatedOffline: false,
+        extra: true,
+      }),
+    });
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.error, 'invalid_body');
+  } finally {
+    proc.kill();
+  }
+});
+
+test('boxUpload missing posPayload returns invalid_body', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/boxUpload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({ storeId: 's120030', deviceId: 'stb-01' }),
+    });
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.error, 'invalid_body');
+  } finally {
+    proc.kill();
+  }
+});
+
+test('forbidden token returns 403 on devCommand', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer forbidden-test-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        type: 'restore',
+        params: {},
+      }),
+    });
+    assert.equal(res.status, 403);
+  } finally {
+    proc.kill();
+  }
+});
+
 test('delayMs over 60000 is invalid_command_params', function () {
   const Dev = loadBrowserDevCmd();
   const r = Dev.buildDevCommandRequest({

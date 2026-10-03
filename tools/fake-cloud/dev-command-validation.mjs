@@ -38,6 +38,10 @@ function invalidCommandParams(message) {
   return { ok: false, code: 'invalid_command_params', message: message || 'invalid command params' };
 }
 
+function invalidBody(message) {
+  return { ok: false, code: 'invalid_body', message: message || 'invalid body' };
+}
+
 export function clampTimingMs(raw) {
   const n = Number(raw);
   if (!Number.isFinite(n)) return 0;
@@ -141,18 +145,25 @@ export function validateDevCommandBody(body) {
   return buildDevCommandRequest(body);
 }
 
-export function httpStatusForDevCommandCode(code) {
+export function httpStatusForApiErrorCode(code) {
   if (code === 'device_not_found') return 404;
   if (code === 'internal_error') return 500;
-  if (code === 'invalid_device_id' || code === 'invalid_command_params') return 400;
-  return 400;
+  if (code === 'invalid_device_id' || code === 'invalid_command_params' || code === 'invalid_body') {
+    return 400;
+  }
+  return 500;
+}
+
+/** @deprecated use httpStatusForApiErrorCode */
+export function httpStatusForDevCommandCode(code) {
+  return httpStatusForApiErrorCode(code);
 }
 
 export function buildBoxHeartbeatRequest(input) {
   const dev = validateDeviceId(input.deviceId);
   if (!dev.ok) return dev;
   if (!hasOnlyKeys(input, HEARTBEAT_KEYS)) {
-    return invalidCommandParams('invalid body');
+    return invalidBody('invalid body');
   }
   const body = {
     storeId: String(input.storeId || '').trim(),
@@ -166,24 +177,42 @@ export function buildBoxHeartbeatRequest(input) {
     body.ackCommandId = String(input.ackCommandId);
   }
   if (!body.storeId) {
-    return invalidCommandParams('invalid store');
+    return invalidBody('invalid store');
   }
   if (!Number.isFinite(body.boardSeq) || body.boardSeq < 0) {
-    return invalidCommandParams('invalid boardSeq');
+    return invalidBody('invalid boardSeq');
   }
   if (!Number.isFinite(body.pendingUploads) || body.pendingUploads < 0) {
-    return invalidCommandParams('invalid pendingUploads');
+    return invalidBody('invalid pendingUploads');
   }
   const json = JSON.stringify(body);
   if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-    return invalidCommandParams('request too large');
+    return invalidBody('request too large');
   }
   return { ok: true, body };
 }
 
 export function validateBoxHeartbeatBody(body) {
   if (!body || typeof body !== 'object') {
-    return invalidCommandParams('invalid body');
+    return invalidBody('invalid body');
   }
   return buildBoxHeartbeatRequest(body);
+}
+
+const BOX_UPLOAD_KEYS = ['storeId', 'deviceId', 'posPayload', 'posRawBody'];
+
+export function validateBoxUploadBody(body) {
+  if (!body || typeof body !== 'object') {
+    return invalidBody('invalid body');
+  }
+  if (!hasOnlyKeys(body, BOX_UPLOAD_KEYS)) {
+    return invalidBody('invalid body');
+  }
+  if (!String(body.storeId || '').trim() || !String(body.deviceId || '').trim()) {
+    return invalidBody('invalid body');
+  }
+  if (body.posPayload === undefined || body.posPayload === null) {
+    return invalidBody('invalid body');
+  }
+  return { ok: true, body };
 }
