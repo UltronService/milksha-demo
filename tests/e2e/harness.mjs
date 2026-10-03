@@ -147,7 +147,7 @@ export async function freshContext(browser) {
         localStorage.clear();
         localStorage.setItem('__e2e_init', '1');
       }
-      localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
+      localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
     } catch {
       /* ignore */
     }
@@ -265,7 +265,7 @@ export async function connectController(page, mode) {
       {
         host: `127.0.0.1:${PORT_SITE}`,
         key: 'fake-api-key-for-emulator',
-        code: 'dev-controller-access-2026',
+        code: 'fake-milksha-controller-access-code',
       },
     );
   } else {

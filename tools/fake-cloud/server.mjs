@@ -164,11 +164,16 @@ function corsHeaders() {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Expose-Headers': 'Date',
   };
 }
 
 function json(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json', ...corsHeaders() });
+  res.writeHead(status, {
+    'Content-Type': 'application/json',
+    Date: new Date().toUTCString(),
+    ...corsHeaders(),
+  });
   res.end(JSON.stringify(body));
 }
 

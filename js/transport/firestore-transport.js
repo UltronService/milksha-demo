@@ -39,6 +39,8 @@
       return {
         data: norm.board,
         updateTime: doc.updateTime || norm.board.updatedAt || '',
+        httpDate: doc.httpDate || '',
+        httpDateReadable: Boolean(doc.httpDateReadable),
       };
     }
 

@@ -25,6 +25,9 @@
 
     function syncBusinessDate() {
       const bd = getBusinessDate();
+      if (!bd) {
+        return;
+      }
       if (trackedBusinessDate !== bd) {
         clearChimedForNewBusinessDay();
       }
@@ -41,6 +44,9 @@
      * @returns {string[]}
      */
     function pickRingIds(prevReady, nextReady, opts) {
+      if (!getBusinessDate()) {
+        return [];
+      }
       syncBusinessDate();
       if (isFirstBatch) {
         isFirstBatch = false;

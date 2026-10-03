@@ -29,9 +29,11 @@ test('business date at 03:00 Taipei rolls forward', function () {
   assert.equal(TB.taipeiBusinessDate(d), '2026-10-03');
 });
 
-test('isCurrentBusinessDate rejects yesterday board', function () {
+test('isCurrentBusinessDate compares against session business day only', function () {
   const TB = loadTodayBoard();
-  const morning = new Date('2026-10-03T01:00:00.000Z');
-  assert.equal(TB.isCurrentBusinessDate('2026-10-02', morning), false);
-  assert.equal(TB.isCurrentBusinessDate('2026-10-03', morning), true);
+  TB.clearSessionBusinessDate();
+  assert.equal(TB.isCurrentBusinessDate('2026-10-03'), false);
+  TB.setSessionBusinessDate('2026-10-03');
+  assert.equal(TB.isCurrentBusinessDate('2026-10-02'), false);
+  assert.equal(TB.isCurrentBusinessDate('2026-10-03'), true);
 });

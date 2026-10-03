@@ -234,7 +234,12 @@
       if (!data) {
         return null;
       }
-      return { data: data, updateTime: data.updatedAt || '' };
+      return {
+        data: data,
+        updateTime: data.updatedAt || '',
+        httpDate: '',
+        httpDateReadable: false,
+      };
     }
 
     function readDevice(deviceId) {

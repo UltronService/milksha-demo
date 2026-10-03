@@ -11,6 +11,25 @@
 
   let sharedAudioContext = null;
   let audioContextCreateCount = 0;
+  let gestureUnlockHooked = false;
+  /** @type {Set<string>} */
+  let lastReadyIdSet = new Set();
+
+  const ringQueue =
+    QMS.Receiver.createReadyRingQueue &&
+    QMS.Receiver.createReadyRingQueue({
+      overlayDurationMs: QMS.Receiver.READY_RING_OVERLAY_MS || 2500,
+      setTimeout: root.setTimeout.bind(root),
+      clearTimeout: root.clearTimeout.bind(root),
+      onPlay: function (_id, number) {
+        recordRingTelemetry(number);
+        showRingOverlayForQueue(number);
+        playWebChime();
+      },
+      onHideOverlay: function () {
+        hideRingOverlay();
+      },
+    });
 
   function ensureOverlay() {
     let ov = root.document.getElementById('rcv-ring-ov');
@@ -41,6 +60,29 @@
     return sharedAudioContext;
   }
 
+  function hookGestureUnlockOnce() {
+    if (gestureUnlockHooked || !root.document) {
+      return;
+    }
+    gestureUnlockHooked = true;
+    const unlock = function () {
+      try {
+        const ctx = getSharedAudioContext();
+        if (ctx && typeof ctx.resume === 'function') {
+          ctx.resume().catch(function () {
+            /* ignore */
+          });
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      if (ringQueue) {
+        ringQueue.unlockAudioFromGesture();
+      }
+    };
+    root.document.addEventListener('pointerdown', unlock, { once: true, passive: true });
+  }
+
   function playWebChime() {
     try {
       const ctx = getSharedAudioContext();
@@ -50,6 +92,13 @@
       const resumePromise =
         ctx.state === 'suspended' && typeof ctx.resume === 'function' ? ctx.resume() : null;
       const run = function () {
+        if (ctx.state === 'suspended') {
+          if (ringQueue) {
+            ringQueue.notifyAudioBlocked();
+          }
+          hookGestureUnlockOnce();
+          return;
+        }
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.connect(g);
@@ -60,41 +109,85 @@
         o.stop(ctx.currentTime + 0.15);
       };
       if (resumePromise && typeof resumePromise.then === 'function') {
-        resumePromise.then(run).catch(function () {
-          /* autoplay blocked */
-        });
+        resumePromise
+          .then(run)
+          .catch(function () {
+            if (ringQueue) {
+              ringQueue.notifyAudioBlocked();
+            }
+            hookGestureUnlockOnce();
+          });
         return;
       }
       run();
     } catch (e) {
-      /* autoplay blocked */
+      if (ringQueue) {
+        ringQueue.notifyAudioBlocked();
+      }
+      hookGestureUnlockOnce();
     }
   }
 
-  function showRingOverlay(number) {
+  function showRingOverlayForQueue(number) {
     const ov = ensureOverlay();
     const box = root.document.getElementById('rcv-ring-box');
     if (box) {
       box.textContent = number;
     }
     ov.style.opacity = '1';
-    root.setTimeout(function () {
+  }
+
+  function hideRingOverlay() {
+    const ov = root.document.getElementById('rcv-ring-ov');
+    if (ov) {
       ov.style.opacity = '0';
-    }, 800);
+    }
+  }
+
+  function recordRingTelemetry(number) {
+    root.__rcvTelemetry.ringCount += 1;
+    root.__rcvTelemetry.ringEvents.push({ at: Date.now(), number: number });
   }
 
   /**
    * @param {string} number
    */
   function playReadyRing(number) {
-    root.__rcvTelemetry.ringCount += 1;
-    root.__rcvTelemetry.ringEvents.push({ at: Date.now(), number: number });
-    showRingOverlay(number);
+    const id = 'legacy:' + String(number);
+    if (ringQueue) {
+      lastReadyIdSet.add(id);
+      ringQueue.syncReadyQueue(lastReadyIdSet);
+      ringQueue.enqueueReadyIds([id]);
+      return;
+    }
+    recordRingTelemetry(number);
+    showRingOverlayForQueue(number);
     playWebChime();
+  }
+
+  function syncReadyQueue(readySet) {
+    if (readySet instanceof Set) {
+      lastReadyIdSet = new Set(readySet);
+    } else if (readySet && typeof readySet.forEach === 'function') {
+      lastReadyIdSet = new Set(readySet);
+    } else {
+      lastReadyIdSet = new Set();
+    }
+    if (ringQueue) {
+      ringQueue.syncReadyQueue(lastReadyIdSet);
+    }
+  }
+
+  function enqueueReadyIds(ids) {
+    if (ringQueue) {
+      ringQueue.enqueueReadyIds(ids);
+    }
   }
 
   QMS.Receiver.RingHost = {
     playReadyRing: playReadyRing,
+    syncReadyQueue: syncReadyQueue,
+    enqueueReadyIds: enqueueReadyIds,
     resetTelemetry: function () {
       root.__rcvTelemetry.ringCount = 0;
       root.__rcvTelemetry.ringEvents = [];
@@ -102,9 +195,20 @@
     getAudioContextCreateCount: function () {
       return audioContextCreateCount;
     },
+    getQueueIdsForTests: function () {
+      return ringQueue ? ringQueue.getQueueIds() : [];
+    },
     _resetAudioContextForTests: function () {
       sharedAudioContext = null;
       audioContextCreateCount = 0;
+      gestureUnlockHooked = false;
+      lastReadyIdSet = new Set();
+      if (ringQueue) {
+        ringQueue.resetForTests();
+      }
+    },
+    _getRingQueueForTests: function () {
+      return ringQueue;
     },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -44,7 +44,7 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
         localStorage.clear();
         localStorage.setItem('__e2e_init', '1');
       }
-      localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
+      localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
     } catch {
       /* ignore */
     }

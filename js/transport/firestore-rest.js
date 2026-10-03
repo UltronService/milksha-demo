@@ -92,9 +92,19 @@
         }
         const json = await res.json();
         backoffMs = 0;
+        let httpDate = '';
+        let httpDateReadable = false;
+        try {
+          httpDate = res.headers.get('date') || '';
+          httpDateReadable = Boolean(httpDate);
+        } catch (e) {
+          httpDateReadable = false;
+        }
         return {
           data: FV.decodeDocumentFields(json.fields),
           updateTime: json.updateTime || '',
+          httpDate: httpDate,
+          httpDateReadable: httpDateReadable,
         };
       } catch (err) {
         if (err && err.name === 'AbortError') {

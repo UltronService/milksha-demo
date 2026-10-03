@@ -71,7 +71,7 @@
     let pendingAckCommandId = '';
     let prevReadySet = new Set();
     let slowNetworkTimer = null;
-    let last0300ClearDate = '';
+    let lastSessionBusinessDate = '';
     let suppressRingOnNextApply = false;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
@@ -81,7 +81,7 @@
       QMS.Receiver.createBoardChimePolicy &&
       QMS.Receiver.createBoardChimePolicy({
         getBusinessDate: function () {
-          return TodayBoard.taipeiBusinessDate();
+          return TodayBoard.getSessionBusinessDate();
         },
         newlyReadyIds: BoardSeq.newlyReadyIds,
       });
@@ -99,19 +99,38 @@
     }
 
     function saveCache(seq, numberContent) {
+      const bd = TodayBoard.getSessionBusinessDate();
+      if (!bd) {
+        return;
+      }
       try {
         root.localStorage.setItem(
           cacheKey,
           JSON.stringify({
             seq: seq,
             numberContent: numberContent,
-            businessDate: TodayBoard.taipeiBusinessDate(),
+            businessDate: bd,
             savedAt: Date.now(),
           }),
         );
       } catch (e) {
         /* ignore */
       }
+    }
+
+    function noteSessionBusinessDateRoll(nextBusinessDate) {
+      const nextBd = String(nextBusinessDate || '');
+      if (!nextBd) {
+        return;
+      }
+      if (lastSessionBusinessDate && lastSessionBusinessDate !== nextBd) {
+        if (chimePolicy) {
+          chimePolicy.onBusinessDateRoll();
+        }
+        clearGuestBoard(true);
+      }
+      lastSessionBusinessDate = nextBd;
+      TodayBoard.setSessionBusinessDate(nextBd);
     }
 
     function clearGuestBoard(silent) {
@@ -175,10 +194,15 @@
       }
       const board = norm.board;
       const seq = board.seq;
-      if (!TodayBoard.isCurrentBusinessDate(board.businessDate)) {
-        clearGuestBoard(true);
-        return { ignored: true, reason: 'business_date' };
+      const resolved = TodayBoard.resolveSessionBusinessDate({
+        boardBusinessDate: board.businessDate,
+        httpDateHeader: boardDoc.httpDate || '',
+        httpDateReadable: Boolean(boardDoc.httpDateReadable),
+      });
+      if (!resolved.ok) {
+        return { ignored: true, reason: 'no_business_date' };
       }
+      noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
         return { ignored: true, reason: Validate.MSG.stale };
       }
@@ -326,17 +350,6 @@
       }
     }
 
-    function check0300Clear() {
-      const bd = TodayBoard.taipeiBusinessDate();
-      if (last0300ClearDate && last0300ClearDate !== bd) {
-        if (chimePolicy) {
-          chimePolicy.onBusinessDateRoll();
-        }
-        clearGuestBoard(true);
-      }
-      last0300ClearDate = bd;
-    }
-
     async function ensureAuth() {
       if (transport.session && transport.session.ensureIdToken) {
         await transport.session.ensureIdToken();
@@ -345,30 +358,8 @@
 
     function start() {
       setSimulatedOfflineFlag(false);
-      const cached = loadCache();
-      const todayBd = TodayBoard.taipeiBusinessDate();
-      last0300ClearDate = todayBd;
-      if (
-        cached &&
-        Array.isArray(cached.numberContent) &&
-        TodayBoard.isCurrentBusinessDate(cached.businessDate)
-      ) {
-        localSeq = Number(cached.seq) || 0;
-        prevReadySet = BoardSeq.readyIdSetFromContent(
-          cached.numberContent,
-          Validate.parseSourceType,
-          Validate.itemId,
-        );
-        // Reload shows cached list as the first batch (silent chime); extra chime after reload is accepted.
-        applyNumberContent(cached.numberContent, localSeq, { silent: true });
-        prevReadySet = BoardSeq.readyIdSetFromContent(
-          cached.numberContent,
-          Validate.parseSourceType,
-          Validate.itemId,
-        );
-      } else if (cached && !TodayBoard.isCurrentBusinessDate(cached.businessDate)) {
-        clearGuestBoard(true);
-      }
+      TodayBoard.clearSessionBusinessDate();
+      lastSessionBusinessDate = '';
 
       ensureAuth().then(function () {
         sendHeartbeat();
@@ -386,9 +377,6 @@
         }
         if (tickMs % heartbeatMs === 0) {
           sendHeartbeat();
-        }
-        if (tickMs % 60000 === 0) {
-          check0300Clear();
         }
       }, 1000);
     }

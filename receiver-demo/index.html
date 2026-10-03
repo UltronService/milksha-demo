@@ -994,6 +994,19 @@
           hasReceivedBoardData = true;
           readyPage = 0;
           renderBoard();
+          if (window.QMS && window.QMS.Receiver.RingHost) {
+            var readySet = window.QMS.Transport.BoardSeq.readyIdSetFromContent(
+              currentRows.map(function (r) {
+                return { source_type: r.source_type, number: r.number };
+              }),
+              parseSourceType,
+              itemId,
+            );
+            window.QMS.Receiver.RingHost.syncReadyQueue(readySet);
+            if (opts.newlyReadyIds && opts.newlyReadyIds.length) {
+              window.QMS.Receiver.RingHost.enqueueReadyIds(opts.newlyReadyIds);
+            }
+          }
           return buildResponse(boundStore, true, MSG.ok);
         }
 
@@ -1042,13 +1055,6 @@
         function pushFromObject(obj, opts) {
           var o = opts || {};
           var res = processPush(obj, o);
-          if (o.newlyReadyIds && o.newlyReadyIds.length && window.QMS && window.QMS.Receiver.RingHost) {
-            for (var ri = 0; ri < o.newlyReadyIds.length; ri += 1) {
-              var parts = String(o.newlyReadyIds[ri]).split(':');
-              var num = parts.length > 1 ? parts[1] : parts[0];
-              window.QMS.Receiver.RingHost.playReadyRing(num);
-            }
-          }
           if (demoMode) {
             renderResponseUi(res);
           }
@@ -1251,6 +1257,7 @@
     <script src="../js/transport/create-transport.js"></script>
     <script src="../js/receiver/validate-request.js"></script>
     <script src="../js/receiver/chime-policy.js"></script>
+    <script src="../js/receiver/ring-queue.js"></script>
     <script src="../js/receiver/ring-host.js"></script>
     <script src="../js/receiver/cloud-runtime.js"></script>
     <script src="../js/receiver/cloud-boot.js"></script>

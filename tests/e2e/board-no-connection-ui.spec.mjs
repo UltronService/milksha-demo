@@ -60,13 +60,13 @@ function cloudSettingsInitScript() {
         JSON.stringify({
           projectId: 'milksha-qms-dev',
           apiKey: 'e2e-placeholder-key',
-          accessCode: 'dev-controller-access-2026',
+          accessCode: 'fake-milksha-controller-access-code',
           region: 'asia-east1',
           useEmulator: false,
           gateway: '',
         }),
       );
-      localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
+      localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
     } catch {
       /* ignore */
     }
@@ -108,7 +108,7 @@ test.describe('guest board never shows connection status', () => {
           localStorage.clear();
           sessionStorage.setItem('__e2e_init', '1');
         }
-        localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
+        localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
       } catch {
         /* ignore */
       }

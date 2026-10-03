@@ -57,15 +57,97 @@
     return cal;
   }
 
+  let sessionBusinessDate = '';
+
+  function normalizeBusinessDateString(businessDate) {
+    if (!businessDate) {
+      return '';
+    }
+    return String(businessDate).trim();
+  }
+
+  function setSessionBusinessDate(businessDate) {
+    const bd = normalizeBusinessDateString(businessDate);
+    if (bd) {
+      sessionBusinessDate = bd;
+    }
+  }
+
+  function getSessionBusinessDate() {
+    return sessionBusinessDate;
+  }
+
+  function hasSessionBusinessDate() {
+    return Boolean(sessionBusinessDate);
+  }
+
+  function clearSessionBusinessDate() {
+    sessionBusinessDate = '';
+  }
+
+  /**
+   * Business day from a readable HTTP Date header (never from box clock directly).
+   * @param {string} httpDateHeader
+   * @returns {string}
+   */
+  function businessDateFromHttpDate(httpDateHeader) {
+    const raw = String(httpDateHeader || '').trim();
+    if (!raw) {
+      return '';
+    }
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) {
+      return '';
+    }
+    return taipeiBusinessDate(d);
+  }
+
+  /**
+   * @param {{ boardBusinessDate?: string, httpDateHeader?: string, httpDateReadable?: boolean }} input
+   * @returns {{ ok: true, businessDate: string, source: 'board' | 'http_date' } | { ok: false }}
+   */
+  function resolveSessionBusinessDate(input) {
+    const boardBd = normalizeBusinessDateString(input && input.boardBusinessDate);
+    if (boardBd) {
+      return { ok: true, businessDate: boardBd, source: 'board' };
+    }
+    if (input && input.httpDateReadable && input.httpDateHeader) {
+      const fromHttp = businessDateFromHttpDate(input.httpDateHeader);
+      if (fromHttp) {
+        return { ok: true, businessDate: fromHttp, source: 'http_date' };
+      }
+    }
+    return { ok: false };
+  }
+
   /**
    * @param {string} businessDate
-   * @param {Date} [d]
    */
-  function isCurrentBusinessDate(businessDate, d) {
-    if (!businessDate) {
+  function isSameBusinessDate(a, b) {
+    const aa = normalizeBusinessDateString(a);
+    const bb = normalizeBusinessDateString(b);
+    if (!aa || !bb) {
       return false;
     }
-    return String(businessDate) === taipeiBusinessDate(d);
+    return aa === bb;
+  }
+
+  /**
+   * Compare against active session business day (never box clock).
+   * @param {string} businessDate
+   */
+  function isCurrentBusinessDate(businessDate) {
+    if (!hasSessionBusinessDate()) {
+      return false;
+    }
+    return isSameBusinessDate(businessDate, sessionBusinessDate);
+  }
+
+  function isCacheBusinessDateCurrent(cachedBusinessDate) {
+    if (!hasSessionBusinessDate()) {
+      return false;
+    }
+    return isSameBusinessDate(cachedBusinessDate, sessionBusinessDate);
   }
 
   /**
@@ -237,10 +319,11 @@
    * @param {Array<object>} tickets
    * @param {'A'|'B'|'system'} source
    */
-  function buildTodayBoard(storeId, seq, tickets, source) {
+  function buildTodayBoard(storeId, seq, tickets, source, businessDate) {
+    const bd = normalizeBusinessDateString(businessDate) || taipeiBusinessDate();
     return {
       storeId: storeId,
-      businessDate: taipeiBusinessDate(),
+      businessDate: bd,
       seq: seq,
       updatedAt: new Date().toISOString(),
       source: source || 'A',
@@ -252,6 +335,14 @@
   QMS.Board.TodayBoard = {
     taipeiCalendarDate: taipeiCalendarDate,
     taipeiBusinessDate: taipeiBusinessDate,
+    setSessionBusinessDate: setSessionBusinessDate,
+    getSessionBusinessDate: getSessionBusinessDate,
+    hasSessionBusinessDate: hasSessionBusinessDate,
+    clearSessionBusinessDate: clearSessionBusinessDate,
+    businessDateFromHttpDate: businessDateFromHttpDate,
+    resolveSessionBusinessDate: resolveSessionBusinessDate,
+    isSameBusinessDate: isSameBusinessDate,
+    isCacheBusinessDateCurrent: isCacheBusinessDateCurrent,
     isCurrentBusinessDate: isCurrentBusinessDate,
     taipeiHourMinute: taipeiHourMinute,
     formatTaipeiClockHM: formatTaipeiClockHM,

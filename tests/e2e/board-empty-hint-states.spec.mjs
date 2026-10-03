@@ -19,7 +19,7 @@ test.describe('guest board empty hint states', () => {
           localStorage.clear();
           sessionStorage.setItem('__e2e_init', '1');
         }
-        localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
+        localStorage.setItem('milksha:accessCode', 'fake-milksha-controller-access-code');
       } catch {
         /* ignore */
       }
