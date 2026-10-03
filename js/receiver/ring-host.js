@@ -176,34 +176,15 @@
     root.document.addEventListener('touchstart', unlock, opts);
   }
 
-  function devTestHooksAllowed() {
-    const QMS = root.QMS;
-    return Boolean(
-      QMS &&
-        QMS.Transport &&
-        QMS.Transport.isDevEndpointOverrideAllowed &&
-        QMS.Transport.isDevEndpointOverrideAllowed(),
-    );
-  }
-
   function syncRing6975672LayoutFlag() {
     const docEl = root.document.documentElement;
     if (!docEl) {
       return;
     }
-    try {
-      const params = new URLSearchParams(root.location.search);
-      if (devTestHooksAllowed() && params.has('testRing6975672')) {
-        docEl.setAttribute('data-rcv-ring-6975672', '1');
-        return;
-      }
-    } catch (e) {
-      /* ignore */
-    }
     const vw = Number(root.innerWidth || docEl.clientWidth || 0);
     if (vw >= 1850 && vw <= 1950) {
       docEl.setAttribute('data-rcv-ring-6975672', '1');
-    } else {
+    } else if (!docEl.hasAttribute('data-rcv-ring-6975672')) {
       docEl.removeAttribute('data-rcv-ring-6975672');
     }
   }
