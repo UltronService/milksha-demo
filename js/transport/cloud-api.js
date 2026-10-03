@@ -12,20 +12,25 @@
    * @param {{ authHeaders: () => Promise<Record<string,string>> }} session
    */
   function createCloudApi(config, session) {
+    const boxHeartbeatName = config.boxHeartbeatFunctionName || 'boxHeartbeat';
+    const posReceiverName = config.posReceiverFunctionName || 'posReceiver';
+    const boxUploadName = config.boxUploadFunctionName || 'boxUpload';
+
     function fnUrl(name) {
       const base = config.functionsBaseUrl || '';
       return base.replace(/\/?$/, '/') + name;
     }
 
-    async function postJson(name, body, withAuth) {
+    async function postJson(name, body, withAuth, rawBody) {
       const headers = { 'Content-Type': 'application/json' };
       if (withAuth) {
         Object.assign(headers, await session.authHeaders());
       }
+      const payload = rawBody !== undefined && rawBody !== null ? rawBody : JSON.stringify(body);
       const res = await fetch(fnUrl(name), {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify(body),
+        body: payload,
       });
       const text = await res.text();
       let json = null;
@@ -34,6 +39,10 @@
       } catch (e) {
         json = { raw: text };
       }
+      const isPos = name === posReceiverName || name === posReceiverName + '/';
+      if (isPos && res.ok) {
+        return json || { isSuccess: false, information: '空回應' };
+      }
       if (!res.ok) {
         const err = new Error((name || 'fn') + ' failed ' + res.status);
         err.response = json;
@@ -41,10 +50,6 @@
       }
       return json;
     }
-
-    const boxHeartbeatName = config.boxHeartbeatFunctionName || 'boxHeartbeat';
-    const posReceiverName = config.posReceiverFunctionName || 'posReceiver';
-    const boxUploadName = config.boxUploadFunctionName || 'boxUpload';
 
     return {
       devLogin: function (body) {
@@ -57,6 +62,12 @@
         return postJson('devCommand', body, true);
       },
       posReceiver: function (body) {
+        if (typeof body === 'string') {
+          return postJson(posReceiverName, null, false, body);
+        }
+        if (body && typeof body.wireText === 'string') {
+          return postJson(posReceiverName, null, false, body.wireText);
+        }
         return postJson(posReceiverName, body, false);
       },
       boxUpload: function (body) {

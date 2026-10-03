@@ -5,14 +5,11 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { URL } from 'node:url';
+import { validatePosReceiverBody } from './pos-validate.mjs';
+import { extractRawJsonField } from './json-raw.mjs';
+import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 
-const SIGN_SECRET = 'dev-milksha-public-test-key-2026';
-
-const STORE_TARGETS = {
-  s120030: 'milkshas120030',
-  s110012: 'milkshas110012',
-  s210008: 'milkshas210008',
-};
+const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -22,6 +19,10 @@ const REGION = 'asia-east1';
 const docs = new Map();
 /** @type {Map<string, object[]>} */
 const logs = new Map();
+
+let posReceiverEntryAEnabled =
+  process.env.POS_RECEIVER_A === undefined || process.env.POS_RECEIVER_A !== '0';
+const POS_MAX_AGE_MS = Number(process.env.POS_RECEIVER_MAX_AGE_MS || 10 * 60 * 1000);
 
 function encodeFields(obj) {
   function enc(v) {
@@ -135,19 +136,22 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function readBody(req) {
+function readRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data', (c) => chunks.push(c));
     req.on('end', () => {
       try {
-        const t = Buffer.concat(chunks).toString('utf8');
-        resolve(t ? JSON.parse(t) : {});
+        resolve(Buffer.concat(chunks).toString('utf8'));
       } catch (e) {
         reject(e);
       }
     });
   });
+}
+
+function readBody(req) {
+  return readRawBody(req).then((t) => (t ? JSON.parse(t) : {}));
 }
 
 function requireAuth(req) {
@@ -169,7 +173,15 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/test/reset' && req.method === 'POST') {
       docs.clear();
       logs.clear();
+      posReceiverEntryAEnabled = true;
       return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/posReceiverA' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.enabled === 'boolean') {
+        posReceiverEntryAEnabled = body.enabled;
+      }
+      return json(res, 200, { ok: true, enabled: posReceiverEntryAEnabled });
     }
 
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
@@ -188,49 +200,49 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname.startsWith(fnPrefix)) {
       const name = url.pathname.slice(fnPrefix.length);
-      const body = await readBody(req);
+      const rawText = await readRawBody(req);
+      const body = rawText ? JSON.parse(rawText) : {};
       const storeId = body.storeId || body.account || 's120030';
 
       if (name === 'posReceiver' || name === 'posReceiver/') {
-        if (!body.serviceSpecialData_Json) {
-          return json(res, 400, { isSuccess: false, information: '叫號資料格式錯誤' });
-        }
-        const jsonStr = JSON.stringify(body.serviceSpecialData_Json);
-        const hash = md5Hex(jsonStr);
-        if (body.serviceSpecialData_Json_Md5Hash && body.serviceSpecialData_Json_Md5Hash !== hash) {
-          return json(res, 400, { isSuccess: false, information: 'Md5Hash 不符' });
+        const rawInner = extractRawJsonField(rawText, 'serviceSpecialData_Json');
+        const v = validatePosReceiverBody(body, {
+          entryAEnabled: posReceiverEntryAEnabled,
+          maxAgeMs: POS_MAX_AGE_MS,
+          serviceSpecialDataJsonRaw: rawInner,
+        });
+        if (!v.ok) {
+          return json(res, 200, { isSuccess: false, information: v.information });
         }
         if (!verifyPosSignature(body)) {
-          return json(res, 400, { isSuccess: false, information: '簽章錯誤' });
+          return json(res, 200, { isSuccess: false, information: '簽章錯誤' });
         }
-        const target = body.serviceSpecialData_Json.target || '';
-        const account = body.account || storeId;
-        const expectedTarget = STORE_TARGETS[account] || STORE_TARGETS[storeId];
-        if (expectedTarget && target && target !== expectedTarget) {
-          return json(res, 400, { isSuccess: false, information: '找不到目標叫號機' });
-        }
-        const nc = body.serviceSpecialData_Json?.data?.number_content || [];
-        const tickets = numberToTickets(nc);
-        const board = {
-          storeId,
-          businessDate: taipeiDate(),
-          seq: nextSeq(storeId),
-          updatedAt: new Date().toISOString(),
-          source: 'A',
-          tickets,
-          clearedAt: tickets.length ? null : new Date().toISOString(),
-        };
-        docs.set(boardKey(storeId), board);
         const online = storeHasOnlineBox(storeId);
         const info = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        let seq = null;
+        if (online) {
+          const nc = body.serviceSpecialData_Json?.data?.number_content || [];
+          const tickets = numberToTickets(nc);
+          seq = nextSeq(storeId);
+          const board = {
+            storeId,
+            businessDate: taipeiDate(),
+            seq: seq,
+            updatedAt: new Date().toISOString(),
+            source: 'A',
+            tickets,
+            clearedAt: tickets.length ? null : new Date().toISOString(),
+          };
+          docs.set(boardKey(storeId), board);
+        }
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
           isSuccess: online,
           information: info,
-          seq: board.seq,
+          seq: seq,
         });
-        return json(res, 200, { isSuccess: online, information: info, seq: board.seq });
+        return json(res, 200, { isSuccess: online, information: info, seq: seq });
       }
 
       if (!requireAuth(req)) return json(res, 401, { error: 'auth' });

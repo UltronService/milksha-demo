@@ -83,6 +83,10 @@
     signature: 'DEMO-NO-SIGNATURE',
   };
 
+  function milkshaTargetForAccount(account) {
+    return 'milksha' + String(account || '');
+  }
+
   function findStore(id) {
     for (let i = 0; i < STORES.length; i += 1) {
       if (STORES[i].id === id) {
@@ -161,6 +165,7 @@
     STORES: STORES,
     ORDER_SOURCES: ORDER_SOURCES,
     TAMMY_SAMPLE_REQUEST: TAMMY_SAMPLE_REQUEST,
+    milkshaTargetForAccount: milkshaTargetForAccount,
     findStore: findStore,
     parseSourceType: parseSourceType,
     itemId: itemId,

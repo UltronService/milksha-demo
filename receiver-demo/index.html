@@ -290,6 +290,31 @@
         white-space: pre-wrap;
         word-break: break-all;
       }
+      .rcv-setup-gate {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111;
+        color: #fff;
+        padding: 24px;
+        text-align: center;
+        font-size: 1.25rem;
+        line-height: 1.6;
+      }
+      .rcv-stage[hidden],
+      #rcv-stage[hidden] {
+        display: none !important;
+      }
+      .rcv-setup-gate[hidden] {
+        display: none !important;
+      }
+      .rcv-setup-gate p {
+        max-width: 28rem;
+        margin: 0;
+      }
       .rcv-demo-handle {
         position: fixed;
         right: 0;
@@ -307,6 +332,12 @@
     <script src="../js/board/today-board.js"></script>
   </head>
   <body>
+    <div id="rcv-setup-gate" class="rcv-setup-gate" hidden data-testid="rcv-setup-gate">
+      <p>
+        看板尚未設定雲端連線。<br />
+        請在控制端按「產生看板連結」，用機上盒掃描 QR 碼，或請店員在控制端開啟設定連結完成配對。
+      </p>
+    </div>
     <div class="rcv-stage" id="rcv-stage" data-testid="rcv-guest-stage" data-simulated-offline="0">
       <div class="rcv-viewport" id="rcv-viewport">
         <div class="rcv-board" id="rcv-board"></div>
@@ -1118,15 +1149,16 @@
       })();
     </script>
     <script src="../config/firebase.js"></script>
-    <script src="../js/board/today-board.js"></script>
     <script src="../js/transport/paths.js"></script>
     <script src="../js/transport/firestore-value.js"></script>
     <script src="../js/transport/board-seq.js"></script>
+    <script src="../js/transport/cloud-settings.js"></script>
     <script src="../js/transport/config-resolve.js"></script>
     <script src="../js/transport/auth-session.js"></script>
     <script src="../js/transport/pos-sign.js"></script>
     <script src="../js/transport/cloud-api.js"></script>
     <script src="../js/transport/firestore-rest.js"></script>
+    <script src="../js/transport/pos-receiver-validate.js"></script>
     <script src="../js/transport/local-cloud-shim.js"></script>
     <script src="../js/transport/local-transport.js"></script>
     <script src="../js/transport/firestore-transport.js"></script>

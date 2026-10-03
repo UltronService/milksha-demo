@@ -10,7 +10,7 @@
   <body>
     <header class="top">
       <h1>叫號看板控制端</h1>
-      <p class="sub">店內測試用操作面板</p>
+      <p class="sub">本控制頁僅供測試環境使用。</p>
     </header>
     <p id="local-mode-notice" class="local-notice" hidden data-testid="local-mode-notice">
       目前是本機測試：控制頁和看板要在同一台電腦、同一個瀏覽器開兩個視窗才會連動。
@@ -26,19 +26,63 @@
           <label>連線方式
             <select id="fld-mode" data-testid="fld-mode">
               <option value="local" selected>本機連動（同一瀏覽器）</option>
-              <option value="firestore">雲端連線測試</option>
+              <option value="cloud">雲端模式（店內／機上盒）</option>
+              <option value="firestore">本機模擬雲端（工程測試）</option>
             </select>
           </label>
+          <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
+            請先展開「進階設定」，在「雲端設定」填寫專案與金鑰，並輸入測試用存取碼後再按連線。
+          </p>
           <details class="advanced" id="advanced-settings">
             <summary>進階設定</summary>
-            <label>看板裝置編號<input id="fld-device" value="stb-01" data-testid="fld-device" /></label>
-            <label>測試伺服器位址<input id="fld-gateway" placeholder="127.0.0.1:8787" data-testid="fld-gateway" /></label>
-            <label>測試用金鑰<input id="fld-key" data-testid="fld-key" /></label>
-            <label>存取碼<input id="fld-code" value="dev-controller-access-2026" data-testid="fld-code" /></label>
+            <fieldset class="cloud-settings" id="cloud-settings-panel">
+              <legend>雲端設定</legend>
+              <p class="field-hint">僅保存在本機瀏覽器，不會上傳到 Git。</p>
+              <label>Firebase 專案 ID
+                <input id="fld-cloud-project" placeholder="milksha-qms-dev" data-testid="fld-cloud-project" autocomplete="off" />
+              </label>
+              <label>Web API 金鑰
+                <input id="fld-cloud-apikey" type="password" placeholder="向後端索取" data-testid="fld-cloud-apikey" autocomplete="off" />
+                <span class="field-hint">Firebase 控制台 → 專案設定 → 一般</span>
+              </label>
+              <label>函式區域
+                <input id="fld-cloud-region" value="asia-east1" data-testid="fld-cloud-region" />
+                <span class="field-hint">預設 asia-east1</span>
+              </label>
+              <label>測試用存取碼
+                <input id="fld-code" type="password" placeholder="請輸入後端提供的存取碼" data-testid="fld-code" autocomplete="off" />
+              </label>
+              <label>測試環境專用 POS 金鑰
+                <input id="fld-pos-sign-key" type="password" placeholder="僅存於本機，不會放入看板連結" data-testid="fld-pos-sign-key" autocomplete="off" />
+                <span class="field-hint">僅控制頁簽名叫號用；看板不需要此金鑰。</span>
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" id="fld-use-emulator" data-testid="fld-use-emulator" />
+                使用本機模擬器（工程測試）
+              </label>
+              <label>模擬器位址
+                <input id="fld-gateway" placeholder="127.0.0.1:8787" data-testid="fld-gateway" />
+                <span class="field-hint">僅「本機模擬雲端」或勾選模擬器時需要</span>
+              </label>
+            </fieldset>
+            <label>看板裝置編號
+              <input id="fld-device" value="stb-01" data-testid="fld-device" />
+              <span class="field-hint">deviceId</span>
+            </label>
             <label>離線判定（秒，無心跳）
               <input id="fld-heartbeat-timeout" type="number" value="120" min="5" data-testid="fld-heartbeat-timeout" />
             </label>
           </details>
+          <div class="board-link-block" id="board-link-block" hidden>
+            <label>看板簡易網址（機上盒可先開此頁）
+              <input id="fld-board-simple-url" readonly data-testid="fld-board-simple-url" />
+            </label>
+            <label>看板設定連結（含雲端參數，請掃 QR）
+              <input id="fld-board-setup-url" readonly data-testid="fld-board-setup-url" />
+            </label>
+            <canvas id="board-setup-qr" width="160" height="160" data-testid="board-setup-qr"></canvas>
+            <button type="button" id="btn-gen-board-link" data-testid="btn-gen-board-link">產生看板連結</button>
+          </div>
           <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
           <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
           <dl class="status-dl">
@@ -97,8 +141,11 @@
             <button type="button" id="btn-gen-normal" data-testid="btn-gen-normal" data-requires-connect="1">自動產生（一般）</button>
             <button type="button" id="btn-gen-peak" data-testid="btn-gen-peak" data-requires-connect="1">自動產生（尖峰）</button>
           </div>
-          <textarea id="fld-tammy" rows="6" spellcheck="false" data-testid="fld-tammy"></textarea>
-          <button type="button" id="btn-send-tammy" data-testid="btn-send-tammy" data-requires-connect="1">送 Tammy JSON</button>
+          <details class="advanced" id="tammy-advanced">
+            <summary>進階：檢視／送出範例資料</summary>
+            <textarea id="fld-tammy" rows="6" spellcheck="false" data-testid="fld-tammy"></textarea>
+            <button type="button" id="btn-send-tammy" data-testid="btn-send-tammy" data-requires-connect="1">送出範例 JSON</button>
+          </details>
           <fieldset class="bad-data">
             <legend>錯誤資料測試</legend>
             <div class="row">
@@ -142,10 +189,10 @@
       <section id="sec-log" class="card wide zone" data-zone="log" data-default-expanded="0">
         <button type="button" class="zone-toggle" aria-expanded="false">5. 紀錄</button>
         <div class="zone-body" hidden>
-          <label>篩選關鍵字 <input id="log-filter" placeholder="posReceiver / 指令…" data-testid="log-filter" /></label>
+          <label>篩選關鍵字 <input id="log-filter" placeholder="叫號回應 / 指令…" data-testid="log-filter" /></label>
           <div class="row">
             <button type="button" id="btn-refresh-logs" data-testid="btn-refresh-logs" data-requires-connect="1">
-              合併雲端 receive_logs / commands
+              合併雲端紀錄
             </button>
             <button type="button" id="btn-export-json" data-testid="btn-export-json">匯出 JSON</button>
             <button type="button" id="btn-export-csv" data-testid="btn-export-csv">匯出 CSV</button>
@@ -159,13 +206,19 @@
     <script src="../js/transport/paths.js"></script>
     <script src="../js/transport/firestore-value.js"></script>
     <script src="../js/transport/board-seq.js"></script>
+    <script src="../js/transport/cloud-settings.js"></script>
+    <script src="../js/transport/controller-secrets.js"></script>
     <script src="../js/transport/config-resolve.js"></script>
+    <script src="../js/vendor/qrcode-generator.js"></script>
     <script src="../js/transport/auth-session.js"></script>
     <script src="../js/vendor/md5.min.js"></script>
     <script src="../js/transport/milksha-md5.js"></script>
     <script src="../js/transport/milksha-pos-sign.js"></script>
+    <script src="../js/transport/milksha-pos-wire.js"></script>
+    <script src="../js/transport/json-raw.js"></script>
     <script src="../js/transport/cloud-api.js"></script>
     <script src="../js/transport/firestore-rest.js"></script>
+    <script src="../js/transport/pos-receiver-validate.js"></script>
     <script src="../js/transport/local-cloud-shim.js"></script>
     <script src="../js/transport/local-transport.js"></script>
     <script src="../js/transport/firestore-transport.js"></script>

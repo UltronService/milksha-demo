@@ -39,10 +39,24 @@ npx --yes serve -l 4173 .
 # 開啟 http://localhost:4173/?demo=1
 ```
 
+## 雲端模式（正式測試環境）
+
+控制端與機上盒看板可透過 Firebase 專案 `milksha-qms-dev`（asia-east1）同步。**請勿**把 API Key 或存取碼寫進 Git；在控制端 **進階設定 → 雲端設定** 填寫並存於瀏覽器本機。
+
+| 角色 | 說明 |
+|------|------|
+| 控制端 | `/controller/` → 連線方式選 **雲端模式** → 填雲端設定與存取碼 → 連線 |
+| 看板（簡易網址） | `/receiver-demo/?store=s120030&mode=cloud` |
+| 看板（首次設定） | 控制端按 **產生看板連結**，機上盒掃 QR 或開設定連結 |
+
+店長試用步驟見 [docs/OWNER-TRIAL.md](docs/OWNER-TRIAL.md)。  
+工程本機測試仍用 **本機連動** 或 **本機模擬雲端** + `npm run fake-cloud`（見 [docs/EMULATOR.md](docs/EMULATOR.md)）。
+
 ## 測試
 
 ```bash
 npm test
+npm run test:e2e
 ```
 
 ## 目錄摘要

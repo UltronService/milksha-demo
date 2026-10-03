@@ -8,9 +8,9 @@
   QMS.Board = QMS.Board || {};
 
   /**
-   * @returns {string} YYYY-MM-DD in Asia/Taipei
+   * @returns {string} YYYY-MM-DD calendar date in Asia/Taipei
    */
-  function taipeiBusinessDate(d) {
+  function taipeiCalendarDate(d) {
     const date = d || new Date();
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Taipei',
@@ -28,6 +28,44 @@
       return p.type === 'day';
     });
     return (y ? y.value : '1970') + '-' + (m ? m.value : '01') + '-' + (day ? day.value : '01');
+  }
+
+  function addCalendarDays(ymd, delta) {
+    const parts = String(ymd).split('-');
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const da = Number(parts[2]);
+    const dt = new Date(Date.UTC(y, mo - 1, da));
+    dt.setUTCDate(dt.getUTCDate() + delta);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getUTCDate()).padStart(2, '0');
+    return yy + '-' + mm + '-' + dd;
+  }
+
+  /**
+   * Business day rolls at 03:00 Asia/Taipei.
+   * @returns {string} YYYY-MM-DD
+   */
+  function taipeiBusinessDate(d) {
+    const date = d || new Date();
+    const cal = taipeiCalendarDate(date);
+    const hm = taipeiHourMinute(date);
+    if (hm.hour < 3) {
+      return addCalendarDays(cal, -1);
+    }
+    return cal;
+  }
+
+  /**
+   * @param {string} businessDate
+   * @param {Date} [d]
+   */
+  function isCurrentBusinessDate(businessDate, d) {
+    if (!businessDate) {
+      return false;
+    }
+    return String(businessDate) === taipeiBusinessDate(d);
   }
 
   /**
@@ -212,7 +250,9 @@
   }
 
   QMS.Board.TodayBoard = {
+    taipeiCalendarDate: taipeiCalendarDate,
     taipeiBusinessDate: taipeiBusinessDate,
+    isCurrentBusinessDate: isCurrentBusinessDate,
     taipeiHourMinute: taipeiHourMinute,
     formatTaipeiClockHM: formatTaipeiClockHM,
     formatTaipeiDateTimeHuman: formatTaipeiDateTimeHuman,

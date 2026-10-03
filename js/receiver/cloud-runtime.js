@@ -94,11 +94,21 @@
       try {
         root.localStorage.setItem(
           cacheKey,
-          JSON.stringify({ seq: seq, numberContent: numberContent, savedAt: Date.now() }),
+          JSON.stringify({
+            seq: seq,
+            numberContent: numberContent,
+            businessDate: TodayBoard.taipeiBusinessDate(),
+            savedAt: Date.now(),
+          }),
         );
       } catch (e) {
         /* ignore */
       }
+    }
+
+    function clearGuestBoard(silent) {
+      applyNumberContent([], localSeq, { silent: silent });
+      saveCache(localSeq, []);
     }
 
     function applyNumberContent(numberContent, seq, opts) {
@@ -153,10 +163,20 @@
       }
       const board = norm.board;
       const seq = board.seq;
+      if (!TodayBoard.isCurrentBusinessDate(board.businessDate)) {
+        clearGuestBoard(true);
+        return { ignored: true, reason: 'business_date' };
+      }
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
         return { ignored: true, reason: Validate.MSG.stale };
       }
       if (simulateOffline) {
+        const numberContentOffline = TodayBoard.ticketsToNumberContent(board.tickets);
+        prevReadySet = BoardSeq.readyIdSetFromContent(
+          numberContentOffline,
+          Validate.parseSourceType,
+          Validate.itemId,
+        );
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
@@ -178,6 +198,22 @@
 
     async function pollBoard() {
       if (simulateOffline) {
+        try {
+          const board = await transport.readBoard();
+          if (board && board.data) {
+            const norm = TodayBoard.normalizeTodayBoard(board.data);
+            if (norm.ok) {
+              const nc = TodayBoard.ticketsToNumberContent(norm.board.tickets);
+              prevReadySet = BoardSeq.readyIdSetFromContent(
+                nc,
+                Validate.parseSourceType,
+                Validate.itemId,
+              );
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
         return;
       }
       try {
@@ -210,6 +246,19 @@
         networkDelayMs = 0;
         setSimulatedOfflineFlag(false, demoApi);
         suppressRingOnNextApply = true;
+        try {
+          const boardSnap = await transport.readBoard();
+          if (boardSnap && boardSnap.data && boardSnap.data.tickets) {
+            const nc = TodayBoard.ticketsToNumberContent(boardSnap.data.tickets);
+            prevReadySet = BoardSeq.readyIdSetFromContent(
+              nc,
+              Validate.parseSourceType,
+              Validate.itemId,
+            );
+          }
+        } catch (e) {
+          /* ignore */
+        }
         pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
@@ -267,11 +316,10 @@
 
     function check0300Clear() {
       const bd = TodayBoard.taipeiBusinessDate();
-      const hm = TodayBoard.taipeiHourMinute();
-      if (hm.hour === 3 && hm.minute === 0 && last0300ClearDate !== bd) {
-        last0300ClearDate = bd;
-        applyNumberContent([], localSeq, { silent: true });
+      if (last0300ClearDate && last0300ClearDate !== bd) {
+        clearGuestBoard(true);
       }
+      last0300ClearDate = bd;
     }
 
     async function ensureAuth() {
@@ -283,7 +331,13 @@
     function start() {
       setSimulatedOfflineFlag(false);
       const cached = loadCache();
-      if (cached && Array.isArray(cached.numberContent)) {
+      const todayBd = TodayBoard.taipeiBusinessDate();
+      last0300ClearDate = todayBd;
+      if (
+        cached &&
+        Array.isArray(cached.numberContent) &&
+        TodayBoard.isCurrentBusinessDate(cached.businessDate)
+      ) {
         localSeq = Number(cached.seq) || 0;
         prevReadySet = BoardSeq.readyIdSetFromContent(
           cached.numberContent,
@@ -296,6 +350,9 @@
           Validate.parseSourceType,
           Validate.itemId,
         );
+        isFirstApply = false;
+      } else if (cached && !TodayBoard.isCurrentBusinessDate(cached.businessDate)) {
+        clearGuestBoard(true);
         isFirstApply = false;
       }
 

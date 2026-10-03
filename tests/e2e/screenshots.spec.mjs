@@ -107,3 +107,52 @@ test('save controller and board screenshots', async ({ browser }) => {
 
   await ctx.close();
 });
+
+test('save cloud mode screenshots', async ({ browser }) => {
+  const base = urlsForMode('local').base;
+  mkdirSync(ART, { recursive: true });
+  const ctx = await browser.newContext({ deviceScaleFactor: 1 });
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+  const controller = await ctx.newPage();
+  await controller.goto(`${base}/controller/`);
+  await controller.selectOption('#fld-mode', 'cloud');
+  await controller.evaluate(() => {
+    const adv = document.getElementById('advanced-settings');
+    if (adv) adv.open = true;
+    document.getElementById('fld-cloud-project').value = 'milksha-qms-dev';
+    document.getElementById('fld-cloud-apikey').value = 'e2e-placeholder-key';
+    document.getElementById('fld-code').value = 'e2e-placeholder-code';
+    document.getElementById('fld-device').value = 'stb-01';
+    if (window.QMS?.Transport?.CloudSettings) {
+      window.QMS.Transport.CloudSettings.save({
+        projectId: 'milksha-qms-dev',
+        apiKey: 'e2e-placeholder-key',
+        accessCode: 'e2e-placeholder-code',
+        region: 'asia-east1',
+      });
+    }
+    const linkBlock = document.getElementById('board-link-block');
+    if (linkBlock) linkBlock.hidden = false;
+  });
+  await controller.click('#btn-gen-board-link');
+  await expect(controller.locator('#board-setup-qr')).toBeVisible();
+  await controller.setViewportSize({ width: 1440, height: 900 });
+  await controller.screenshot({ path: `${ART}/controller-cloud-settings.png`, fullPage: false });
+
+  await controller.setViewportSize({ width: 390, height: 844 });
+  await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: false });
+
+  const board = await ctx.newPage();
+  await board.goto(`${base}/receiver-demo/?store=s120030&mode=cloud`);
+  await board.setViewportSize({ width: 1366, height: 768 });
+  await expect(board.locator('[data-testid="rcv-setup-gate"]')).toBeVisible();
+  await board.screenshot({ path: `${ART}/board-setup-needed-1366.png`, fullPage: false });
+
+  await ctx.close();
+});

@@ -81,7 +81,7 @@
       const url =
         (config.identityToolkitBaseUrl || '').replace(/\/?$/, '') +
         '/accounts:signInWithCustomToken?key=' +
-        encodeURIComponent(config.apiKey || 'fake-api-key');
+        encodeURIComponent(config.apiKey || '');
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,7 +106,7 @@
       const url =
         (config.secureTokenBaseUrl || 'https://securetoken.googleapis.com/v1').replace(/\/?$/, '') +
         '/token?key=' +
-        encodeURIComponent(config.apiKey || 'fake-api-key');
+        encodeURIComponent(config.apiKey || '');
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

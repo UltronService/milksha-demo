@@ -22,8 +22,8 @@
 
 ## 簽章（測試環境）
 
-- 金鑰：`dev-milksha-public-test-key-2026`（`config/firebase.js` 可改）
-- `Base64(HMAC-SHA256(key, merchant_id|account|timeStmp|serviceSpecialData_Json_Md5Hash))`
+- POS 金鑰：僅在控制頁「測試環境專用 POS 金鑰」輸入，存於瀏覽器 localStorage（勿提交 Git、勿放入看板 `#cfg=` 連結）
+- 驗證與簽名規則見 [docs/entry-a-pos-api.md](../docs/entry-a-pos-api.md)（與 milksha-cloud 入口 A 一致）
 
 ## 模擬器
 

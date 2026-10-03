@@ -47,6 +47,9 @@
     const storage = options.storage || root.localStorage;
     const config = options.config || {};
     const channel = options.broadcast || function () {};
+    const PosValidate = QMS.Transport.PosReceiverValidate;
+    const Md5 = QMS.Transport.MilkshaMd5;
+    let entryAEnabled = options.posReceiverEntryAEnabled !== false;
 
     function nextSeq() {
       const cur = readJson(storage, boardKey(storeId));
@@ -126,41 +129,65 @@
         return { ok: true, commandId: cmd.id };
       },
       posReceiver: async function (body) {
-        if (!body || !body.serviceSpecialData_Json) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '叫號資料格式錯誤' });
-          const err = new Error('format');
-          err.response = { isSuccess: false, information: '叫號資料格式錯誤' };
-          throw err;
+        const reject = function (information) {
+          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: information });
+          return { isSuccess: false, information: information };
+        };
+        let parsed = body;
+        let rawInner = null;
+        const JsonRaw = QMS.Transport.JsonRaw;
+        if (typeof body === 'string') {
+          if (JsonRaw) {
+            rawInner = JsonRaw.extractRawJsonField(body, 'serviceSpecialData_Json');
+          }
+          try {
+            parsed = JSON.parse(body);
+          } catch (e) {
+            return reject('叫號資料格式錯誤');
+          }
         }
-        const secret = config.posSignSecret || 'dev-milksha-public-test-key-2026';
-        const valid = await PosSign.verifyPosBody(body, secret);
+        if (PosValidate && Md5) {
+          const innerRaw =
+            rawInner !== null && rawInner !== undefined
+              ? rawInner
+              : JSON.stringify(parsed.serviceSpecialData_Json);
+          const v = PosValidate.validatePosReceiverBody(parsed, {
+            entryAEnabled: entryAEnabled,
+            md5Hex: Md5.md5Hex,
+            serviceSpecialDataJsonRaw: innerRaw,
+          });
+          if (!v.ok) {
+            return reject(v.information);
+          }
+        } else if (!parsed || !parsed.serviceSpecialData_Json) {
+          return reject('叫號資料格式錯誤');
+        }
+        const secret = config.posSignSecret || '';
+        if (!secret) {
+          return reject('未設定 POS 金鑰');
+        }
+        const valid = await PosSign.verifyPosBody(parsed, secret);
         if (!valid) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '簽章錯誤' });
-          const err = new Error('invalid signature');
-          err.response = { isSuccess: false, information: '簽章錯誤' };
-          throw err;
+          return reject('簽章錯誤');
         }
-        const target = body.serviceSpecialData_Json.target || '';
-        if (boundTarget && target && target !== boundTarget) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '找不到目標叫號機' });
-          const err = new Error('wrong store');
-          err.response = { isSuccess: false, information: '找不到目標叫號機' };
-          throw err;
-        }
-        const nc = body.serviceSpecialData_Json.data && body.serviceSpecialData_Json.data.number_content;
-        const tickets = TodayBoard.numberContentToTickets(nc || []);
-        const board = TodayBoard.buildTodayBoard(storeId, nextSeq(), tickets, 'A');
-        writeJson(storage, boardKey(storeId), board);
-        channel({ type: 'board', storeId: storeId });
         const online = storeHasOnlineBox();
         const information = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        let seq = null;
+        if (online) {
+          const nc = parsed.serviceSpecialData_Json.data && parsed.serviceSpecialData_Json.data.number_content;
+          const tickets = TodayBoard.numberContentToTickets(nc || []);
+          seq = nextSeq();
+          const board = TodayBoard.buildTodayBoard(storeId, seq, tickets, 'A');
+          writeJson(storage, boardKey(storeId), board);
+          channel({ type: 'board', storeId: storeId });
+        }
         appendReceiveLog({
           kind: 'posReceiver',
           isSuccess: online,
           information: information,
-          seq: board.seq,
+          seq: seq,
         });
-        return { isSuccess: online, information: information, seq: board.seq };
+        return { isSuccess: online, information: information, seq: seq };
       },
     };
 
