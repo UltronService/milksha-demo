@@ -6,6 +6,8 @@ const ART = '/opt/cursor/artifacts';
 const MSG_401 = '登入已過期。請重新登入，再送出指令。';
 const MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
 const MSG_400 = '指令內容不正確。請檢查欄位，再送出。';
+const MSG_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
+const MSG_500 = '雲端暫時出錯。請稍後再送一次。';
 
 test.beforeAll(() => {
   mkdirSync(ART, { recursive: true });
@@ -71,11 +73,24 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   });
   await controller.fill('#fld-device', 'bad device');
   await controller.click('#btn-restore');
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_DEVICE_ID);
+  const detailDevice = await controller.getByTestId('command-error-detail').textContent();
+  expect(detailDevice).toMatch(/400/);
+  expect(detailDevice).not.toMatch(/Bearer|idToken|POS/i);
+  await controller.screenshot({ path: `${ART}/controller-alert-invalid-device-id.png`, fullPage: false });
+
+  await controller.getByTestId('command-error-close').click();
+  await controller.fill('#fld-device', 'stb-01');
+  await rejectDevCommand(controller, 400, { error: 'invalid_command_params', message: 'bad params' });
+  await controller.click('#btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_400);
-  const detail = await controller.getByTestId('command-error-detail').textContent();
-  expect(detail).toMatch(/400/);
-  expect(detail).not.toMatch(/Bearer|idToken|POS/i);
   await controller.screenshot({ path: `${ART}/controller-alert-400.png`, fullPage: false });
+
+  await rejectDevCommand(controller, 500, { error: 'internal_error', message: 'internal_error' });
+  await controller.getByTestId('command-error-close').click();
+  await controller.click('#btn-restore');
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_500);
+  await controller.screenshot({ path: `${ART}/controller-alert-500.png`, fullPage: false });
 
   await controller.fill('#fld-device', 'stb-01');
   await controller.evaluate(() => {

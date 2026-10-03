@@ -10,16 +10,33 @@
   const USER_MSG_401 = '登入已過期。請重新登入，再送出指令。';
   const USER_MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
+  const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
+  const USER_MSG_INTERNAL_ERROR = '雲端暫時出錯。請稍後再送一次。';
 
   const SENSITIVE_KEY_RE =
     /(token|authorization|password|secret|apikey|api_key|signkey|sign_key|poskey|pos_key|signature|refreshtoken|idtoken|accesscode|access_code)/i;
 
-  function isInvalidParamsStatus(status, response) {
-    if (Number(status) !== 400) {
-      return false;
+  /**
+   * @param {{ status?: number, response?: object }} err
+   * @param {{ validationCode?: string }} [opts]
+   * @returns {string}
+   */
+  function resolveErrorCode(err, opts) {
+    const response = err && err.response ? err.response : null;
+    if (response && response.error != null && String(response.error)) {
+      return String(response.error);
     }
-    const code = response && response.error != null ? String(response.error) : '';
-    return code === 'invalid_command_params' || code === 'invalid_device_id';
+    if (opts && opts.validationCode) {
+      return String(opts.validationCode);
+    }
+    const status = err && err.status ? Number(err.status) : 0;
+    if (status === 404) {
+      return 'device_not_found';
+    }
+    if (status === 500) {
+      return 'internal_error';
+    }
+    return '';
   }
 
   /**
@@ -30,18 +47,22 @@
   function devCommandUserMessage(err, opts) {
     const status = err && err.status ? Number(err.status) : 0;
     const response = err && err.response ? err.response : null;
-    if (status === 401) {
+    const code = resolveErrorCode(err, opts);
+
+    if (status === 401 || code === 'invalid_token') {
       return USER_MSG_401;
     }
-    if (status === 404) {
+    if (code === 'device_not_found') {
       return USER_MSG_404;
     }
-    if (isInvalidParamsStatus(status, response)) {
+    if (code === 'invalid_device_id') {
+      return USER_MSG_INVALID_DEVICE_ID;
+    }
+    if (code === 'invalid_command_params') {
       return USER_MSG_400_INVALID;
     }
-    const vCode = opts && opts.validationCode ? String(opts.validationCode) : '';
-    if (vCode === 'invalid_command_params' || vCode === 'invalid_device_id') {
-      return USER_MSG_400_INVALID;
+    if (code === 'internal_error' || status === 500) {
+      return USER_MSG_INTERNAL_ERROR;
     }
     if (status === 400) {
       return USER_MSG_400_INVALID;
@@ -111,8 +132,10 @@
     USER_MSG_401: USER_MSG_401,
     USER_MSG_404: USER_MSG_404,
     USER_MSG_400_INVALID: USER_MSG_400_INVALID,
+    USER_MSG_INVALID_DEVICE_ID: USER_MSG_INVALID_DEVICE_ID,
+    USER_MSG_INTERNAL_ERROR: USER_MSG_INTERNAL_ERROR,
     devCommandUserMessage: devCommandUserMessage,
-    isInvalidParamsStatus: isInvalidParamsStatus,
+    resolveErrorCode: resolveErrorCode,
     sanitizeForDetail: sanitizeForDetail,
     formatErrorDetailText: formatErrorDetailText,
   };
