@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,9 +45,17 @@ function startStaticSite(rootDir) {
 }
 
 async function showRing8888(page) {
-  await page.waitForFunction(() => window.QMS?.Receiver?.RingHost?.playReadyRing, null, {
-    timeout: 20000,
-  });
+  await page.waitForFunction(
+    () => {
+      const RH = window.QMS?.Receiver?.RingHost;
+      return (
+        RH &&
+        (typeof RH.showRingOverlayForTests === 'function' || typeof RH.playReadyRing === 'function')
+      );
+    },
+    null,
+    { timeout: 20000 },
+  );
   await page.evaluate((num) => {
     const RH = window.QMS.Receiver.RingHost;
     if (typeof RH.showRingOverlayForTests === 'function') {
@@ -78,6 +86,10 @@ test('board ready 8888 screenshots at key viewports', async ({ browser }) => {
 });
 
 test('6975672 baseline ring screenshot at 1920x1080', async ({ browser }) => {
+  test.skip(
+    !existsSync(join(BASELINE_ROOT, 'receiver-demo', 'index.html')),
+    '6975672 worktree missing (run global-setup or git worktree add)',
+  );
   mkdirSync(ART, { recursive: true });
   const { server, base } = await startStaticSite(BASELINE_ROOT);
   try {

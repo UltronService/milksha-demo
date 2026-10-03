@@ -103,16 +103,18 @@
         font-variant-numeric: tabular-nums;
         color: #000;
       }
-      @media (width: 1920px) {
+      /* 6975672 geometry: 1920×1080 design width (tolerant band for sub-pixel layout). */
+      @media (min-width: 1900px) and (max-width: 1940px) {
         #rcv-ring-box {
           width: auto;
           max-width: var(--rcv-ring-box-max);
+          min-width: 0;
         }
         .rcv-ring-num {
           font-size: var(--rcv-ring-num-size);
         }
       }
-      @media not (width: 1920px) {
+      @media (max-width: 1899px), (min-width: 1941px) {
         #rcv-ring-box {
           width: var(--rcv-ring-box-max);
           min-width: var(--rcv-ring-box-max);
