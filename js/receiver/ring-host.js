@@ -9,6 +9,9 @@
 
   root.__rcvTelemetry = root.__rcvTelemetry || { ringCount: 0, ringEvents: [] };
 
+  let sharedAudioContext = null;
+  let audioContextCreateCount = 0;
+
   function ensureOverlay() {
     let ov = root.document.getElementById('rcv-ring-ov');
     if (ov) {
@@ -25,25 +28,28 @@
     return ov;
   }
 
-  /**
-   * @param {string} number
-   */
-  function playReadyRing(number) {
-    root.__rcvTelemetry.ringCount += 1;
-    root.__rcvTelemetry.ringEvents.push({ at: Date.now(), number: number });
-    const ov = ensureOverlay();
-    const box = root.document.getElementById('rcv-ring-box');
-    if (box) {
-      box.textContent = number;
+  function getSharedAudioContext() {
+    if (sharedAudioContext) {
+      return sharedAudioContext;
     }
-    ov.style.opacity = '1';
-    window.setTimeout(function () {
-      ov.style.opacity = '0';
-    }, 800);
+    const Ctx = root.AudioContext || root.webkitAudioContext;
+    if (!Ctx) {
+      return null;
+    }
+    sharedAudioContext = new Ctx();
+    audioContextCreateCount += 1;
+    return sharedAudioContext;
+  }
+
+  function playWebChime() {
     try {
-      const Ctx = root.AudioContext || root.webkitAudioContext;
-      if (Ctx) {
-        const ctx = new Ctx();
+      const ctx = getSharedAudioContext();
+      if (!ctx) {
+        return;
+      }
+      const resumePromise =
+        ctx.state === 'suspended' && typeof ctx.resume === 'function' ? ctx.resume() : null;
+      const run = function () {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.connect(g);
@@ -52,10 +58,39 @@
         g.gain.value = 0.08;
         o.start();
         o.stop(ctx.currentTime + 0.15);
+      };
+      if (resumePromise && typeof resumePromise.then === 'function') {
+        resumePromise.then(run).catch(function () {
+          /* autoplay blocked */
+        });
+        return;
       }
+      run();
     } catch (e) {
       /* autoplay blocked */
     }
+  }
+
+  function showRingOverlay(number) {
+    const ov = ensureOverlay();
+    const box = root.document.getElementById('rcv-ring-box');
+    if (box) {
+      box.textContent = number;
+    }
+    ov.style.opacity = '1';
+    root.setTimeout(function () {
+      ov.style.opacity = '0';
+    }, 800);
+  }
+
+  /**
+   * @param {string} number
+   */
+  function playReadyRing(number) {
+    root.__rcvTelemetry.ringCount += 1;
+    root.__rcvTelemetry.ringEvents.push({ at: Date.now(), number: number });
+    showRingOverlay(number);
+    playWebChime();
   }
 
   QMS.Receiver.RingHost = {
@@ -63,6 +98,13 @@
     resetTelemetry: function () {
       root.__rcvTelemetry.ringCount = 0;
       root.__rcvTelemetry.ringEvents = [];
+    },
+    getAudioContextCreateCount: function () {
+      return audioContextCreateCount;
+    },
+    _resetAudioContextForTests: function () {
+      sharedAudioContext = null;
+      audioContextCreateCount = 0;
     },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -485,6 +485,7 @@
         var offlineCb = document.getElementById('rcv-offline');
 
         var currentRows = [];
+        var hasReceivedBoardData = false;
         var metaById = {};
         var readyPage = 0;
         var prepPage = 0;
@@ -821,12 +822,12 @@
 
         var EMPTY_BOARD_HINT = '目前沒有號碼';
 
-        function syncEmptyHint(boardEmpty) {
+        function syncEmptyHint(showHint) {
           var hint = document.getElementById('rcv-empty-board-hint');
           if (!hint) {
             return;
           }
-          if (boardEmpty) {
+          if (showHint) {
             hint.hidden = false;
             hint.style.top = HEADER + 'px';
             hint.style.height = H - HEADER + 'px';
@@ -865,7 +866,7 @@
           var boardEmpty = readyEmpty && prepEmpty;
           touchMeta(part.ready.concat(part.preparing));
           pruneMeta(part.ready, part.preparing);
-          syncEmptyHint(boardEmpty);
+          syncEmptyHint(boardEmpty && hasReceivedBoardData);
           if (boardEmpty) {
             clearZoneDisplay('ready');
             clearZoneDisplay('prep');
@@ -991,6 +992,7 @@
           currentRows = v.numberContent.map(function (r) {
             return { source_type: r.source_type, number: r.number };
           });
+          hasReceivedBoardData = true;
           readyPage = 0;
           renderBoard();
           return buildResponse(boundStore, true, MSG.ok);

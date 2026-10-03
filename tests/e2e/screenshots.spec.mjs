@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
