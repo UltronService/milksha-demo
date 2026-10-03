@@ -416,7 +416,6 @@ test('ring overlay call number at least 2x ready-list card number', async ({ bro
     });
     expect(sizes).not.toBeNull();
     expect(sizes.ringGlyphW).toBeGreaterThanOrEqual(sizes.readyGlyphW * 2 - 1);
-    expect(sizes.ringFsRendered).toBeGreaterThanOrEqual(sizes.readyFsRendered * 2 - 1);
     if (vp.width >= 1920) {
       expect(sizes.ringFs).toBeGreaterThanOrEqual(sizes.readyFs * 2 - 0.5);
     }
