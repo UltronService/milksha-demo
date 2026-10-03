@@ -8,8 +8,8 @@ const COMMITTED_DIR = join(dirname(fileURLToPath(import.meta.url)), 'committed-a
 
 const VIEW = { width: 1920, height: 1080 };
 
-/** Golden layout at 1920×1080 (ring overlay, 4-digit 8801) — must not drift when scaling rules change. */
-const RING_BASELINE_1920 = { boxWidth: 900, numWidth: 640.640625 };
+/** Golden layout at 1920×1080 (ring overlay, 4-digit 8801) — box + font size; text width varies by host fonts. */
+const RING_BASELINE_1920 = { boxWidth: 900, ringFontPx: 280 };
 
 async function seedReadyNumber(page, number = '8801') {
   await page.evaluate((num) => {
@@ -226,7 +226,10 @@ test('ring overlay at 1920x1080 matches baseline box and number width', async ({
   const m = await measureRingOverlay(receiver);
   expect(m).not.toBeNull();
   expect(Math.abs(m.boxWidth - RING_BASELINE_1920.boxWidth)).toBeLessThan(1.5);
-  expect(Math.abs(m.numWidth - RING_BASELINE_1920.numWidth)).toBeLessThan(1.5);
+  expect(Math.abs(m.ringFontPx - RING_BASELINE_1920.ringFontPx)).toBeLessThan(2);
+  expect(m.numWidth).toBeLessThanOrEqual(m.innerWidth + 0.5);
+  expect(m.sideMarginPct).toBeGreaterThanOrEqual(0.03);
+  expect(m.numWidth / m.innerWidth).toBeLessThan(0.95);
   await ctx.close();
 });
 
