@@ -1,13 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint } from './harness.mjs';
+import { e2eArtifactsDir } from './artifact-dir.mjs';
 
-const ART = '/opt/cursor/artifacts';
-
-test.beforeAll(() => {
-  mkdirSync(ART, { recursive: true });
-});
+const ART = e2eArtifactsDir();
 
 test('save controller and board screenshots', async ({ browser }) => {
   const { recv, ctrl } = urlsForMode('local');

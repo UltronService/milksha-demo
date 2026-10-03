@@ -103,6 +103,7 @@
   letter-spacing: 4px;
   pointer-events: none;
   z-index: 2;
+  transition: none;
 }
 
 .milksha-zone-body--idle {

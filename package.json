@@ -3,7 +3,7 @@
   "private": true,
   "description": "迷客夏取餐叫號看板 GitHub Pages 展示站",
   "scripts": {
-    "test": "node --test tests/**/*.test.js",
+    "test": "node scripts/run-unit-tests.mjs",
     "fake-cloud": "node tools/fake-cloud/server.mjs",
     "test:e2e": "playwright test tests/e2e"
   },

@@ -1,12 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
 import { urlsForMode, connectController, resetCloudState } from './harness.mjs';
+import { e2eArtifactsDir } from './artifact-dir.mjs';
 
-const ART = '/opt/cursor/artifacts';
-
-test.beforeAll(() => {
-  mkdirSync(ART, { recursive: true });
-});
+const ART = e2eArtifactsDir();
 
 test('guest board empty state keeps zone headers and hint', async ({ browser }) => {
   const { recv, ctrl } = urlsForMode('local');
@@ -37,6 +33,8 @@ test('guest board empty state keeps zone headers and hint', async ({ browser }) 
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '8801' })).toBeVisible({
     timeout: 15000,
   });
+
+  await expect(receiver.locator('#rcv-empty-board-hint')).toBeHidden();
 
   await controller.click('#btn-clear-board');
   await expect(receiver.locator('#rcv-empty-board-hint')).toBeVisible({ timeout: 15000 });

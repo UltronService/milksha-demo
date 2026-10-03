@@ -130,7 +130,7 @@ export function urlsForMode(mode) {
   const emu = mode === 'firestore' ? '&emulatorPrefix=__emulator' : '';
   const emuKey = mode === 'firestore' ? '&key=fake-api-key-for-emulator&project=milksha-qms-dev' : '';
   const recv =
-    `${base}/receiver-demo/?mode=${mode}&store=s120030&device=stb-01&code=dev-controller-access-2026` +
+    `${base}/receiver-demo/?mode=${mode}&store=s120030&device=stb-01` +
     (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
   const ctrl =
     `${base}/controller/?mode=${mode}` + (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
@@ -147,6 +147,7 @@ export async function freshContext(browser) {
         localStorage.clear();
         localStorage.setItem('__e2e_init', '1');
       }
+      localStorage.setItem('milksha:accessCode', 'dev-controller-access-2026');
     } catch {
       /* ignore */
     }

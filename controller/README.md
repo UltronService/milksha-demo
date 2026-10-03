@@ -25,6 +25,10 @@
 - POS 金鑰：僅在控制頁「測試環境專用 POS 金鑰」輸入，存於瀏覽器 localStorage（勿提交 Git、勿放入看板 `#cfg=` 連結）
 - 驗證與簽名規則見 [docs/entry-a-pos-api.md](../docs/entry-a-pos-api.md)（與 milksha-cloud 入口 A 一致）
 
+## 看板設定連結
+
+「產生看板連結」輸出 `#cfg=` URL（含存取碼）。看板讀取後存本機並清除 hash。測試環境由工程人員私下交 Android 工程師用 Ultron APK 裝進機上盒；詳見 [docs/EMULATOR.md](../docs/EMULATOR.md)。
+
 ## 模擬器
 
 見 [docs/EMULATOR.md](../docs/EMULATOR.md)。本機假雲端：`npm run fake-cloud`。

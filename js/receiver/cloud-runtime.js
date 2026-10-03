@@ -359,6 +359,7 @@
           Validate.parseSourceType,
           Validate.itemId,
         );
+        // Reload shows cached list as the first batch (silent chime); extra chime after reload is accepted.
         applyNumberContent(cached.numberContent, localSeq, { silent: true });
         prevReadySet = BoardSeq.readyIdSetFromContent(
           cached.numberContent,

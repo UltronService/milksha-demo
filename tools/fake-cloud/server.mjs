@@ -14,6 +14,7 @@ import {
   httpStatusForApiErrorCode,
 } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
+import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 
@@ -79,8 +80,37 @@ function deviceKey(storeId, deviceId) {
   return `stores/${storeId}/devices/${deviceId}`;
 }
 
-function taipeiDate() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(new Date());
+function seedE2eDevice() {
+  docs.set(deviceKey('s120030', 'stb-01'), {
+    online: false,
+    lastSeen: '',
+    appVersion: '',
+    boardSeq: 0,
+    pendingUploads: 0,
+    simulatedOffline: false,
+    pendingCommand: null,
+  });
+}
+
+/** @param {object} board */
+function materializeTodayBoard(board) {
+  if (!board || typeof board !== 'object') {
+    return board;
+  }
+  if (isCurrentBusinessDate(board.businessDate)) {
+    return board;
+  }
+  const cleared = {
+    storeId: board.storeId,
+    businessDate: taipeiBusinessDate(),
+    seq: board.seq || 0,
+    updatedAt: new Date().toISOString(),
+    source: 'system',
+    tickets: [],
+    clearedAt: new Date().toISOString(),
+  };
+  docs.set(boardKey(board.storeId), cleared);
+  return cleared;
 }
 
 function nextSeq(storeId) {
@@ -194,6 +224,21 @@ const server = http.createServer(async (req, res) => {
       docs.clear();
       logs.clear();
       posReceiverEntryAEnabled = true;
+      seedE2eDevice();
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/seed-board' && req.method === 'POST') {
+      const body = await readBody(req);
+      const storeId = body.storeId || 's120030';
+      docs.set(boardKey(storeId), {
+        storeId,
+        businessDate: body.businessDate || '2020-01-01',
+        seq: Number(body.seq) || 1,
+        updatedAt: new Date().toISOString(),
+        source: 'A',
+        tickets: Array.isArray(body.tickets) ? body.tickets : [],
+        clearedAt: null,
+      });
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/test/posReceiverA' && req.method === 'POST') {
@@ -246,7 +291,7 @@ const server = http.createServer(async (req, res) => {
           seq = nextSeq(storeId);
           const board = {
             storeId,
-            businessDate: taipeiDate(),
+            businessDate: taipeiBusinessDate(),
             seq: seq,
             updatedAt: new Date().toISOString(),
             source: 'A',
@@ -275,6 +320,9 @@ const server = http.createServer(async (req, res) => {
         }
         const hb = hv.body;
         const dk = deviceKey(hb.storeId, hb.deviceId);
+        if (!docs.has(dk)) {
+          return json(res, 404, { error: 'device_not_found', message: 'device not found' });
+        }
         const prev = docs.get(dk) || {};
         docs.set(dk, {
           ...prev,
@@ -321,7 +369,7 @@ const server = http.createServer(async (req, res) => {
         if (cmdBody.type === 'clear_now') {
           docs.set(boardKey(cmdBody.storeId), {
             storeId: cmdBody.storeId,
-            businessDate: taipeiDate(),
+            businessDate: taipeiBusinessDate(),
             seq: nextSeq(cmdBody.storeId),
             updatedAt: new Date().toISOString(),
             source: 'system',
@@ -347,8 +395,11 @@ const server = http.createServer(async (req, res) => {
       const docAuth = requireAuth(req);
       if (!docAuth.ok) return json(res, docAuth.status, docAuth.body);
       const rel = decodeURIComponent(url.pathname.slice(docPrefix.length)).replace(/\/$/, '');
-      const data = docs.get(rel);
+      let data = docs.get(rel);
       if (data) {
+        if (rel.endsWith('/board/today_board')) {
+          data = materializeTodayBoard(data);
+        }
         return json(res, 200, {
           name: `projects/${PROJECT}/databases/(default)/documents/${rel}`,
           fields: encodeFields(data).fields,
@@ -380,6 +431,8 @@ const server = http.createServer(async (req, res) => {
     json(res, 500, { error: 'internal_error', message: 'internal_error' });
   }
 });
+
+seedE2eDevice();
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`fake-cloud listening on http://127.0.0.1:${PORT}`);

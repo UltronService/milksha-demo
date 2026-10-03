@@ -48,6 +48,24 @@ test('cloud settings round-trip and hash import', function () {
   assert.equal(loaded.accessCode, 'secret-code');
 });
 
+test('applyHashImport stores accessCode and strips cfg from address bar', function () {
+  const { CS, sandbox } = loadCloudSettings();
+  let replaced = '';
+  sandbox.history.replaceState = function (_s, _t, url) {
+    replaced = url;
+  };
+  const hash = CS.encodeCfgHash({
+    projectId: 'p1',
+    apiKey: 'k1',
+    region: 'asia-east1',
+    accessCode: 'trial-access-99',
+  });
+  sandbox.location.hash = '#cfg=' + hash;
+  assert.equal(CS.applyHashImport(), true);
+  assert.equal(CS.load().accessCode, 'trial-access-99');
+  assert.equal(replaced, '/receiver-demo/?mode=cloud');
+});
+
 test('board setup hash never contains POS signing key', function () {
   const { CS, sandbox } = loadCloudSettings();
   const posKey = 'user-pos-sign-key-unique-xyz-99';

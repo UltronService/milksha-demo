@@ -43,3 +43,10 @@ test('empty board message and full-empty detection', function () {
   assert.equal(MB.isBoardFullyEmpty([{ id: 'a:1' }], []), false);
   assert.equal(MB.isBoardFullyEmpty([], [{ id: 'a:2' }]), false);
 });
+
+test('hint copy applies only when both zones are empty', function () {
+  const MB = loadMilkshaBoard();
+  assert.equal(MB.isBoardFullyEmpty([], []), true);
+  assert.equal(MB.isBoardFullyEmpty([{ id: 'x:1' }], []), false);
+  assert.equal(MB.isBoardFullyEmpty([], [{ id: 'x:2' }]), false);
+});

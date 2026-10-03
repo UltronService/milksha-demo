@@ -1,18 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
 import { connectController, urlsForMode } from './harness.mjs';
+import { e2eArtifactsDir } from './artifact-dir.mjs';
 
-const ART = '/opt/cursor/artifacts';
+const ART = e2eArtifactsDir();
 const MSG_401 = '登入已過期。請重新登入，再送出指令。';
 const MSG_403 = '這個帳號沒有這間店的權限。請檢查店號。';
 const MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
 const MSG_400 = '指令內容不正確。請檢查欄位，再送出。';
 const MSG_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
 const MSG_500 = '雲端暫時出錯。請稍後再送一次。';
-
-test.beforeAll(() => {
-  mkdirSync(ART, { recursive: true });
-});
 
 async function openNetZone(controller) {
   await controller.evaluate(() => {

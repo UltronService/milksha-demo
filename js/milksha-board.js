@@ -461,6 +461,8 @@
       prepPage = clampPage(prepPage, prepPages);
 
       const boardFullyEmpty = isBoardFullyEmpty(readyItems, prepItems);
+      const readyZoneEmpty = readyItems.length === 0;
+      const prepZoneEmpty = prepItems.length === 0;
       const readySlice = slicePage(readyItems, readyPage, readyPer);
       const prepSlice = slicePage(prepItems, prepPage, prepPer);
 
@@ -478,9 +480,10 @@
         slice,
         isReady,
         progStart,
+        zoneListEmpty,
         boardFullyEmpty,
       ) {
-        const showPager = !boardFullyEmpty && totalPages > 1;
+        const showPager = !zoneListEmpty && !boardFullyEmpty && totalPages > 1;
         let z =
           '<div class="milksha-zone ' +
           cls +
@@ -516,7 +519,7 @@
         }
         z += '</div>';
         const bodyH = hh - zcfg.titleH - 24;
-        if (boardFullyEmpty) {
+        if (boardFullyEmpty || zoneListEmpty) {
           z +=
             '<div class="milksha-zone-body milksha-zone-body--idle" style="height:' +
             bodyH +
@@ -598,6 +601,7 @@
         readySlice,
         true,
         readyPageStartedAt,
+        readyZoneEmpty,
         boardFullyEmpty,
       );
       html += zoneHtml(
@@ -614,6 +618,7 @@
         prepSlice,
         false,
         prepPageStartedAt,
+        prepZoneEmpty,
         boardFullyEmpty,
       );
 

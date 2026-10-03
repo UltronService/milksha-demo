@@ -8,16 +8,9 @@
     const storeId = params.get('store') || 's120030';
     const deviceId = params.get('device') || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
     const saved = root.QMS.Transport.CloudSettings.load();
-    const code =
-      params.get('code') ||
-      saved.accessCode ||
-      root.localStorage.getItem('milksha:accessCode') ||
-      '';
+    const code = saved.accessCode || root.localStorage.getItem('milksha:accessCode') || '';
     if (params.get('device')) {
       root.localStorage.setItem('milksha:deviceId', deviceId);
-    }
-    if (code) {
-      root.localStorage.setItem('milksha:accessCode', code);
     }
     return { storeId: storeId, deviceId: deviceId, accessCode: code };
   }

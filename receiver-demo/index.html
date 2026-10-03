@@ -188,7 +188,7 @@
       .rcv-empty-board-hint {
         position: absolute;
         left: 0;
-        right: 0;
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -199,6 +199,10 @@
         letter-spacing: 4px;
         pointer-events: none;
         z-index: 2;
+        transition: none;
+      }
+      .rcv-empty-board-hint[hidden] {
+        display: none !important;
       }
       .rcv-prog-bar {
         display: block;
@@ -817,61 +821,72 @@
 
         var EMPTY_BOARD_HINT = '目前沒有號碼';
 
-        function syncEmptyHint(boardEmpty, contentTop, contentHeight) {
+        function syncEmptyHint(boardEmpty) {
           var hint = document.getElementById('rcv-empty-board-hint');
           if (!hint) {
             return;
           }
           if (boardEmpty) {
             hint.hidden = false;
-            hint.style.top = contentTop + 'px';
-            hint.style.height = contentHeight + 'px';
+            hint.style.top = HEADER + 'px';
+            hint.style.height = H - HEADER + 'px';
           } else {
             hint.hidden = true;
           }
         }
 
+        function clearZoneDisplay(zone) {
+          var pgEl = document.getElementById('rcv-pg-' + zone);
+          if (pgEl) {
+            pgEl.textContent = '';
+            pgEl.style.display = 'none';
+          }
+          var pool = cardPool[zone];
+          for (var ci = 0; ci < pool.length; ci += 1) {
+            pool[ci].style.display = 'none';
+            var tagSlot = pool[ci].querySelector('.rcv-tag-slot');
+            var numEl = pool[ci].querySelector('.rcv-num');
+            if (tagSlot) {
+              tagSlot.innerHTML = '';
+            }
+            if (numEl) {
+              numEl.textContent = '';
+            }
+          }
+          if (gridDom[zone]) {
+            gridDom[zone].style.display = 'none';
+          }
+        }
+
         function renderBoard() {
           var part = partition(currentRows);
-          var boardEmpty = part.ready.length === 0 && part.preparing.length === 0;
+          var readyEmpty = part.ready.length === 0;
+          var prepEmpty = part.preparing.length === 0;
+          var boardEmpty = readyEmpty && prepEmpty;
           touchMeta(part.ready.concat(part.preparing));
           pruneMeta(part.ready, part.preparing);
-          var geom = layoutZones();
-          var contentTop = HEADER;
-          var contentHeight = geom.ready.height;
-          syncEmptyHint(boardEmpty, contentTop, contentHeight);
+          syncEmptyHint(boardEmpty);
           if (boardEmpty) {
-            ['ready', 'prep'].forEach(function (z) {
-              var pgEl = document.getElementById('rcv-pg-' + z);
-              if (pgEl) {
-                pgEl.textContent = '';
-                pgEl.style.display = 'none';
-              }
-              var pool = cardPool[z];
-              for (var ci = 0; ci < pool.length; ci += 1) {
-                pool[ci].style.display = 'none';
-                var tagSlot = pool[ci].querySelector('.rcv-tag-slot');
-                var numEl = pool[ci].querySelector('.rcv-num');
-                if (tagSlot) {
-                  tagSlot.innerHTML = '';
-                }
-                if (numEl) {
-                  numEl.textContent = '';
-                }
-              }
-              if (gridDom[z]) {
-                gridDom[z].style.display = 'none';
-              }
-            });
+            clearZoneDisplay('ready');
+            clearZoneDisplay('prep');
             return;
           }
-          ['ready', 'prep'].forEach(function (z) {
-            if (gridDom[z]) {
-              gridDom[z].style.display = '';
+          if (readyEmpty) {
+            clearZoneDisplay('ready');
+          } else {
+            if (gridDom.ready) {
+              gridDom.ready.style.display = '';
             }
-          });
-          renderZone('ready', part.ready, READY, true);
-          renderZone('prep', part.preparing, PREP, false);
+            renderZone('ready', part.ready, READY, true);
+          }
+          if (prepEmpty) {
+            clearZoneDisplay('prep');
+          } else {
+            if (gridDom.prep) {
+              gridDom.prep.style.display = '';
+            }
+            renderZone('prep', part.preparing, PREP, false);
+          }
         }
 
         function startPageTimers() {
