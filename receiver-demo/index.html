@@ -957,8 +957,6 @@
           return { ok: true, target: ssd.target, numberContent: nc };
         }
 
-        var guestPrevReady = {};
-
         function processPush(body, pushOpts) {
           var opts = pushOpts || {};
           if (!opts.skipOfflineCheck && demoMode && offlineCb && offlineCb.checked) {

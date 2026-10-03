@@ -8,6 +8,8 @@
   QMS.Transport = QMS.Transport || {};
 
   const USER_MSG_401 = '登入已過期。請重新登入，再送出指令。';
+  const USER_MSG_403 =
+    '這個帳號沒有這間店的權限。請檢查店號。';
   const USER_MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
   const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
@@ -49,7 +51,10 @@
     const response = err && err.response ? err.response : null;
     const code = resolveErrorCode(err, opts);
 
-    if (status === 401 || status === 403 || code === 'invalid_token' || code === 'forbidden') {
+    if (status === 403 || code === 'forbidden') {
+      return USER_MSG_403;
+    }
+    if (status === 401 || code === 'invalid_token') {
       return USER_MSG_401;
     }
     if (code === 'device_not_found') {
@@ -133,6 +138,7 @@
 
   QMS.Transport.ControllerCommandErrors = {
     USER_MSG_401: USER_MSG_401,
+    USER_MSG_403: USER_MSG_403,
     USER_MSG_404: USER_MSG_404,
     USER_MSG_400_INVALID: USER_MSG_400_INVALID,
     USER_MSG_INVALID_DEVICE_ID: USER_MSG_INVALID_DEVICE_ID,

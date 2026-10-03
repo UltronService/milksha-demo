@@ -44,18 +44,13 @@
         return json || { isSuccess: false, information: '空回應' };
       }
       if (!res.ok) {
-        if (
-          withAuth &&
-          (res.status === 401 || res.status === 403) &&
-          session.refreshIdToken &&
-          !authRetried
-        ) {
+        if (withAuth && res.status === 401 && session.refreshIdToken && !authRetried) {
           try {
             await session.refreshIdToken();
             return postJson(name, body, withAuth, rawBody, true);
           } catch (refreshErr) {
             const err = new Error('login expired, please sign in again');
-            err.status = res.status === 403 ? 403 : 401;
+            err.status = 401;
             err.response = json;
             throw err;
           }

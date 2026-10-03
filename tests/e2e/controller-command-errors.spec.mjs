@@ -4,6 +4,7 @@ import { connectController, urlsForMode } from './harness.mjs';
 
 const ART = '/opt/cursor/artifacts';
 const MSG_401 = '登入已過期。請重新登入，再送出指令。';
+const MSG_403 = '這個帳號沒有這間店的權限。請檢查店號。';
 const MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
 const MSG_400 = '指令內容不正確。請檢查欄位，再送出。';
 const MSG_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
@@ -53,7 +54,8 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
 
   await rejectDevCommand(controller, 403, { error: 'forbidden', message: 'forbidden' });
   await controller.click('#btn-restore');
-  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401);
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403);
+  await controller.screenshot({ path: `${ART}/controller-alert-403.png`, fullPage: false });
   await controller.getByTestId('command-error-close').click();
 
   await rejectDevCommand(controller, 401, { error: 'invalid_token', message: 'login expired' });

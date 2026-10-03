@@ -173,7 +173,7 @@ function requireAuth(req) {
     return {
       ok: false,
       status: 403,
-      body: { error: 'forbidden', message: 'login expired, please sign in again' },
+      body: { error: 'forbidden', message: 'no permission for this store' },
     };
   }
   return { ok: true };

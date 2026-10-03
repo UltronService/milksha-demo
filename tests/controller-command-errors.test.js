@@ -39,7 +39,7 @@ test('devCommand user messages map by error code', function () {
     E.devCommandUserMessage({ status: 500, response: { error: 'internal_error' } }),
     E.USER_MSG_INTERNAL_ERROR,
   );
-  assert.equal(E.devCommandUserMessage({ status: 403, response: { error: 'forbidden' } }), E.USER_MSG_401);
+  assert.equal(E.devCommandUserMessage({ status: 403, response: { error: 'forbidden' } }), E.USER_MSG_403);
   assert.equal(
     E.devCommandUserMessage({ status: 400, response: { error: 'invalid_body' } }),
     E.USER_MSG_400_INVALID,
