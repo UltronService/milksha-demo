@@ -866,7 +866,10 @@
   });
   document.getElementById('btn-slow').addEventListener('click', function () {
     if (!requireConnect()) return;
-    const ms = Number(document.getElementById('fld-delay').value) || 3000;
+    const delayEl = document.getElementById('fld-delay');
+    const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const ms = DevCmd && DevCmd.clampTimingMs ? DevCmd.clampTimingMs(delayEl.value) : Number(delayEl.value) || 3000;
+    delayEl.value = String(ms);
     sendCommand('slow', { delayMs: ms }).catch(function () {});
   });
   document.getElementById('btn-cable-pull').addEventListener('click', function () {

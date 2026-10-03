@@ -24,7 +24,7 @@ test('devCommand user messages for 401 404 and invalid params', function () {
   assert.equal(E.devCommandUserMessage({ status: 401 }), E.USER_MSG_401);
   assert.equal(E.devCommandUserMessage({ status: 404 }), E.USER_MSG_404);
   assert.equal(
-    E.devCommandUserMessage({ status: 400, response: { error: 'invalid_params', message: 'x' } }),
+    E.devCommandUserMessage({ status: 400, response: { error: 'invalid_command_params', message: 'x' } }),
     E.USER_MSG_400_INVALID,
   );
   assert.equal(E.devCommandUserMessage({}, { validationCode: 'invalid_device_id' }), E.USER_MSG_400_INVALID);

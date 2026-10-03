@@ -7,7 +7,11 @@ import crypto from 'node:crypto';
 import { URL } from 'node:url';
 import { validatePosReceiverBody } from './pos-validate.mjs';
 import { extractRawJsonField } from './json-raw.mjs';
-import { validateDevCommandBody, validateBoxHeartbeatBody } from './dev-command-validation.mjs';
+import {
+  validateDevCommandBody,
+  validateBoxHeartbeatBody,
+  httpStatusForDevCommandCode,
+} from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
@@ -259,7 +263,7 @@ const server = http.createServer(async (req, res) => {
       if (name === 'boxHeartbeat') {
         const hv = validateBoxHeartbeatBody(body);
         if (!hv.ok) {
-          return json(res, 400, { error: hv.code, message: hv.message });
+          return json(res, httpStatusForDevCommandCode(hv.code), { error: hv.code, message: hv.message });
         }
         const hb = hv.body;
         const dk = deviceKey(hb.storeId, hb.deviceId);
@@ -288,7 +292,7 @@ const server = http.createServer(async (req, res) => {
       if (name === 'devCommand') {
         const cv = validateDevCommandBody(body);
         if (!cv.ok) {
-          return json(res, 400, { error: cv.code, message: cv.message });
+          return json(res, httpStatusForDevCommandCode(cv.code), { error: cv.code, message: cv.message });
         }
         const cmdBody = cv.body;
         const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);

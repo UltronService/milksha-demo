@@ -19,7 +19,7 @@
       return false;
     }
     const code = response && response.error != null ? String(response.error) : '';
-    return code.indexOf('invalid_') === 0;
+    return code === 'invalid_command_params' || code === 'invalid_device_id';
   }
 
   /**
@@ -40,7 +40,7 @@
       return USER_MSG_400_INVALID;
     }
     const vCode = opts && opts.validationCode ? String(opts.validationCode) : '';
-    if (vCode.indexOf('invalid_') === 0) {
+    if (vCode === 'invalid_command_params' || vCode === 'invalid_device_id') {
       return USER_MSG_400_INVALID;
     }
     if (status === 400) {

@@ -41,8 +41,11 @@ test('devCommand validation matches fake-cloud module', async function () {
   const cases = [
     { storeId: 's120030', deviceId: 'stb-01', type: 'restore', params: {} },
     { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 3000 } },
+    { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 60000 } },
     { storeId: 's120030', deviceId: 'bad id', type: 'restore', params: {} },
     { storeId: 's120030', deviceId: 'stb-01', type: 'restore', params: { delayMs: 1 } },
+    { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 60001 } },
+    { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 1.5 } },
   ];
   for (const c of cases) {
     const b = browser.buildDevCommandRequest(c);
@@ -79,6 +82,50 @@ test('fake-cloud devCommand returns 404 when device unknown', async function () 
   } finally {
     proc.kill();
   }
+});
+
+test('clampTimingMs bounds 0..60000', function () {
+  const Dev = loadBrowserDevCmd();
+  assert.equal(Dev.clampTimingMs(-5), 0);
+  assert.equal(Dev.clampTimingMs(999999), 60000);
+  assert.equal(Dev.clampTimingMs(3000.6), 3001);
+});
+
+test('invalid_device_id returns 400 from fake-cloud', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'bad id',
+        type: 'restore',
+        params: {},
+      }),
+    });
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.error, 'invalid_device_id');
+  } finally {
+    proc.kill();
+  }
+});
+
+test('delayMs over 60000 is invalid_command_params', function () {
+  const Dev = loadBrowserDevCmd();
+  const r = Dev.buildDevCommandRequest({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    type: 'slow',
+    params: { delayMs: 70000 },
+  });
+  assert.equal(r.ok, false);
+  assert.equal(r.code, 'invalid_command_params');
 });
 
 test('deviceId regex accepts stb-01 and rejects spaces', function () {

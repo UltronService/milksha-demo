@@ -1,5 +1,7 @@
 export const DEVICE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/;
 export const MAX_JSON_BYTES = 1024;
+export const MAX_PARAMS_BYTES = 1024;
+export const MAX_TIMING_MS = 60000;
 
 const COMMAND_PARAM_KEYS = {
   simulate_offline: ['durationMs'],
@@ -32,6 +34,33 @@ function hasOnlyKeys(obj, allowed) {
   return true;
 }
 
+function invalidCommandParams(message) {
+  return { ok: false, code: 'invalid_command_params', message: message || 'invalid command params' };
+}
+
+export function clampTimingMs(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 0;
+  const rounded = Math.round(n);
+  if (rounded < 0) return 0;
+  if (rounded > MAX_TIMING_MS) return MAX_TIMING_MS;
+  return rounded;
+}
+
+function parseTimingMs(value) {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true, omitted: true };
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) {
+    return invalidCommandParams('timing must be integer 0..60000');
+  }
+  if (n < 0 || n > MAX_TIMING_MS) {
+    return invalidCommandParams('timing must be integer 0..60000');
+  }
+  return { ok: true, value: n };
+}
+
 export function validateDeviceId(deviceId) {
   const id = String(deviceId || '').trim();
   if (!DEVICE_ID_RE.test(id)) {
@@ -43,26 +72,36 @@ export function validateDeviceId(deviceId) {
 function normalizeParams(type, params) {
   const allowed = COMMAND_PARAM_KEYS[type];
   if (!allowed) {
-    return { ok: false, code: 'invalid_type', message: 'invalid command type' };
+    return invalidCommandParams('invalid command type');
   }
   const raw = params === undefined || params === null ? {} : params;
   if (typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ok: false, code: 'invalid_params', message: 'invalid params' };
+    return invalidCommandParams('invalid params');
   }
   if (!hasOnlyKeys(raw, allowed)) {
-    return { ok: false, code: 'invalid_params', message: 'invalid params' };
+    return invalidCommandParams('invalid params');
   }
   const out = {};
   for (const key of allowed) {
     if (raw[key] === undefined) continue;
+    if (key === 'durationMs' || key === 'delayMs') {
+      const parsed = parseTimingMs(raw[key]);
+      if (!parsed.ok) return parsed;
+      if (!parsed.omitted) out[key] = parsed.value;
+      continue;
+    }
     const n = Number(raw[key]);
-    if (!Number.isFinite(n) || n < 0) {
-      return { ok: false, code: 'invalid_params', message: 'invalid params' };
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      return invalidCommandParams('invalid params');
     }
     out[key] = n;
   }
   if (allowed.length === 0 && Object.keys(raw).length > 0) {
-    return { ok: false, code: 'invalid_params', message: 'invalid params' };
+    return invalidCommandParams('invalid params');
+  }
+  const paramsJson = JSON.stringify(out);
+  if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
+    return invalidCommandParams('params too large');
   }
   return { ok: true, params: out };
 }
@@ -72,7 +111,7 @@ export function buildDevCommandRequest(input) {
   if (!dev.ok) return dev;
   const type = String(input.type || '').trim();
   if (!COMMAND_PARAM_KEYS[type]) {
-    return { ok: false, code: 'invalid_type', message: 'invalid command type' };
+    return invalidCommandParams('invalid command type');
   }
   const norm = normalizeParams(type, input.params);
   if (!norm.ok) return norm;
@@ -83,30 +122,37 @@ export function buildDevCommandRequest(input) {
     params: norm.params,
   };
   if (!body.storeId) {
-    return { ok: false, code: 'invalid_store', message: 'invalid store' };
+    return invalidCommandParams('invalid store');
   }
   const json = JSON.stringify(body);
   if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-    return { ok: false, code: 'invalid_body', message: 'request too large' };
+    return invalidCommandParams('request too large');
   }
   return { ok: true, body };
 }
 
 export function validateDevCommandBody(body) {
   if (!body || typeof body !== 'object') {
-    return { ok: false, code: 'invalid_body', message: 'invalid body' };
+    return invalidCommandParams('invalid body');
   }
   if (!hasOnlyKeys(body, ['storeId', 'deviceId', 'type', 'params'])) {
-    return { ok: false, code: 'invalid_body', message: 'invalid body' };
+    return invalidCommandParams('invalid body');
   }
   return buildDevCommandRequest(body);
+}
+
+export function httpStatusForDevCommandCode(code) {
+  if (code === 'device_not_found') return 404;
+  if (code === 'internal_error') return 500;
+  if (code === 'invalid_device_id' || code === 'invalid_command_params') return 400;
+  return 400;
 }
 
 export function buildBoxHeartbeatRequest(input) {
   const dev = validateDeviceId(input.deviceId);
   if (!dev.ok) return dev;
   if (!hasOnlyKeys(input, HEARTBEAT_KEYS)) {
-    return { ok: false, code: 'invalid_body', message: 'invalid body' };
+    return invalidCommandParams('invalid body');
   }
   const body = {
     storeId: String(input.storeId || '').trim(),
@@ -120,24 +166,24 @@ export function buildBoxHeartbeatRequest(input) {
     body.ackCommandId = String(input.ackCommandId);
   }
   if (!body.storeId) {
-    return { ok: false, code: 'invalid_store', message: 'invalid store' };
+    return invalidCommandParams('invalid store');
   }
   if (!Number.isFinite(body.boardSeq) || body.boardSeq < 0) {
-    return { ok: false, code: 'invalid_body', message: 'invalid boardSeq' };
+    return invalidCommandParams('invalid boardSeq');
   }
   if (!Number.isFinite(body.pendingUploads) || body.pendingUploads < 0) {
-    return { ok: false, code: 'invalid_body', message: 'invalid pendingUploads' };
+    return invalidCommandParams('invalid pendingUploads');
   }
   const json = JSON.stringify(body);
   if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-    return { ok: false, code: 'invalid_body', message: 'request too large' };
+    return invalidCommandParams('request too large');
   }
   return { ok: true, body };
 }
 
 export function validateBoxHeartbeatBody(body) {
   if (!body || typeof body !== 'object') {
-    return { ok: false, code: 'invalid_body', message: 'invalid body' };
+    return invalidCommandParams('invalid body');
   }
   return buildBoxHeartbeatRequest(body);
 }

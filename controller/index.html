@@ -196,7 +196,9 @@
             <button type="button" id="btn-offline" data-testid="btn-offline" data-requires-connect="1" data-dev-command="1">模擬斷網</button>
             <button type="button" id="btn-restore" data-testid="btn-restore" data-requires-connect="1" data-dev-command="1">恢復</button>
           </div>
-          <label>變慢（毫秒）<input id="fld-delay" type="number" value="3000" data-testid="fld-delay" /></label>
+          <label>變慢（毫秒）
+            <input id="fld-delay" type="number" value="3000" min="0" max="60000" step="1" data-testid="fld-delay" />
+          </label>
           <button type="button" id="btn-slow" data-testid="btn-slow" data-requires-connect="1" data-dev-command="1">模擬變慢</button>
           <button type="button" id="btn-cable-pull" data-testid="btn-cable-pull" data-requires-connect="1">拔線測試（暫停 API）</button>
           <button type="button" id="btn-cable-restore" data-testid="btn-cable-restore" data-requires-connect="1">接回線路</button>
