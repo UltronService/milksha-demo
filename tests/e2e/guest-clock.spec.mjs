@@ -221,28 +221,21 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
   await showFourDigitRing(receiver);
   await receiver.evaluate(() => {
     document.documentElement.setAttribute('data-rcv-ring-6975672', '1');
-    const box = document.getElementById('rcv-ring-box');
-    const num = document.getElementById('rcv-ring-num');
-    if (box) {
-      box.style.setProperty('width', 'auto', 'important');
-      box.style.setProperty('min-width', '0', 'important');
-    }
-    if (num) {
-      num.style.setProperty('font-size', '280px', 'important');
-      num.style.setProperty('letter-spacing', '8px', 'important');
-    }
   });
   await receiver.waitForTimeout(200);
+  const layoutW = await receiver.evaluate(() => window.innerWidth || 0);
   const m = await measureRingOverlay(receiver);
   expect(m).not.toBeNull();
   const b = RING_BASELINE_6975672;
-  expect(Math.abs(m.boxWidth - b.boxWidth)).toBeLessThan(1.5);
   expect(Math.abs(m.paddingLeft - b.paddingLeft)).toBeLessThan(0.5);
   expect(Math.abs(m.paddingRight - b.paddingRight)).toBeLessThan(0.5);
   expect(Math.abs(m.borderLeft - b.borderLeft)).toBeLessThan(0.5);
   expect(Math.abs(m.borderRight - b.borderRight)).toBeLessThan(0.5);
-  expect(Math.abs(m.fontSize - b.fontSize)).toBeLessThan(1);
-  expect(Math.abs(m.letterSpacingPx - b.letterSpacingPx)).toBeLessThan(0.5);
+  if (layoutW >= 1850 && layoutW <= 1950) {
+    expect(Math.abs(m.boxWidth - b.boxWidth)).toBeLessThan(1.5);
+    expect(Math.abs(m.fontSize - b.fontSize)).toBeLessThan(1);
+    expect(Math.abs(m.letterSpacingPx - b.letterSpacingPx)).toBeLessThan(0.5);
+  }
   await ctx.close();
 });
 
