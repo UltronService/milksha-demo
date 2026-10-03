@@ -42,10 +42,11 @@
     ov = root.document.createElement('div');
     ov.id = 'rcv-ring-ov';
     ov.setAttribute('aria-hidden', 'true');
-    ov.style.cssText =
-      'position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
     ov.innerHTML =
-      '<div id="rcv-ring-box" style="background:#fff;padding:24px 48px;border-radius:12px;font-size:120px;font-weight:900"></div>';
+      '<div id="rcv-ring-box">' +
+      '<div class="rcv-ring-label" id="rcv-ring-label">請取餐</div>' +
+      '<div class="rcv-ring-num" id="rcv-ring-num"></div>' +
+      '</div>';
     root.document.body.appendChild(ov);
     return ov;
   }
@@ -177,9 +178,9 @@
 
   function showRingOverlayForQueue(number) {
     const ov = ensureOverlay();
-    const box = root.document.getElementById('rcv-ring-box');
-    if (box) {
-      box.textContent = number;
+    const numEl = root.document.getElementById('rcv-ring-num');
+    if (numEl) {
+      numEl.textContent = number;
     }
     ov.style.opacity = '1';
   }

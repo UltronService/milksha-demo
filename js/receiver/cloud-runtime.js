@@ -122,18 +122,77 @@
       }
     }
 
+    function guestClockReferenceMs(boardDoc) {
+      if (boardDoc && boardDoc.httpDateReadable && boardDoc.httpDate) {
+        const t = Date.parse(boardDoc.httpDate);
+        if (!Number.isNaN(t)) {
+          return t;
+        }
+      }
+      if (boardDoc && boardDoc.data && boardDoc.data.updatedAt) {
+        const t = Date.parse(String(boardDoc.data.updatedAt));
+        if (!Number.isNaN(t)) {
+          return t;
+        }
+      }
+      return null;
+    }
+
+    function syncGuestClockAfterBoot() {
+      if (!demoApi || typeof demoApi.setGuestClockState !== 'function') {
+        return;
+      }
+      const cached = loadCache();
+      if (
+        cached &&
+        cached.businessDate &&
+        cached.boardUpdatedAt &&
+        !TodayBoard.shouldShowBootCache(cached, new Date())
+      ) {
+        demoApi.setGuestClockState({ hidden: true });
+        return;
+      }
+      demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+    }
+
+    function revealGuestClockFromCloudBoard(boardDoc) {
+      if (!demoApi || typeof demoApi.setGuestClockState !== 'function') {
+        return;
+      }
+      const refMs = guestClockReferenceMs(boardDoc);
+      const cached = loadCache();
+      if (
+        cached &&
+        cached.businessDate &&
+        cached.boardUpdatedAt &&
+        !TodayBoard.shouldShowBootCache(cached, new Date())
+      ) {
+        if (refMs != null) {
+          demoApi.setGuestClockState({ hidden: false, timeMs: refMs });
+          return;
+        }
+        demoApi.setGuestClockState({ hidden: true });
+        return;
+      }
+      if (refMs != null) {
+        demoApi.setGuestClockState({ hidden: false, timeMs: refMs });
+        return;
+      }
+      demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+    }
+
     function tryApplyBootCache() {
       const cached = loadCache();
       if (!TodayBoard.shouldShowBootCache(cached)) {
         return false;
       }
+      const list = Array.isArray(cached.numberContent) ? cached.numberContent : [];
+      if (list.length === 0) {
+        return false;
+      }
       const bd = String(cached.businessDate || '');
       TodayBoard.setSessionBusinessDate(bd);
       lastSessionBusinessDate = bd;
-      if (typeof cached.seq === 'number') {
-        localSeq = cached.seq;
-      }
-      const list = Array.isArray(cached.numberContent) ? cached.numberContent : [];
       applyNumberContent(list, localSeq, {
         silent: true,
         preserveFirstBatchFlag: true,
@@ -335,6 +394,7 @@
           return;
         }
         lastBoardUpdateTime = marker;
+        revealGuestClockFromCloudBoard(board);
         await tryApplyTodayBoard(board);
       } catch (e) {
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
@@ -447,6 +507,7 @@
       clockSkewSilentRefetchPending = false;
 
       tryApplyBootCache();
+      syncGuestClockAfterBoot();
 
       const kick = function () {
         sendHeartbeat();

@@ -73,6 +73,55 @@ function cloudSettingsInitScript() {
 }
 
 test.describe('guest board never shows connection status', () => {
+  test('offline boot with empty cache does not show empty hint', async ({ browser }) => {
+    const { recv } = urlsForMode('firestore');
+    const ctx = await browser.newContext({ deviceScaleFactor: 1 });
+    await ctx.addInitScript(() => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        const bd = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Taipei',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).format(new Date());
+        localStorage.setItem(
+          'milksha:cloud-settings',
+          JSON.stringify({
+            projectId: 'milksha-qms-dev',
+            apiKey: 'e2e-placeholder-key',
+            accessCode: 'fake-milksha-controller-access-code',
+            region: 'asia-east1',
+            useEmulator: false,
+            gateway: '',
+          }),
+        );
+        const updatedAt = new Date().toISOString();
+        localStorage.setItem(
+          'milksha:receiver-cache:s120030',
+          JSON.stringify({
+            seq: 1,
+            numberContent: [],
+            businessDate: bd,
+            boardUpdatedAt: updatedAt,
+          }),
+        );
+      } catch {
+        /* ignore */
+      }
+    });
+    const receiver = await ctx.newPage();
+    await receiver.setViewportSize(VIEW);
+    await receiver.route('**/readBoard', async (route) => {
+      await route.abort('failed');
+    });
+    await receiver.goto(recv);
+    await receiver.waitForTimeout(2500);
+    await assertBootNoDataBoard(receiver);
+    await ctx.close();
+  });
+
   test('boot before first board data: headers only, no empty hint', async ({ browser }) => {
     const { base } = urlsForMode('local');
     const bootUrl = `${base}/receiver-demo/?store=s120030&device=stb-01`;

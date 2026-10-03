@@ -134,15 +134,23 @@ test('offline reboot shows boot cache silently when clock matches today', async 
   const TB = sandbox.QMS.Board.TodayBoard;
   const cacheKey = 'milksha:receiver-cache:s120030';
   const bd = TB.taipeiBusinessDate(new Date(now));
-  storage[cacheKey] = JSON.stringify({
+  const cachePayload = {
     seq: 5,
     numberContent: [{ source_type: 'From_Store_OK', number: '42' }],
     businessDate: bd,
     boardUpdatedAt: '2026-10-03T08:00:00.000Z',
-  });
+  };
+  storage[cacheKey] = JSON.stringify(cachePayload);
   const ringIds = [];
+  const pushedNumbers = [];
   const demo = {
-    pushFromObject: function (_req, opts) {
+    pushFromObject: function (req, opts) {
+      const nc = req && req.serviceSpecialData_Json && req.serviceSpecialData_Json.data
+        ? req.serviceSpecialData_Json.data.number_content
+        : [];
+      for (let i = 0; i < nc.length; i += 1) {
+        pushedNumbers.push(nc[i].number);
+      }
       if (opts && opts.newlyReadyIds) {
         ringIds.push(opts.newlyReadyIds.slice());
       }
@@ -170,18 +178,20 @@ test('offline reboot shows boot cache silently when clock matches today', async 
   });
   assert.equal(ringIds.flat().length, 0);
   assert.equal(sandbox.QMS.Board.TodayBoard.getSessionBusinessDate(), bd);
-  assert.equal(storage[cacheKey], storage[cacheKey]);
+  assert.deepEqual(pushedNumbers, ['42']);
+  assert.equal(storage[cacheKey], JSON.stringify(cachePayload));
 });
 
 test('offline reboot with clock 1970 does not show boot cache', async function () {
   const { sandbox, storage } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
   const cacheKey = 'milksha:receiver-cache:s120030';
-  storage[cacheKey] = JSON.stringify({
+  const cachePayload = {
     seq: 1,
     numberContent: [{ source_type: 'From_Store_OK', number: '11' }],
     businessDate: '2026-10-03',
     boardUpdatedAt: '2026-10-03T08:00:00.000Z',
-  });
+  };
+  storage[cacheKey] = JSON.stringify(cachePayload);
   let pushCalls = 0;
   const demo = {
     pushFromObject: function () {
@@ -209,6 +219,115 @@ test('offline reboot with clock 1970 does not show boot cache', async function (
   });
   assert.equal(pushCalls, 0);
   assert.equal(sandbox.QMS.Board.TodayBoard.hasSessionBusinessDate(), false);
+  assert.equal(storage[cacheKey], JSON.stringify(cachePayload));
+});
+
+test('offline reboot skips empty boot cache and leaves board pre-data', async function () {
+  const now = '2026-10-03T14:00:00.000Z';
+  const { sandbox, storage } = loadCloudRuntimeHarness(now);
+  const TB = sandbox.QMS.Board.TodayBoard;
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  const bd = TB.taipeiBusinessDate(new Date(now));
+  const cachePayload = {
+    seq: 2,
+    numberContent: [],
+    businessDate: bd,
+    boardUpdatedAt: '2026-10-03T08:00:00.000Z',
+  };
+  storage[cacheKey] = JSON.stringify(cachePayload);
+  let pushCalls = 0;
+  const demo = {
+    pushFromObject: function () {
+      pushCalls += 1;
+      return { isOK: true };
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: {
+      session: { ensureIdToken: async function () {} },
+      readBoard: async function () {
+        throw new Error('offline');
+      },
+      readDevice: async function () {
+        return null;
+      },
+    },
+    receiverDemo: demo,
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 10);
+  });
+  assert.equal(pushCalls, 0);
+  assert.equal(sandbox.QMS.Board.TodayBoard.hasSessionBusinessDate(), false);
+  assert.equal(storage[cacheKey], JSON.stringify(cachePayload));
+});
+
+test('cloud seq lower than cached boot seq still applies when localSeq stays 0', async function () {
+  const now = '2026-10-03T14:00:00.000Z';
+  const { sandbox, storage } = loadCloudRuntimeHarness(now);
+  const TB = sandbox.QMS.Board.TodayBoard;
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  const bd = TB.taipeiBusinessDate(new Date(now));
+  storage[cacheKey] = JSON.stringify({
+    seq: 5,
+    numberContent: [{ source_type: 'From_Store_OK', number: '11' }],
+    businessDate: bd,
+    boardUpdatedAt: '2026-10-03T08:00:00.000Z',
+  });
+  const ringIds = [];
+  const cloudNumbers = [];
+  const demo = {
+    pushFromObject: function (req, opts) {
+      const nc = req && req.serviceSpecialData_Json && req.serviceSpecialData_Json.data
+        ? req.serviceSpecialData_Json.data.number_content
+        : [];
+      for (let i = 0; i < nc.length; i += 1) {
+        cloudNumbers.push(nc[i].number);
+      }
+      if (opts && opts.newlyReadyIds) {
+        ringIds.push(opts.newlyReadyIds.slice());
+      }
+      return { isOK: true };
+    },
+  };
+  const transport = {
+    session: { ensureIdToken: async function () {} },
+    readBoard: async function () {
+      return {
+        data: {
+          storeId: 's120030',
+          businessDate: bd,
+          seq: 1,
+          updatedAt: '2026-10-03T15:00:00.000Z',
+          source: 'A',
+          tickets: [{ no: '77', status: 'ready', updatedAt: '2026-10-03T15:00:00.000Z' }],
+        },
+        updateTime: '2026-10-03T15:00:00.000Z',
+        httpDate: '',
+        httpDateReadable: false,
+      };
+    },
+    readDevice: async function () {
+      return null;
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: transport,
+    receiverDemo: demo,
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 30);
+  });
+  assert.equal(ringIds.flat().length, 0);
+  assert.ok(cloudNumbers.includes('77'));
+  const saved = JSON.parse(storage[cacheKey]);
+  assert.equal(saved.seq, 1);
 });
 
 test('cloud replaces boot cache silently on first fetch', async function () {
@@ -368,4 +487,106 @@ test('first cloud batch after boot stays silent when stale cache cleared on roll
     setTimeout(r, 30);
   });
   assert.equal(ringIds.flat().length, 0);
+});
+
+test('guest clock hidden on boot when shouldShowBootCache rejects 1970 clock', async function () {
+  const { sandbox, storage } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  storage[cacheKey] = JSON.stringify({
+    seq: 2,
+    numberContent: [{ source_type: 'From_Store_OK', number: '55' }],
+    businessDate: '2026-10-03',
+    boardUpdatedAt: '2026-10-03T08:00:00.000Z',
+  });
+  const clockStates = [];
+  const demo = {
+    pushFromObject: function () {
+      return { isOK: true };
+    },
+    setGuestClockState: function (opts) {
+      clockStates.push(opts);
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: {
+      session: { ensureIdToken: async function () {} },
+      readBoard: async function () {
+        throw new Error('offline');
+      },
+      readDevice: async function () {
+        return null;
+      },
+    },
+    receiverDemo: demo,
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 15);
+  });
+  assert.ok(clockStates.some(function (s) {
+    return s.hidden === true;
+  }));
+});
+
+test('guest clock shown after cloud board when box clock is 1970', async function () {
+  const { sandbox, storage } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  storage[cacheKey] = JSON.stringify({
+    seq: 1,
+    numberContent: [{ source_type: 'From_Store_OK', number: '11' }],
+    businessDate: '2026-10-03',
+    boardUpdatedAt: '2026-10-03T08:00:00.000Z',
+  });
+  const clockStates = [];
+  const demo = {
+    pushFromObject: function () {
+      return { isOK: true };
+    },
+    setGuestClockState: function (opts) {
+      clockStates.push(opts);
+    },
+  };
+  const transport = {
+    session: { ensureIdToken: async function () {} },
+    readBoard: async function () {
+      return {
+        data: {
+          storeId: 's120030',
+          businessDate: '2026-10-03',
+          seq: 2,
+          updatedAt: '2026-10-03T15:00:00.000Z',
+          source: 'A',
+          tickets: [{ no: '88', status: 'ready', updatedAt: '2026-10-03T15:00:00.000Z' }],
+        },
+        updateTime: '2026-10-03T15:00:00.000Z',
+        httpDate: 'Fri, 03 Oct 2026 14:00:00 GMT',
+        httpDateReadable: true,
+      };
+    },
+    readDevice: async function () {
+      return null;
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: transport,
+    receiverDemo: demo,
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 40);
+  });
+  assert.ok(
+    clockStates.some(function (s) {
+      return s.hidden === true;
+    }),
+  );
+  assert.ok(
+    clockStates.some(function (s) {
+      return s.hidden === false && typeof s.timeMs === 'number';
+    }),
+  );
 });

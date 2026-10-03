@@ -26,8 +26,69 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
+        font-family: var(
+          --rcv-sans,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          'PingFang TC',
+          'Microsoft JhengHei',
+          'Noto Sans TC',
+          sans-serif
+        );
         font-variant-numeric: tabular-nums;
+      }
+      :root {
+        --rcv-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei',
+          'Noto Sans TC', sans-serif;
+        --rcv-ready-num-px: 140;
+        --rcv-ring-num-size: clamp(
+          calc(var(--rcv-ready-num-px) * 2px),
+          14vw,
+          calc(var(--rcv-ready-num-px) * 2.75px)
+        );
+        --rcv-ring-label-size: clamp(32px, 3.2vw, 64px);
+      }
+      .rcv-clock[hidden] {
+        visibility: hidden;
+      }
+      #rcv-ring-ov {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+        font-family: var(--rcv-sans);
+        transition: opacity 0.15s ease-out;
+      }
+      #rcv-ring-box {
+        background: #fff;
+        color: #111;
+        padding: clamp(20px, 3vh, 36px) clamp(32px, 6vw, 80px);
+        border-radius: 16px;
+        text-align: center;
+        border: clamp(4px, 0.6vw, 8px) solid #111;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+        max-width: min(92vw, 900px);
+      }
+      .rcv-ring-label {
+        font-size: var(--rcv-ring-label-size);
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        margin-bottom: clamp(8px, 1.2vh, 16px);
+        color: #222;
+      }
+      .rcv-ring-num {
+        font-size: var(--rcv-ring-num-size);
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: clamp(2px, 0.5vw, 8px);
+        font-variant-numeric: tabular-nums;
+        color: #000;
       }
       .rcv-viewport {
         position: relative;
@@ -623,9 +684,21 @@
           boardEl.style.transform = 'scale(' + scale + ')';
         }
 
-        function formatClock() {
+        var guestClockState = { hidden: false, anchorCloudMs: null, anchorWallMs: null };
+
+        function guestClockDate() {
+          if (guestClockState.anchorCloudMs != null && guestClockState.anchorWallMs != null) {
+            return new Date(
+              guestClockState.anchorCloudMs + (Date.now() - guestClockState.anchorWallMs),
+            );
+          }
+          return new Date();
+        }
+
+        function formatClock(at) {
+          var d = at instanceof Date ? at : guestClockDate();
           if (window.QMS && window.QMS.Board && window.QMS.Board.TodayBoard.formatTaipeiClockHM) {
-            return window.QMS.Board.TodayBoard.formatTaipeiClockHM();
+            return window.QMS.Board.TodayBoard.formatTaipeiClockHM(d);
           }
           return new Intl.DateTimeFormat('en-GB', {
             timeZone: 'Asia/Taipei',
@@ -633,10 +706,24 @@
             minute: '2-digit',
             hourCycle: 'h23',
           })
-            .format(new Date())
+            .format(d)
             .replace(/^(\d{1,2}):(\d{2})$/, function (_m, h, m) {
               return String(h).padStart(2, '0') + ':' + m;
             });
+        }
+
+        function refreshGuestClock() {
+          var c = document.getElementById('rcv-clock');
+          if (!c) {
+            return;
+          }
+          if (guestClockState.hidden) {
+            c.hidden = true;
+            c.textContent = '';
+            return;
+          }
+          c.hidden = false;
+          c.textContent = formatClock();
         }
 
         function layoutZones() {
@@ -1230,18 +1317,26 @@
           },
           wrapPayload: wrapPayload,
           MSG: MSG,
+          setGuestClockState: function (opts) {
+            var o = opts || {};
+            guestClockState.hidden = o.hidden === true;
+            if (o.clearCloudAnchor) {
+              guestClockState.anchorCloudMs = null;
+              guestClockState.anchorWallMs = null;
+            }
+            if (typeof o.timeMs === 'number' && Number.isFinite(o.timeMs)) {
+              guestClockState.anchorCloudMs = o.timeMs;
+              guestClockState.anchorWallMs = Date.now();
+            }
+            refreshGuestClock();
+          },
         };
 
         buildShell();
         applyScale();
         window.addEventListener('resize', applyScale);
-        document.getElementById('rcv-clock').textContent = formatClock();
-        clockTimer = setInterval(function () {
-          var c = document.getElementById('rcv-clock');
-          if (c) {
-            c.textContent = formatClock();
-          }
-        }, 1000);
+        refreshGuestClock();
+        clockTimer = setInterval(refreshGuestClock, 1000);
         startPageTimers();
         initDemoPanel();
         renderBoard();

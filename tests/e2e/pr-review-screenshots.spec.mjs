@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { connectController, resetCloudState, urlsForMode } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
+const COMMITTED_DIR = join(dirname(fileURLToPath(import.meta.url)), 'committed-artifacts');
 const VIEW = { width: 1920, height: 1080 };
 
 const MSG_401 = '登入已過期。請重新登入，再送出指令。';
@@ -111,6 +115,27 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
   await controller.screenshot({ path: `${ART}/controller-command-in-flight-1920.png`, fullPage: false });
   await controller.evaluate(() => window.__releaseDevCommand());
   await expect(controller.locator('#btn-restore')).toBeEnabled({ timeout: 10000 });
+
+  await receiver.evaluate(() => {
+    const RH = window.QMS && window.QMS.Receiver && window.QMS.Receiver.RingHost;
+    if (!RH) {
+      return;
+    }
+    if (typeof RH._resetAudioContextForTests === 'function') {
+      RH._resetAudioContextForTests();
+    }
+    RH.syncReadyQueue(new Set());
+    RH.playReadyRing('9527');
+  });
+  await expect(receiver.locator('#rcv-ring-label')).toHaveText('請取餐');
+  await expect(receiver.locator('#rcv-ring-num')).toHaveText('9527');
+  await expect(receiver.locator('#rcv-ring-ov')).toHaveCSS('opacity', '1');
+  mkdirSync(COMMITTED_DIR, { recursive: true });
+  await receiver.screenshot({
+    path: join(COMMITTED_DIR, 'board-chime-overlay-1920.png'),
+    fullPage: false,
+  });
+  await receiver.screenshot({ path: `${ART}/board-chime-overlay-1920.png`, fullPage: false });
 
   await ctx.close();
 });
