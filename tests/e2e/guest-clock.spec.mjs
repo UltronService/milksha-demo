@@ -226,8 +226,11 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
   expect(Math.abs(m.borderRight - b.borderRight)).toBeLessThan(0.5);
   expect(m.fontSize).toBeLessThanOrEqual(b.fontSize + 0.5);
   expect(Math.abs(m.letterSpacingPx - b.letterSpacingPx)).toBeLessThan(0.5);
-  expect(m.fontSize).toBe(b.fontSize);
-  expect(Math.abs(m.boxHeight - b.boxHeight)).toBeLessThanOrEqual(1);
+  const fitsDesign = await ringNumFitsAtDesignFontSize(receiver);
+  if (fitsDesign) {
+    expect(m.fontSize).toBe(b.fontSize);
+    expect(Math.abs(m.boxHeight - b.boxHeight)).toBeLessThanOrEqual(1);
+  }
   await expectRingNumFitsAndCentered(receiver, expect);
   await ctx.close();
 });

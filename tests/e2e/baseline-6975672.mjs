@@ -21,13 +21,26 @@ export function ensure6975672Worktree() {
   if (existsSync(join(BASELINE_WORKTREE, 'receiver-demo', 'index.html'))) {
     return;
   }
-  try {
-    execSync('git fetch --depth=1 origin 6975672', { cwd: ROOT, stdio: 'ignore' });
-  } catch {
-    /* best-effort */
+  const fetchAttempts = [
+    'git fetch --depth=1 origin 6975672',
+    'git fetch origin 6975672',
+    'git fetch --unshallow',
+  ];
+  for (const cmd of fetchAttempts) {
+    try {
+      execSync(cmd, { cwd: ROOT, stdio: 'ignore' });
+      break;
+    } catch {
+      /* try next */
+    }
   }
-  execSync(`git worktree add ${BASELINE_WORKTREE} 6975672`, {
-    cwd: ROOT,
-    stdio: 'ignore',
-  });
+  try {
+    execSync(`git worktree add --force ${BASELINE_WORKTREE} 6975672`, {
+      cwd: ROOT,
+      stdio: 'pipe',
+    });
+  } catch (err) {
+    const msg = err && err.stderr ? String(err.stderr) : String(err);
+    throw new Error(`6975672 baseline worktree required for e2e: ${msg}`);
+  }
 }
