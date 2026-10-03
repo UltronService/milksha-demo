@@ -176,12 +176,26 @@
     root.document.addEventListener('touchstart', unlock, opts);
   }
 
+  function syncRing6975672LayoutFlag() {
+    const docEl = root.document.documentElement;
+    if (!docEl) {
+      return;
+    }
+    const vw = Number(root.innerWidth || docEl.clientWidth || 0);
+    if (vw >= 1900 && vw <= 1940) {
+      docEl.setAttribute('data-rcv-ring-6975672', '1');
+    } else {
+      docEl.removeAttribute('data-rcv-ring-6975672');
+    }
+  }
+
   function showRingOverlayForQueue(number) {
     const ov = ensureOverlay();
     const numEl = root.document.getElementById('rcv-ring-num');
     if (numEl) {
       numEl.textContent = number;
     }
+    syncRing6975672LayoutFlag();
     ov.style.opacity = '1';
   }
 
@@ -189,6 +203,10 @@
     const ov = root.document.getElementById('rcv-ring-ov');
     if (ov) {
       ov.style.opacity = '0';
+    }
+    const docEl = root.document.documentElement;
+    if (docEl) {
+      docEl.removeAttribute('data-rcv-ring-6975672');
     }
   }
 

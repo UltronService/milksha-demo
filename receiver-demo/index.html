@@ -55,7 +55,7 @@
           min(92vw, 900px) - 2 * clamp(32px, 6vw, 80px) - 2 * clamp(4px, 0.6vw, 8px)
         );
         /* Caps 4-digit width on non-1920 viewports (1920 uses 6975672 uncapped font). */
-        --rcv-ring-font-fit-ratio: 0.352;
+        --rcv-ring-font-fit-ratio: 0.31;
       }
       .rcv-clock[hidden] {
         visibility: hidden;
@@ -103,7 +103,15 @@
         font-variant-numeric: tabular-nums;
         color: #000;
       }
-      /* 6975672 geometry: 1920×1080 design width (tolerant band for sub-pixel layout). */
+      /* 6975672 geometry at 1920×1080 (JS sets data-rcv-ring-6975672; media is fallback). */
+      html[data-rcv-ring-6975672='1'] #rcv-ring-box {
+        width: auto;
+        max-width: var(--rcv-ring-box-max);
+        min-width: 0;
+      }
+      html[data-rcv-ring-6975672='1'] .rcv-ring-num {
+        font-size: var(--rcv-ring-num-size);
+      }
       @media (min-width: 1900px) and (max-width: 1940px) {
         #rcv-ring-box {
           width: auto;
