@@ -59,7 +59,7 @@ npx --yes serve -l 4173 .
 - **僅本機／fake gateway**（`localhost`、`127.0.0.1` 等）可用工程用 URL 參數：`?testAuthRecheckMs=`（縮短重登間隔）、`?testDevicePollMs=`（停用自動裝置輪詢並開啟測試 hook）。正式網域上這些參數**不生效**。
 - **停止期間不會收到遠端 reload 指令**；重新登入成功後恢復輪詢，才會處理遠端 `reload`。
 - **遠端 reload／reboot**（兩道防護，避免雲端長期保留 `pendingCommand` 造成重複重整）：
-  1. **開機伺服器時間**：本輪開機完成 `devLogin`／`signIn` 時，取回應 HTTP `Date` 標頭（`bootServerTime`，非裝置時鐘）。`reload`／`reboot` 若伺服器 `createdAt`（含 `issuedAt`）落在**同一秒或更早**則略過（比較前皆取整到秒）。若沒有 `Date` 標頭，僅靠下一項。
+  1. **開機伺服器時間**：本輪開機第一次成功雲端 HTTP 回應的 `Date` 標頭（`bootServerTimeMs`，非裝置時鐘；毫秒精度）。`reload`／`reboot` 的伺服器時間取 `issuedAtMs`（優先）、`issuedAt`、`createdAt`；若 **嚴格早於** `bootServerTimeMs` 則略過（同一毫秒不略過）。時間缺漏或無法解析時**不**依時間略過，僅靠下一項。若沒有 `Date` 標頭，僅靠下一項。
   2. **已執行指令 id**：執行前將 `cmd.id` 寫入 `localStorage`（`milksha:lastHandledCmd:<store>:<device>`），相同 id 不再執行。執行前仍會盡快送 heartbeat ack（短逾時），但不依賴 ack 清除雲端文件。
 - **403**：不重試，維持停止直到使用者修正存取碼／權限。
 

@@ -67,8 +67,9 @@
     let refreshToken = '';
     let expiresAtMs = 0;
     let authStopped = false;
+    let accessDenied403 = false;
     let devLoginAttempts = 0;
-    /** UTC ms floored to second; from HTTP Date on devLogin / signIn (not device clock). */
+    /** UTC ms from HTTP Date on first cloud response (not device clock). */
     let bootServerTimeMs = 0;
     /** @type {Promise<string> | null} */
     let devLoginInFlight = null;
@@ -118,6 +119,9 @@
     }
 
     function captureBootServerTimeFromResponse(res) {
+      if (bootServerTimeMs > 0) {
+        return;
+      }
       if (!res || !res.headers || !res.headers.get) {
         return;
       }
@@ -130,10 +134,14 @@
         if (!Number.isFinite(parsed)) {
           return;
         }
-        bootServerTimeMs = Math.floor(parsed / 1000) * 1000;
+        bootServerTimeMs = parsed;
       } catch (e) {
         /* ignore */
       }
+    }
+
+    function noteBootServerTimeFromResponse(res) {
+      captureBootServerTimeFromResponse(res);
     }
 
     function throwIfAuthStopped() {
@@ -171,7 +179,7 @@
       if (!res.ok) {
         devLoginAttempts += 1;
         if (res.status === 403) {
-          authStopped = true;
+          accessDenied403 = true;
         }
         if (res.status === 401 && devLoginAttempts >= 2) {
           authStopped = true;
@@ -180,6 +188,7 @@
       }
       devLoginAttempts = 0;
       authStopped = false;
+      accessDenied403 = false;
       captureBootServerTimeFromResponse(res);
       if (!json || !json.customToken) {
         const err = new Error('devLogin missing customToken');
@@ -229,6 +238,7 @@
       persist();
       devLoginAttempts = 0;
       authStopped = false;
+      accessDenied403 = false;
       return idToken;
     }
 
@@ -265,6 +275,8 @@
       }
       devLoginAttempts = 0;
       authStopped = false;
+      accessDenied403 = false;
+      captureBootServerTimeFromResponse(res);
       idToken = json.id_token || json.idToken || '';
       refreshToken = json.refresh_token || json.refreshToken || refreshToken;
       const expiresIn = Number(json.expires_in || json.expiresIn || 3600);
@@ -317,6 +329,13 @@
       },
       getBootServerTimeMs: function () {
         return bootServerTimeMs;
+      },
+      noteBootServerTimeFromResponse: noteBootServerTimeFromResponse,
+      isUploadHalted: function () {
+        return accessDenied403;
+      },
+      clearUploadHalt: function () {
+        accessDenied403 = false;
       },
     };
   }

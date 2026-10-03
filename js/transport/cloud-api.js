@@ -60,6 +60,9 @@
         err.response = json;
         throw err;
       }
+      if (session.noteBootServerTimeFromResponse) {
+        session.noteBootServerTimeFromResponse(res);
+      }
       return json;
     }
 

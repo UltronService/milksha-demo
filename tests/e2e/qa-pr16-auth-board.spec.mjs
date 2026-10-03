@@ -115,15 +115,16 @@ test('receiver auth 403 does not retry devLogin', async ({ browser }) => {
   await receiver.goto(`${base}/receiver-demo/?mode=firestore&store=s120030&device=stb-01`);
   await receiver.waitForTimeout(2000);
   expect(attempts).toBe(1);
-  await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+  await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-upload-stopped', '1');
   await ctx.close();
 });
 
 const BOOT_HTTP_DATE = 'Sat, 03 Oct 2026 12:00:00 GMT';
-const AFTER_BOOT_CREATED_AT = '2026-10-03T12:00:01.000Z';
-const STALE_CREATED_AT = '2020-01-01T12:00:00.000Z';
+const BOOT_SERVER_MS = Date.parse(BOOT_HTTP_DATE);
+const AFTER_BOOT_ISSUED_AT = BOOT_SERVER_MS + 1000;
+const STALE_ISSUED_AT = Date.parse('2020-01-01T12:00:00.000Z');
 
-async function seedPendingReload(createdAt, id) {
+async function seedPendingReload(issuedAt, id) {
   await ensureCloudRunning();
   const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devicePendingCommand`, {
     method: 'POST',
@@ -131,9 +132,9 @@ async function seedPendingReload(createdAt, id) {
     body: JSON.stringify({
       storeId: 's120030',
       deviceId: 'stb-01',
-      id: id || `cmd-${createdAt}`,
+      id: id || `cmd-${issuedAt}`,
       type: 'reload',
-      createdAt,
+      issuedAt,
       params: {},
     }),
   });
@@ -227,8 +228,10 @@ test('receiver skips stale pending reload when localStorage cleared', async ({ b
   test.setTimeout(90000);
   await ensureCloudRunning();
   await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
-  await seedPendingReload(STALE_CREATED_AT, 'stale-reload-cmd');
-  const { recv } = urlsForMode('firestore');
+  await seedPendingReload(STALE_ISSUED_AT, 'stale-reload-cmd');
+  const { recv, base } = urlsForMode('firestore');
+  const deviceUrl =
+    `${base}/__emulator/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/devices/stb-01`;
   const ctx = await browser.newContext();
   await ctx.addInitScript(() => {
     try {
@@ -249,6 +252,19 @@ test('receiver skips stale pending reload when localStorage cleared', async ({ b
   await kickDevicePoll(receiver);
   await receiver.waitForTimeout(15000);
   expect(loadCount).toBe(1);
+  let pendingCleared = false;
+  for (let i = 0; i < 30; i += 1) {
+    const pendingRes = await fetch(deviceUrl, {
+      headers: { Authorization: 'Bearer e2e-fake-id-token' },
+    });
+    const pendingDoc = await pendingRes.json();
+    if (!pendingDoc.fields || !pendingDoc.fields.pendingCommand) {
+      pendingCleared = true;
+      break;
+    }
+    await receiver.waitForTimeout(400);
+  }
+  expect(pendingCleared).toBe(true);
   await ctx.close();
 });
 
@@ -263,7 +279,7 @@ test('receiver runs post-boot reload command exactly once', async ({ browser }) 
   await wireFirestoreAuthRoutes(receiver);
   await receiver.goto(`${recv}&testDevicePollMs=400`);
   await waitReceiverCloudReady(receiver);
-  await seedPendingReload(AFTER_BOOT_CREATED_AT, 'post-boot-reload');
+  await seedPendingReload(AFTER_BOOT_ISSUED_AT, 'post-boot-reload');
   const firstReload = receiver.waitForEvent('framenavigated', { timeout: 45000 });
   await kickDevicePoll(receiver);
   await firstReload;
@@ -289,7 +305,7 @@ test('receiver reloads once when fake cloud never clears pendingCommand', async 
   await wireFirestoreAuthRoutes(receiver);
   await receiver.goto(`${recv}&testDevicePollMs=400`);
   await waitReceiverCloudReady(receiver);
-  await seedPendingReload(AFTER_BOOT_CREATED_AT, 'keep-pending-reload');
+  await seedPendingReload(AFTER_BOOT_ISSUED_AT, 'keep-pending-reload');
   const firstReload = receiver.waitForEvent('framenavigated', { timeout: 45000 });
   await kickDevicePoll(receiver);
   await firstReload;

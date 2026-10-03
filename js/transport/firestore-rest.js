@@ -85,6 +85,9 @@
         const res = await fetch(docUrl(cfg, docPath), { signal: signal, headers: headers });
         if (res.status === 404) {
           backoffMs = 0;
+          if (options.onHttpResponse) {
+            options.onHttpResponse(res);
+          }
           let httpDate = '';
           let httpDateReadable = false;
           try {
@@ -100,6 +103,9 @@
         }
         const json = await res.json();
         backoffMs = 0;
+        if (options.onHttpResponse) {
+          options.onHttpResponse(res);
+        }
         let httpDate = '';
         let httpDateReadable = false;
         try {

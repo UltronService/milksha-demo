@@ -78,19 +78,14 @@
     let lastResolvedBusinessDate = '';
     let lastResolvedSource = '';
     let clockSkewSilentRefetchPending = false;
+    let cloudReachable = true;
+    /** @type {object|null} */
+    let deferredReloadCommand = null;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
     const handledCmdStorageKey = 'milksha:lastHandledCmd:' + storeId + ':' + deviceId;
     const RELOAD_ACK_TIMEOUT_MS = 2500;
-
-    function commandServerCreatedAt(cmd) {
-      if (!cmd || typeof cmd !== 'object') {
-        return '';
-      }
-      const v = cmd.createdAt != null ? cmd.createdAt : cmd.issuedAt;
-      return v != null ? String(v) : '';
-    }
 
     function readStoredHandledCommandId() {
       try {
@@ -133,14 +128,6 @@
       return Promise.resolve();
     }
 
-    function floorUtcToSecondMs(value) {
-      const parsed = Date.parse(String(value || ''));
-      if (!Number.isFinite(parsed)) {
-        return 0;
-      }
-      return Math.floor(parsed / 1000) * 1000;
-    }
-
     function getBootServerTimeMs() {
       if (!transport.session || !transport.session.getBootServerTimeMs) {
         return 0;
@@ -149,21 +136,11 @@
     }
 
     function shouldSkipReloadRebootByBootServerTime(cmd) {
-      const type = cmd && cmd.type ? String(cmd.type) : '';
-      if (type !== 'reload' && type !== 'reboot') {
+      const skipFn = QMS.Receiver.shouldSkipReloadRebootByBootServerTime;
+      if (!skipFn) {
         return false;
       }
-      const bootMs = getBootServerTimeMs();
-      if (!bootMs) {
-        return false;
-      }
-      const cmdAt = commandServerCreatedAt(cmd);
-      if (!cmdAt) {
-        return false;
-      }
-      const cmdSecMs = floorUtcToSecondMs(cmdAt);
-      const bootSecMs = bootMs;
-      return cmdSecMs <= bootSecMs;
+      return skipFn(cmd, getBootServerTimeMs());
     }
 
     function shouldSkipDeviceCommand(cmd) {
@@ -458,7 +435,21 @@
       return run();
     }
 
-    function authBlocksCloudWork() {
+    function authBlocksBoardSync() {
+      const session = transport.session;
+      if (!session) {
+        return false;
+      }
+      if (session.isAuthStopped && session.isAuthStopped()) {
+        return true;
+      }
+      if (session.isUploadHalted && session.isUploadHalted()) {
+        return true;
+      }
+      return false;
+    }
+
+    function authBlocksHeartbeat() {
       return (
         transport.session &&
         transport.session.isAuthStopped &&
@@ -466,8 +457,37 @@
       );
     }
 
+    function effectiveHeartbeatIntervalMs() {
+      if (
+        transport.session &&
+        transport.session.isUploadHalted &&
+        transport.session.isUploadHalted()
+      ) {
+        return 300000;
+      }
+      return heartbeatMs;
+    }
+
+    function markCloudReachable() {
+      cloudReachable = true;
+      tryFlushDeferredReloadCommand();
+    }
+
+    function markCloudUnreachable() {
+      cloudReachable = false;
+    }
+
+    async function tryFlushDeferredReloadCommand() {
+      if (!deferredReloadCommand || !cloudReachable || simulateOffline) {
+        return;
+      }
+      const cmd = deferredReloadCommand;
+      deferredReloadCommand = null;
+      await handleCommand(cmd);
+    }
+
     async function pollBoard() {
-      if (authBlocksCloudWork()) {
+      if (authBlocksBoardSync()) {
         return;
       }
       if (simulateOffline) {
@@ -507,7 +527,11 @@
         lastBoardUpdateTime = marker;
         revealGuestClockFromCloudBoard(board);
         await tryApplyTodayBoard(board);
+        markCloudReachable();
       } catch (e) {
+        if (!isFirestoreAbortError(e)) {
+          markCloudUnreachable();
+        }
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
@@ -516,6 +540,10 @@
       const type = cmd.type;
       const params = cmd.params || {};
       if (type === 'reload' || type === 'reboot') {
+        if (!cloudReachable || simulateOffline) {
+          deferredReloadCommand = cmd;
+          return;
+        }
         pendingAckCommandId = cmd.id ? String(cmd.id) : '';
         await awaitPersistHandledCommandRecord(cmd);
         await flushCommandAckBeforeReload();
@@ -584,8 +612,20 @@
       return msg.indexOf('aborted') !== -1;
     }
 
+    async function acknowledgeSkippedPendingCommand(cmd) {
+      if (!cmd || !cmd.id) {
+        return;
+      }
+      pendingAckCommandId = String(cmd.id);
+      const type = cmd && cmd.type ? String(cmd.type) : '';
+      if (type === 'reload' || type === 'reboot') {
+        await awaitPersistHandledCommandRecord(cmd);
+      }
+      await sendHeartbeat();
+    }
+
     async function pollDevice() {
-      if (authBlocksCloudWork()) {
+      if (authBlocksBoardSync()) {
         return;
       }
       try {
@@ -593,11 +633,13 @@
         if (!dev || !dev.data) {
           return;
         }
+        markCloudReachable();
         const pending = dev.data.pendingCommand;
         if (!pending || !pending.id) {
           return;
         }
         if (shouldSkipDeviceCommand(pending)) {
+          await acknowledgeSkippedPendingCommand(pending);
           return;
         }
         await handleCommand(pending);
@@ -605,12 +647,13 @@
         if (isFirestoreAbortError(e)) {
           return;
         }
+        markCloudUnreachable();
         onStatusLine('device 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
 
     async function sendHeartbeat() {
-      if (authBlocksCloudWork()) {
+      if (authBlocksHeartbeat()) {
         return;
       }
       if (!cloudApi || !cloudApi.boxHeartbeat) {
@@ -631,7 +674,12 @@
           lastAckCommandId = pendingAckCommandId;
           pendingAckCommandId = '';
         }
+        if (transport.session && transport.session.clearUploadHalt) {
+          transport.session.clearUploadHalt();
+        }
+        markCloudReachable();
       } catch (e) {
+        markCloudUnreachable();
         onStatusLine('heartbeat 失敗');
       }
     }
@@ -679,7 +727,7 @@
         if (tickMs % boardPollMs === 0) {
           pollBoard();
         }
-        if (tickMs % heartbeatMs === 0) {
+        if (tickMs % effectiveHeartbeatIntervalMs() === 0) {
           sendHeartbeat();
         }
       }, 1000);
@@ -726,7 +774,7 @@
     };
     if (options.enableTestPollHook) {
       api.pollDeviceForTests = async function () {
-        const blocked = authBlocksCloudWork();
+        const blocked = authBlocksBoardSync();
         let pendingId = '';
         if (!blocked) {
           try {

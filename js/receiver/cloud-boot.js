@@ -90,6 +90,14 @@
     stage.removeAttribute('data-auth-debug-code');
     stage.removeAttribute('data-auth-debug-status');
     stage.removeAttribute('data-auth-stopped');
+    stage.removeAttribute('data-upload-stopped');
+  }
+
+  function setUploadStopped() {
+    const stage = guestAuthDebugStage();
+    if (stage) {
+      stage.setAttribute('data-upload-stopped', '1');
+    }
   }
 
   function setAuthStopped() {
@@ -161,7 +169,8 @@
         transport.session && transport.session.isAuthStopped && transport.session.isAuthStopped();
       if (status === 403) {
         authHalted = true;
-        setAuthStopped();
+        setUploadStopped();
+        scheduleSlowAuthRecheck();
         return;
       }
       if (sessionStopped) {

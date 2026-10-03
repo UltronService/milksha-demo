@@ -65,6 +65,7 @@ function loadCloudRuntimeHarness(nowIso) {
     'js/transport/board-seq.js',
     'js/receiver/validate-request.js',
     'js/receiver/chime-policy.js',
+    'js/receiver/device-command-time.js',
     'js/receiver/cloud-runtime.js',
   ];
   for (let i = 0; i < files.length; i += 1) {

@@ -273,14 +273,19 @@ const server = http.createServer(async (req, res) => {
       if (!docs.has(dk)) {
         seedE2eDevice();
       }
-      const createdAt = body.createdAt || new Date().toISOString();
+      const issuedAt =
+        typeof body.issuedAt === 'string' && body.issuedAt.trim()
+          ? body.issuedAt.trim()
+          : new Date().toISOString();
       const cmd = {
         id: body.id || `cmd-test-${Date.now()}`,
         type: body.type || 'reload',
         params: body.params && typeof body.params === 'object' ? body.params : {},
-        createdAt,
-        issuedAt: createdAt,
+        issuedAt,
       };
+      if (body.issuedAtMs != null && Number.isFinite(Number(body.issuedAtMs))) {
+        cmd.issuedAtMs = Number(body.issuedAtMs);
+      }
       const prev = docs.get(dk) || {};
       docs.set(dk, { ...prev, pendingCommand: cmd });
       return json(res, 200, { ok: true, commandId: cmd.id });
@@ -444,13 +449,11 @@ const server = http.createServer(async (req, res) => {
           return json(res, 404, apiError('device_not_found', 'device not found'));
         }
         const prev = docs.get(dk) || {};
-        const issuedAt = new Date().toISOString();
         const cmd = {
           id: `cmd-${Date.now()}`,
           type: cmdBody.type,
           params: cmdBody.params || {},
-          createdAt: issuedAt,
-          issuedAt: issuedAt,
+          issuedAt: new Date().toISOString(),
         };
         if (cmdBody.type === 'clear_now') {
           docs.set(boardKey(cmdBody.storeId), {
