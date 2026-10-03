@@ -129,13 +129,12 @@
           return t;
         }
       }
-      if (boardDoc && boardDoc.data && boardDoc.data.updatedAt) {
-        const t = Date.parse(String(boardDoc.data.updatedAt));
-        if (!Number.isNaN(t)) {
-          return t;
-        }
-      }
       return null;
+    }
+
+    function bootGuestClockOk() {
+      const cached = loadCache();
+      return Boolean(cached) && TodayBoard.shouldShowBootCache(cached, new Date());
     }
 
     function syncGuestClockAfterBoot() {
@@ -143,16 +142,8 @@
         return;
       }
       const cached = loadCache();
-      if (
-        cached &&
-        cached.businessDate &&
-        cached.boardUpdatedAt &&
-        !TodayBoard.shouldShowBootCache(cached, new Date())
-      ) {
-        demoApi.setGuestClockState({ hidden: true });
-        return;
-      }
-      demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+      const ok = Boolean(cached) && TodayBoard.shouldShowBootCache(cached, new Date());
+      demoApi.setGuestClockState({ hidden: !ok, clearCloudAnchor: true });
     }
 
     function revealGuestClockFromCloudBoard(boardDoc) {
@@ -160,25 +151,15 @@
         return;
       }
       const refMs = guestClockReferenceMs(boardDoc);
-      const cached = loadCache();
-      if (
-        cached &&
-        cached.businessDate &&
-        cached.boardUpdatedAt &&
-        !TodayBoard.shouldShowBootCache(cached, new Date())
-      ) {
-        if (refMs != null) {
-          demoApi.setGuestClockState({ hidden: false, timeMs: refMs });
-          return;
-        }
-        demoApi.setGuestClockState({ hidden: true });
-        return;
-      }
       if (refMs != null) {
         demoApi.setGuestClockState({ hidden: false, timeMs: refMs });
         return;
       }
-      demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+      if (bootGuestClockOk()) {
+        demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+        return;
+      }
+      demoApi.setGuestClockState({ hidden: true });
     }
 
     function tryApplyBootCache() {
@@ -386,6 +367,11 @@
       try {
         const board = await transport.readBoard();
         if (!board) {
+          onStatusLine('board: 無名單');
+          return;
+        }
+        if (board.missing) {
+          revealGuestClockFromCloudBoard(board);
           onStatusLine('board: 無名單');
           return;
         }

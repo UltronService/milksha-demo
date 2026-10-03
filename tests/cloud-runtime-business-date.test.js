@@ -489,6 +489,39 @@ test('first cloud batch after boot stays silent when stale cache cleared on roll
   assert.equal(ringIds.flat().length, 0);
 });
 
+test('guest clock hidden on boot with no cache', async function () {
+  const { sandbox } = loadCloudRuntimeHarness('2026-10-03T14:00:00.000Z');
+  const clockStates = [];
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: {
+      session: { ensureIdToken: async function () {} },
+      readBoard: async function () {
+        throw new Error('offline');
+      },
+      readDevice: async function () {
+        return null;
+      },
+    },
+    receiverDemo: {
+      pushFromObject: function () {
+        return { isOK: true };
+      },
+      setGuestClockState: function (opts) {
+        clockStates.push(opts);
+      },
+    },
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 15);
+  });
+  assert.ok(clockStates.some(function (s) {
+    return s.hidden === true && s.clearCloudAnchor === true;
+  }));
+});
+
 test('guest clock hidden on boot when shouldShowBootCache rejects 1970 clock', async function () {
   const { sandbox, storage } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
   const cacheKey = 'milksha:receiver-cache:s120030';
@@ -589,4 +622,82 @@ test('guest clock shown after cloud board when box clock is 1970', async functio
       return s.hidden === false && typeof s.timeMs === 'number';
     }),
   );
+});
+
+test('missing board with readable HTTP Date reveals guest clock', async function () {
+  const { sandbox, storage } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
+  const cacheKey = 'milksha:receiver-cache:s120030';
+  storage[cacheKey] = JSON.stringify({
+    seq: 1,
+    numberContent: [{ source_type: 'From_Store_OK', number: '11' }],
+    businessDate: '2026-10-03',
+    boardUpdatedAt: '2026-10-03T08:00:00.000Z',
+  });
+  const clockStates = [];
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: {
+      session: { ensureIdToken: async function () {} },
+      readBoard: async function () {
+        return {
+          missing: true,
+          httpDate: 'Fri, 03 Oct 2026 14:00:00 GMT',
+          httpDateReadable: true,
+        };
+      },
+      readDevice: async function () {
+        return null;
+      },
+    },
+    receiverDemo: {
+      pushFromObject: function () {
+        return { isOK: true };
+      },
+      setGuestClockState: function (opts) {
+        clockStates.push(opts);
+      },
+    },
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 40);
+  });
+  assert.ok(
+    clockStates.some(function (s) {
+      return s.hidden === false && typeof s.timeMs === 'number';
+    }),
+  );
+});
+
+test('missing board without HTTP Date keeps clock hidden after failed boot check', async function () {
+  const { sandbox } = loadCloudRuntimeHarness('1970-01-01T00:00:00.000Z');
+  const clockStates = [];
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    transport: {
+      session: { ensureIdToken: async function () {} },
+      readBoard: async function () {
+        return { missing: true, httpDate: '', httpDateReadable: false };
+      },
+      readDevice: async function () {
+        return null;
+      },
+    },
+    receiverDemo: {
+      pushFromObject: function () {
+        return { isOK: true };
+      },
+      setGuestClockState: function (opts) {
+        clockStates.push(opts);
+      },
+    },
+  });
+  cloud.start();
+  await new Promise(function (r) {
+    setTimeout(r, 40);
+  });
+  const last = clockStates[clockStates.length - 1];
+  assert.equal(last.hidden, true);
 });

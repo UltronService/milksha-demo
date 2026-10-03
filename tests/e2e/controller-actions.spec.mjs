@@ -309,7 +309,8 @@ test('board | receiveBoard API and no Firebase SDK', async ({ browser }) => {
 test('board | clock shows Taipei when browser TZ is UTC', async ({ browser }) => {
   const ctx = await browser.newContext({ timezoneId: 'UTC', locale: 'en-US' });
   const page = await ctx.newPage();
-  await page.goto(urlsForMode('local').recv);
+  const { base } = urlsForMode('local');
+  await page.goto(`${base}/receiver-demo/?store=s120030&device=stb-01`);
   const match = await page.evaluate(() => {
     const clock = document.getElementById('rcv-clock');
     const shown = clock ? clock.textContent : '';

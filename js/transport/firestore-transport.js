@@ -29,6 +29,13 @@
 
     async function readBoard() {
       const doc = await client.getDocument(boardPath);
+      if (doc && doc.missing) {
+        return {
+          missing: true,
+          httpDate: doc.httpDate || '',
+          httpDateReadable: Boolean(doc.httpDateReadable),
+        };
+      }
       if (!doc) {
         return null;
       }
