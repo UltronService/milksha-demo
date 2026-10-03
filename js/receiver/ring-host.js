@@ -246,6 +246,9 @@
     if (ringResizeHooked) {
       return;
     }
+    if (typeof root.addEventListener !== 'function') {
+      return;
+    }
     ringResizeHooked = true;
     let resizeTimer = null;
     root.addEventListener('resize', function () {
