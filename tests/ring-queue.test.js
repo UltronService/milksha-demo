@@ -38,7 +38,7 @@ function makeFakeTimers() {
     },
     setTimeout: function (fn, ms) {
       const id = timers.length;
-      timers.push({ fn: fn, at: now + ms, id: id });
+      timers.push({ fn: fn, at: now + ms, id: id, cancelled: false });
       return id;
     },
     clearTimeout: function (id) {
@@ -51,7 +51,7 @@ function makeFakeTimers() {
     advance: function (ms) {
       now += ms;
       let safety = 0;
-      while (safety < 50) {
+      while (safety < 80) {
         safety += 1;
         const due = timers
           .filter(function (t) {
@@ -72,43 +72,41 @@ function makeFakeTimers() {
   };
 }
 
-const GAP_MS = 120;
-
-test('twelve simultaneous rings play FIFO sequentially without overlap', function () {
+test('twelve simultaneous rings play FIFO every 2.5s with gap 0', function () {
   const create = loadQueue();
   const clocks = makeFakeTimers();
   try {
-  const played = [];
-  const queue = create({
-    overlayDurationMs: OVERLAY_MS,
-    setTimeout: clocks.setTimeout,
-    clearTimeout: clocks.clearTimeout,
-    onPlay: function (_id, number, onChimeEnded) {
-      played.push({ number: number, at: clocks.now() });
-      if (onChimeEnded) {
-        onChimeEnded();
-      }
-    },
-    onHideOverlay: function () {},
-  });
-  const ids = [];
-  const ready = new Set();
-  for (let i = 0; i < 12; i += 1) {
-    const id = 'store:' + (9000 + i);
-    ids.push(id);
-    ready.add(id);
-  }
-  queue.syncReadyQueue(ready);
-  queue.enqueueReadyIds(ids);
-  assert.equal(played.length, 1);
-  assert.equal(played[0].number, '9000');
-  for (let step = 1; step < 12; step += 1) {
-    clocks.advance(OVERLAY_MS + GAP_MS + 20);
-    clocks.advance(GAP_MS + 20);
-    assert.equal(played.length, step + 1);
-    assert.equal(played[step].number, String(9000 + step));
-    assert.ok(played[step].at > played[step - 1].at);
-  }
+    const played = [];
+    const queue = create({
+      overlayDurationMs: OVERLAY_MS,
+      gapBetweenItemsMs: 0,
+      setTimeout: clocks.setTimeout,
+      clearTimeout: clocks.clearTimeout,
+      onPlay: function (_id, number, onChimeEnded) {
+        played.push({ number: number, at: clocks.now() });
+        if (onChimeEnded) {
+          onChimeEnded();
+        }
+      },
+      onHideOverlay: function () {},
+    });
+    const ids = [];
+    const ready = new Set();
+    for (let i = 0; i < 12; i += 1) {
+      const id = 'store:' + (9000 + i);
+      ids.push(id);
+      ready.add(id);
+    }
+    queue.syncReadyQueue(ready);
+    queue.enqueueReadyIds(ids);
+    assert.equal(played.length, 1);
+    assert.equal(played[0].number, '9000');
+    for (let step = 1; step < 12; step += 1) {
+      clocks.advance(OVERLAY_MS);
+      assert.equal(played.length, step + 1);
+      assert.equal(played[step].number, String(9000 + step));
+      assert.equal(played[step].at - played[step - 1].at, OVERLAY_MS);
+    }
   } finally {
     clocks.restore();
   }
@@ -156,6 +154,42 @@ test('removes id from queue when it leaves ready before turn', function () {
   queue.enqueueReadyIds(['store:1', 'store:2']);
   assert.equal(played[0], '1');
   queue.syncReadyQueue(new Set(['store:1']));
-  clocks.advance(OVERLAY_MS + GAP_MS);
+  clocks.advance(OVERLAY_MS);
   assert.deepEqual(played, ['1']);
+});
+
+test('autoplay blocked keeps full queue until gesture unlock plays one head', function () {
+  const create = loadQueue();
+  const clocks = makeFakeTimers();
+  let playCalls = 0;
+  const queue = create({
+    overlayDurationMs: OVERLAY_MS,
+    setTimeout: clocks.setTimeout,
+    clearTimeout: clocks.clearTimeout,
+    onPlay: function (_id, _number, onChimeEnded) {
+      playCalls += 1;
+      if (playCalls === 1) {
+        queue.notifyAudioBlocked();
+        return;
+      }
+      if (onChimeEnded) {
+        onChimeEnded();
+      }
+    },
+    onHideOverlay: function () {},
+  });
+  const ready = new Set(['store:1', 'store:2', 'store:3']);
+  queue.syncReadyQueue(ready);
+  queue.enqueueReadyIds(['store:1', 'store:2', 'store:3']);
+  assert.equal(playCalls, 1);
+  assert.equal(queue.getQueueIds().length, 3);
+  assert.equal(queue.isAudioBlocked(), true);
+  queue.unlockAudioFromGesture();
+  assert.equal(playCalls, 2);
+  clocks.advance(OVERLAY_MS);
+  assert.equal(playCalls, 3);
+  assert.equal(queue.getQueueIds().length, 2);
+  clocks.advance(OVERLAY_MS);
+  assert.equal(playCalls, 4);
+  assert.equal(queue.getQueueIds().length, 1);
 });

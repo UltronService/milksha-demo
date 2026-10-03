@@ -21,25 +21,27 @@
     }
   }
 
-  function assertSecureAccessCodeChannel() {
+  function isSecureTargetUrl(urlStr) {
     try {
-      const loc = root.location;
-      if (!loc || loc.protocol !== 'http:') {
-        return;
+      const u = new URL(String(urlStr || ''));
+      if (u.protocol === 'https:') {
+        return true;
       }
-      if (isDevHttpAllowed()) {
-        return;
-      }
-      const err = new Error('access code requires https');
-      err.status = 400;
-      err.response = { code: 'insecure_transport', message: 'access code requires https' };
-      throw err;
+      const host = u.hostname;
+      return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
     } catch (e) {
-      if (e && e.status) {
-        throw e;
-      }
-      /* ignore */
+      return false;
     }
+  }
+
+  function assertSecureTargetUrl(urlStr) {
+    if (isSecureTargetUrl(urlStr)) {
+      return;
+    }
+    const err = new Error('access code requires https target');
+    err.status = 400;
+    err.response = { code: 'insecure_transport', message: 'access code requires https target' };
+    throw err;
   }
 
   function authHttpError(res, json, fallbackMessage) {
@@ -125,14 +127,15 @@
 
     async function devLoginOnce() {
       throwIfAuthStopped();
-      assertSecureAccessCodeChannel();
+      const loginUrl = functionsUrl('devLogin');
+      assertSecureTargetUrl(loginUrl);
       const body = {
         storeId: creds.storeId,
         role: creds.role,
         deviceId: creds.deviceId || 'controller-web',
         accessCode: creds.accessCode || '',
       };
-      const res = await fetch(functionsUrl('devLogin'), {
+      const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -178,6 +181,7 @@
         (config.identityToolkitBaseUrl || '').replace(/\/?$/, '') +
         '/accounts:signInWithCustomToken?key=' +
         encodeURIComponent(config.apiKey || '');
+      assertSecureTargetUrl(url);
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -212,6 +216,7 @@
         (config.secureTokenBaseUrl || 'https://securetoken.googleapis.com/v1').replace(/\/?$/, '') +
         '/token?key=' +
         encodeURIComponent(config.apiKey || '');
+      assertSecureTargetUrl(url);
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -238,7 +243,6 @@
 
     async function ensureIdToken() {
       throwIfAuthStopped();
-      assertSecureAccessCodeChannel();
       if (idToken && Date.now() < expiresAtMs) {
         return idToken;
       }

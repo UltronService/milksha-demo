@@ -54,6 +54,18 @@ function sandboxMilkshaConfig() {
   };
 }
 
+test('production host ignores firestore mode param', function () {
+  const T = loadConfigResolve({
+    hostname: 'ultronservice.github.io',
+    protocol: 'https:',
+    search: '?mode=firestore&gateway=127.0.0.1:8787',
+  });
+  const params = new URLSearchParams('?mode=firestore&gateway=127.0.0.1:8787');
+  const resolved = T.resolveModeFromUrl(params, sandboxMilkshaConfig());
+  assert.equal(resolved.mode, 'local');
+  assert.equal(resolved.config.useEmulator, false);
+});
+
 test('localhost allows gateway override', function () {
   const T = loadConfigResolve({
     hostname: '127.0.0.1',

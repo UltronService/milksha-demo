@@ -186,6 +186,10 @@
         } else if (!parsed || !parsed.serviceSpecialData_Json) {
           return reject('叫號資料格式錯誤');
         }
+        const reqTarget = parsed.serviceSpecialData_Json.target;
+        if (boundTarget && typeof reqTarget === 'string' && reqTarget !== boundTarget) {
+          return reject('找不到目標叫號機');
+        }
         const secret = config.posSignSecret || '';
         if (!secret) {
           return reject('未設定 POS 金鑰');

@@ -12,19 +12,22 @@
   let sharedAudioContext = null;
   let audioContextCreateCount = 0;
   let gestureUnlockHooked = false;
+  let audioResumeInFlight = null;
   /** @type {Set<string>} */
   let lastReadyIdSet = new Set();
+
+  const RESUME_TIMEOUT_MS = 2500;
+  const CHIME_DURATION_S = 0.15;
 
   const ringQueue =
     QMS.Receiver.createReadyRingQueue &&
     QMS.Receiver.createReadyRingQueue({
       overlayDurationMs: QMS.Receiver.READY_RING_OVERLAY_MS || 2500,
+      gapBetweenItemsMs: 0,
       setTimeout: root.setTimeout.bind(root),
       clearTimeout: root.clearTimeout.bind(root),
       onPlay: function (_id, number, onChimeEnded) {
-        recordRingTelemetry(number);
-        showRingOverlayForQueue(number);
-        playWebChime(onChimeEnded);
+        playWebChime(number, onChimeEnded);
       },
       onHideOverlay: function () {
         hideRingOverlay();
@@ -60,7 +63,81 @@
     return sharedAudioContext;
   }
 
-  const CHIME_DURATION_S = 0.15;
+  function blockAutoplay() {
+    hideRingOverlay();
+    if (ringQueue) {
+      ringQueue.notifyAudioBlocked();
+    }
+    hookGestureUnlock();
+  }
+
+  function runOscillator(ctx, number, onEnded) {
+    const done = typeof onEnded === 'function' ? onEnded : function () {};
+    if (ctx.state === 'suspended') {
+      blockAutoplay();
+      return;
+    }
+    recordRingTelemetry(number);
+    showRingOverlayForQueue(number);
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.value = 880;
+    g.gain.value = 0.08;
+    o.onended = function () {
+      done();
+    };
+    o.start();
+    o.stop(ctx.currentTime + CHIME_DURATION_S);
+  }
+
+  function awaitCtxResume(ctx) {
+    if (ctx.state !== 'suspended' || typeof ctx.resume !== 'function') {
+      return Promise.resolve();
+    }
+    if (audioResumeInFlight) {
+      return audioResumeInFlight;
+    }
+    audioResumeInFlight = Promise.race([
+      ctx.resume(),
+      new Promise(function (resolve) {
+        root.setTimeout(resolve, RESUME_TIMEOUT_MS);
+      }),
+    ]).finally(function () {
+      audioResumeInFlight = null;
+    });
+    return audioResumeInFlight;
+  }
+
+  function playWebChime(number, onEnded) {
+    try {
+      const ctx = getSharedAudioContext();
+      if (!ctx) {
+        if (typeof onEnded === 'function') {
+          onEnded();
+        }
+        return;
+      }
+      if (ctx.state !== 'suspended') {
+        runOscillator(ctx, number, onEnded);
+        return;
+      }
+      if (audioResumeInFlight) {
+        blockAutoplay();
+        return;
+      }
+      awaitCtxResume(ctx)
+        .then(function () {
+          runOscillator(ctx, number, onEnded);
+        })
+        .catch(function () {
+          blockAutoplay();
+        });
+    } catch (e) {
+      blockAutoplay();
+    }
+  }
 
   function hookGestureUnlock() {
     if (gestureUnlockHooked || !root.document) {
@@ -70,73 +147,32 @@
     const unlock = function () {
       try {
         const ctx = getSharedAudioContext();
-        if (ctx && typeof ctx.resume === 'function') {
-          ctx.resume().catch(function () {
-            /* ignore */
-          });
+        if (!ctx) {
+          if (ringQueue) {
+            ringQueue.unlockAudioFromGesture();
+          }
+          return;
         }
+        awaitCtxResume(ctx)
+          .then(function () {
+            if (ctx.state === 'suspended') {
+              return;
+            }
+            if (ringQueue) {
+              ringQueue.unlockAudioFromGesture();
+            }
+          })
+          .catch(function () {
+            /* wait for next gesture */
+          });
       } catch (e) {
         /* ignore */
-      }
-      if (ringQueue) {
-        ringQueue.unlockAudioFromGesture();
       }
     };
     const opts = { passive: true };
     root.document.addEventListener('pointerdown', unlock, opts);
     root.document.addEventListener('keydown', unlock, opts);
     root.document.addEventListener('touchstart', unlock, opts);
-  }
-
-  function playWebChime(onEnded) {
-    const done = typeof onEnded === 'function' ? onEnded : function () {};
-    try {
-      const ctx = getSharedAudioContext();
-      if (!ctx) {
-        done();
-        return;
-      }
-      const resumePromise =
-        ctx.state === 'suspended' && typeof ctx.resume === 'function' ? ctx.resume() : null;
-      const run = function () {
-        if (ctx.state === 'suspended') {
-          if (ringQueue) {
-            ringQueue.notifyAudioBlocked();
-          }
-          hookGestureUnlock();
-          return;
-        }
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.frequency.value = 880;
-        g.gain.value = 0.08;
-        o.onended = function () {
-          done();
-        };
-        o.start();
-        o.stop(ctx.currentTime + CHIME_DURATION_S);
-      };
-      if (resumePromise && typeof resumePromise.then === 'function') {
-        resumePromise
-          .then(run)
-          .catch(function () {
-            if (ringQueue) {
-              ringQueue.notifyAudioBlocked();
-            }
-            hookGestureUnlock();
-          });
-        return;
-      }
-      run();
-    } catch (e) {
-      if (ringQueue) {
-        ringQueue.notifyAudioBlocked();
-      }
-      hookGestureUnlock();
-      done();
-    }
   }
 
   function showRingOverlayForQueue(number) {
@@ -173,7 +209,7 @@
     }
     recordRingTelemetry(number);
     showRingOverlayForQueue(number);
-    playWebChime();
+    playWebChime(number);
   }
 
   function syncReadyQueue(readySet) {
@@ -213,6 +249,7 @@
       sharedAudioContext = null;
       audioContextCreateCount = 0;
       gestureUnlockHooked = false;
+      audioResumeInFlight = null;
       lastReadyIdSet = new Set();
       if (ringQueue) {
         ringQueue.resetForTests();
@@ -220,6 +257,9 @@
     },
     _getRingQueueForTests: function () {
       return ringQueue;
+    },
+    _setSharedAudioContextForTests: function (ctx) {
+      sharedAudioContext = ctx;
     },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

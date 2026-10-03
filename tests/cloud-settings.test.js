@@ -55,7 +55,7 @@ test('applyHashImport stores accessCode and strips cfg from address bar', functi
     replaced = url;
   };
   const hash = CS.encodeCfgHash({
-    projectId: 'p1',
+    projectId: 'demo-proj',
     apiKey: 'k1',
     region: 'asia-east1',
     accessCode: 'trial-access-99',
@@ -88,6 +88,28 @@ test('board setup hash never contains POS signing key', function () {
     Object.assign(CS.load(), { posSignSecret: posKey, posSigningKey: posKey }),
   );
   assert.deepEqual(Object.keys(payload).sort(), ['accessCode', 'apiKey', 'projectId', 'region']);
+});
+
+test('decodeCfgHash rejects invalid projectId and keeps only cfg fields', function () {
+  const { CS, sandbox } = loadCloudSettings();
+  const bad = CS.encodeCfgHash({
+    projectId: 'bad',
+    apiKey: 'k1',
+    region: 'asia-east1',
+    accessCode: 'x',
+  });
+  sandbox.location.hash = '#cfg=' + bad;
+  assert.equal(CS.applyHashImport(), false);
+  const good = CS.encodeCfgHash({
+    projectId: 'demo-proj',
+    apiKey: 'k1',
+    region: 'asia-east1',
+    accessCode: 'x',
+    gateway: 'http://evil',
+  });
+  const decoded = CS.decodeCfgHash('#cfg=' + good);
+  assert.equal(decoded.gateway, '');
+  assert.equal(decoded.projectId, 'demo-proj');
 });
 
 test('production endpoints match Firebase functions URL pattern', function () {

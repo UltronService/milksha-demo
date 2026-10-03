@@ -196,17 +196,21 @@
    */
   function resolveModeFromUrl(params, baseConfig) {
     const modeParam = (params.get('mode') || '').toLowerCase();
+    const effectiveMode =
+      modeParam === 'firestore' && !isDevEndpointOverrideAllowed() ? 'local' : modeParam;
     const cfg =
-      modeParam === 'cloud'
+      effectiveMode === 'cloud'
         ? resolveConfigForMode('cloud', params, baseConfig)
-        : resolveFirebaseConfig(params, baseConfig);
-    if (modeParam === 'firestore') {
+        : effectiveMode === 'firestore'
+          ? resolveConfigForMode('firestore', params, baseConfig)
+          : resolveFirebaseConfig(params, baseConfig);
+    if (effectiveMode === 'firestore') {
       return { mode: 'firestore', config: cfg };
     }
-    if (modeParam === 'cloud') {
+    if (effectiveMode === 'cloud') {
       return { mode: 'cloud', config: cfg };
     }
-    if (modeParam === 'local') {
+    if (effectiveMode === 'local') {
       return { mode: 'local', config: cfg };
     }
     return { mode: 'local', config: cfg };

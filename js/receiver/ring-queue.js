@@ -8,16 +8,14 @@
   QMS.Receiver = QMS.Receiver || {};
 
   const DEFAULT_OVERLAY_MS = 2500;
-  const DEFAULT_GAP_MS = 120;
+  const DEFAULT_GAP_MS = 0;
   const MAX_QUEUE_LEN = 32;
-  const STALE_QUEUE_MS = 8000;
 
   /**
    * @param {{
    *   overlayDurationMs?: number,
    *   gapBetweenItemsMs?: number,
    *   maxQueueLen?: number,
-   *   staleQueueMs?: number,
    *   setTimeout?: (fn: () => void, ms: number) => unknown,
    *   clearTimeout?: (id: unknown) => void,
    *   onPlay: (id: string, number: string, onChimeEnded: () => void) => void,
@@ -26,15 +24,14 @@
    */
   function createReadyRingQueue(options) {
     const overlayMs = options.overlayDurationMs || DEFAULT_OVERLAY_MS;
-    const gapMs = options.gapBetweenItemsMs || DEFAULT_GAP_MS;
+    const gapMs = options.gapBetweenItemsMs !== undefined ? options.gapBetweenItemsMs : DEFAULT_GAP_MS;
     const maxQueueLen = options.maxQueueLen || MAX_QUEUE_LEN;
-    const staleQueueMs = options.staleQueueMs || STALE_QUEUE_MS;
     const setTimeoutFn = options.setTimeout || root.setTimeout.bind(root);
     const clearTimeoutFn = options.clearTimeout || root.clearTimeout.bind(root);
     const onPlay = options.onPlay;
     const onHideOverlay = options.onHideOverlay || function () {};
 
-    /** @type {Array<{ id: string, number: string, enqueuedAt: number }>} */
+    /** @type {Array<{ id: string, number: string }>} */
     let queue = [];
     const queuedIds = new Set();
     /** @type {Set<string>} */
@@ -55,20 +52,7 @@
       }
     }
 
-    function dropStaleFromQueue() {
-      const now = Date.now();
-      const next = [];
-      for (let i = 0; i < queue.length; i += 1) {
-        if (now - queue[i].enqueuedAt <= staleQueueMs) {
-          next.push(queue[i]);
-        }
-      }
-      queue = next;
-      rebuildQueuedIds();
-    }
-
     function pruneQueue() {
-      dropStaleFromQueue();
       const playingId = draining && queue.length > 0 ? queue[0].id : null;
       const next = [];
       for (let i = 0; i < queue.length; i += 1) {
@@ -116,7 +100,7 @@
       let advanced = false;
 
       function scheduleAdvanceAfterChime() {
-        if (advanced) {
+        if (advanced || audioBlocked) {
           return;
         }
         advanced = true;
@@ -175,7 +159,6 @@
 
     function enqueueReadyIds(ids) {
       const list = Array.isArray(ids) ? ids : [];
-      const now = Date.now();
       for (let i = 0; i < list.length; i += 1) {
         const id = String(list[i]);
         if (queuedIds.has(id)) {
@@ -184,7 +167,7 @@
         if (!currentReadySet.has(id)) {
           continue;
         }
-        queue.push({ id: id, number: idToNumber(id), enqueuedAt: now });
+        queue.push({ id: id, number: idToNumber(id) });
         queuedIds.add(id);
         while (queue.length > maxQueueLen) {
           const dropped = queue.shift();
@@ -200,12 +183,14 @@
       audioBlocked = true;
       clearDrainTimer();
       draining = false;
-      dropStaleFromQueue();
+      onHideOverlay();
     }
 
     function unlockAudioFromGesture() {
+      if (!audioBlocked) {
+        return;
+      }
       audioBlocked = false;
-      dropStaleFromQueue();
       scheduleDrain();
     }
 
@@ -231,6 +216,9 @@
       },
       isDraining: function () {
         return draining;
+      },
+      isAudioBlocked: function () {
+        return audioBlocked;
       },
       resetForTests: resetForTests,
     };

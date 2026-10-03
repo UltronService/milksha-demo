@@ -4,6 +4,8 @@
 (function (root) {
   'use strict';
 
+  const AUTH_SLOW_RECHECK_MS = 10 * 60 * 1000;
+
   function readCreds(params) {
     const storeId = params.get('store') || 's120030';
     const deviceId = params.get('device') || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
@@ -117,15 +119,37 @@
 
     let authHalted = false;
     let auth401Retried = false;
+    let slowRecheckTimer = null;
+
+    function scheduleSlowAuthRecheck() {
+      if (slowRecheckTimer) {
+        return;
+      }
+      slowRecheckTimer = root.setTimeout(function () {
+        slowRecheckTimer = null;
+        authHalted = false;
+        auth401Retried = false;
+        if (transport.session && transport.session.resetAuthRetryState) {
+          transport.session.resetAuthRetryState();
+        }
+        runEnsureIdToken();
+      }, AUTH_SLOW_RECHECK_MS);
+    }
 
     function handleAuthFailure(err) {
       setGuestAuthDebug(err);
       const status = err && err.status ? Number(err.status) : 0;
       const sessionStopped =
         transport.session && transport.session.isAuthStopped && transport.session.isAuthStopped();
-      if (status === 403 || sessionStopped) {
+      if (status === 403) {
         authHalted = true;
         setAuthStopped();
+        return;
+      }
+      if (sessionStopped) {
+        authHalted = true;
+        setAuthStopped();
+        scheduleSlowAuthRecheck();
         return;
       }
       if (status === 401) {
@@ -137,6 +161,7 @@
         }
         authHalted = true;
         setAuthStopped();
+        scheduleSlowAuthRecheck();
       }
     }
 

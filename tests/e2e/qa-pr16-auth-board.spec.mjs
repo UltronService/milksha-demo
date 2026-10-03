@@ -83,3 +83,31 @@ test('receiver auth 403 does not retry devLogin', async ({ browser }) => {
   await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
   await ctx.close();
 });
+
+test('receiver recovers after reload when devLogin succeeds', async ({ browser }) => {
+  const { base } = urlsForMode('firestore');
+  const ctx = await browser.newContext();
+  await ctx.addInitScript(cloudSettingsInitScript());
+  const receiver = await ctx.newPage();
+  let denyAuth = true;
+  await receiver.route('**/devLogin', async (route) => {
+    if (denyAuth) {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'invalid_access_code', message: 'bad code' }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+  await receiver.goto(`${base}/receiver-demo/?mode=firestore&store=s120030&device=stb-01`);
+  await receiver.waitForTimeout(2500);
+  await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-auth-stopped', '1');
+  denyAuth = false;
+  await receiver.reload();
+  await receiver.waitForTimeout(3000);
+  await expect(receiver.locator('#rcv-stage')).not.toHaveAttribute('data-auth-stopped', '1');
+  await expect(receiver.locator('#rcv-stage')).toBeVisible();
+  await ctx.close();
+});

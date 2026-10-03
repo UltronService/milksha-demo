@@ -8,6 +8,21 @@
   QMS.Transport = QMS.Transport || {};
 
   const STORAGE_KEY = 'milksha:cloud-settings';
+  const PROJECT_ID_RE = /^[a-z0-9-]{6,30}$/;
+  const REGION_RE = /^[a-z]+-[a-z]+\d$/;
+
+  function isDevSettingsHost() {
+    try {
+      const loc = root.location;
+      if (!loc) {
+        return false;
+      }
+      const host = String(loc.hostname || '');
+      return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+    } catch (e) {
+      return false;
+    }
+  }
 
   function defaults() {
     return {
@@ -21,6 +36,16 @@
     };
   }
 
+  function stripDevFields(settings) {
+    const s = Object.assign({}, settings || {});
+    if (!isDevSettingsHost()) {
+      s.gateway = '';
+      s.emulatorPrefix = '';
+      s.useEmulator = false;
+    }
+    return s;
+  }
+
   function load(storage) {
     const s = storage || root.localStorage;
     try {
@@ -28,7 +53,7 @@
       if (!raw) {
         return defaults();
       }
-      return Object.assign(defaults(), JSON.parse(raw));
+      return stripDevFields(Object.assign(defaults(), JSON.parse(raw)));
     } catch (e) {
       return defaults();
     }
@@ -36,7 +61,7 @@
 
   function save(partial, storage) {
     const s = storage || root.localStorage;
-    const merged = Object.assign(load(s), partial || {});
+    const merged = stripDevFields(Object.assign(load(s), partial || {}));
     s.setItem(STORAGE_KEY, JSON.stringify(merged));
     return merged;
   }
@@ -47,6 +72,12 @@
       return false;
     }
     if (!String(s.accessCode || '').trim()) {
+      return false;
+    }
+    if (!PROJECT_ID_RE.test(String(s.projectId || '').trim())) {
+      return false;
+    }
+    if (!REGION_RE.test(String(s.region || 'asia-east1').trim())) {
       return false;
     }
     if (s.useEmulator && !String(s.gateway || '').trim()) {
@@ -88,16 +119,39 @@
     };
   }
 
+  function normalizeImportedCfg(json) {
+    if (!json || typeof json !== 'object') {
+      return null;
+    }
+    const projectId = String(json.projectId || '').trim();
+    const apiKey = String(json.apiKey || '').trim();
+    const region = String(json.region || 'asia-east1').trim() || 'asia-east1';
+    const accessCode = String(json.accessCode || '').trim();
+    if (!PROJECT_ID_RE.test(projectId)) {
+      return null;
+    }
+    if (!REGION_RE.test(region)) {
+      return null;
+    }
+    if (!apiKey) {
+      return null;
+    }
+    return {
+      projectId: projectId,
+      apiKey: apiKey,
+      region: region,
+      accessCode: accessCode,
+      useEmulator: false,
+      gateway: '',
+      emulatorPrefix: '',
+    };
+  }
+
   function stripBoardCfgFields(obj) {
     if (!obj || typeof obj !== 'object') {
       return obj;
     }
-    const out = Object.assign({}, obj);
-    delete out.posSignSecret;
-    delete out.posSignKey;
-    delete out.pos_sign_secret;
-    delete out.posSigningKey;
-    return out;
+    return normalizeImportedCfg(obj);
   }
 
   function encodeCfgHash(settings) {
@@ -112,7 +166,7 @@
     }
     try {
       const json = JSON.parse(base64UrlDecode(m[1]));
-      return Object.assign(defaults(), stripBoardCfgFields(json));
+      return normalizeImportedCfg(json);
     } catch (e) {
       return null;
     }
@@ -165,7 +219,7 @@
       clearCfgHashFromUrl();
       return false;
     }
-    save(stripBoardCfgFields(parsed), storage);
+    save(parsed, storage);
     clearCfgHashFromUrl();
     return true;
   }
@@ -173,6 +227,14 @@
   function productionEndpoints(projectId, region) {
     const pid = String(projectId || '').trim();
     const reg = String(region || 'asia-east1').trim() || 'asia-east1';
+    if (!PROJECT_ID_RE.test(pid) || !REGION_RE.test(reg)) {
+      return {
+        functionsBaseUrl: '',
+        firestoreRestBase: '',
+        identityToolkitBaseUrl: '',
+        firestoreEmulatorHost: '',
+      };
+    }
     return {
       functionsBaseUrl: 'https://' + reg + '-' + pid + '.cloudfunctions.net/',
       firestoreRestBase:
@@ -184,6 +246,8 @@
 
   QMS.Transport.CloudSettings = {
     STORAGE_KEY: STORAGE_KEY,
+    PROJECT_ID_RE: PROJECT_ID_RE,
+    REGION_RE: REGION_RE,
     defaults: defaults,
     load: load,
     save: save,
@@ -192,8 +256,10 @@
     decodeCfgHash: decodeCfgHash,
     applyHashImport: applyHashImport,
     cfgPayload: cfgPayload,
+    normalizeImportedCfg: normalizeImportedCfg,
     stripBoardCfgFields: stripBoardCfgFields,
     hashContainsForbiddenSecrets: hashContainsForbiddenSecrets,
     productionEndpoints: productionEndpoints,
+    isDevSettingsHost: isDevSettingsHost,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);
