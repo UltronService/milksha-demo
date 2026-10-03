@@ -48,6 +48,11 @@
           calc(var(--rcv-ready-num-px) * 2 * 100vw / var(--rcv-board-design-width))
         );
         --rcv-ring-label-size: clamp(32px, 3.2vw, 64px);
+        --rcv-ring-box-max: min(92vw, 46.875vw);
+        --rcv-ring-pad-x: calc(80px * 100vw / var(--rcv-board-design-width));
+        --rcv-ring-pad-y: clamp(20px, 3vh, 36px);
+        --rcv-ring-border: calc(8px * 100vw / var(--rcv-board-design-width));
+        --rcv-ring-letter: calc(8px * 100vw / var(--rcv-board-design-width));
       }
       .rcv-clock[hidden] {
         visibility: hidden;
@@ -67,14 +72,17 @@
         transition: opacity 0.15s ease-out;
       }
       #rcv-ring-box {
+        flex-shrink: 0;
         background: #fff;
         color: #111;
-        padding: clamp(20px, 3vh, 36px) clamp(32px, 6vw, 80px);
+        padding: var(--rcv-ring-pad-y) var(--rcv-ring-pad-x);
         border-radius: 16px;
         text-align: center;
-        border: clamp(4px, 0.6vw, 8px) solid #111;
+        border: var(--rcv-ring-border) solid #111;
         box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
-        max-width: min(92vw, 900px);
+        width: var(--rcv-ring-box-max);
+        max-width: var(--rcv-ring-box-max);
+        box-sizing: border-box;
       }
       .rcv-ring-label {
         font-size: var(--rcv-ring-label-size);
@@ -87,9 +95,17 @@
         font-size: var(--rcv-ring-num-size);
         font-weight: 900;
         line-height: 1.05;
-        letter-spacing: clamp(2px, 0.5vw, 8px);
+        letter-spacing: var(--rcv-ring-letter);
         font-variant-numeric: tabular-nums;
         color: #000;
+      }
+      @media (min-width: 1921px) {
+        .rcv-ring-num {
+          font-size: min(
+            var(--rcv-ring-num-size),
+            calc(0.278 * var(--rcv-ring-box-max))
+          );
+        }
       }
       .rcv-viewport {
         position: relative;
@@ -1363,6 +1379,7 @@
     <script src="../js/receiver/chime-policy.js"></script>
     <script src="../js/receiver/ring-queue.js"></script>
     <script src="../js/receiver/ring-host.js"></script>
+    <script src="../js/receiver/device-command-time.js"></script>
     <script src="../js/receiver/cloud-runtime.js"></script>
     <script src="../js/receiver/cloud-boot.js"></script>
   </body>

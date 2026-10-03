@@ -44,6 +44,8 @@ test('controller connect 401 shows access code alert', async ({ browser }) => {
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
   await controller.click('#btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401, { timeout: 10000 });
+  await expect(controller.locator('.controller-alert-error')).toHaveCSS('color', 'rgb(207, 19, 34)');
+  await expect(controller.getByTestId('command-error-message')).toHaveCSS('color', 'rgb(207, 19, 34)');
   await expect(controller.getByTestId('command-error-detail')).not.toHaveText('');
   await controller.locator('details').filter({ hasText: '詳細內容' }).click();
   await expect(controller.getByTestId('command-error-detail')).toContainText('401');

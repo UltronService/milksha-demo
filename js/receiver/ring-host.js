@@ -262,5 +262,8 @@
     _setSharedAudioContextForTests: function (ctx) {
       sharedAudioContext = ctx;
     },
+    showRingOverlayForTests: function (number) {
+      showRingOverlayForQueue(String(number));
+    },
   };
 })(typeof window !== 'undefined' ? window : globalThis);

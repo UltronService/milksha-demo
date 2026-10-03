@@ -8,6 +8,88 @@ const COMMITTED_DIR = join(dirname(fileURLToPath(import.meta.url)), 'committed-a
 
 const VIEW = { width: 1920, height: 1080 };
 
+/** Golden layout at 1920×1080 (ring overlay, 4-digit 8801) — must not drift when scaling rules change. */
+const RING_BASELINE_1920 = { boxWidth: 900, numWidth: 640.640625 };
+
+async function seedReadyNumber(page, number = '8801') {
+  await page.evaluate((num) => {
+    window.receiverDemo.pushFromObject({
+      isEncrypt: false,
+      serviceSpecialData_Json: {
+        target: 's120030',
+        data: {
+          number_content: [{ source_type: 'From_Store_OK', number: String(num) }],
+          newsTicker_content: [],
+          newsTickerSpeed: 0,
+        },
+      },
+      merchant_id: 'demo',
+      account: 's120030',
+      timeStmp: '2026-10-02-12-00-00:0000',
+      serviceSpecialData_Json_Md5Hash: 'demo',
+      signature: 'DEMO-NO-SIGNATURE',
+    });
+  }, number);
+}
+
+async function showFourDigitRing(page, digits = '8801') {
+  await page.evaluate((num) => {
+    const RH = window.QMS && window.QMS.Receiver && window.QMS.Receiver.RingHost;
+    if (RH && typeof RH.showRingOverlayForTests === 'function') {
+      RH.showRingOverlayForTests(num);
+      return;
+    }
+    const numEl = document.getElementById('rcv-ring-num');
+    const ov = document.getElementById('rcv-ring-ov');
+    if (numEl) {
+      numEl.textContent = num;
+    }
+    if (ov) {
+      ov.style.opacity = '1';
+    }
+  }, digits);
+}
+
+async function measureRingOverlay(page) {
+  return page.evaluate(() => {
+    const box = document.getElementById('rcv-ring-box');
+    const num = document.getElementById('rcv-ring-num');
+    const card = document.querySelector('.rcv-ready .rcv-num');
+    if (!box || !num) {
+      return null;
+    }
+    const boxR = box.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(num);
+    const numR = range.getBoundingClientRect();
+    let cardWidth = 0;
+    if (card && card.textContent) {
+      const cardRange = document.createRange();
+      cardRange.selectNodeContents(card);
+      cardWidth = cardRange.getBoundingClientRect().width;
+    }
+    const cs = getComputedStyle(box);
+    const insetX =
+      parseFloat(cs.paddingLeft) +
+      parseFloat(cs.paddingRight) +
+      parseFloat(cs.borderLeftWidth) +
+      parseFloat(cs.borderRightWidth);
+    const innerW = Math.max(0, boxR.width - insetX);
+    const side = (innerW - numR.width) / 2;
+    const ringFontPx = parseFloat(getComputedStyle(num).fontSize) || 0;
+    const readyFontPx = 140;
+    return {
+      boxWidth: boxR.width,
+      numWidth: numR.width,
+      innerWidth: innerW,
+      cardWidth: cardWidth,
+      ringFontPx: ringFontPx,
+      readyFontPx: readyFontPx,
+      sideMarginPct: boxR.width > 0 ? side / boxR.width : 0,
+    };
+  });
+}
+
 function cloudSettingsInitScript() {
   return () => {
     try {
@@ -131,26 +213,42 @@ test('store name horizontal position stable when clock hidden', async ({ browser
   await ctx.close();
 });
 
-test('overlay number at 2560px is at least twice ready card size', async ({ browser }) => {
+test('ring overlay at 1920x1080 matches baseline box and number width', async ({ browser }) => {
   const { recv } = urlsForMode('local');
   const ctx = await browser.newContext({ deviceScaleFactor: 1 });
   const receiver = await ctx.newPage();
-  await receiver.setViewportSize({ width: 2560, height: 1080 });
+  await receiver.setViewportSize(VIEW);
   await receiver.goto(recv);
   await receiver.waitForTimeout(500);
-  const sizes = await receiver.evaluate(() => {
-    const RH = window.QMS && window.QMS.Receiver && window.QMS.Receiver.RingHost;
-    if (RH && RH._resetAudioContextForTests) {
-      RH._resetAudioContextForTests();
-      RH.syncReadyQueue(new Set());
-      RH.playReadyRing('8801');
-    }
-    const card = document.querySelector('.rcv-ready .rcv-num');
-    const ring = document.getElementById('rcv-ring-num');
-    const cardSize = card ? parseFloat(getComputedStyle(card).fontSize) : 0;
-    const ringSize = ring ? parseFloat(getComputedStyle(ring).fontSize) : 0;
-    return { cardSize, ringSize };
-  });
-  expect(sizes.ringSize).toBeGreaterThanOrEqual(sizes.cardSize * 2 - 1);
+  await seedReadyNumber(receiver);
+  await showFourDigitRing(receiver);
+  await receiver.waitForTimeout(200);
+  const m = await measureRingOverlay(receiver);
+  expect(m).not.toBeNull();
+  expect(Math.abs(m.boxWidth - RING_BASELINE_1920.boxWidth)).toBeLessThan(1.5);
+  expect(Math.abs(m.numWidth - RING_BASELINE_1920.numWidth)).toBeLessThan(1.5);
   await ctx.close();
+});
+
+test('ring overlay number does not overflow the box (side margins)', async ({ browser }) => {
+  const { recv } = urlsForMode('local');
+  const viewports = [
+    { width: 2560, height: 1080 },
+    { width: 2560, height: 1440 },
+  ];
+  for (const vp of viewports) {
+    const ctx = await browser.newContext({ deviceScaleFactor: 1 });
+    const receiver = await ctx.newPage();
+    await receiver.setViewportSize(vp);
+    await receiver.goto(recv);
+    await receiver.waitForTimeout(500);
+    await showFourDigitRing(receiver);
+    await receiver.waitForTimeout(200);
+    const m = await measureRingOverlay(receiver);
+    expect(m).not.toBeNull();
+    expect(m.numWidth).toBeLessThanOrEqual(m.boxWidth + 0.5);
+    expect(m.sideMarginPct).toBeGreaterThanOrEqual(0.05 - 0.005);
+    expect(m.ringFontPx).toBeGreaterThanOrEqual(m.readyFontPx * 2 - 1);
+    await ctx.close();
+  }
 });
