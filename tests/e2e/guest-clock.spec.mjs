@@ -244,8 +244,8 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
     if (!num || !box) {
       return false;
     }
+    const savedFontSize = num.style.fontSize;
     num.style.fontSize = '';
-    const maxPx = parseFloat(getComputedStyle(num).fontSize) || 0;
     const cs = getComputedStyle(box);
     const innerW =
       box.clientWidth -
@@ -256,7 +256,9 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
     const range = document.createRange();
     range.selectNodeContents(num);
     const textW = range.getBoundingClientRect().width;
-    return textW <= innerW + 1;
+    const fits = textW <= innerW + 1;
+    num.style.fontSize = savedFontSize;
+    return fits;
   });
   if (fitsAtDesign) {
     expect(Math.abs(m.fontSize - b.fontSize)).toBeLessThan(1);
