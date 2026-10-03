@@ -19,6 +19,7 @@
         deviceId: options.deviceId,
         accessCode: options.accessCode,
         storage: options.storage,
+        onAuthSuccess: options.onAuthSuccess,
       });
       return QMS.Transport.Firestore.createFirestoreTransport({
         storeId: options.storeId,

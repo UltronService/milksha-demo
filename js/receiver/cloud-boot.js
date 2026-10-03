@@ -23,6 +23,17 @@
     return 10 * 60 * 1000;
   }
 
+  function auth403RecheckMs(params) {
+    if (!devTestHooksAllowed()) {
+      return 5 * 60 * 1000;
+    }
+    const testMs = Number(params.get('testAuthRecheckMs'));
+    if (Number.isFinite(testMs) && testMs >= 100) {
+      return testMs;
+    }
+    return 5 * 60 * 1000;
+  }
+
   function readCreds(params) {
     const storeId = params.get('store') || 's120030';
     const deviceId = params.get('device') || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
@@ -56,12 +67,7 @@
     }
     const status = err && err.status ? String(err.status) : '';
     const response = err && err.response ? err.response : null;
-    const code =
-      response && response.code != null
-        ? String(response.code)
-        : response && response.error != null
-          ? String(response.error) // TODO: remove legacy `error` after milksha-cloud PR #4 deploy
-          : '';
+    const code = response && response.code != null ? String(response.code) : '';
     const tag = code || status || 'auth';
     stage.setAttribute('data-auth-error', tag);
     if (code) {
@@ -140,12 +146,17 @@
       role: 'device',
       deviceId: creds.deviceId,
       accessCode: creds.accessCode,
+      onAuthSuccess: function () {
+        clearGuestAuthDebug();
+      },
     });
 
     let authHalted = false;
     let auth401Retried = false;
     let slowRecheckTimer = null;
+    let pendingRecheckDelayMs = authSlowRecheckMs(params);
     const slowRecheckMs = authSlowRecheckMs(params);
+    const recheck403Ms = auth403RecheckMs(params);
 
     if (devTestHooksAllowed()) {
       root.__forceReceiverAuthRecheck = function (opts) {
@@ -159,6 +170,9 @@
           transport.session.clearStored();
         }
         runEnsureIdToken();
+      };
+      root.__receiverEnsureIdTokenForTests = function () {
+        return runEnsureIdToken(true);
       };
       root.__receiverAttemptDevLoginForTests = function () {
         if (!transport.session || !transport.session.devLogin) {
@@ -182,10 +196,13 @@
       };
     }
 
-    function scheduleSlowAuthRecheck() {
+    function scheduleSlowAuthRecheck(delayMs) {
       if (slowRecheckTimer) {
-        return;
+        root.clearTimeout(slowRecheckTimer);
+        slowRecheckTimer = null;
       }
+      const waitMs =
+        Number.isFinite(delayMs) && delayMs >= 100 ? delayMs : pendingRecheckDelayMs;
       slowRecheckTimer = root.setTimeout(function () {
         slowRecheckTimer = null;
         authHalted = false;
@@ -193,8 +210,8 @@
         if (transport.session && transport.session.resetAuthRetryState) {
           transport.session.resetAuthRetryState();
         }
-        runEnsureIdToken();
-      }, slowRecheckMs);
+        runEnsureIdToken(true);
+      }, waitMs);
     }
 
     function handleAuthFailure(err) {
@@ -203,15 +220,16 @@
       const sessionStopped =
         transport.session && transport.session.isAuthStopped && transport.session.isAuthStopped();
       if (status === 403) {
-        authHalted = true;
         setUploadStopped();
-        scheduleSlowAuthRecheck();
+        pendingRecheckDelayMs = recheck403Ms;
+        scheduleSlowAuthRecheck(recheck403Ms);
         return;
       }
       if (sessionStopped) {
         authHalted = true;
         setAuthStopped();
-        scheduleSlowAuthRecheck();
+        pendingRecheckDelayMs = slowRecheckMs;
+        scheduleSlowAuthRecheck(slowRecheckMs);
         return;
       }
       if (status === 401) {
@@ -223,25 +241,35 @@
         }
         authHalted = true;
         setAuthStopped();
-        scheduleSlowAuthRecheck();
+        pendingRecheckDelayMs = slowRecheckMs;
+        scheduleSlowAuthRecheck(slowRecheckMs);
       }
     }
 
     let ensureAuthInFlight = false;
+    /** @type {Promise<void>|null} */
+    let ensureAuthPromise = null;
 
-    function runEnsureIdToken() {
-      if (authHalted || ensureAuthInFlight) {
-        return;
+    function runEnsureIdToken(forceRetry) {
+      if (ensureAuthInFlight && ensureAuthPromise) {
+        return ensureAuthPromise;
+      }
+      if (authHalted && !forceRetry) {
+        return Promise.resolve();
       }
       if (!transport.session || !transport.session.ensureIdToken) {
-        return;
+        return Promise.resolve();
       }
       ensureAuthInFlight = true;
-      transport.session
+      ensureAuthPromise = transport.session
         .ensureIdToken()
         .then(function () {
           authHalted = false;
           auth401Retried = false;
+          if (slowRecheckTimer) {
+            root.clearTimeout(slowRecheckTimer);
+            slowRecheckTimer = null;
+          }
           if (transport.session && transport.session.resetAuthRetryState) {
             transport.session.resetAuthRetryState();
           }
@@ -249,13 +277,18 @@
             transport.session.clearUploadHalt();
           }
           clearGuestAuthDebug();
+          if (root.__receiverSyncAuthUi) {
+            root.__receiverSyncAuthUi();
+          }
         })
         .catch(function (err) {
           handleAuthFailure(err);
         })
         .finally(function () {
           ensureAuthInFlight = false;
+          ensureAuthPromise = null;
         });
+      return ensureAuthPromise;
     }
 
     let cloudStarted = false;
@@ -314,6 +347,19 @@
         cloud.start();
         root.receiveBoard = cloud.receiveBoard;
         root.receiverCloud = cloud;
+        root.__receiverHandleAuthFailure = handleAuthFailure;
+        root.__receiverSyncAuthUi = function () {
+          if (!transport.session) {
+            return;
+          }
+          const halted =
+            transport.session.isUploadHalted && transport.session.isUploadHalted();
+          const stopped =
+            transport.session.isAuthStopped && transport.session.isAuthStopped();
+          if (!halted && !stopped) {
+            clearGuestAuthDebug();
+          }
+        };
       };
       startCloud();
       runEnsureIdToken();

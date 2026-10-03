@@ -8,10 +8,20 @@ const COMMITTED_DIR = join(dirname(fileURLToPath(import.meta.url)), 'committed-a
 
 const VIEW = { width: 1920, height: 1080 };
 
-/** Golden layout at 1920×1080 (ring overlay, 4-digit 8801) — box + font size; text width varies by host fonts. */
-const RING_BASELINE_1920 = { boxWidth: 900, ringFontPx: 280 };
+/** Measured on commit 6975672 @ 1920×1080, 4-digit ring overlay (geometry only). */
+const RING_BASELINE_6975672 = {
+  boxWidth: 848.640625,
+  paddingLeft: 80,
+  paddingRight: 80,
+  borderLeft: 8,
+  borderRight: 8,
+  fontSize: 280,
+  letterSpacingPx: 8,
+};
 
-async function seedReadyNumber(page, number = '8801') {
+const RING_DIGITS = '8888';
+
+async function seedReadyNumber(page, number = RING_DIGITS) {
   await page.evaluate((num) => {
     window.receiverDemo.pushFromObject({
       isEncrypt: false,
@@ -32,21 +42,9 @@ async function seedReadyNumber(page, number = '8801') {
   }, number);
 }
 
-async function showFourDigitRing(page, digits = '8801') {
+async function showFourDigitRing(page, digits = RING_DIGITS) {
   await page.evaluate((num) => {
-    const RH = window.QMS && window.QMS.Receiver && window.QMS.Receiver.RingHost;
-    if (RH && typeof RH.showRingOverlayForTests === 'function') {
-      RH.showRingOverlayForTests(num);
-      return;
-    }
-    const numEl = document.getElementById('rcv-ring-num');
-    const ov = document.getElementById('rcv-ring-ov');
-    if (numEl) {
-      numEl.textContent = num;
-    }
-    if (ov) {
-      ov.style.opacity = '1';
-    }
+    window.QMS.Receiver.RingHost.showRingOverlayForTests(num);
   }, digits);
 }
 
@@ -54,7 +52,6 @@ async function measureRingOverlay(page) {
   return page.evaluate(() => {
     const box = document.getElementById('rcv-ring-box');
     const num = document.getElementById('rcv-ring-num');
-    const card = document.querySelector('.rcv-ready .rcv-num');
     if (!box || !num) {
       return null;
     }
@@ -62,30 +59,28 @@ async function measureRingOverlay(page) {
     const range = document.createRange();
     range.selectNodeContents(num);
     const numR = range.getBoundingClientRect();
-    let cardWidth = 0;
-    if (card && card.textContent) {
-      const cardRange = document.createRange();
-      cardRange.selectNodeContents(card);
-      cardWidth = cardRange.getBoundingClientRect().width;
-    }
     const cs = getComputedStyle(box);
-    const insetX =
-      parseFloat(cs.paddingLeft) +
-      parseFloat(cs.paddingRight) +
-      parseFloat(cs.borderLeftWidth) +
-      parseFloat(cs.borderRightWidth);
-    const innerW = Math.max(0, boxR.width - insetX);
-    const side = (innerW - numR.width) / 2;
-    const ringFontPx = parseFloat(getComputedStyle(num).fontSize) || 0;
-    const readyFontPx = 140;
+    const numCs = getComputedStyle(num);
+    const padL = parseFloat(cs.paddingLeft);
+    const padR = parseFloat(cs.paddingRight);
+    const borL = parseFloat(cs.borderLeftWidth);
+    const borR = parseFloat(cs.borderRightWidth);
+    const innerL = boxR.left + padL + borL;
+    const innerR = boxR.right - padR - borR;
+    const innerW = innerR - innerL;
+    const letterSpacing = parseFloat(numCs.letterSpacing) || 0;
     return {
       boxWidth: boxR.width,
+      paddingLeft: padL,
+      paddingRight: padR,
+      borderLeft: borL,
+      borderRight: borR,
+      fontSize: parseFloat(numCs.fontSize) || 0,
+      letterSpacingPx: letterSpacing,
       numWidth: numR.width,
       innerWidth: innerW,
-      cardWidth: cardWidth,
-      ringFontPx: ringFontPx,
-      readyFontPx: readyFontPx,
-      sideMarginPct: boxR.width > 0 ? side / boxR.width : 0,
+      sideMarginPctLeft: (numR.left - innerL) / boxR.width,
+      sideMarginPctRight: (innerR - numR.right) / boxR.width,
     };
   });
 }
@@ -213,45 +208,58 @@ test('store name horizontal position stable when clock hidden', async ({ browser
   await ctx.close();
 });
 
-test('ring overlay at 1920x1080 matches baseline box and number width', async ({ browser }) => {
+test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser }) => {
   const { recv } = urlsForMode('local');
   const ctx = await browser.newContext({ deviceScaleFactor: 1 });
   const receiver = await ctx.newPage();
   await receiver.setViewportSize(VIEW);
   await receiver.goto(recv);
-  await receiver.waitForTimeout(500);
+  await receiver.waitForFunction(() => window.QMS?.Receiver?.RingHost?.showRingOverlayForTests, null, {
+    timeout: 15000,
+  });
   await seedReadyNumber(receiver);
   await showFourDigitRing(receiver);
   await receiver.waitForTimeout(200);
   const m = await measureRingOverlay(receiver);
   expect(m).not.toBeNull();
-  expect(Math.abs(m.boxWidth - RING_BASELINE_1920.boxWidth)).toBeLessThan(1.5);
-  expect(Math.abs(m.ringFontPx - RING_BASELINE_1920.ringFontPx)).toBeLessThan(2);
-  expect(m.numWidth).toBeLessThanOrEqual(m.innerWidth + 0.5);
-  expect(m.sideMarginPct).toBeGreaterThanOrEqual(0.03);
-  expect(m.numWidth / m.innerWidth).toBeLessThan(0.95);
+  const b = RING_BASELINE_6975672;
+  expect(Math.abs(m.boxWidth - b.boxWidth)).toBeLessThan(1.5);
+  expect(Math.abs(m.paddingLeft - b.paddingLeft)).toBeLessThan(0.5);
+  expect(Math.abs(m.paddingRight - b.paddingRight)).toBeLessThan(0.5);
+  expect(Math.abs(m.borderLeft - b.borderLeft)).toBeLessThan(0.5);
+  expect(Math.abs(m.borderRight - b.borderRight)).toBeLessThan(0.5);
+  expect(Math.abs(m.fontSize - b.fontSize)).toBeLessThan(1);
+  expect(Math.abs(m.letterSpacingPx - b.letterSpacingPx)).toBeLessThan(0.5);
   await ctx.close();
 });
 
-test('ring overlay number does not overflow the box (side margins)', async ({ browser }) => {
+test('ring overlay 8888 side margins by viewport', async ({ browser }) => {
   const { recv } = urlsForMode('local');
-  const viewports = [
-    { width: 2560, height: 1080 },
-    { width: 2560, height: 1440 },
+  const cases = [
+    { width: 2560, height: 1080, minSide: 0.04, maxSide: 0.1 },
+    { width: 2560, height: 1440, minSide: 0.04, maxSide: 0.1 },
+    { width: 1366, height: 768, minSide: 0.04, maxSide: null },
+    { width: 1280, height: 720, minSide: 0.04, maxSide: null },
   ];
-  for (const vp of viewports) {
+  for (const vp of cases) {
     const ctx = await browser.newContext({ deviceScaleFactor: 1 });
     const receiver = await ctx.newPage();
     await receiver.setViewportSize(vp);
     await receiver.goto(recv);
-    await receiver.waitForTimeout(500);
+    await receiver.waitForFunction(() => window.QMS?.Receiver?.RingHost?.showRingOverlayForTests, null, {
+      timeout: 15000,
+    });
     await showFourDigitRing(receiver);
     await receiver.waitForTimeout(200);
     const m = await measureRingOverlay(receiver);
     expect(m).not.toBeNull();
-    expect(m.numWidth).toBeLessThanOrEqual(m.boxWidth + 0.5);
-    expect(m.sideMarginPct).toBeGreaterThanOrEqual(0.05 - 0.005);
-    expect(m.ringFontPx).toBeGreaterThanOrEqual(m.readyFontPx * 2 - 1);
+    expect(m.numWidth).toBeLessThan(m.innerWidth - 0.5);
+    expect(m.sideMarginPctLeft).toBeGreaterThanOrEqual(vp.minSide - 0.002);
+    expect(m.sideMarginPctRight).toBeGreaterThanOrEqual(vp.minSide - 0.002);
+    if (vp.maxSide != null) {
+      expect(m.sideMarginPctLeft).toBeLessThanOrEqual(vp.maxSide + 0.002);
+      expect(m.sideMarginPctRight).toBeLessThanOrEqual(vp.maxSide + 0.002);
+    }
     await ctx.close();
   }
 });

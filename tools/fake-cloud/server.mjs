@@ -18,6 +18,8 @@ import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-dat
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 const FAKE_DEV_ACCESS_CODE = 'fake-milksha-controller-access-code';
+let devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
+let devLoginRequestCount = 0;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -262,8 +264,20 @@ const server = http.createServer(async (req, res) => {
       logs.clear();
       posReceiverEntryAEnabled = true;
       pendingCommandClearOnAck = true;
+      devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
+      devLoginRequestCount = 0;
       seedE2eDevice();
       return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
+      return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/devLoginAccessCode' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.accessCode === 'string' && body.accessCode.trim()) {
+        devLoginExpectedAccessCode = body.accessCode.trim();
+      }
+      return json(res, 200, { ok: true, accessCode: devLoginExpectedAccessCode });
     }
     if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
       const body = await readBody(req);
@@ -321,8 +335,9 @@ const server = http.createServer(async (req, res) => {
 
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
+      devLoginRequestCount += 1;
       const body = await readBody(req);
-      if (String(body.accessCode || '') !== FAKE_DEV_ACCESS_CODE) {
+      if (String(body.accessCode || '') !== devLoginExpectedAccessCode) {
         return json(res, 403, {
           code: 'invalid_access_code',
           message: 'wrong access code for fake cloud',

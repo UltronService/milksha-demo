@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, PORT_SITE, PORT_CLOUD, ensureCloudRunning } from './harness.mjs';
+import { urlsForMode, PORT_SITE, PORT_CLOUD, ensureCloudRunning, restartCloud } from './harness.mjs';
 
 function cloudSettingsInitScript() {
   return () => {
@@ -37,7 +37,7 @@ function firestoreCloudSettingsInitScript() {
           accessCode: 'fake-milksha-controller-access-code',
           region: 'asia-east1',
           useEmulator: true,
-          gateway: `127.0.0.1:${PORT_SITE}`,
+          gateway: '127.0.0.1:8877',
           emulatorPrefix: '__emulator',
         }),
       );
@@ -179,12 +179,17 @@ function deviceClockSkewInitScript(fixedIso) {
 async function wireFirestoreAuthRoutes(receiver, options = {}) {
   const bootDate = options.bootDate || BOOT_HTTP_DATE;
   const auth401First = Boolean(options.auth401First);
+  const devLoginToFakeCloud = Boolean(options.devLoginToFakeCloud);
   let devLoginAttempts = 0;
   await receiver.route('**/boxHeartbeat**', async (route) => {
     await route.continue();
   });
   await receiver.route('**/devLogin', async (route) => {
     devLoginAttempts += 1;
+    if (devLoginToFakeCloud) {
+      await route.continue();
+      return;
+    }
     if (auth401First && devLoginAttempts <= 2) {
       await route.fulfill({
         status: 401,
@@ -365,9 +370,11 @@ test('receiver reloads once when fake cloud never clears pendingCommand', async 
 
 test('receiver 403 after board data keeps numbers halts upload heartbeats and recovers', async ({ browser }) => {
   test.setTimeout(120000);
+  await restartCloud();
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
   const { recv } = urlsForMode('firestore');
-  let devLoginMode = 'ok';
   let heartbeatCalls = 0;
+  let devLoginMode = 'ok';
   const ctx = await browser.newContext();
   await ctx.addInitScript(firestoreCloudSettingsInitScript());
   const receiver = await ctx.newPage();
@@ -381,20 +388,25 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
       });
       return;
     }
+    await route.continue();
+  });
+  await receiver.route('**/accounts:signInWithCustomToken**', async (route) => {
     await route.fulfill({
       status: 200,
       headers: { Date: BOOT_HTTP_DATE },
       contentType: 'application/json',
-      body: JSON.stringify({ customToken: 'e2e-custom-token' }),
+      body: JSON.stringify({
+        idToken: 'e2e-fake-id-token',
+        refreshToken: 'e2e-fake-refresh-token',
+        expiresIn: 3600,
+      }),
     });
   });
   await receiver.route('**/boxHeartbeat**', async (route) => {
     heartbeatCalls += 1;
     await route.continue();
   });
-  await receiver.goto(
-    `${recv}&testDevicePollMs=800&testHeartbeatMs=800&testUploadHaltHeartbeatMs=1200&testAuthRecheckMs=1500`,
-  );
+  await receiver.goto(`${recv}&testDevicePollMs=800&testHeartbeatMs=800&testAuthRecheckMs=1000`);
   await receiver.waitForTimeout(800);
   await receiver.evaluate(() => {
     window.receiverDemo.pushFromObject(
@@ -403,47 +415,59 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
   });
   await expect(receiver.locator('.rcv-ready .rcv-num').filter({ hasText: '5566' })).toBeVisible();
   await waitReceiverCloudReady(receiver);
+  await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessCode: 'wrong-access-code-for-e2e' }),
+  });
   devLoginMode = 'forbidden';
   await receiver.evaluate(() => {
-    localStorage.setItem(
-      'milksha:cloud-settings',
-      JSON.stringify({
-        ...JSON.parse(localStorage.getItem('milksha:cloud-settings') || '{}'),
-        accessCode: 'wrong-code-triggers-403',
-      }),
-    );
-  });
-  await receiver.evaluate(() => {
-    if (typeof window.__receiverAttemptDevLoginForTests === 'function') {
-      return window.__receiverAttemptDevLoginForTests();
+    const authKey = Object.keys(localStorage).find((k) => k.startsWith('milksha:auth:'));
+    if (authKey) {
+      const parsed = JSON.parse(localStorage.getItem(authKey) || '{}');
+      parsed.expiresAtMs = Date.now() - 1000;
+      parsed.refreshToken = '';
+      localStorage.setItem(authKey, JSON.stringify(parsed));
     }
-    return undefined;
   });
   await expect(receiver.locator('#rcv-stage')).toHaveAttribute('data-upload-stopped', '1', {
-    timeout: 15000,
+    timeout: 20000,
   });
   await expect(receiver.locator('.rcv-ready .rcv-num').filter({ hasText: '5566' })).toBeVisible();
   const hbBefore = heartbeatCalls;
   await receiver.waitForTimeout(3500);
-  expect(heartbeatCalls).toBeGreaterThan(hbBefore);
-  devLoginMode = 'ok';
-  await receiver.evaluate(() => {
-    localStorage.setItem(
-      'milksha:cloud-settings',
-      JSON.stringify({
-        ...JSON.parse(localStorage.getItem('milksha:cloud-settings') || '{}'),
+  expect(heartbeatCalls).toBe(hbBefore);
+  const restoreRes = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessCode: 'fake-milksha-controller-access-code' }),
+  });
+  expect(restoreRes.ok).toBe(true);
+  const probeLogin = await fetch(
+    `http://127.0.0.1:${PORT_CLOUD}/fn/milksha-qms-dev/asia-east1/devLogin`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        role: 'device',
+        deviceId: 'stb-01',
         accessCode: 'fake-milksha-controller-access-code',
       }),
-    );
-  });
-  await receiver.evaluate(() => {
-    if (typeof window.__forceReceiverAuthRecheck === 'function') {
-      window.__forceReceiverAuthRecheck({ clearSession: true });
-    }
-  });
-  await expect(receiver.locator('#rcv-stage')).not.toHaveAttribute('data-upload-stopped', '1', {
-    timeout: 20000,
-  });
+    },
+  );
+  expect(probeLogin.ok).toBe(true);
+  devLoginMode = 'ok';
+  await receiver.waitForTimeout(1100);
+  await expect
+    .poll(
+      async () => {
+        const attr = await receiver.locator('#rcv-stage').getAttribute('data-upload-stopped');
+        return attr !== '1';
+      },
+      { timeout: 15000, intervals: [500] },
+    )
+    .toBe(true);
   await ctx.close();
 });
 

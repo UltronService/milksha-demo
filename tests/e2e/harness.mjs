@@ -43,6 +43,19 @@ export async function ensureCloudRunning() {
   await waitCloudReady();
 }
 
+/** Kill any stale fake-cloud and start the current workspace server.mjs. */
+export async function restartCloud() {
+  cloudProc = null;
+  try {
+    execSync('pkill -f "fake-cloud/server.mjs" 2>/dev/null || true', { stdio: 'ignore' });
+    execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
+  } catch {
+    /* ignore */
+  }
+  startCloud();
+  await waitCloudReady();
+}
+
 export async function resetCloudState() {
   try {
     await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });

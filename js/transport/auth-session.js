@@ -59,6 +59,7 @@
    * @param {object} creds
    */
   function createAuthSession(config, creds) {
+    const onAuthSuccess = creds.onAuthSuccess;
     const storage = creds.storage || root.localStorage;
     const storageKey =
       STORAGE_PREFIX + creds.storeId + ':' + creds.role + ':' + (creds.deviceId || 'ctrl');
@@ -154,6 +155,18 @@
       throw err;
     }
 
+    function resolveAccessCode() {
+      const fromCreds = String(creds.accessCode || '').trim();
+      if (fromCreds) {
+        return fromCreds;
+      }
+      if (QMS.Transport.CloudSettings && QMS.Transport.CloudSettings.load) {
+        const saved = QMS.Transport.CloudSettings.load();
+        return String(saved.accessCode || '').trim();
+      }
+      return '';
+    }
+
     async function devLoginOnce() {
       throwIfAuthStopped();
       const loginUrl = functionsUrl('devLogin');
@@ -162,7 +175,7 @@
         storeId: creds.storeId,
         role: creds.role,
         deviceId: creds.deviceId || 'controller-web',
-        accessCode: creds.accessCode || '',
+        accessCode: resolveAccessCode(),
       };
       const res = await fetch(loginUrl, {
         method: 'POST',
@@ -239,6 +252,9 @@
       devLoginAttempts = 0;
       authStopped = false;
       accessDenied403 = false;
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
       return idToken;
     }
 
@@ -287,8 +303,13 @@
 
     async function ensureIdToken() {
       throwIfAuthStopped();
-      if (!idToken && !refreshToken) {
-        loadStored();
+      loadStored();
+      if (expiresAtMs > 0 && Date.now() >= expiresAtMs) {
+        idToken = '';
+      }
+      if (accessDenied403) {
+        const custom = await devLogin();
+        return signInWithCustomToken(custom);
       }
       if (idToken && Date.now() < expiresAtMs) {
         return idToken;

@@ -6,7 +6,7 @@ const { spawn } = require('node:child_process');
 const { join } = require('node:path');
 
 const ROOT = join(__dirname, '..');
-const PORT = 18789;
+const PORT = 18791;
 
 async function waitHealth() {
   for (let i = 0; i < 40; i += 1) {

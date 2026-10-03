@@ -31,10 +31,6 @@
     if (response && response.code != null && String(response.code)) {
       return String(response.code);
     }
-    // TODO: remove legacy `error` fallback after milksha-cloud PR #4 deploys.
-    if (response && response.error != null && String(response.error)) {
-      return String(response.error);
-    }
     if (opts && opts.validationCode) {
       return String(opts.validationCode);
     }

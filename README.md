@@ -61,7 +61,7 @@ npx --yes serve -l 4173 .
 - **遠端 reload／reboot**（兩道防護，避免雲端長期保留 `pendingCommand` 造成重複重整）：
   1. **開機伺服器時間**：本輪開機第一次成功雲端 HTTP 回應的 `Date` 標頭（`bootServerTimeMs`，非裝置時鐘；毫秒精度）。`reload`／`reboot` 的伺服器時間取 `issuedAtMs`（優先）、`issuedAt`、`createdAt`；若 **嚴格早於** `bootServerTimeMs` 則略過（同一毫秒不略過）。時間缺漏或無法解析時**不**依時間略過，僅靠下一項。若沒有 `Date` 標頭，僅靠下一項。
   2. **已執行指令 id**：執行前將 `cmd.id` 寫入 `localStorage`（`milksha:lastHandledCmd:<store>:<device>`），相同 id 不再執行。執行前仍會盡快送 heartbeat ack（短逾時），但不依賴 ack 清除雲端文件。
-- **403**：不重試，維持停止直到使用者修正存取碼／權限。
+- **403**：停止看板／裝置同步與 heartbeat，標記 `data-upload-stopped`；約每 **5 分鐘**自動再試登入。存取碼修正後登入成功即恢復，無需重開頁面。
 
 ### 叫號提示音佇列
 

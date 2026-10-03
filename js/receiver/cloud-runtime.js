@@ -452,21 +452,20 @@
     }
 
     function authBlocksHeartbeat() {
-      return (
-        transport.session &&
-        transport.session.isAuthStopped &&
-        transport.session.isAuthStopped()
-      );
+      const session = transport.session;
+      if (!session) {
+        return false;
+      }
+      if (session.isAuthStopped && session.isAuthStopped()) {
+        return true;
+      }
+      if (session.isUploadHalted && session.isUploadHalted()) {
+        return true;
+      }
+      return false;
     }
 
     function effectiveHeartbeatIntervalMs() {
-      if (
-        transport.session &&
-        transport.session.isUploadHalted &&
-        transport.session.isUploadHalted()
-      ) {
-        return uploadHaltHeartbeatIntervalMs;
-      }
       return heartbeatMs;
     }
 
@@ -477,6 +476,17 @@
 
     function markCloudUnreachable() {
       cloudReachable = false;
+    }
+
+    function notifyAuthFailure(err) {
+      if (root.__receiverHandleAuthFailure) {
+        root.__receiverHandleAuthFailure(err);
+      }
+    }
+
+    function isAuthHttpError(err) {
+      const status = err && err.status ? Number(err.status) : 0;
+      return status === 401 || status === 403;
     }
 
     async function tryFlushDeferredReloadCommand() {
@@ -536,6 +546,9 @@
         markCloudReachable();
       } catch (e) {
         if (!isFirestoreAbortError(e)) {
+          if (isAuthHttpError(e)) {
+            notifyAuthFailure(e);
+          }
           markCloudUnreachable();
         }
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
@@ -661,6 +674,9 @@
         if (isFirestoreAbortError(e)) {
           return;
         }
+        if (isAuthHttpError(e)) {
+          notifyAuthFailure(e);
+        }
         markCloudUnreachable();
         onStatusLine('device 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
@@ -693,6 +709,9 @@
         tryFlushDeferredReloadCommand();
       } catch (e) {
         lastHeartbeatSucceeded = false;
+        if (isAuthHttpError(e)) {
+          notifyAuthFailure(e);
+        }
         markCloudUnreachable();
         onStatusLine('heartbeat 失敗');
       }
@@ -735,6 +754,9 @@
 
       tickTimer = setInterval(function () {
         tickMs += 1000;
+        if (root.__receiverSyncAuthUi) {
+          root.__receiverSyncAuthUi();
+        }
         if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
         }
