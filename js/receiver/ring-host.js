@@ -310,23 +310,23 @@
     return (margins.marginL + margins.marginR) / (2 * margins.boxW);
   }
 
-  function measureGlyphHeight(numEl) {
+  function measureGlyphWidth(numEl) {
     const range = root.document.createRange();
     range.selectNodeContents(numEl);
-    return range.getBoundingClientRect().height;
+    return range.getBoundingClientRect().width;
   }
 
-  /** Guest board ready card is scaled; ring overlay must stay >= 2× rendered ready height when visible. */
+  /** Guest board ready card is scaled; ring overlay must stay >= 2× rendered ready glyph width when visible. */
   function enforceRingAtLeastDoubleReady(numEl, box, innerW) {
     const readyNum = root.document.querySelector('.rcv-ready .rcv-num');
     if (!readyNum || innerW <= 0) {
       return;
     }
-    const minH = measureGlyphHeight(readyNum) * 2;
+    const minW = measureGlyphWidth(readyNum) * 2;
     let px = parseFloat(root.getComputedStyle(numEl).fontSize) || 8;
     numEl.style.fontSize = String(px) + 'px';
     let guard = 0;
-    while (measureGlyphHeight(numEl) < minH - 0.5 && guard < 120) {
+    while (measureRingTextWidth(numEl) < minW - 0.5 && guard < 160) {
       guard += 1;
       px += 0.5;
       numEl.style.fontSize = String(px) + 'px';
