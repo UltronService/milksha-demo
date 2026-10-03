@@ -105,12 +105,12 @@
       }
       /* 6975672 geometry at 1920×1080 (JS sets data-rcv-ring-6975672; media is fallback). */
       html[data-rcv-ring-6975672='1'] #rcv-ring-box {
-        width: auto;
+        width: auto !important;
         max-width: var(--rcv-ring-box-max);
-        min-width: 0;
+        min-width: 0 !important;
       }
       html[data-rcv-ring-6975672='1'] .rcv-ring-num {
-        font-size: var(--rcv-ring-num-size);
+        font-size: var(--rcv-ring-num-size) !important;
       }
       @media (min-width: 1900px) and (max-width: 1940px) {
         #rcv-ring-box {

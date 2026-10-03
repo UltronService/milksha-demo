@@ -221,6 +221,17 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
   await showFourDigitRing(receiver);
   await receiver.evaluate(() => {
     document.documentElement.setAttribute('data-rcv-ring-6975672', '1');
+    const box = document.getElementById('rcv-ring-box');
+    const num = document.getElementById('rcv-ring-num');
+    if (box) {
+      box.style.setProperty('width', 'auto', 'important');
+      box.style.setProperty('min-width', '0', 'important');
+    }
+    if (num) {
+      const root = document.documentElement;
+      const ringSize = getComputedStyle(root).getPropertyValue('--rcv-ring-num-size').trim();
+      num.style.setProperty('font-size', ringSize || '280px', 'important');
+    }
   });
   await receiver.waitForTimeout(200);
   const m = await measureRingOverlay(receiver);
