@@ -539,15 +539,31 @@
   }
 
   async function sendCommand(type, params) {
-    await cloudCall(function () {
-      return transport.cloudApi.devCommand({
-        storeId: storeId(),
-        deviceId: document.getElementById('fld-device').value.trim() || 'stb-01',
-        type: type,
-        params: params || {},
+    const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    const built = DevCmd
+      ? DevCmd.buildDevCommandRequest({
+          storeId: storeId(),
+          deviceId: deviceId,
+          type: type,
+          params: params || {},
+        })
+      : { ok: true, body: { storeId: storeId(), deviceId: deviceId, type: type, params: params || {} } };
+    if (!built.ok) {
+      showUserBanner(built.message || '指令參數不正確');
+      pushLog({ summary: '指令未送出 · ' + (built.message || built.code), kind: 'command' });
+      return;
+    }
+    try {
+      await cloudCall(function () {
+        return transport.cloudApi.devCommand(built.body);
       });
-    });
-    pushLog({ summary: '指令 ' + type, kind: 'command' });
+      pushLog({ summary: '指令 ' + type, kind: 'command' });
+    } catch (e) {
+      const msg = DevCmd ? DevCmd.formatHttpError(e) : e.message;
+      showUserBanner(msg);
+      pushLog({ summary: '指令失敗 · ' + msg, kind: 'command' });
+    }
   }
 
   function addTicketLocal(status, sourceKey, no) {

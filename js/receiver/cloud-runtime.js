@@ -70,13 +70,21 @@
     let lastHandledCommandId = '';
     let pendingAckCommandId = '';
     let prevReadySet = new Set();
-    let isFirstApply = true;
     let slowNetworkTimer = null;
     let last0300ClearDate = '';
     let suppressRingOnNextApply = false;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
+
+    const chimePolicy =
+      QMS.Receiver.createBoardChimePolicy &&
+      QMS.Receiver.createBoardChimePolicy({
+        getBusinessDate: function () {
+          return TodayBoard.taipeiBusinessDate();
+        },
+        newlyReadyIds: BoardSeq.newlyReadyIds,
+      });
 
     function loadCache() {
       try {
@@ -118,12 +126,17 @@
         Validate.parseSourceType,
         Validate.itemId,
       );
-      const newly = BoardSeq.newlyReadyIds(prevReadySet, nextReady);
-      let shouldRing = !isFirstApply && newly.length > 0 && !(opts && opts.silent);
+      const ringOpts = {
+        silent: Boolean(opts && opts.silent),
+        suppressRing: suppressRingOnNextApply,
+      };
       if (suppressRingOnNextApply) {
-        shouldRing = false;
         suppressRingOnNextApply = false;
       }
+      const ringIds =
+        chimePolicy
+          ? chimePolicy.pickRingIds(prevReadySet, nextReady, ringOpts)
+          : [];
 
       const store = Validate.findStore(storeId);
       const req = {
@@ -141,15 +154,14 @@
 
       const res = demoApi.pushFromObject(req, {
         skipOfflineCheck: true,
-        newlyReadyIds: shouldRing ? newly : [],
+        newlyReadyIds: ringIds,
       });
       prevReadySet = nextReady;
-      isFirstApply = false;
       if (typeof seq === 'number') {
         localSeq = seq;
       }
       saveCache(localSeq, list);
-      onBoardAck({ seq: localSeq, response: res, newlyReady: shouldRing ? newly : [] });
+      onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
     }
 
@@ -317,6 +329,9 @@
     function check0300Clear() {
       const bd = TodayBoard.taipeiBusinessDate();
       if (last0300ClearDate && last0300ClearDate !== bd) {
+        if (chimePolicy) {
+          chimePolicy.onBusinessDateRoll();
+        }
         clearGuestBoard(true);
       }
       last0300ClearDate = bd;
@@ -350,10 +365,8 @@
           Validate.parseSourceType,
           Validate.itemId,
         );
-        isFirstApply = false;
       } else if (cached && !TodayBoard.isCurrentBusinessDate(cached.businessDate)) {
         clearGuestBoard(true);
-        isFirstApply = false;
       }
 
       ensureAuth().then(function () {

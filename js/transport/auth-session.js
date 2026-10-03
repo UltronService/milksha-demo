@@ -148,6 +148,7 @@
     return {
       ensureIdToken: ensureIdToken,
       authHeaders: authHeaders,
+      refreshIdToken: refreshIdToken,
       devLogin: devLogin,
       getIdToken: function () {
         return idToken;

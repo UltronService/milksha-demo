@@ -27,7 +27,17 @@ npx serve -p 8088 .
 - 看板：`/receiver-demo/?mode=firestore&store=s120030&device=stb-01&code=dev-controller-access-2026`
 - 控制端：`/controller/?mode=firestore`（連線區填 Functions / API Key 依 README）
 
-函式名稱：`posReceiver`、`boxHeartbeat`、`boxUpload`、`devLogin`、`devCommand`。
+真實 milksha-cloud 函式名稱：`posReceiver`、`boxHeartbeat`、`boxUpload`、`devLogin`、`devCommand`。
+
+### 本 repo 假雲端（`npm run fake-cloud`）實作範圍
+
+| 函式 | 假雲端 |
+|------|--------|
+| `posReceiver` | 有（入口 A，行為見 [entry-a-pos-api.md](./entry-a-pos-api.md)） |
+| `boxHeartbeat`、`devCommand`、`devLogin` | 有（測試用簡化驗證） |
+| `boxUpload` | **無**（入口 B 未在此模擬；請接真實後端） |
+
+入口 B（`boxUpload`）契約與批次限制以 milksha-cloud 為準；本示範站**未**實作、也**未**在假雲端模擬 `posPayload` / `posRawBody` 等欄位。
 
 ## 無模擬器時
 

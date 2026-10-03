@@ -49,6 +49,7 @@
     const channel = options.broadcast || function () {};
     const PosValidate = QMS.Transport.PosReceiverValidate;
     const Md5 = QMS.Transport.MilkshaMd5;
+    const DevCmd = QMS.Transport.DevCommandValidation;
     let entryAEnabled = options.posReceiverEntryAEnabled !== false;
 
     function nextSeq() {
@@ -92,16 +93,24 @@
 
     const api = {
       boxHeartbeat: async function (body) {
-        const devId = body.deviceId || 'stb-01';
+        const hv = DevCmd ? DevCmd.buildBoxHeartbeatRequest(body) : { ok: true, body: body };
+        if (!hv.ok) {
+          const err = new Error('boxHeartbeat');
+          err.status = 400;
+          err.response = { error: hv.code, message: hv.message };
+          throw err;
+        }
+        const hb = hv.body;
+        const devId = hb.deviceId;
         const doc = readJson(storage, deviceKey(storeId, devId)) || {};
         const merged = Object.assign(doc, {
           lastSeen: new Date().toISOString(),
-          online: !body.simulatedOffline,
-          appVersion: body.appVersion || '',
-          boardSeq: body.boardSeq || 0,
-          pendingUploads: body.pendingUploads || 0,
-          simulatedOffline: Boolean(body.simulatedOffline),
-          lastAckCommandId: body.ackCommandId || doc.lastAckCommandId || '',
+          online: !hb.simulatedOffline,
+          appVersion: hb.appVersion || '',
+          boardSeq: hb.boardSeq || 0,
+          pendingUploads: hb.pendingUploads || 0,
+          simulatedOffline: Boolean(hb.simulatedOffline),
+          lastAckCommandId: hb.ackCommandId || doc.lastAckCommandId || '',
           pendingCommand: doc.pendingCommand || null,
         });
         writeJson(storage, deviceKey(storeId, devId), merged);
@@ -109,15 +118,30 @@
         return { ok: true };
       },
       devCommand: async function (body) {
-        const devId = body.deviceId || 'stb-01';
-        const doc = readJson(storage, deviceKey(storeId, devId)) || {};
+        const cv = DevCmd ? DevCmd.buildDevCommandRequest(body) : { ok: true, body: body };
+        if (!cv.ok) {
+          const err = new Error('devCommand');
+          err.status = 400;
+          err.response = { error: cv.code, message: cv.message };
+          throw err;
+        }
+        const cmdBody = cv.body;
+        const devId = cmdBody.deviceId;
+        const existing = readJson(storage, deviceKey(storeId, devId));
+        if (!existing) {
+          const err = new Error('devCommand');
+          err.status = 404;
+          err.response = { error: 'device_not_found', message: 'device not found' };
+          throw err;
+        }
+        const doc = existing;
         const cmd = {
           id: 'cmd-' + Date.now(),
-          type: body.type,
-          params: body.params || {},
+          type: cmdBody.type,
+          params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
-        if (body.type === 'clear_now') {
+        if (cmdBody.type === 'clear_now') {
           const board = TodayBoard.buildTodayBoard(storeId, nextSeq(), [], 'system');
           writeJson(storage, boardKey(storeId), board);
           channel({ type: 'board', storeId: storeId });

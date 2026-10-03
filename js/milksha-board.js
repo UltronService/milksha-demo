@@ -241,8 +241,39 @@
     const ovEl = doc.getElementById('milksha-ov');
     const ovBoxEl = doc.getElementById('milksha-ovbox');
 
-    let isFirstPayload = true;
     let prevReadyIdSet = new Set();
+    let isFirstPayload = true;
+    let boardChimePolicy = null;
+
+    function ensureBoardChimePolicy() {
+      if (boardChimePolicy) {
+        return boardChimePolicy;
+      }
+      if (!QMS.Receiver || !QMS.Receiver.createBoardChimePolicy) {
+        return null;
+      }
+      boardChimePolicy = QMS.Receiver.createBoardChimePolicy({
+        getBusinessDate: function () {
+          if (QMS.Board && QMS.Board.TodayBoard) {
+            return QMS.Board.TodayBoard.taipeiBusinessDate();
+          }
+          return '';
+        },
+        newlyReadyIds: function (prev, next) {
+          if (QMS.Transport && QMS.Transport.BoardSeq) {
+            return QMS.Transport.BoardSeq.newlyReadyIds(prev, next);
+          }
+          const out = [];
+          next.forEach(function (id) {
+            if (!prev.has(id)) {
+              out.push(id);
+            }
+          });
+          return out;
+        },
+      });
+      return boardChimePolicy;
+    }
     const metaById = {};
     let readyItems = [];
     let prepItems = [];
@@ -606,6 +637,17 @@
       const now = Date.now();
       const parts = partitionNumberContent(numberContent);
       const newReadyIds = detectNewlyReady(prevReadyIdSet, parts.ready);
+      const nextReadyIdSet = new Set();
+      for (let nr = 0; nr < parts.ready.length; nr += 1) {
+        nextReadyIdSet.add(parts.ready[nr].id);
+      }
+      const chimePolicy = ensureBoardChimePolicy();
+      let ringIds = [];
+      if (chimePolicy) {
+        ringIds = chimePolicy.pickRingIds(prevReadyIdSet, nextReadyIdSet, {});
+      } else if (!isFirstPayload && newReadyIds.length > 0) {
+        ringIds = newReadyIds;
+      }
 
       const nextMeta = {};
       const nextReady = [];
@@ -660,24 +702,22 @@
       readyItems = nextReady;
       prepItems = nextPrep;
 
-      if (!isFirstPayload && newReadyIds.length > 0) {
+      if (ringIds.length > 0) {
         readyPage = 0;
         readyPageStartedAt = now;
-        const split = splitPopQueue(newReadyIds);
+        const split = splitPopQueue(ringIds);
         for (let p = 0; p < split.popIds.length; p += 1) {
           popQueue.push(split.popIds[p]);
         }
+        runPopQueue();
+      }
+      if (newReadyIds.length > 0) {
         for (let f = 0; f < newReadyIds.length; f += 1) {
           freshUntil[newReadyIds[f]] = now + FRESH_BORDER_MS;
         }
-        runPopQueue();
       }
 
-      prevReadyIdSet = new Set();
-      for (let r = 0; r < readyItems.length; r += 1) {
-        prevReadyIdSet.add(readyItems[r].id);
-      }
-
+      prevReadyIdSet = nextReadyIdSet;
       isFirstPayload = false;
       renderBoard();
     }

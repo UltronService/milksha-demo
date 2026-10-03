@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { URL } from 'node:url';
 import { validatePosReceiverBody } from './pos-validate.mjs';
 import { extractRawJsonField } from './json-raw.mjs';
+import { validateDevCommandBody, validateBoxHeartbeatBody } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
@@ -156,7 +157,14 @@ function readBody(req) {
 
 function requireAuth(req) {
   const h = req.headers.authorization || '';
-  return h.startsWith('Bearer ');
+  if (!h.startsWith('Bearer ')) {
+    return { ok: false, status: 401, body: { error: 'invalid_token', message: 'login expired, please sign in again' } };
+  }
+  const token = h.slice(7).trim();
+  if (token === 'expired-test-token') {
+    return { ok: false, status: 401, body: { error: 'invalid_token', message: 'login expired, please sign in again' } };
+  }
+  return { ok: true };
 }
 
 const server = http.createServer(async (req, res) => {
@@ -245,39 +253,60 @@ const server = http.createServer(async (req, res) => {
         return json(res, 200, { isSuccess: online, information: info, seq: seq });
       }
 
-      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
+      const auth = requireAuth(req);
+      if (!auth.ok) return json(res, auth.status, auth.body);
 
       if (name === 'boxHeartbeat') {
-        const dk = deviceKey(storeId, body.deviceId || 'stb-01');
+        const hv = validateBoxHeartbeatBody(body);
+        if (!hv.ok) {
+          return json(res, 400, { error: hv.code, message: hv.message });
+        }
+        const hb = hv.body;
+        const dk = deviceKey(hb.storeId, hb.deviceId);
         const prev = docs.get(dk) || {};
         docs.set(dk, {
           ...prev,
           lastSeen: new Date().toISOString(),
-          online: !body.simulatedOffline,
-          appVersion: body.appVersion || '',
-          boardSeq: body.boardSeq || 0,
-          pendingUploads: body.pendingUploads || 0,
-          simulatedOffline: Boolean(body.simulatedOffline),
-          lastAckCommandId: body.ackCommandId || prev.lastAckCommandId || '',
+          online: !hb.simulatedOffline,
+          appVersion: hb.appVersion || '',
+          boardSeq: hb.boardSeq || 0,
+          pendingUploads: hb.pendingUploads || 0,
+          simulatedOffline: Boolean(hb.simulatedOffline),
+          lastAckCommandId: hb.ackCommandId || prev.lastAckCommandId || '',
           pendingCommand: prev.pendingCommand || null,
         });
         return json(res, 200, { ok: true });
       }
 
+      if (name === 'boxUpload' || name === 'boxUpload/') {
+        return json(res, 501, {
+          error: 'not_implemented',
+          message: 'boxUpload (entry B) is not implemented in fake-cloud; use milksha-cloud.',
+        });
+      }
+
       if (name === 'devCommand') {
-        const dk = deviceKey(storeId, body.deviceId || 'stb-01');
+        const cv = validateDevCommandBody(body);
+        if (!cv.ok) {
+          return json(res, 400, { error: cv.code, message: cv.message });
+        }
+        const cmdBody = cv.body;
+        const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
+        if (!docs.has(dk)) {
+          return json(res, 404, { error: 'device_not_found', message: 'device not found' });
+        }
         const prev = docs.get(dk) || {};
         const cmd = {
           id: `cmd-${Date.now()}`,
-          type: body.type,
-          params: body.params || {},
+          type: cmdBody.type,
+          params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
-        if (body.type === 'clear_now') {
-          docs.set(boardKey(storeId), {
-            storeId,
+        if (cmdBody.type === 'clear_now') {
+          docs.set(boardKey(cmdBody.storeId), {
+            storeId: cmdBody.storeId,
             businessDate: taipeiDate(),
-            seq: nextSeq(storeId),
+            seq: nextSeq(cmdBody.storeId),
             updatedAt: new Date().toISOString(),
             source: 'system',
             tickets: [],
@@ -285,10 +314,10 @@ const server = http.createServer(async (req, res) => {
           });
         }
         docs.set(dk, { ...prev, pendingCommand: cmd });
-        docs.set(commandLogKey(storeId, cmd.id), {
+        docs.set(commandLogKey(cmdBody.storeId, cmd.id), {
           at: new Date().toISOString(),
-          type: body.type,
-          deviceId: body.deviceId,
+          type: cmdBody.type,
+          deviceId: cmdBody.deviceId,
           commandId: cmd.id,
         });
         return json(res, 200, { ok: true, commandId: cmd.id });
@@ -299,7 +328,8 @@ const server = http.createServer(async (req, res) => {
 
     const docPrefix = `/v1/projects/${PROJECT}/databases/(default)/documents/`;
     if (req.method === 'GET' && url.pathname.startsWith(docPrefix)) {
-      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
+      const docAuth = requireAuth(req);
+      if (!docAuth.ok) return json(res, docAuth.status, docAuth.body);
       const rel = decodeURIComponent(url.pathname.slice(docPrefix.length)).replace(/\/$/, '');
       const data = docs.get(rel);
       if (data) {

@@ -21,7 +21,7 @@
       return base.replace(/\/?$/, '/') + name;
     }
 
-    async function postJson(name, body, withAuth, rawBody) {
+    async function postJson(name, body, withAuth, rawBody, authRetried) {
       const headers = { 'Content-Type': 'application/json' };
       if (withAuth) {
         Object.assign(headers, await session.authHeaders());
@@ -44,7 +44,19 @@
         return json || { isSuccess: false, information: '空回應' };
       }
       if (!res.ok) {
+        if (withAuth && res.status === 401 && session.refreshIdToken && !authRetried) {
+          try {
+            await session.refreshIdToken();
+            return postJson(name, body, withAuth, rawBody, true);
+          } catch (refreshErr) {
+            const err = new Error('login expired, please sign in again');
+            err.status = 401;
+            err.response = json;
+            throw err;
+          }
+        }
         const err = new Error((name || 'fn') + ' failed ' + res.status);
+        err.status = res.status;
         err.response = json;
         throw err;
       }
@@ -56,10 +68,26 @@
         return postJson('devLogin', body, false);
       },
       boxHeartbeat: function (body) {
-        return postJson(boxHeartbeatName, body, true);
+        const Dev = QMS.Transport.DevCommandValidation;
+        const payload = Dev && Dev.buildBoxHeartbeatRequest ? Dev.buildBoxHeartbeatRequest(body) : { ok: true, body: body };
+        if (!payload.ok) {
+          const err = new Error(payload.message || 'invalid heartbeat');
+          err.status = 400;
+          err.response = { error: payload.code, message: payload.message };
+          return Promise.reject(err);
+        }
+        return postJson(boxHeartbeatName, payload.body, true);
       },
       devCommand: function (body) {
-        return postJson('devCommand', body, true);
+        const Dev = QMS.Transport.DevCommandValidation;
+        const payload = Dev && Dev.buildDevCommandRequest ? Dev.buildDevCommandRequest(body) : { ok: true, body: body };
+        if (!payload.ok) {
+          const err = new Error(payload.message || 'invalid command');
+          err.status = 400;
+          err.response = { error: payload.code, message: payload.message };
+          return Promise.reject(err);
+        }
+        return postJson('devCommand', payload.body, true);
       },
       posReceiver: function (body) {
         if (typeof body === 'string') {

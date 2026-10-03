@@ -9,7 +9,7 @@
 | `devLogin` | 取得 custom token |
 | `posReceiver` | 入口 A：POS 送單（Milksha Request + HMAC 簽章） |
 | `boxHeartbeat` | 機上盒報平安 |
-| `boxUpload` | 入口 B（保留） |
+| `boxUpload` | 入口 B（僅真實 milksha-cloud；本 repo 假雲端**未**實作） |
 | `devCommand` | 遠端指令 |
 
 ## Firestore 路徑
