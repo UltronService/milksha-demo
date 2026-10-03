@@ -213,7 +213,7 @@ test('ring overlay at 1920x1080 matches 6975672 box geometry', async ({ browser 
   const ctx = await browser.newContext({ deviceScaleFactor: 1 });
   const receiver = await ctx.newPage();
   await receiver.setViewportSize(VIEW);
-  await receiver.goto(recv);
+  await receiver.goto(`${recv}&testRing6975672=1`);
   await receiver.waitForFunction(() => window.QMS?.Receiver?.RingHost?.showRingOverlayForTests, null, {
     timeout: 15000,
   });
