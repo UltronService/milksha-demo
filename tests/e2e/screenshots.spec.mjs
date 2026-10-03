@@ -80,6 +80,8 @@ test('save controller and board screenshots', async ({ browser }) => {
   const guestText = await receiver.locator('[data-testid="rcv-guest-stage"]').innerText();
   expect(guestText).not.toContain('尚未連線');
   expect(guestText).not.toContain('斷線');
+  expect(guestText).not.toContain('s120030');
+  expect(guestText).not.toMatch(/milkshas\d+/i);
   const stylesOffline = await guestBoardStyleFingerprint(receiver);
   expect(stylesOffline.stageSimulatedOffline).toBe('0');
   expect(stylesOffline.offlineClassNames).toEqual([]);

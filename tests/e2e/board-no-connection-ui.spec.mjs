@@ -31,7 +31,16 @@ async function assertGuestBoardHasNoConnectionUi(receiver) {
 }
 
 /** Same guest layout as cold boot before any board payload (no 「目前沒有號碼」). */
+async function assertGuestStoreNameOnly(receiver) {
+  await expect(receiver.locator('#rcv-store-label')).toHaveText('迷客夏臺南東安店');
+  const stageText = await receiver.locator('#rcv-stage').innerText();
+  expect(stageText).not.toContain('s120030');
+  expect(stageText).not.toMatch(/milkshas\d+/i);
+  expect(stageText).not.toContain('stb-01');
+}
+
 async function assertBootNoDataBoard(receiver) {
+  await assertGuestStoreNameOnly(receiver);
   await expect(receiver.locator('.rcv-ready .rcv-ztitle')).toContainText('可取餐');
   await expect(receiver.locator('.rcv-prep .rcv-ztitle')).toContainText('製作中');
   await expect(receiver.locator('#rcv-empty-board-hint')).toBeHidden();

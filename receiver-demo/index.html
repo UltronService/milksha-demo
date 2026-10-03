@@ -700,8 +700,7 @@
           if (!el) {
             return;
           }
-          el.innerHTML =
-            boundStore.name + '<small>' + boundStore.id + ' · ' + boundStore.target + '</small>';
+          el.textContent = boundStore.name;
         }
 
         function touchMeta(items) {

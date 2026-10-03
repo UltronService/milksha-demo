@@ -34,6 +34,15 @@ test.describe('guest board empty hint states', () => {
     return { ctx, receiver, controller };
   }
 
+  test('guest header shows store name only', async ({ browser }) => {
+    const { ctx, receiver } = await openPair(browser);
+    await expect(receiver.locator('#rcv-store-label')).toHaveText('迷客夏臺南東安店');
+    const text = await receiver.locator('#rcv-stage').innerText();
+    expect(text).not.toContain('s120030');
+    expect(text).not.toMatch(/milkshas\d+/i);
+    await ctx.close();
+  });
+
   test('both-empty shows centered hint', async ({ browser }) => {
     const { ctx, receiver, controller } = await openPair(browser);
     await controller.click('#btn-clear-board');
