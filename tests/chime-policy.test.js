@@ -50,7 +50,7 @@ test('first batch after load is silent', function () {
   assertRingEqual(policy.pickRingIds(prev, next), ['store:1002']);
 });
 
-test('ready preparing ready again chimes when re-entering ready', function () {
+test('ready preparing ready again does not re-chime same business day', function () {
   const create = loadChimePolicy();
   const policy = create({
     getBusinessDate: function () {
@@ -69,7 +69,7 @@ test('ready preparing ready again chimes when re-entering ready', function () {
   assertRingEqual(policy.pickRingIds(prev, next), []);
   prev = next;
   next = new Set(['store:55', 'store:56']);
-  assertRingEqual(policy.pickRingIds(prev, next), ['store:56']);
+  assertRingEqual(policy.pickRingIds(prev, next), []);
 });
 
 test('silent and suppressRing skip chime', function () {
@@ -88,7 +88,7 @@ test('silent and suppressRing skip chime', function () {
   );
 });
 
-test('after business-date roll newly ready still chimes', function () {
+test('after 03:00 business-day roll chimed set clears and ready can chime again', function () {
   const create = loadChimePolicy();
   let bd = '2026-10-02';
   const policy = create({
@@ -99,7 +99,9 @@ test('after business-date roll newly ready still chimes', function () {
   });
   policy.pickRingIds(new Set(), new Set(['store:9']));
   policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10']));
+  policy.pickRingIds(new Set(['store:9', 'store:10']), new Set(['store:9']));
+  policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10']));
   bd = '2026-10-03';
   policy.onBusinessDateRoll();
-  assertRingEqual(policy.pickRingIds(new Set(), new Set(['store:10'])), ['store:10']);
+  assertRingEqual(policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10'])), ['store:10']);
 });

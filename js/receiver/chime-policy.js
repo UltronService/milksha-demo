@@ -1,5 +1,6 @@
 /**
- * Chime on newly-ready ids only. First apply after load is silent; use silent/suppressRing on reconnect.
+ * In-memory chime dedupe: each ready item id rings at most once per business day.
+ * Cleared on business-date roll (03:00 Taipei). First apply after load never rings.
  */
 (function (root) {
   'use strict';
@@ -13,15 +14,24 @@
   function createBoardChimePolicy(options) {
     const getBusinessDate = options.getBusinessDate;
     const newlyReadyIds = options.newlyReadyIds;
+    let chimedIds = new Set();
     let trackedBusinessDate = getBusinessDate();
     let isFirstBatch = true;
 
-    function syncBusinessDate() {
+    function clearChimedForNewBusinessDay() {
+      chimedIds = new Set();
       trackedBusinessDate = getBusinessDate();
     }
 
+    function syncBusinessDate() {
+      const bd = getBusinessDate();
+      if (trackedBusinessDate !== bd) {
+        clearChimedForNewBusinessDay();
+      }
+    }
+
     function onBusinessDateRoll() {
-      trackedBusinessDate = getBusinessDate();
+      clearChimedForNewBusinessDay();
     }
 
     /**
@@ -34,12 +44,24 @@
       syncBusinessDate();
       if (isFirstBatch) {
         isFirstBatch = false;
+        nextReady.forEach(function (id) {
+          chimedIds.add(id);
+        });
         return [];
       }
       if (opts && (opts.silent || opts.suppressRing)) {
         return [];
       }
-      return newlyReadyIds(prevReady, nextReady);
+      const newly = newlyReadyIds(prevReady, nextReady);
+      const ringIds = [];
+      for (let i = 0; i < newly.length; i += 1) {
+        const id = newly[i];
+        if (!chimedIds.has(id)) {
+          ringIds.push(id);
+          chimedIds.add(id);
+        }
+      }
+      return ringIds;
     }
 
     return {
