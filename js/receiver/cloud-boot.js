@@ -113,6 +113,39 @@
     }
   }
 
+  function isHomeBoardPage() {
+    return Boolean(root.document.getElementById('board-root'));
+  }
+
+  function attachLocalSyncListeners(storeId, cloud) {
+    function kick() {
+      if (cloud.triggerBoardPoll) {
+        cloud.triggerBoardPoll();
+      }
+      if (cloud.triggerDevicePoll) {
+        cloud.triggerDevicePoll();
+      }
+    }
+    const channelName = 'milksha-transport:' + storeId;
+    if (typeof BroadcastChannel !== 'undefined') {
+      const ch = new BroadcastChannel(channelName);
+      ch.onmessage = function (ev) {
+        const msg = ev.data;
+        if (msg && msg.storeId === storeId) {
+          kick();
+        }
+      };
+    }
+    root.addEventListener('storage', function (ev) {
+      if (!ev.key || ev.key.indexOf('milksha:local:') !== 0) {
+        return;
+      }
+      if (ev.key.indexOf(':board:' + storeId) >= 0 || ev.key.indexOf(':device:' + storeId) >= 0) {
+        kick();
+      }
+    });
+  }
+
   function boot() {
     const QMS = root.QMS;
     if (!QMS || !QMS.Transport || !QMS.Receiver) {
@@ -121,7 +154,10 @@
     QMS.Transport.CloudSettings.applyHashImport();
 
     const params = new URLSearchParams(root.location.search);
-    const mode = (params.get('mode') || '').toLowerCase();
+    let mode = (params.get('mode') || '').toLowerCase();
+    if (!mode && isHomeBoardPage()) {
+      mode = 'local';
+    }
     if (mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
       return;
     }
@@ -303,63 +339,78 @@
     }
 
     let cloudStarted = false;
+    const statusEl = root.document.getElementById('rcv-cloud-status');
 
-    function waitDemo() {
-      if (!root.receiverDemo) {
-        root.setTimeout(waitDemo, 30);
+    function startCloudRuntime(milkshaRuntime) {
+      if (cloudStarted) {
         return;
       }
-      const statusEl = root.document.getElementById('rcv-cloud-status');
-      const startCloud = function () {
-        if (cloudStarted) {
+      cloudStarted = true;
+      const devHooks = devTestHooksAllowed();
+      const testDevicePollMs = devHooks ? Number(params.get('testDevicePollMs')) : NaN;
+      const testHeartbeatMs = devHooks ? Number(params.get('testHeartbeatMs')) : NaN;
+      const enableTestPollHook = devHooks && params.has('testDevicePollMs');
+      if (enableTestPollHook) {
+        root.__receiverAuthBlockedForTests = function () {
+          return Boolean(
+            transport.session &&
+              transport.session.isAuthStopped &&
+              transport.session.isAuthStopped(),
+          );
+        };
+      }
+      const cloud = QMS.Receiver.bootReceiverCloud({
+        storeId: creds.storeId,
+        deviceId: creds.deviceId,
+        transport: transport,
+        receiverDemo: milkshaRuntime ? null : root.receiverDemo,
+        milkshaRuntime: milkshaRuntime || null,
+        enableTestPollHook: enableTestPollHook,
+        enableTestReloadSpy: enableTestPollHook,
+        boardPollIntervalMs: modeResolved.config.boardPollIntervalMs,
+        devicePollIntervalMs:
+          Number.isFinite(testDevicePollMs) && testDevicePollMs >= 200
+            ? testDevicePollMs
+            : modeResolved.config.devicePollIntervalMs,
+        heartbeatIntervalMs:
+          Number.isFinite(testHeartbeatMs) && testHeartbeatMs >= 200
+            ? testHeartbeatMs
+            : modeResolved.config.heartbeatIntervalMs,
+        onStatusLine: function (line) {
+          if (statusEl) {
+            statusEl.textContent = line;
+          }
+        },
+        onAuthFailure: handleAuthFailure,
+        onSyncAuthUi: syncAuthUiFromSession,
+      });
+      cloud.start();
+      root.receiveBoard = cloud.receiveBoard;
+      root.receiverCloud = cloud;
+      if (milkshaRuntime) {
+        attachLocalSyncListeners(creds.storeId, cloud);
+      }
+    }
+
+    function waitBoardSurface() {
+      const homeBoard = isHomeBoardPage();
+      if (homeBoard) {
+        if (!root.QMS || !root.QMS.runtime || typeof root.QMS.runtime.applyPayload !== 'function') {
+          root.setTimeout(waitBoardSurface, 30);
           return;
         }
-        cloudStarted = true;
-        const devHooks = devTestHooksAllowed();
-        const testDevicePollMs = devHooks ? Number(params.get('testDevicePollMs')) : NaN;
-        const testHeartbeatMs = devHooks ? Number(params.get('testHeartbeatMs')) : NaN;
-        const enableTestPollHook = devHooks && params.has('testDevicePollMs');
-        if (enableTestPollHook) {
-          root.__receiverAuthBlockedForTests = function () {
-            return Boolean(
-              transport.session &&
-                transport.session.isAuthStopped &&
-                transport.session.isAuthStopped(),
-            );
-          };
-        }
-        const cloud = QMS.Receiver.bootReceiverCloud({
-          storeId: creds.storeId,
-          deviceId: creds.deviceId,
-          transport: transport,
-          receiverDemo: root.receiverDemo,
-          enableTestPollHook: enableTestPollHook,
-          enableTestReloadSpy: enableTestPollHook,
-          boardPollIntervalMs: modeResolved.config.boardPollIntervalMs,
-          devicePollIntervalMs:
-            Number.isFinite(testDevicePollMs) && testDevicePollMs >= 200
-              ? testDevicePollMs
-              : modeResolved.config.devicePollIntervalMs,
-          heartbeatIntervalMs:
-            Number.isFinite(testHeartbeatMs) && testHeartbeatMs >= 200
-              ? testHeartbeatMs
-              : modeResolved.config.heartbeatIntervalMs,
-          onStatusLine: function (line) {
-            if (statusEl) {
-              statusEl.textContent = line;
-            }
-          },
-          onAuthFailure: handleAuthFailure,
-          onSyncAuthUi: syncAuthUiFromSession,
-        });
-        cloud.start();
-        root.receiveBoard = cloud.receiveBoard;
-        root.receiverCloud = cloud;
-      };
-      startCloud();
+        startCloudRuntime(root.QMS.runtime);
+        runEnsureIdToken();
+        return;
+      }
+      if (!root.receiverDemo) {
+        root.setTimeout(waitBoardSurface, 30);
+        return;
+      }
+      startCloudRuntime(null);
       runEnsureIdToken();
     }
-    waitDemo();
+    waitBoardSurface();
   }
 
   if (root.document.readyState === 'loading') {

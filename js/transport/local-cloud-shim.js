@@ -191,12 +191,11 @@
           return reject('找不到目標叫號機');
         }
         const secret = config.posSignSecret || '';
-        if (!secret) {
-          return reject('未設定 POS 金鑰');
-        }
-        const valid = await PosSign.verifyPosBody(parsed, secret);
-        if (!valid) {
-          return reject('簽章錯誤');
+        if (secret) {
+          const valid = await PosSign.verifyPosBody(parsed, secret);
+          if (!valid) {
+            return reject('簽章錯誤');
+          }
         }
         const online = storeHasOnlineBox();
         const information = online ? '資料顯示成功' : '目標叫號機尚未連線';

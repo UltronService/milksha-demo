@@ -367,7 +367,12 @@
       params.set('project', form.projectId);
     }
     const base = window.MILKSHA_FIREBASE_CONFIG || {};
-    const posSecret = ControllerSecrets ? ControllerSecrets.loadPosSignSecret() : '';
+    let posSecret = ControllerSecrets ? ControllerSecrets.loadPosSignSecret() : '';
+    const modeEl = document.getElementById('fld-mode');
+    const modeVal = mode || (modeEl ? modeEl.value : 'local');
+    if (!posSecret && modeVal === 'local') {
+      posSecret = 'local-poc-unsigned';
+    }
     const resolved = window.QMS.Transport.resolveConfigForMode(m, params, base);
     const cfg = resolved || window.QMS.Transport.resolveFirebaseConfig(params, base);
     return Object.assign({}, cfg, { posSignSecret: posSecret });
@@ -440,15 +445,17 @@
       body.account = 'wrong-store';
     }
     persistCloudForm();
+    const mode = document.getElementById('fld-mode').value;
     const secret = buildConfig().posSignSecret;
-    if (!secret) {
+    const signSecret = secret || (mode === 'local' ? 'local-poc-unsigned' : '');
+    if (!signSecret) {
       showUserBanner('請在進階設定輸入測試環境專用 POS 金鑰');
       pushLog({ kind: 'posReceiver', summary: '叫號失敗 · 未設定 POS 金鑰' });
       posInFlight = false;
       setPosButtonsDisabled(false);
       return { isSuccess: false, information: '未設定 POS 金鑰' };
     }
-    const signed = await PosSign.applyPosSignature(body, secret, wrongSign);
+    const signed = await PosSign.applyPosSignature(body, signSecret, wrongSign);
     const wire =
       signed && typeof signed.wireText === 'string'
         ? signed.wireText
@@ -621,6 +628,16 @@
     }
     connectInFlight = true;
     setConnectButtonDisabled(true);
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    if (transport && transport.destroy) {
+      transport.destroy();
+    }
+    transport = null;
+    connected = false;
+    setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
     if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
       showUserBanner('請先在進階設定填寫雲端設定與存取碼');
@@ -765,38 +782,38 @@
   }
 
   function initMobileZones() {
-    const narrow = window.matchMedia('(max-width: 480px)');
     function applyLayout() {
       document.querySelectorAll('.zone').forEach(function (z) {
         const body = z.querySelector('.zone-body');
         const btn = z.querySelector('.zone-toggle');
-        if (!body || !btn) return;
-        if (narrow.matches) {
-          const def = z.getAttribute('data-default-expanded') === '1';
-          const open = btn.getAttribute('aria-expanded') === 'true';
-          if (btn.getAttribute('data-user-toggled') !== '1') {
-            btn.setAttribute('aria-expanded', def ? 'true' : 'false');
-            body.hidden = !def;
-          } else {
-            body.hidden = !open;
-          }
-        } else {
+        if (!body) {
+          return;
+        }
+        if (!btn) {
           body.hidden = false;
-          btn.setAttribute('aria-expanded', 'true');
+          return;
+        }
+        const def = z.getAttribute('data-default-expanded') === '1';
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        if (btn.getAttribute('data-user-toggled') !== '1') {
+          btn.setAttribute('aria-expanded', def ? 'true' : 'false');
+          body.hidden = !def;
+        } else {
+          body.hidden = !open;
         }
       });
     }
     document.querySelectorAll('.zone-toggle').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!narrow.matches) return;
         const open = btn.getAttribute('aria-expanded') === 'true';
         btn.setAttribute('aria-expanded', open ? 'false' : 'true');
         btn.setAttribute('data-user-toggled', '1');
         const body = btn.parentElement.querySelector('.zone-body');
-        if (body) body.hidden = open;
+        if (body) {
+          body.hidden = open;
+        }
       });
     });
-    narrow.addEventListener('change', applyLayout);
     applyLayout();
   }
 
@@ -916,6 +933,14 @@
 
   document.getElementById('btn-gen-normal').addEventListener('click', function () {
     if (!requireConnect()) return;
+    generateTickets('normal');
+    posSend(ticketsToNc(), false).catch(function () {});
+  });
+
+  document.getElementById('btn-send-numbers').addEventListener('click', function () {
+    if (!requireConnect()) {
+      return;
+    }
     generateTickets('normal');
     posSend(ticketsToNc(), false).catch(function () {});
   });
@@ -1085,4 +1110,11 @@
       return true;
     },
   };
+
+  if (document.getElementById('fld-mode').value === 'local') {
+    connect().catch(function (e) {
+      setConnectedState(false, '');
+      pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
+    });
+  }
 })();

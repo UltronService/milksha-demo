@@ -49,24 +49,39 @@
       </button>
     </div>
     <main class="grid" id="main-grid">
-      <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="1">
-        <button type="button" class="zone-toggle" aria-expanded="true">1. 連線與狀態</button>
-        <div class="zone-body">
+      <section id="sec-quick-send" class="card zone quick-send" data-zone="quick" data-default-expanded="1">
+        <div class="zone-body quick-send-body">
+          <button
+            type="button"
+            id="btn-send-numbers"
+            class="primary btn-send-numbers"
+            data-testid="btn-send-numbers"
+            data-requires-connect="1"
+          >
+            送出號碼
+          </button>
+          <p class="hint quick-send-hint">產生示範號碼並送到看板（本機連動預設自動連線）。</p>
+          <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
+        </div>
+      </section>
+      <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false">1. 連線與狀態</button>
+        <div class="zone-body" hidden>
           <label>選擇門市
             <select id="fld-store" data-testid="fld-store"></select>
-          </label>
-          <label>連線方式
-            <select id="fld-mode" data-testid="fld-mode">
-              <option value="local" selected>本機連動（同一瀏覽器）</option>
-              <option value="cloud">雲端模式（店內／機上盒）</option>
-              <option value="firestore">本機模擬雲端（工程測試）</option>
-            </select>
           </label>
           <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
             請先展開「進階設定」，在「雲端設定」填寫專案與金鑰，並輸入測試用存取碼後再按連線。
           </p>
           <details class="advanced" id="advanced-settings">
             <summary>進階設定</summary>
+            <label>連線方式
+              <select id="fld-mode" data-testid="fld-mode">
+                <option value="local" selected>本機連動（同一瀏覽器）</option>
+                <option value="cloud">雲端模式（店內／機上盒）</option>
+                <option value="firestore">本機模擬雲端（工程測試）</option>
+              </select>
+            </label>
             <fieldset class="cloud-settings" id="cloud-settings-panel">
               <legend>雲端設定</legend>
               <p class="field-hint">僅保存在本機瀏覽器，不會上傳到 Git。</p>
@@ -116,7 +131,6 @@
             <button type="button" id="btn-gen-board-link" data-testid="btn-gen-board-link">產生看板連結</button>
           </div>
           <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
-          <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
           <dl class="status-dl">
             <dt>台北時間</dt>
             <dd id="status-taipei-time" data-testid="status-taipei-time">—</dd>
@@ -138,9 +152,9 @@
         </div>
       </section>
 
-      <section id="sec-pos" class="card zone" data-zone="pos" data-default-expanded="1">
-        <button type="button" class="zone-toggle" aria-expanded="true">2. 模擬 POS</button>
-        <div class="zone-body">
+      <section id="sec-pos" class="card zone" data-zone="pos" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false">2. 模擬 POS</button>
+        <div class="zone-body" hidden>
           <label>號碼 <input id="fld-no" value="2001" data-testid="fld-no" /></label>
           <label>來源
             <select id="fld-source" data-testid="fld-source"></select>

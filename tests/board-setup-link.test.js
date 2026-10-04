@@ -12,6 +12,13 @@ test('board bootstrap does not read access code from query string', function () 
   assert.doesNotMatch(src, /params\.get\(['"]code['"]\)/);
 });
 
+test('home board index wires cloud sync scripts', function () {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.match(html, /js\/receiver\/cloud-boot\.js/);
+  assert.match(html, /js\/receiver\/cloud-runtime\.js/);
+  assert.match(html, /js\/transport\/local-cloud-shim\.js/);
+});
+
 test('setup link documents cfg hash only in docs', function () {
   const emulator = fs.readFileSync(path.join(ROOT, 'docs', 'EMULATOR.md'), 'utf8');
   const owner = fs.readFileSync(path.join(ROOT, 'docs', 'OWNER-TRIAL.md'), 'utf8');

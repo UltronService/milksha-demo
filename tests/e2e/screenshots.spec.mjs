@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync, readFileSync } from 'node:fs';
-import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint } from './harness.mjs';
+import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint, expandControllerZone } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -33,9 +33,25 @@ test('save controller and board screenshots', async ({ browser }) => {
 
   await controller.setViewportSize({ width: 390, height: 844 });
   await expect(controller.locator('#local-mode-notice')).toBeVisible();
+  await controller.evaluate(() => {
+    const z = document.getElementById('sec-net');
+    if (!z) {
+      return;
+    }
+    const body = z.querySelector('.zone-body');
+    const btn = z.querySelector('.zone-toggle');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    if (body) {
+      body.hidden = true;
+    }
+  });
   await expect(controller.locator('#sec-net .zone-body')).toBeHidden();
   await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: false });
   await controller.setViewportSize({ width: 1440, height: 900 });
+
+  await expandControllerZone(controller, 'sec-net');
 
   const sourceRows = [
     { source: 'store', no: '7101', status: 'preparing' },
@@ -119,10 +135,16 @@ test('save cloud mode screenshots', async ({ browser }) => {
   });
   const controller = await ctx.newPage();
   await controller.goto(`${base}/controller/`);
-  await controller.selectOption('#fld-mode', 'cloud');
+  await expandControllerZone(controller, 'sec-connect');
   await controller.evaluate(() => {
     const adv = document.getElementById('advanced-settings');
-    if (adv) adv.open = true;
+    if (adv) {
+      adv.open = true;
+    }
+    const mode = document.getElementById('fld-mode');
+    if (mode) {
+      mode.value = 'cloud';
+    }
     document.getElementById('fld-cloud-project').value = 'milksha-qms-dev';
     document.getElementById('fld-cloud-apikey').value = 'e2e-placeholder-key';
     document.getElementById('fld-code').value = 'e2e-placeholder-code';

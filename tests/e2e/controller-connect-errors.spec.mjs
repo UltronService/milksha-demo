@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, PORT_SITE } from './harness.mjs';
+import { urlsForMode, PORT_SITE, expandControllerZone } from './harness.mjs';
 
 const MSG_401 = '存取碼錯誤。請重新確認，再連線。';
 const MSG_403 = '這個帳號沒有這間店的權限。請檢查店號。';
@@ -7,11 +7,13 @@ const MSG_CLOUD = '雲端暫時出錯。請稍後再連線。';
 
 async function openFirestoreConnectForm(page, host) {
   await page.goto(urlsForMode('firestore').ctrl);
-  await page.selectOption('#fld-mode', 'firestore');
+  await expandControllerZone(page, 'sec-connect');
   await page.evaluate(
     ({ host, key, code }) => {
       const adv = document.getElementById('advanced-settings');
       if (adv) adv.open = true;
+      const mode = document.getElementById('fld-mode');
+      if (mode) mode.value = 'firestore';
       const g = document.getElementById('fld-gateway');
       const k = document.getElementById('fld-cloud-apikey');
       const p = document.getElementById('fld-cloud-project');
