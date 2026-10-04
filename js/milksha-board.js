@@ -345,6 +345,44 @@
       return page;
     }
 
+    function patchZonePage(zoneClass, items, page, totalPages) {
+      const zone = boardEl.querySelector('.milksha-zone.' + zoneClass);
+      if (!zone) {
+        renderBoard();
+        return;
+      }
+      const cells = layoutPageGrid(items, page, PAGE_SIZE);
+      const cellEls = zone.querySelectorAll('.milksha-num-cell');
+      if (cellEls.length !== PAGE_SIZE) {
+        renderBoard();
+        return;
+      }
+      for (let i = 0; i < PAGE_SIZE; i += 1) {
+        const cell = cells[i];
+        const el = cellEls[i];
+        if (cell && cell.number) {
+          el.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
+        } else {
+          el.innerHTML = '';
+        }
+      }
+      const cream = zone.querySelector('.milksha-cream');
+      if (!cream) {
+        return;
+      }
+      let ind = cream.querySelector('.milksha-pg-indicator');
+      if (totalPages > 1) {
+        if (!ind) {
+          ind = doc.createElement('div');
+          ind.className = 'milksha-pg-indicator';
+          cream.appendChild(ind);
+        }
+        ind.textContent = String(page + 1) + '/' + String(totalPages);
+      } else if (ind) {
+        ind.remove();
+      }
+    }
+
     function scheduleZoneTimers() {
       if (readyTimer) {
         clearInterval(readyTimer);
@@ -359,7 +397,7 @@
         }
         readyPage = (readyPage + 1) % pages;
         readyPageStartedAt = Date.now();
-        renderBoard();
+        patchZonePage('ready', readyItems, readyPage, pages);
       }, PAGE_INTERVAL_MS);
       prepTimer = setInterval(function () {
         const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
@@ -368,7 +406,7 @@
         }
         prepPage = (prepPage + 1) % pages;
         prepPageStartedAt = Date.now();
-        renderBoard();
+        patchZonePage('prep', prepItems, prepPage, pages);
       }, PAGE_INTERVAL_MS);
     }
 
@@ -656,6 +694,9 @@
           ready: readyItems.slice(),
           preparing: prepItems.slice(),
         };
+      },
+      isAnnouncing: function () {
+        return ringRunning || ringQueue.length > 0;
       },
       destroy: function () {
         if (readyTimer) {

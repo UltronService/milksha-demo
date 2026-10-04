@@ -170,6 +170,7 @@ button[data-dev-command='1']:disabled {
   gap: 12px;
   padding: 12px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
 }
 .card {
   background: #fff;
@@ -284,8 +285,28 @@ ul {
   text-align: left;
   background: #f0f0f0;
   border: none;
+  border-bottom: 1px solid #e0e0e0;
   padding: 10px 12px;
   font-weight: 800;
+  display: block;
+  cursor: pointer;
+  border-radius: 10px 10px 0 0;
+}
+.card.zone:not(.quick-send) .zone-body[hidden] + .zone-toggle,
+.card.zone:not(.quick-send) .zone-toggle {
+  border-radius: 10px 10px 0 0;
+}
+.card.zone:not(.quick-send) .zone-body:not([hidden]) {
+  border-top: none;
+}
+.card.zone:not(.quick-send) {
+  padding: 0;
+  overflow: hidden;
+}
+.card.zone:not(.quick-send) .zone-body {
+  padding: 8px 12px 12px;
+}
+.card.zone:not(.quick-send) .zone-body[hidden] {
   display: none;
 }
 @media (max-width: 480px) {

@@ -22,6 +22,7 @@
   let lastBoardSeq = 0;
   let lastHeartbeatAt = '';
   let deviceOnline = false;
+  let boardLinkHint = '';
   let pauseCloud = false;
   let pollTimer = null;
   let clockTimer = null;
@@ -278,7 +279,7 @@
         '已連線（' +
         modeDisplayName(mode) +
         '）· 看板 ' +
-        (deviceOnline ? '在線' : '離線/未知') +
+        (deviceOnline ? '在線' : boardLinkHint || '離線/未知') +
         (lastHeartbeatAt ? ' · 最後心跳 ' + lastHeartbeatAt : '');
       showUserBanner('');
     } else {
@@ -289,7 +290,16 @@
 
   function heartbeatTimeoutMs() {
     const sec = Number(document.getElementById('fld-heartbeat-timeout').value) || 120;
-    return Math.max(5, sec) * 1000;
+    const base = Math.max(5, sec) * 1000;
+    const modeEl = document.getElementById('fld-mode');
+    if (modeEl && modeEl.value === 'local') {
+      const localStale =
+        window.QMS.Transport && window.QMS.Transport.LOCAL_DEVICE_STALE_MS
+          ? window.QMS.Transport.LOCAL_DEVICE_STALE_MS
+          : 300000;
+      return Math.max(base, localStale);
+    }
+    return base;
   }
 
   function formatTaipeiNow() {
@@ -382,6 +392,63 @@
     return document.getElementById('fld-store').value.trim() || 's120030';
   }
 
+  function publishLocalPocTargetFromForm() {
+    const modeEl = document.getElementById('fld-mode');
+    if (!modeEl || modeEl.value !== 'local') {
+      return;
+    }
+    const Coord = window.QMS.Transport.LocalPocCoord;
+    if (!Coord) {
+      return;
+    }
+    const devEl = document.getElementById('fld-device');
+    const deviceId = devEl && devEl.value.trim() ? devEl.value.trim() : 'stb-01';
+    try {
+      Coord.publishLocalPocTarget(window.localStorage, {
+        storeId: storeId(),
+        deviceId: deviceId,
+        build: readLoadedBuildTag(),
+      });
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function readLoadedBuildTag() {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = 0; i < scripts.length; i += 1) {
+      const src = scripts[i].src || '';
+      const match = src.match(/controller-app\.js\?v=([^&]+)/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return '';
+  }
+
+  function refreshBoardLinkHint(mode) {
+    boardLinkHint = '';
+    if (mode !== 'local' || deviceOnline) {
+      return;
+    }
+    const Coord = window.QMS.Transport.LocalPocCoord;
+    if (!Coord) {
+      return;
+    }
+    try {
+      const foreign = Coord.findForeignRecentHeartbeat(
+        window.localStorage,
+        storeId(),
+        heartbeatTimeoutMs(),
+      );
+      if (foreign) {
+        boardLinkHint = '看板頁面是舊版或店號不同，請重新整理看板分頁';
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function pinLocalPocTargets() {
     const modeEl = document.getElementById('fld-mode');
     if (!modeEl || modeEl.value !== 'local') {
@@ -401,6 +468,7 @@
         /* ignore */
       }
     }
+    publishLocalPocTargetFromForm();
   }
 
   function store() {
@@ -599,6 +667,7 @@
         deviceOnline = false;
       }
       const mode = document.getElementById('fld-mode').value;
+      refreshBoardLinkHint(mode);
       setConnectedState(true, mode);
       tickClock();
     } catch (e) {
@@ -609,6 +678,7 @@
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(function () {
+      publishLocalPocTargetFromForm();
       pollDevice();
       refreshBoardLists().catch(function () {});
     }, 4000);

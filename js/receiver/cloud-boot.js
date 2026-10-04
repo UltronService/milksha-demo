@@ -52,6 +52,14 @@
           /* ignore */
         }
       }
+      const Coord = root.QMS && root.QMS.Transport && root.QMS.Transport.LocalPocCoord;
+      if (Coord) {
+        const poc = Coord.readLocalPocTarget(root.localStorage);
+        if (poc) {
+          storeId = poc.storeId;
+          deviceId = poc.deviceId;
+        }
+      }
     }
     const saved = root.QMS.Transport.CloudSettings.load();
     const code = saved.accessCode || '';
@@ -133,7 +141,67 @@
     return Boolean(root.document.getElementById('board-root'));
   }
 
-  function attachLocalSyncListeners(storeId, cloud) {
+  function readLoadedBuildTag() {
+    const scripts = root.document.getElementsByTagName('script');
+    for (let i = 0; i < scripts.length; i += 1) {
+      const src = scripts[i].src || '';
+      const match = src.match(/cloud-boot\.js\?v=([^&]+)/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return '';
+  }
+
+  function scheduleHomeBuildVersionCheck() {
+    const loadedBuild = readLoadedBuildTag();
+    if (!loadedBuild) {
+      return;
+    }
+    let checkTimer = null;
+    function checkRemoteBuild() {
+      const path = root.location.pathname || '/';
+      const url = path + (path.indexOf('?') >= 0 ? '&' : '?') + '_buildProbe=' + Date.now();
+      root
+        .fetch(url, { cache: 'no-store' })
+        .then(function (res) {
+          return res.text();
+        })
+        .then(function (html) {
+          const match = html.match(/cloud-boot\.js\?v=([^"'&]+)/);
+          if (!match || match[1] === loadedBuild) {
+            return;
+          }
+          const remoteBuild = match[1];
+          if (root.QMS && root.QMS.runtime && typeof root.QMS.runtime.isAnnouncing === 'function') {
+            if (root.QMS.runtime.isAnnouncing()) {
+              return;
+            }
+          }
+          try {
+            const reloadedFor = root.sessionStorage.getItem('milksha:build-reloaded-for');
+            if (reloadedFor === remoteBuild) {
+              return;
+            }
+            root.sessionStorage.setItem('milksha:build-reloaded-for', remoteBuild);
+          } catch (e) {
+            /* ignore */
+          }
+          root.location.reload();
+        })
+        .catch(function () {
+          /* ignore */
+        });
+    }
+    checkTimer = root.setInterval(checkRemoteBuild, 180000);
+    root.addEventListener('beforeunload', function () {
+      if (checkTimer) {
+        root.clearInterval(checkTimer);
+      }
+    });
+  }
+
+  function attachLocalSyncListeners(resolveStoreId, cloud) {
     function kick() {
       if (cloud.triggerBoardPoll) {
         cloud.triggerBoardPoll();
@@ -142,21 +210,38 @@
         cloud.triggerDevicePoll();
       }
     }
-    const channelName = 'milksha-transport:' + storeId;
-    if (typeof BroadcastChannel !== 'undefined') {
-      const ch = new BroadcastChannel(channelName);
-      ch.onmessage = function (ev) {
-        const msg = ev.data;
-        if (msg && msg.storeId === storeId) {
-          kick();
-        }
-      };
+    let channel = null;
+    function ensureChannel() {
+      const storeId = resolveStoreId();
+      const channelName = 'milksha-transport:' + storeId;
+      if (channel && channel.__milkshaStoreId === storeId) {
+        return;
+      }
+      if (channel) {
+        channel.close();
+      }
+      if (typeof BroadcastChannel !== 'undefined') {
+        channel = new BroadcastChannel(channelName);
+        channel.__milkshaStoreId = storeId;
+        channel.onmessage = function (ev) {
+          const msg = ev.data;
+          if (msg && msg.storeId === resolveStoreId()) {
+            kick();
+          }
+        };
+      }
     }
+    ensureChannel();
     root.addEventListener('storage', function (ev) {
       if (!ev.key || ev.key.indexOf('milksha:local:') !== 0) {
         return;
       }
+      ensureChannel();
+      const storeId = resolveStoreId();
       if (ev.key.indexOf(':board:' + storeId) >= 0 || ev.key.indexOf(':device:' + storeId) >= 0) {
+        kick();
+      }
+      if (ev.key === 'milksha:local:poc-target') {
         kick();
       }
     });
@@ -220,10 +305,23 @@
       role: 'device',
       deviceId: creds.deviceId,
       accessCode: creds.accessCode,
+      homeBoard: homeBoard,
       onAuthSuccess: function () {
         clearGuestAuthDebug();
       },
     });
+
+    function resolveHomeLocalStoreId() {
+      const Coord = QMS.Transport.LocalPocCoord;
+      if (Coord && homeBoard) {
+        return Coord.resolveLocalDeviceContext(root.localStorage, {
+          homeBoard: true,
+          fallbackStoreId: creds.storeId,
+          fallbackDeviceId: creds.deviceId,
+        }).storeId;
+      }
+      return creds.storeId;
+    }
 
     let authHalted = false;
     let auth401Retried = false;
@@ -425,8 +523,45 @@
       cloud.start();
       root.receiveBoard = cloud.receiveBoard;
       root.receiverCloud = cloud;
+      if (mode === 'local' && homeBoard) {
+        let localKeepaliveTimer = null;
+        function localKeepalivePulse() {
+          if (cloud.sendHeartbeat) {
+            cloud.sendHeartbeat();
+          }
+        }
+        localKeepalivePulse();
+        localKeepaliveTimer = root.setInterval(localKeepalivePulse, 45000);
+        root.addEventListener('storage', function (ev) {
+          if (!ev.key) {
+            return;
+          }
+          const boardPrefix = 'milksha:local:board:' + resolveHomeLocalStoreId();
+          if (ev.key.indexOf(boardPrefix) === 0) {
+            localKeepalivePulse();
+          }
+        });
+        root.addEventListener('beforeunload', function () {
+          if (localKeepaliveTimer) {
+            root.clearInterval(localKeepaliveTimer);
+          }
+        });
+        if (root.document && root.document.addEventListener) {
+          root.document.addEventListener('visibilitychange', localKeepalivePulse);
+        }
+        const Coord = QMS.Transport.LocalPocCoord;
+        if (Coord && Coord.subscribeLocalPocTarget) {
+          Coord.subscribeLocalPocTarget(function () {
+            localKeepalivePulse();
+            if (cloud.triggerBoardPoll) {
+              cloud.triggerBoardPoll();
+            }
+          });
+        }
+        scheduleHomeBuildVersionCheck();
+      }
       if (milkshaRuntime) {
-        attachLocalSyncListeners(creds.storeId, cloud);
+        attachLocalSyncListeners(resolveHomeLocalStoreId, cloud);
       }
     }
 

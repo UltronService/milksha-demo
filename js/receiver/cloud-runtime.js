@@ -69,6 +69,8 @@
     let lastBoardUpdateTime = '';
     let tickTimer = null;
     let tickMs = 0;
+    let heartbeatTimer = null;
+    let visibilityHandler = null;
     let simulateOffline = false;
     let networkDelayMs = 0;
     let lastAckCommandId = '';
@@ -479,6 +481,27 @@
       return heartbeatMs;
     }
 
+    function scheduleHeartbeatLoop() {
+      if (heartbeatTimer) {
+        root.clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+      const intervalMs = effectiveHeartbeatIntervalMs();
+      heartbeatTimer = root.setInterval(function () {
+        sendHeartbeat();
+      }, intervalMs);
+    }
+
+    function onVisibilityForHeartbeat() {
+      if (!root.document || root.document.visibilityState !== 'visible') {
+        sendHeartbeat();
+        return;
+      }
+      sendHeartbeat();
+      pollBoard();
+      pollDevice();
+    }
+
     function markCloudReachable() {
       cloudReachable = true;
       tryFlushDeferredReloadCommand();
@@ -760,6 +783,12 @@
       };
       ensureAuth().then(kick).catch(kick);
 
+      scheduleHeartbeatLoop();
+      if (root.document && root.document.addEventListener) {
+        visibilityHandler = onVisibilityForHeartbeat;
+        root.document.addEventListener('visibilitychange', visibilityHandler);
+      }
+
       tickTimer = setInterval(function () {
         tickMs += 1000;
         onSyncAuthUi();
@@ -769,13 +798,18 @@
         if (tickMs % boardPollMs === 0) {
           pollBoard();
         }
-        if (tickMs % effectiveHeartbeatIntervalMs() === 0) {
-          sendHeartbeat();
-        }
       }, 1000);
     }
 
     function destroy() {
+      if (heartbeatTimer) {
+        root.clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+      if (visibilityHandler && root.document && root.document.removeEventListener) {
+        root.document.removeEventListener('visibilitychange', visibilityHandler);
+        visibilityHandler = null;
+      }
       if (tickTimer) {
         clearInterval(tickTimer);
         tickTimer = null;
@@ -818,6 +852,9 @@
       },
       isSimulatedOffline: function () {
         return simulateOffline;
+      },
+      sendHeartbeat: function () {
+        return sendHeartbeat();
       },
     };
     if (options.enableTestPollHook) {

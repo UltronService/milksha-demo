@@ -13,7 +13,33 @@
     const storeId = options.storeId;
     const storage = options.storage || root.localStorage;
     const config = options.config || {};
-    const channelName = CHANNEL_PREFIX + storeId;
+    const homeBoard = options.homeBoard === true;
+
+    function resolveActiveStoreId() {
+      const Coord = QMS.Transport.LocalPocCoord;
+      if (Coord && homeBoard) {
+        return Coord.resolveLocalDeviceContext(storage, {
+          homeBoard: true,
+          fallbackStoreId: storeId,
+          fallbackDeviceId: options.deviceId || 'stb-01',
+        }).storeId;
+      }
+      return storeId;
+    }
+
+    function resolveActiveDeviceId() {
+      const Coord = QMS.Transport.LocalPocCoord;
+      if (Coord && homeBoard) {
+        return Coord.resolveLocalDeviceContext(storage, {
+          homeBoard: true,
+          fallbackStoreId: storeId,
+          fallbackDeviceId: options.deviceId || 'stb-01',
+        }).deviceId;
+      }
+      return options.deviceId || 'stb-01';
+    }
+
+    const channelName = CHANNEL_PREFIX + resolveActiveStoreId();
     let channel = null;
     if (typeof BroadcastChannel !== 'undefined') {
       channel = new BroadcastChannel(channelName);
@@ -33,6 +59,8 @@
       config: config,
       broadcast: broadcast,
       boundTarget: boundStore ? boundStore.target : '',
+      resolveStoreId: resolveActiveStoreId,
+      resolveDeviceId: resolveActiveDeviceId,
     });
 
     const session = {
