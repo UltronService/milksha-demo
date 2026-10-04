@@ -382,6 +382,27 @@
     return document.getElementById('fld-store').value.trim() || 's120030';
   }
 
+  function pinLocalPocTargets() {
+    const modeEl = document.getElementById('fld-mode');
+    if (!modeEl || modeEl.value !== 'local') {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const storeSel = document.getElementById('fld-store');
+    if (storeSel && !params.get('store')) {
+      storeSel.value = 's120030';
+    }
+    const devEl = document.getElementById('fld-device');
+    if (devEl && !params.get('device')) {
+      devEl.value = 'stb-01';
+      try {
+        localStorage.setItem('milksha:deviceId', 'stb-01');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }
+
   function store() {
     return Validate.findStore(storeId());
   }
@@ -628,6 +649,7 @@
     }
     connectInFlight = true;
     setConnectButtonDisabled(true);
+    pinLocalPocTargets();
     if (pollTimer) {
       clearInterval(pollTimer);
       pollTimer = null;
@@ -1112,6 +1134,7 @@
   };
 
   if (document.getElementById('fld-mode').value === 'local') {
+    pinLocalPocTargets();
     connect().catch(function (e) {
       setConnectedState(false, '');
       pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });

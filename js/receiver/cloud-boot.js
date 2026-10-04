@@ -35,8 +35,24 @@
   }
 
   function readCreds(params) {
-    const storeId = params.get('store') || 's120030';
-    const deviceId = params.get('device') || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
+    const home = isHomeBoardPage();
+    const storeParam = params.get('store');
+    const deviceParam = params.get('device');
+    let storeId = storeParam || 's120030';
+    let deviceId = deviceParam || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
+    if (home) {
+      if (!storeParam) {
+        storeId = 's120030';
+      }
+      if (!deviceParam) {
+        deviceId = 'stb-01';
+        try {
+          root.localStorage.setItem('milksha:deviceId', deviceId);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
     const saved = root.QMS.Transport.CloudSettings.load();
     const code = saved.accessCode || '';
     if (params.get('device')) {
@@ -154,28 +170,50 @@
     QMS.Transport.CloudSettings.applyHashImport();
 
     const params = new URLSearchParams(root.location.search);
+    const homeBoard = isHomeBoardPage();
     let mode = (params.get('mode') || '').toLowerCase();
-    if (!mode && isHomeBoardPage()) {
+    if (!mode && homeBoard) {
       mode = 'local';
     }
-    if (mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
+    if (!homeBoard && mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
       return;
     }
 
     if (mode === 'cloud' && !QMS.Transport.CloudSettings.isComplete()) {
-      showSetupGate(true);
+      if (homeBoard) {
+        mode = 'local';
+      } else {
+        showSetupGate(true);
+        return;
+      }
+    }
+
+    if (mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
       return;
     }
 
     const modeResolved = QMS.Transport.resolveModeFromUrl(params, root.MILKSHA_FIREBASE_CONFIG || {});
     if (mode === 'cloud' && !modeResolved.config) {
-      showSetupGate(true);
-      return;
+      if (homeBoard) {
+        mode = 'local';
+      } else {
+        showSetupGate(true);
+        return;
+      }
+    }
+
+    if (mode === 'local') {
+      modeResolved.mode = 'local';
+      modeResolved.config = QMS.Transport.resolveConfigForMode(
+        'local',
+        params,
+        root.MILKSHA_FIREBASE_CONFIG || {},
+      );
     }
 
     showSetupGate(false);
     const creds = readCreds(params);
-    const transportMode = modeResolved.mode === 'cloud' ? 'cloud' : modeResolved.mode;
+    const transportMode = mode === 'cloud' ? 'cloud' : mode === 'firestore' ? 'firestore' : 'local';
     const transport = QMS.Transport.createTransport(transportMode, {
       storeId: creds.storeId,
       config: modeResolved.config,
