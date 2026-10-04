@@ -373,4 +373,7 @@ export async function connectController(page, mode) {
     await page.waitForTimeout(400);
   }
   await expandControllerZone(page, 'sec-pos');
+  await expandControllerZone(page, 'sec-net');
+  await expandControllerZone(page, 'sec-special');
+  await expandControllerZone(page, 'sec-log');
 }

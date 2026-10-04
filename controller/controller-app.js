@@ -367,7 +367,12 @@
       params.set('project', form.projectId);
     }
     const base = window.MILKSHA_FIREBASE_CONFIG || {};
-    const posSecret = ControllerSecrets ? ControllerSecrets.loadPosSignSecret() : '';
+    let posSecret = ControllerSecrets ? ControllerSecrets.loadPosSignSecret() : '';
+    const modeEl = document.getElementById('fld-mode');
+    const modeVal = mode || (modeEl ? modeEl.value : 'local');
+    if (!posSecret && modeVal === 'local') {
+      posSecret = 'local-poc-unsigned';
+    }
     const resolved = window.QMS.Transport.resolveConfigForMode(m, params, base);
     const cfg = resolved || window.QMS.Transport.resolveFirebaseConfig(params, base);
     return Object.assign({}, cfg, { posSignSecret: posSecret });
@@ -621,11 +626,18 @@
     if (connectInFlight) {
       return;
     }
-    if (connected) {
-      return;
-    }
     connectInFlight = true;
     setConnectButtonDisabled(true);
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    if (transport && transport.destroy) {
+      transport.destroy();
+    }
+    transport = null;
+    connected = false;
+    setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
     if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
       showUserBanner('請先在進階設定填寫雲端設定與存取碼');
