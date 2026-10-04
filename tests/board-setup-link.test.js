@@ -14,9 +14,15 @@ test('board bootstrap does not read access code from query string', function () 
 
 test('home board index wires cloud sync scripts', function () {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.match(html, /js\/receiver\/cloud-boot\.js/);
-  assert.match(html, /js\/receiver\/cloud-runtime\.js/);
-  assert.match(html, /js\/transport\/local-cloud-shim\.js/);
+  assert.match(html, /js\/receiver\/cloud-boot\.js\?v=/);
+  assert.match(html, /js\/receiver\/cloud-runtime\.js\?v=/);
+  assert.match(html, /js\/transport\/local-cloud-shim\.js\?v=/);
+});
+
+test('home board pins local POC targets in cloud-boot', function () {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'cloud-boot.js'), 'utf8');
+  assert.match(src, /if \(home\)[\s\S]*deviceId = 'stb-01'/);
+  assert.match(src, /if \(homeBoard\)[\s\S]*mode = 'local'/);
 });
 
 test('setup link documents cfg hash only in docs', function () {
