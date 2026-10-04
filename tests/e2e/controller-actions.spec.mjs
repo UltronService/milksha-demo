@@ -212,7 +212,7 @@ for (const mode of MODES) {
 test('controller | require connect banner', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const controller = await ctx.newPage();
-  await controller.goto(`${urlsForMode('local').ctrl}?mode=cloud`);
+  await controller.goto(`${urlsForMode('local').base}/controller/?mode=cloud`);
   await expandControllerZone(controller, 'sec-pos');
   await controller.click('#btn-add-ticket');
   await expect(controller.locator('#user-banner')).toHaveText('請先按連線');
