@@ -24,22 +24,24 @@
     W: 1920,
     H: 1080,
     split: 'row',
+    titleTop: 65,
     titleH: 112,
     titleZh: 72,
     titleEn: 28,
     numFont: 88,
-    creamPad: 48,
+    creamPad: 44,
   };
 
   const LAYOUT_PORTRAIT = {
     W: 1080,
     H: 1920,
     split: 'col',
+    titleTop: 115,
     titleH: 112,
     titleZh: 64,
     titleEn: 26,
     numFont: 76,
-    creamPad: 40,
+    creamPad: 36,
   };
 
   const PREP_WAVES_SRC = 'assets/milksha-prep-waves.svg';
@@ -391,7 +393,7 @@
           PREP_WAVES_SRC +
           '" alt="" decoding="async" />';
       }
-      z += '<div class="milksha-ztitle" style="height:' + cfg.titleH + 'px">';
+      z += '<div class="milksha-ztitle" style="margin-top:' + cfg.titleTop + 'px;height:' + cfg.titleH + 'px">';
       z +=
         '<span class="milksha-ztitle-zh" style="font-size:' +
         cfg.titleZh +
@@ -405,7 +407,7 @@
         titleEn +
         '</span>';
       z += '</div>';
-      const bodyTop = cfg.titleH;
+      const bodyTop = cfg.titleTop + cfg.titleH;
       const bodyH = h - bodyTop;
       z +=
         '<div class="milksha-zone-body" style="top:' +
