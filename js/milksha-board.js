@@ -695,6 +695,9 @@
           preparing: prepItems.slice(),
         };
       },
+      isAnnouncing: function () {
+        return ringRunning || ringQueue.length > 0;
+      },
       destroy: function () {
         if (readyTimer) {
           clearInterval(readyTimer);

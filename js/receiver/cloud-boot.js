@@ -169,9 +169,25 @@
         })
         .then(function (html) {
           const match = html.match(/cloud-boot\.js\?v=([^"'&]+)/);
-          if (match && match[1] !== loadedBuild) {
-            root.location.reload();
+          if (!match || match[1] === loadedBuild) {
+            return;
           }
+          const remoteBuild = match[1];
+          if (root.QMS && root.QMS.runtime && typeof root.QMS.runtime.isAnnouncing === 'function') {
+            if (root.QMS.runtime.isAnnouncing()) {
+              return;
+            }
+          }
+          try {
+            const reloadedFor = root.sessionStorage.getItem('milksha:build-reloaded-for');
+            if (reloadedFor === remoteBuild) {
+              return;
+            }
+            root.sessionStorage.setItem('milksha:build-reloaded-for', remoteBuild);
+          } catch (e) {
+            /* ignore */
+          }
+          root.location.reload();
         })
         .catch(function () {
           /* ignore */

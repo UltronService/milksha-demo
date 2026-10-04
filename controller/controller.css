@@ -170,6 +170,7 @@ button[data-dev-command='1']:disabled {
   gap: 12px;
   padding: 12px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
 }
 .card {
   background: #fff;
