@@ -85,16 +85,40 @@
         const res = await fetch(docUrl(cfg, docPath), { signal: signal, headers: headers });
         if (res.status === 404) {
           backoffMs = 0;
-          return null;
+          if (options.onHttpResponse) {
+            options.onHttpResponse(res);
+          }
+          let httpDate = '';
+          let httpDateReadable = false;
+          try {
+            httpDate = res.headers.get('date') || '';
+            httpDateReadable = Boolean(httpDate);
+          } catch (e) {
+            httpDateReadable = false;
+          }
+          return { missing: true, httpDate: httpDate, httpDateReadable: httpDateReadable };
         }
         if (!res.ok) {
           throw new Error('Firestore GET ' + res.status);
         }
         const json = await res.json();
         backoffMs = 0;
+        if (options.onHttpResponse) {
+          options.onHttpResponse(res);
+        }
+        let httpDate = '';
+        let httpDateReadable = false;
+        try {
+          httpDate = res.headers.get('date') || '';
+          httpDateReadable = Boolean(httpDate);
+        } catch (e) {
+          httpDateReadable = false;
+        }
         return {
           data: FV.decodeDocumentFields(json.fields),
           updateTime: json.updateTime || '',
+          httpDate: httpDate,
+          httpDateReadable: httpDateReadable,
         };
       } catch (err) {
         if (err && err.name === 'AbortError') {

@@ -5,14 +5,21 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { URL } from 'node:url';
+import { validatePosReceiverBody } from './pos-validate.mjs';
+import { extractRawJsonField } from './json-raw.mjs';
+import {
+  validateDevCommandBody,
+  validateBoxHeartbeatBody,
+  validateBoxUploadBody,
+  httpStatusForApiErrorCode,
+} from './dev-command-validation.mjs';
+import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
+import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
-const SIGN_SECRET = 'dev-milksha-public-test-key-2026';
-
-const STORE_TARGETS = {
-  s120030: 'milkshas120030',
-  s110012: 'milkshas110012',
-  s210008: 'milkshas210008',
-};
+const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
+const FAKE_DEV_ACCESS_CODE = 'fake-milksha-controller-access-code';
+let devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
+let devLoginRequestCount = 0;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -22,6 +29,12 @@ const REGION = 'asia-east1';
 const docs = new Map();
 /** @type {Map<string, object[]>} */
 const logs = new Map();
+
+let posReceiverEntryAEnabled =
+  process.env.POS_RECEIVER_A === undefined || process.env.POS_RECEIVER_A !== '0';
+/** When false, boxHeartbeat ack does not clear pendingCommand (production-like 7-day retention). */
+let pendingCommandClearOnAck = true;
+const POS_MAX_AGE_MS = Number(process.env.POS_RECEIVER_MAX_AGE_MS || 10 * 60 * 1000);
 
 function encodeFields(obj) {
   function enc(v) {
@@ -72,8 +85,37 @@ function deviceKey(storeId, deviceId) {
   return `stores/${storeId}/devices/${deviceId}`;
 }
 
-function taipeiDate() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(new Date());
+function seedE2eDevice() {
+  docs.set(deviceKey('s120030', 'stb-01'), {
+    online: false,
+    lastSeen: '',
+    appVersion: '',
+    boardSeq: 0,
+    pendingUploads: 0,
+    simulatedOffline: false,
+    pendingCommand: null,
+  });
+}
+
+/** @param {object} board */
+function materializeTodayBoard(board) {
+  if (!board || typeof board !== 'object') {
+    return board;
+  }
+  if (isCurrentBusinessDate(board.businessDate)) {
+    return board;
+  }
+  const cleared = {
+    storeId: board.storeId,
+    businessDate: taipeiBusinessDate(),
+    seq: board.seq || 0,
+    updatedAt: new Date().toISOString(),
+    source: 'system',
+    tickets: [],
+    clearedAt: new Date().toISOString(),
+  };
+  docs.set(boardKey(board.storeId), cleared);
+  return cleared;
 }
 
 function nextSeq(storeId) {
@@ -127,22 +169,31 @@ function corsHeaders() {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Expose-Headers': 'Date',
   };
 }
 
 function json(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json', ...corsHeaders() });
+  res.writeHead(status, {
+    'Content-Type': 'application/json',
+    Date: new Date().toUTCString(),
+    ...corsHeaders(),
+  });
   res.end(JSON.stringify(body));
 }
 
-function readBody(req) {
+/** @param {string} code @param {string} message */
+function apiError(code, message) {
+  return { code, message };
+}
+
+function readRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     req.on('data', (c) => chunks.push(c));
     req.on('end', () => {
       try {
-        const t = Buffer.concat(chunks).toString('utf8');
-        resolve(t ? JSON.parse(t) : {});
+        resolve(Buffer.concat(chunks).toString('utf8'));
       } catch (e) {
         reject(e);
       }
@@ -150,9 +201,51 @@ function readBody(req) {
   });
 }
 
+function readBody(req) {
+  return readRawBody(req).then((t) => (t ? JSON.parse(t) : {}));
+}
+
 function requireAuth(req) {
   const h = req.headers.authorization || '';
-  return h.startsWith('Bearer ');
+  if (!h.startsWith('Bearer ')) {
+    return {
+      ok: false,
+      status: 401,
+      body: apiError('invalid_token', 'login expired, please sign in again'),
+    };
+  }
+  const token = h.slice(7).trim();
+  if (token === 'expired-test-token') {
+    return {
+      ok: false,
+      status: 401,
+      body: apiError('invalid_token', 'login expired, please sign in again'),
+    };
+  }
+  if (token === 'forbidden-test-token') {
+    return {
+      ok: false,
+      status: 403,
+      body: apiError('forbidden', 'no permission for this store'),
+    };
+  }
+  return { ok: true };
+}
+
+/** @param {string} token */
+function storeIdForAuthToken(token) {
+  const t = String(token || '').trim();
+  if (!t || t === 'expired-test-token' || t === 'forbidden-test-token') {
+    return '';
+  }
+  if (t === 'fake-id-token' || t === 'e2e-fake-id-token') {
+    return 's120030';
+  }
+  const m = /^fake-([^-]+)-/.exec(t);
+  if (m && m[1]) {
+    return m[1];
+  }
+  return 's120030';
 }
 
 const server = http.createServer(async (req, res) => {
@@ -169,12 +262,87 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/test/reset' && req.method === 'POST') {
       docs.clear();
       logs.clear();
+      posReceiverEntryAEnabled = true;
+      pendingCommandClearOnAck = true;
+      devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
+      devLoginRequestCount = 0;
+      seedE2eDevice();
       return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
+      return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/devLoginAccessCode' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.accessCode === 'string' && body.accessCode.trim()) {
+        devLoginExpectedAccessCode = body.accessCode.trim();
+      }
+      return json(res, 200, { ok: true, accessCode: devLoginExpectedAccessCode });
+    }
+    if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
+      const body = await readBody(req);
+      const store = body.storeId || 's120030';
+      const device = body.deviceId || 'stb-01';
+      const dk = deviceKey(store, device);
+      if (!docs.has(dk)) {
+        seedE2eDevice();
+      }
+      const issuedAt =
+        typeof body.issuedAt === 'string' && body.issuedAt.trim()
+          ? body.issuedAt.trim()
+          : new Date().toISOString();
+      const cmd = {
+        id: body.id || `cmd-test-${Date.now()}`,
+        type: body.type || 'reload',
+        params: body.params && typeof body.params === 'object' ? body.params : {},
+        issuedAt,
+      };
+      if (body.issuedAtMs != null && Number.isFinite(Number(body.issuedAtMs))) {
+        cmd.issuedAtMs = Number(body.issuedAtMs);
+      }
+      const prev = docs.get(dk) || {};
+      docs.set(dk, { ...prev, pendingCommand: cmd });
+      return json(res, 200, { ok: true, commandId: cmd.id });
+    }
+    if (url.pathname === '/test/pendingCommandMode' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.clearOnAck === 'boolean') {
+        pendingCommandClearOnAck = body.clearOnAck;
+      }
+      return json(res, 200, { ok: true, clearOnAck: pendingCommandClearOnAck });
+    }
+    if (url.pathname === '/test/seed-board' && req.method === 'POST') {
+      const body = await readBody(req);
+      const storeId = body.storeId || 's120030';
+      docs.set(boardKey(storeId), {
+        storeId,
+        businessDate: body.businessDate || '2020-01-01',
+        seq: Number(body.seq) || 1,
+        updatedAt: new Date().toISOString(),
+        source: 'A',
+        tickets: Array.isArray(body.tickets) ? body.tickets : [],
+        clearedAt: null,
+      });
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/test/posReceiverA' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (typeof body.enabled === 'boolean') {
+        posReceiverEntryAEnabled = body.enabled;
+      }
+      return json(res, 200, { ok: true, enabled: posReceiverEntryAEnabled });
     }
 
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
+      devLoginRequestCount += 1;
       const body = await readBody(req);
+      if (String(body.accessCode || '') !== devLoginExpectedAccessCode) {
+        return json(res, 403, {
+          code: 'invalid_access_code',
+          message: 'wrong access code for fake cloud',
+        });
+      }
       return json(res, 200, { customToken: `fake-${body.storeId}-${body.role}` });
     }
 
@@ -188,84 +356,125 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname.startsWith(fnPrefix)) {
       const name = url.pathname.slice(fnPrefix.length);
-      const body = await readBody(req);
+      const rawText = await readRawBody(req);
+      const body = rawText ? JSON.parse(rawText) : {};
       const storeId = body.storeId || body.account || 's120030';
 
       if (name === 'posReceiver' || name === 'posReceiver/') {
-        if (!body.serviceSpecialData_Json) {
-          return json(res, 400, { isSuccess: false, information: '叫號資料格式錯誤' });
-        }
-        const jsonStr = JSON.stringify(body.serviceSpecialData_Json);
-        const hash = md5Hex(jsonStr);
-        if (body.serviceSpecialData_Json_Md5Hash && body.serviceSpecialData_Json_Md5Hash !== hash) {
-          return json(res, 400, { isSuccess: false, information: 'Md5Hash 不符' });
+        const rawInner = extractRawJsonField(rawText, 'serviceSpecialData_Json');
+        const v = validatePosReceiverBody(body, {
+          entryAEnabled: posReceiverEntryAEnabled,
+          maxAgeMs: POS_MAX_AGE_MS,
+          serviceSpecialDataJsonRaw: rawInner,
+        });
+        if (!v.ok) {
+          return json(res, 200, { isSuccess: false, information: v.information });
         }
         if (!verifyPosSignature(body)) {
-          return json(res, 400, { isSuccess: false, information: '簽章錯誤' });
+          return json(res, 200, { isSuccess: false, information: '簽章錯誤' });
         }
-        const target = body.serviceSpecialData_Json.target || '';
-        const account = body.account || storeId;
-        const expectedTarget = STORE_TARGETS[account] || STORE_TARGETS[storeId];
-        if (expectedTarget && target && target !== expectedTarget) {
-          return json(res, 400, { isSuccess: false, information: '找不到目標叫號機' });
-        }
-        const nc = body.serviceSpecialData_Json?.data?.number_content || [];
-        const tickets = numberToTickets(nc);
-        const board = {
-          storeId,
-          businessDate: taipeiDate(),
-          seq: nextSeq(storeId),
-          updatedAt: new Date().toISOString(),
-          source: 'A',
-          tickets,
-          clearedAt: tickets.length ? null : new Date().toISOString(),
-        };
-        docs.set(boardKey(storeId), board);
         const online = storeHasOnlineBox(storeId);
         const info = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        let seq = null;
+        if (online) {
+          const nc = body.serviceSpecialData_Json?.data?.number_content || [];
+          const tickets = numberToTickets(nc);
+          seq = nextSeq(storeId);
+          const board = {
+            storeId,
+            businessDate: taipeiBusinessDate(),
+            seq: seq,
+            updatedAt: new Date().toISOString(),
+            source: 'A',
+            tickets,
+            clearedAt: tickets.length ? null : new Date().toISOString(),
+          };
+          docs.set(boardKey(storeId), board);
+        }
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
           isSuccess: online,
           information: info,
-          seq: board.seq,
+          seq: seq,
         });
-        return json(res, 200, { isSuccess: online, information: info, seq: board.seq });
+        return json(res, 200, { isSuccess: online, information: info, seq: seq });
       }
 
-      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
+      const auth = requireAuth(req);
+      if (!auth.ok) return json(res, auth.status, auth.body);
 
       if (name === 'boxHeartbeat') {
-        const dk = deviceKey(storeId, body.deviceId || 'stb-01');
+        const hv = validateBoxHeartbeatBody(body);
+        if (!hv.ok) {
+          return json(res, httpStatusForApiErrorCode(hv.code), apiError(hv.code, hv.message));
+        }
+        const hb = hv.body;
+        const dk = deviceKey(hb.storeId, hb.deviceId);
+        if (!docs.has(dk)) {
+          return json(res, 404, apiError('device_not_found', 'device not found'));
+        }
         const prev = docs.get(dk) || {};
+        let nextPending = prev.pendingCommand || null;
+        if (
+          pendingCommandClearOnAck &&
+          hb.ackCommandId &&
+          nextPending &&
+          nextPending.id === hb.ackCommandId
+        ) {
+          nextPending = null;
+        }
         docs.set(dk, {
           ...prev,
           lastSeen: new Date().toISOString(),
-          online: !body.simulatedOffline,
-          appVersion: body.appVersion || '',
-          boardSeq: body.boardSeq || 0,
-          pendingUploads: body.pendingUploads || 0,
-          simulatedOffline: Boolean(body.simulatedOffline),
-          lastAckCommandId: body.ackCommandId || prev.lastAckCommandId || '',
-          pendingCommand: prev.pendingCommand || null,
+          online: !hb.simulatedOffline,
+          appVersion: hb.appVersion || '',
+          boardSeq: hb.boardSeq || 0,
+          pendingUploads: hb.pendingUploads || 0,
+          simulatedOffline: Boolean(hb.simulatedOffline),
+          lastAckCommandId: hb.ackCommandId || prev.lastAckCommandId || '',
+          pendingCommand: nextPending,
         });
         return json(res, 200, { ok: true });
       }
 
+      if (name === 'boxUpload' || name === 'boxUpload/') {
+        const uv = validateBoxUploadBody(body);
+        if (!uv.ok) {
+          return json(res, httpStatusForApiErrorCode(uv.code), apiError(uv.code, uv.message));
+        }
+        return json(res, 501, apiError('not_implemented', 'boxUpload is not implemented in fake-cloud.'));
+      }
+
       if (name === 'devCommand') {
-        const dk = deviceKey(storeId, body.deviceId || 'stb-01');
+        const cv = validateDevCommandBody(body);
+        if (!cv.ok) {
+          return json(res, httpStatusForApiErrorCode(cv.code), apiError(cv.code, cv.message));
+        }
+        const cmdBody = cv.body;
+        const bearer = (req.headers.authorization || '').startsWith('Bearer ')
+          ? (req.headers.authorization || '').slice(7).trim()
+          : '';
+        const authStoreId = storeIdForAuthToken(bearer);
+        if (authStoreId && cmdBody.storeId !== authStoreId) {
+          return json(res, 403, apiError('forbidden', 'store id does not match token store'));
+        }
+        const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
+        if (!docs.has(dk)) {
+          return json(res, 404, apiError('device_not_found', 'device not found'));
+        }
         const prev = docs.get(dk) || {};
         const cmd = {
           id: `cmd-${Date.now()}`,
-          type: body.type,
-          params: body.params || {},
+          type: cmdBody.type,
+          params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
-        if (body.type === 'clear_now') {
-          docs.set(boardKey(storeId), {
-            storeId,
-            businessDate: taipeiDate(),
-            seq: nextSeq(storeId),
+        if (cmdBody.type === 'clear_now') {
+          docs.set(boardKey(cmdBody.storeId), {
+            storeId: cmdBody.storeId,
+            businessDate: taipeiBusinessDate(),
+            seq: nextSeq(cmdBody.storeId),
             updatedAt: new Date().toISOString(),
             source: 'system',
             tickets: [],
@@ -273,24 +482,28 @@ const server = http.createServer(async (req, res) => {
           });
         }
         docs.set(dk, { ...prev, pendingCommand: cmd });
-        docs.set(commandLogKey(storeId, cmd.id), {
+        docs.set(commandLogKey(cmdBody.storeId, cmd.id), {
           at: new Date().toISOString(),
-          type: body.type,
-          deviceId: body.deviceId,
+          type: cmdBody.type,
+          deviceId: cmdBody.deviceId,
           commandId: cmd.id,
         });
         return json(res, 200, { ok: true, commandId: cmd.id });
       }
 
-      return json(res, 404, { error: 'unknown fn ' + name });
+      return json(res, 404, apiError('not_found', 'Cloud function not found.'));
     }
 
     const docPrefix = `/v1/projects/${PROJECT}/databases/(default)/documents/`;
     if (req.method === 'GET' && url.pathname.startsWith(docPrefix)) {
-      if (!requireAuth(req)) return json(res, 401, { error: 'auth' });
+      const docAuth = requireAuth(req);
+      if (!docAuth.ok) return json(res, docAuth.status, docAuth.body);
       const rel = decodeURIComponent(url.pathname.slice(docPrefix.length)).replace(/\/$/, '');
-      const data = docs.get(rel);
+      let data = docs.get(rel);
       if (data) {
+        if (rel.endsWith('/board/today_board')) {
+          data = materializeTodayBoard(data);
+        }
         return json(res, 200, {
           name: `projects/${PROJECT}/databases/(default)/documents/${rel}`,
           fields: encodeFields(data).fields,
@@ -319,9 +532,11 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404);
     res.end('not found');
   } catch (e) {
-    json(res, 500, { error: String(e) });
+    json(res, 500, apiError('internal_error', 'An internal error occurred.'));
   }
 });
+
+seedE2eDevice();
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`fake-cloud listening on http://127.0.0.1:${PORT}`);

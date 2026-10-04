@@ -12,16 +12,20 @@
     return String(n).padStart(2, '0');
   }
 
+  const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+  /** Wall clock in Asia/Taipei (UTC+8, no DST) from instant; ms 0–999 padded to 4 digits. */
   function formatTimeStmp(d) {
     const date = d || new Date();
-    const y = date.getFullYear();
-    const mo = pad2(date.getMonth() + 1);
-    const da = pad2(date.getDate());
-    const h = pad2(date.getHours());
-    const mi = pad2(date.getMinutes());
-    const s = pad2(date.getSeconds());
-    const ms = String(date.getMilliseconds()).padStart(4, '0');
-    return y + '-' + mo + '-' + da + '-' + h + '-' + mi + '-' + s + ':' + ms;
+    const shifted = new Date(date.getTime() + TAIPEI_OFFSET_MS);
+    const y = shifted.getUTCFullYear();
+    const mo = pad2(shifted.getUTCMonth() + 1);
+    const da = pad2(shifted.getUTCDate());
+    const h = pad2(shifted.getUTCHours());
+    const mi = pad2(shifted.getUTCMinutes());
+    const s = pad2(shifted.getUTCSeconds());
+    const ms4 = String(date.getUTCMilliseconds()).padStart(4, '0');
+    return y + '-' + mo + '-' + da + '-' + h + '-' + mi + '-' + s + ':' + ms4;
   }
 
   function md5ServiceJson(serviceSpecialData_Json) {
@@ -64,11 +68,20 @@
    * @param {string} secret
    */
   async function signPosBody(body, secret) {
+    const Wire = QMS.Transport.MilkshaPosWire;
+    if (Wire && Wire.signPosWire) {
+      const built = await Wire.signPosWire(body, secret, false);
+      const parsed = JSON.parse(built.wireText);
+      parsed.__wireText = built.wireText;
+      parsed.__innerText = built.innerText;
+      return parsed;
+    }
     const copy = JSON.parse(JSON.stringify(body));
     if (!copy.timeStmp) {
       copy.timeStmp = formatTimeStmp();
     }
-    copy.serviceSpecialData_Json_Md5Hash = md5ServiceJson(copy.serviceSpecialData_Json);
+    const innerText = JSON.stringify(copy.serviceSpecialData_Json);
+    copy.serviceSpecialData_Json_Md5Hash = Md5.md5Hex(innerText);
     const sig = await hmacSha256Base64(secret, canonicalString(copy));
     copy.signature = sig;
     return copy;
@@ -80,11 +93,20 @@
    * @param {boolean} wrong
    */
   async function applyPosSignature(body, secret, wrong) {
+    const Wire = QMS.Transport.MilkshaPosWire;
+    if (Wire && Wire.signPosWire) {
+      const built = await Wire.signPosWire(body, secret, wrong);
+      return {
+        wireText: built.wireText,
+        innerText: built.innerText,
+        parsed: JSON.parse(built.wireText),
+      };
+    }
     const signed = await signPosBody(body, secret);
     if (wrong) {
       signed.signature = 'WRONG-' + (signed.signature || '').slice(0, 8);
     }
-    return signed;
+    return { wireText: null, innerText: null, parsed: signed };
   }
 
   async function verifyPosBody(body, secret) {
@@ -99,6 +121,7 @@
     formatTimeStmp: formatTimeStmp,
     md5ServiceJson: md5ServiceJson,
     canonicalString: canonicalString,
+    hmacSha256Base64: hmacSha256Base64,
     signPosBody: signPosBody,
     applyPosSignature: applyPosSignature,
     verifyPosBody: verifyPosBody,

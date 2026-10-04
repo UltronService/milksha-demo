@@ -59,6 +59,10 @@
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
     const onStatusLine = options.onStatusLine || function () {};
     const onBoardAck = options.onBoardAck || function () {};
+    const onAuthFailure = options.onAuthFailure || function () {};
+    const onSyncAuthUi = options.onSyncAuthUi || function () {};
+    const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
+    const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
@@ -70,13 +74,114 @@
     let lastHandledCommandId = '';
     let pendingAckCommandId = '';
     let prevReadySet = new Set();
-    let isFirstApply = true;
     let slowNetworkTimer = null;
-    let last0300ClearDate = '';
+    let lastSessionBusinessDate = '';
     let suppressRingOnNextApply = false;
+    let lastResolvedBusinessDate = '';
+    let lastResolvedSource = '';
+    let clockSkewSilentRefetchPending = false;
+    let cloudReachable = true;
+    let lastHeartbeatSucceeded = true;
+    /** @type {object|null} */
+    let deferredReloadCommand = null;
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
+    const handledCmdStorageKey = 'milksha:lastHandledCmd:' + storeId + ':' + deviceId;
+    const RELOAD_ACK_TIMEOUT_MS = 2500;
+
+    function readStoredHandledCommandId() {
+      try {
+        return root.localStorage.getItem(handledCmdStorageKey) || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function restorePersistedCommandGuards() {
+      try {
+        const id = readStoredHandledCommandId();
+        if (!id) {
+          return;
+        }
+        lastHandledCommandId = id;
+        lastAckCommandId = id;
+        pendingAckCommandId = id;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    function persistHandledCommandRecord(cmd) {
+      const id = cmd && cmd.id ? String(cmd.id) : '';
+      if (!id) {
+        return;
+      }
+      try {
+        root.localStorage.setItem(handledCmdStorageKey, id);
+      } catch (e) {
+        /* ignore */
+      }
+      lastHandledCommandId = id;
+      lastAckCommandId = id;
+    }
+
+    function awaitPersistHandledCommandRecord(cmd) {
+      persistHandledCommandRecord(cmd);
+      return Promise.resolve();
+    }
+
+    function getBootServerTimeMs() {
+      if (!transport.session || !transport.session.getBootServerTimeMs) {
+        return 0;
+      }
+      return transport.session.getBootServerTimeMs();
+    }
+
+    function shouldSkipReloadRebootByBootServerTime(cmd) {
+      const skipFn = QMS.Receiver.shouldSkipReloadRebootByBootServerTime;
+      if (!skipFn) {
+        return false;
+      }
+      return skipFn(cmd, getBootServerTimeMs());
+    }
+
+    function shouldSkipDeviceCommand(cmd) {
+      if (!cmd || !cmd.id) {
+        return true;
+      }
+      const id = String(cmd.id);
+      const storedId = readStoredHandledCommandId();
+      if (id === lastHandledCommandId || id === storedId) {
+        return true;
+      }
+      if (shouldSkipReloadRebootByBootServerTime(cmd)) {
+        return true;
+      }
+      return false;
+    }
+
+    async function flushCommandAckBeforeReload() {
+      try {
+        await Promise.race([
+          sendHeartbeat(),
+          new Promise(function (resolve) {
+            root.setTimeout(resolve, RELOAD_ACK_TIMEOUT_MS);
+          }),
+        ]);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    const chimePolicy =
+      QMS.Receiver.createBoardChimePolicy &&
+      QMS.Receiver.createBoardChimePolicy({
+        getBusinessDate: function () {
+          return TodayBoard.getSessionBusinessDate();
+        },
+        newlyReadyIds: BoardSeq.newlyReadyIds,
+      });
 
     function loadCache() {
       try {
@@ -90,15 +195,147 @@
       }
     }
 
-    function saveCache(seq, numberContent) {
+    function saveCache(seq, numberContent, boardUpdatedAt) {
+      const bd = TodayBoard.getSessionBusinessDate();
+      const updatedAt = String(boardUpdatedAt || '').trim();
+      if (!bd || !updatedAt) {
+        return;
+      }
       try {
         root.localStorage.setItem(
           cacheKey,
-          JSON.stringify({ seq: seq, numberContent: numberContent, savedAt: Date.now() }),
+          JSON.stringify({
+            seq: seq,
+            numberContent: numberContent,
+            businessDate: bd,
+            boardUpdatedAt: updatedAt,
+          }),
         );
       } catch (e) {
         /* ignore */
       }
+    }
+
+    function guestClockReferenceMs(boardDoc) {
+      if (boardDoc && boardDoc.httpDateReadable && boardDoc.httpDate) {
+        const t = Date.parse(boardDoc.httpDate);
+        if (!Number.isNaN(t)) {
+          return t;
+        }
+      }
+      return null;
+    }
+
+    function bootGuestClockOk() {
+      const cached = loadCache();
+      return Boolean(cached) && TodayBoard.shouldShowBootCache(cached, new Date());
+    }
+
+    function syncGuestClockAfterBoot() {
+      if (!demoApi || typeof demoApi.setGuestClockState !== 'function') {
+        return;
+      }
+      const cached = loadCache();
+      const ok = Boolean(cached) && TodayBoard.shouldShowBootCache(cached, new Date());
+      demoApi.setGuestClockState({ hidden: !ok, clearCloudAnchor: true });
+    }
+
+    function revealGuestClockFromCloudBoard(boardDoc) {
+      if (!demoApi || typeof demoApi.setGuestClockState !== 'function') {
+        return;
+      }
+      const refMs = guestClockReferenceMs(boardDoc);
+      if (refMs != null) {
+        demoApi.setGuestClockState({ hidden: false, timeMs: refMs });
+        return;
+      }
+      if (bootGuestClockOk()) {
+        demoApi.setGuestClockState({ hidden: false, clearCloudAnchor: true });
+        return;
+      }
+      demoApi.setGuestClockState({ hidden: true });
+    }
+
+    function tryApplyBootCache() {
+      const cached = loadCache();
+      if (!TodayBoard.shouldShowBootCache(cached)) {
+        return false;
+      }
+      const list = Array.isArray(cached.numberContent) ? cached.numberContent : [];
+      if (list.length === 0) {
+        return false;
+      }
+      const bd = String(cached.businessDate || '');
+      TodayBoard.setSessionBusinessDate(bd);
+      lastSessionBusinessDate = bd;
+      applyNumberContent(list, localSeq, {
+        silent: true,
+        preserveFirstBatchFlag: true,
+        skipCacheWrite: true,
+        bootCacheRestore: true,
+      });
+      return true;
+    }
+
+    function noteSessionBusinessDateRoll(nextBusinessDate) {
+      const nextBd = String(nextBusinessDate || '');
+      if (!nextBd) {
+        return;
+      }
+      if (lastSessionBusinessDate && lastSessionBusinessDate !== nextBd) {
+        if (chimePolicy) {
+          chimePolicy.onBusinessDateRoll();
+        }
+        clearGuestBoard({ silent: true });
+      }
+      lastSessionBusinessDate = nextBd;
+      TodayBoard.setSessionBusinessDate(nextBd);
+    }
+
+    function dropStaleCacheIfBusinessDayMismatch(resolvedBusinessDate) {
+      const cached = loadCache();
+      if (!cached || !cached.businessDate) {
+        return;
+      }
+      if (!TodayBoard.isSameBusinessDate(cached.businessDate, resolvedBusinessDate)) {
+        try {
+          root.localStorage.removeItem(cacheKey);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+
+    function noteResolvedBusinessDate(resolved) {
+      if (!resolved || !resolved.ok) {
+        return;
+      }
+      const nextBd = resolved.businessDate;
+      const nextSource = resolved.source;
+      if (
+        lastResolvedBusinessDate &&
+        lastResolvedBusinessDate !== nextBd &&
+        clockSkewSilentRefetchPending
+      ) {
+        suppressRingOnNextApply = true;
+        clockSkewSilentRefetchPending = false;
+      }
+      if (nextSource === 'board' || nextSource === 'http_date') {
+        if (TodayBoard.isClockSkewedFromTrusted(nextBd)) {
+          clockSkewSilentRefetchPending = true;
+        }
+      }
+      lastResolvedBusinessDate = nextBd;
+      lastResolvedSource = nextSource;
+    }
+
+    function clearGuestBoard(opts) {
+      const o = opts || {};
+      applyNumberContent([], localSeq, {
+        silent: o.silent !== false,
+        preserveFirstBatchFlag: true,
+        skipCacheWrite: true,
+      });
     }
 
     function applyNumberContent(numberContent, seq, opts) {
@@ -108,12 +345,18 @@
         Validate.parseSourceType,
         Validate.itemId,
       );
-      const newly = BoardSeq.newlyReadyIds(prevReadySet, nextReady);
-      let shouldRing = !isFirstApply && newly.length > 0 && !(opts && opts.silent);
+      const ringOpts = {
+        silent: Boolean(opts && opts.silent),
+        suppressRing: suppressRingOnNextApply,
+        preserveFirstBatchFlag: Boolean(opts && opts.preserveFirstBatchFlag),
+      };
       if (suppressRingOnNextApply) {
-        shouldRing = false;
         suppressRingOnNextApply = false;
       }
+      const ringIds =
+        chimePolicy
+          ? chimePolicy.pickRingIds(prevReadySet, nextReady, ringOpts)
+          : [];
 
       const store = Validate.findStore(storeId);
       const req = {
@@ -131,15 +374,16 @@
 
       const res = demoApi.pushFromObject(req, {
         skipOfflineCheck: true,
-        newlyReadyIds: shouldRing ? newly : [],
+        newlyReadyIds: ringIds,
       });
       prevReadySet = nextReady;
-      isFirstApply = false;
       if (typeof seq === 'number') {
         localSeq = seq;
       }
-      saveCache(localSeq, list);
-      onBoardAck({ seq: localSeq, response: res, newlyReady: shouldRing ? newly : [] });
+      if (!(opts && opts.skipCacheWrite) && TodayBoard.hasSessionBusinessDate()) {
+        saveCache(localSeq, list, opts && opts.boardUpdatedAt);
+      }
+      onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
     }
 
@@ -153,15 +397,33 @@
       }
       const board = norm.board;
       const seq = board.seq;
+      const resolved = TodayBoard.resolveSessionBusinessDate({
+        boardBusinessDate: board.businessDate,
+        httpDateHeader: boardDoc.httpDate || '',
+        httpDateReadable: Boolean(boardDoc.httpDateReadable),
+      });
+      if (!resolved.ok) {
+        return { ignored: true, reason: 'no_business_date' };
+      }
+      noteResolvedBusinessDate(resolved);
+      dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
+      noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
         return { ignored: true, reason: Validate.MSG.stale };
       }
       if (simulateOffline) {
+        const numberContentOffline = TodayBoard.ticketsToNumberContent(board.tickets);
+        prevReadySet = BoardSeq.readyIdSetFromContent(
+          numberContentOffline,
+          Validate.parseSourceType,
+          Validate.itemId,
+        );
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
-        return applyNumberContent(numberContent, seq, opts);
+        return applyNumberContent(numberContent, seq, applyOpts);
       };
       if (networkDelayMs > 0) {
         return new Promise(function (resolve) {
@@ -176,8 +438,90 @@
       return run();
     }
 
+    function authBlocksBoardSync() {
+      const session = transport.session;
+      if (!session) {
+        return false;
+      }
+      if (session.isAuthStopped && session.isAuthStopped()) {
+        return true;
+      }
+      if (session.isUploadHalted && session.isUploadHalted()) {
+        return true;
+      }
+      return false;
+    }
+
+    function authBlocksHeartbeat() {
+      const session = transport.session;
+      if (!session) {
+        return false;
+      }
+      if (session.isAuthStopped && session.isAuthStopped()) {
+        return true;
+      }
+      if (session.isUploadHalted && session.isUploadHalted()) {
+        return true;
+      }
+      return false;
+    }
+
+    function effectiveHeartbeatIntervalMs() {
+      return heartbeatMs;
+    }
+
+    function markCloudReachable() {
+      cloudReachable = true;
+      tryFlushDeferredReloadCommand();
+    }
+
+    function markCloudUnreachable() {
+      cloudReachable = false;
+    }
+
+    function notifyAuthFailure(err) {
+      onAuthFailure(err);
+    }
+
+    function isAuthHttpError(err) {
+      const status = err && err.status ? Number(err.status) : 0;
+      return status === 401 || status === 403;
+    }
+
+    async function tryFlushDeferredReloadCommand() {
+      if (!deferredReloadCommand || simulateOffline || !lastHeartbeatSucceeded) {
+        return;
+      }
+      const cmd = deferredReloadCommand;
+      deferredReloadCommand = null;
+      if (shouldSkipDeviceCommand(cmd)) {
+        await acknowledgeSkippedPendingCommand(cmd);
+        return;
+      }
+      await handleCommand(cmd);
+    }
+
     async function pollBoard() {
+      if (authBlocksBoardSync()) {
+        return;
+      }
       if (simulateOffline) {
+        try {
+          const board = await transport.readBoard();
+          if (board && board.data) {
+            const norm = TodayBoard.normalizeTodayBoard(board.data);
+            if (norm.ok) {
+              const nc = TodayBoard.ticketsToNumberContent(norm.board.tickets);
+              prevReadySet = BoardSeq.readyIdSetFromContent(
+                nc,
+                Validate.parseSourceType,
+                Validate.itemId,
+              );
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
         return;
       }
       try {
@@ -186,13 +530,26 @@
           onStatusLine('board: 無名單');
           return;
         }
+        if (board.missing) {
+          revealGuestClockFromCloudBoard(board);
+          onStatusLine('board: 無名單');
+          return;
+        }
         const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
         if (marker && marker === lastBoardUpdateTime) {
           return;
         }
         lastBoardUpdateTime = marker;
+        revealGuestClockFromCloudBoard(board);
         await tryApplyTodayBoard(board);
+        markCloudReachable();
       } catch (e) {
+        if (!isFirestoreAbortError(e)) {
+          if (isAuthHttpError(e)) {
+            notifyAuthFailure(e);
+          }
+          markCloudUnreachable();
+        }
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
@@ -200,6 +557,45 @@
     async function handleCommand(cmd) {
       const type = cmd.type;
       const params = cmd.params || {};
+      if (type === 'reload' || type === 'reboot') {
+        if (shouldSkipReloadRebootByBootServerTime(cmd)) {
+          await acknowledgeSkippedPendingCommand(cmd);
+          return;
+        }
+        if (simulateOffline) {
+          deferredReloadCommand = cmd;
+          return;
+        }
+        if (!lastHeartbeatSucceeded) {
+          deferredReloadCommand = cmd;
+          return;
+        }
+        pendingAckCommandId = cmd.id ? String(cmd.id) : '';
+        await awaitPersistHandledCommandRecord(cmd);
+        await flushCommandAckBeforeReload();
+        if (type === 'reload') {
+          if (enableTestReloadSpy) {
+            root.__testReloadFired = true;
+            try {
+              root.sessionStorage.setItem('__rcv_test_reload', '1');
+            } catch (e) {
+              /* ignore */
+            }
+            const stage = root.document && root.document.getElementById('rcv-stage');
+            if (stage) {
+              stage.setAttribute('data-test-remote-reload', '1');
+            }
+          }
+          root.location.reload();
+          return;
+        }
+        if (root.AndroidBridge && typeof root.AndroidBridge.reboot === 'function') {
+          root.AndroidBridge.reboot();
+        } else {
+          root.location.reload();
+        }
+        return;
+      }
       lastHandledCommandId = cmd.id;
       pendingAckCommandId = cmd.id;
       if (type === 'simulate_offline') {
@@ -210,38 +606,85 @@
         networkDelayMs = 0;
         setSimulatedOfflineFlag(false, demoApi);
         suppressRingOnNextApply = true;
+        try {
+          const boardSnap = await transport.readBoard();
+          if (boardSnap && boardSnap.data && boardSnap.data.tickets) {
+            const nc = TodayBoard.ticketsToNumberContent(boardSnap.data.tickets);
+            prevReadySet = BoardSeq.readyIdSetFromContent(
+              nc,
+              Validate.parseSourceType,
+              Validate.itemId,
+            );
+          }
+        } catch (e) {
+          /* ignore */
+        }
         pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
         applyNumberContent([], localSeq, { silent: true });
-      } else if (type === 'reload') {
-        root.location.reload();
-      } else if (type === 'reboot') {
-        if (root.AndroidBridge && typeof root.AndroidBridge.reboot === 'function') {
-          root.AndroidBridge.reboot();
-        } else {
-          root.location.reload();
-        }
       }
     }
 
+    function isFirestoreAbortError(err) {
+      if (!err) {
+        return false;
+      }
+      if (err.name === 'AbortError') {
+        return true;
+      }
+      const msg = err.message ? String(err.message) : '';
+      return msg.indexOf('aborted') !== -1;
+    }
+
+    async function acknowledgeSkippedPendingCommand(cmd) {
+      if (!cmd || !cmd.id) {
+        return;
+      }
+      pendingAckCommandId = String(cmd.id);
+      const type = cmd && cmd.type ? String(cmd.type) : '';
+      if (type === 'reload' || type === 'reboot') {
+        await awaitPersistHandledCommandRecord(cmd);
+      }
+      await sendHeartbeat();
+    }
+
     async function pollDevice() {
+      if (authBlocksBoardSync()) {
+        return;
+      }
       try {
         const dev = await transport.readDevice(deviceId);
         if (!dev || !dev.data) {
           return;
         }
+        markCloudReachable();
         const pending = dev.data.pendingCommand;
-        if (pending && pending.id && pending.id !== lastHandledCommandId) {
-          await handleCommand(pending);
+        if (!pending || !pending.id) {
+          return;
         }
+        if (shouldSkipDeviceCommand(pending)) {
+          await acknowledgeSkippedPendingCommand(pending);
+          return;
+        }
+        await handleCommand(pending);
       } catch (e) {
+        if (isFirestoreAbortError(e)) {
+          return;
+        }
+        if (isAuthHttpError(e)) {
+          notifyAuthFailure(e);
+        }
+        markCloudUnreachable();
         onStatusLine('device 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
 
     async function sendHeartbeat() {
+      if (authBlocksHeartbeat()) {
+        return;
+      }
       if (!cloudApi || !cloudApi.boxHeartbeat) {
         return;
       }
@@ -260,64 +703,65 @@
           lastAckCommandId = pendingAckCommandId;
           pendingAckCommandId = '';
         }
+        lastHeartbeatSucceeded = true;
+        markCloudReachable();
+        tryFlushDeferredReloadCommand();
       } catch (e) {
+        lastHeartbeatSucceeded = false;
+        if (isAuthHttpError(e)) {
+          notifyAuthFailure(e);
+        }
+        markCloudUnreachable();
         onStatusLine('heartbeat 失敗');
       }
     }
 
-    function check0300Clear() {
-      const bd = TodayBoard.taipeiBusinessDate();
-      const hm = TodayBoard.taipeiHourMinute();
-      if (hm.hour === 3 && hm.minute === 0 && last0300ClearDate !== bd) {
-        last0300ClearDate = bd;
-        applyNumberContent([], localSeq, { silent: true });
-      }
-    }
+    let runtimeAuthKickDone = false;
 
     async function ensureAuth() {
+      if (runtimeAuthKickDone) {
+        return;
+      }
+      runtimeAuthKickDone = true;
       if (transport.session && transport.session.ensureIdToken) {
-        await transport.session.ensureIdToken();
+        try {
+          await transport.session.ensureIdToken();
+        } catch (e) {
+          /* guest board: auth handled in cloud-boot */
+        }
       }
     }
 
     function start() {
+      restorePersistedCommandGuards();
       setSimulatedOfflineFlag(false);
-      const cached = loadCache();
-      if (cached && Array.isArray(cached.numberContent)) {
-        localSeq = Number(cached.seq) || 0;
-        prevReadySet = BoardSeq.readyIdSetFromContent(
-          cached.numberContent,
-          Validate.parseSourceType,
-          Validate.itemId,
-        );
-        applyNumberContent(cached.numberContent, localSeq, { silent: true });
-        prevReadySet = BoardSeq.readyIdSetFromContent(
-          cached.numberContent,
-          Validate.parseSourceType,
-          Validate.itemId,
-        );
-        isFirstApply = false;
-      }
+      TodayBoard.clearSessionBusinessDate();
+      lastSessionBusinessDate = '';
+      lastResolvedBusinessDate = '';
+      lastResolvedSource = '';
+      clockSkewSilentRefetchPending = false;
 
-      ensureAuth().then(function () {
+      tryApplyBootCache();
+      syncGuestClockAfterBoot();
+
+      const kick = function () {
         sendHeartbeat();
         pollBoard();
         pollDevice();
-      });
+      };
+      ensureAuth().then(kick).catch(kick);
 
       tickTimer = setInterval(function () {
         tickMs += 1000;
-        if (tickMs % devicePollMs === 0) {
+        onSyncAuthUi();
+        if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
         }
         if (tickMs % boardPollMs === 0) {
           pollBoard();
         }
-        if (tickMs % heartbeatMs === 0) {
+        if (tickMs % effectiveHeartbeatIntervalMs() === 0) {
           sendHeartbeat();
-        }
-        if (tickMs % 60000 === 0) {
-          check0300Clear();
         }
       }, 1000);
     }
@@ -350,7 +794,7 @@
       return null;
     }
 
-    return {
+    const api = {
       start: start,
       destroy: destroy,
       receiveBoard: receiveBoard,
@@ -361,6 +805,32 @@
         return simulateOffline;
       },
     };
+    if (options.enableTestPollHook) {
+      api.sendHeartbeatForTests = function () {
+        return sendHeartbeat();
+      };
+      api.pollDeviceForTests = async function () {
+        const blocked = authBlocksBoardSync();
+        let pendingId = '';
+        if (!blocked) {
+          try {
+            const dev = await transport.readDevice(deviceId);
+            const pending = dev && dev.data ? dev.data.pendingCommand : null;
+            pendingId = pending && pending.id ? String(pending.id) : '';
+          } catch (e) {
+            pendingId = '';
+          }
+        }
+        await pollDevice();
+        return {
+          authBlocked: blocked,
+          pendingId: pendingId,
+          lastHandledCommandId: lastHandledCommandId,
+          reloadFired: Boolean(root.__testReloadFired),
+        };
+      };
+    }
+    return api;
   }
 
   QMS.Receiver.bootReceiverCloud = bootReceiverCloud;

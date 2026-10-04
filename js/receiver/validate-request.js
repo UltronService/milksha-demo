@@ -83,13 +83,25 @@
     signature: 'DEMO-NO-SIGNATURE',
   };
 
+  function milkshaTargetForAccount(account) {
+    return 'milksha' + String(account || '');
+  }
+
   function findStore(id) {
+    const sid = String(id || '').trim();
     for (let i = 0; i < STORES.length; i += 1) {
-      if (STORES[i].id === id) {
+      if (STORES[i].id === sid) {
         return STORES[i];
       }
     }
-    return STORES[0];
+    const account = sid || 'unknown';
+    return {
+      id: account,
+      name: '門市',
+      merchant_id: 'milksha',
+      account: account,
+      target: milkshaTargetForAccount(account),
+    };
   }
 
   function parseSourceType(st) {
@@ -161,6 +173,7 @@
     STORES: STORES,
     ORDER_SOURCES: ORDER_SOURCES,
     TAMMY_SAMPLE_REQUEST: TAMMY_SAMPLE_REQUEST,
+    milkshaTargetForAccount: milkshaTargetForAccount,
     findStore: findStore,
     parseSourceType: parseSourceType,
     itemId: itemId,

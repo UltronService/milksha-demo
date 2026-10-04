@@ -25,14 +25,19 @@
   let pauseCloud = false;
   let pollTimer = null;
   let clockTimer = null;
+  let commandInFlight = false;
 
   const LOG_KEY = 'milksha:controller:logs';
+  const CmdErrors = window.QMS.Transport.ControllerCommandErrors;
 
   window.__controllerTelemetry = {
     connected: false,
     lastBoardSeq: 0,
     pauseCloud: false,
     lastPosResponse: null,
+    isCommandInFlight: function () {
+      return commandInFlight;
+    },
   };
 
   function loadLogs() {
@@ -70,8 +75,111 @@
       });
   }
 
+  const CloudSettings = window.QMS.Transport.CloudSettings;
+  const ControllerSecrets = window.QMS.Transport.ControllerSecrets;
+
   function modeDisplayName(mode) {
-    return mode === 'firestore' ? '雲端連線測試' : '本機連動';
+    if (mode === 'cloud') {
+      return '雲端模式';
+    }
+    if (mode === 'firestore') {
+      return '本機模擬雲端';
+    }
+    return '本機連動';
+  }
+
+  function readCloudForm() {
+    const saved = CloudSettings.load();
+    const prefixEl = document.getElementById('fld-emulator-prefix');
+    const prefixFromField = prefixEl ? prefixEl.value.trim() : '';
+    return {
+      projectId: document.getElementById('fld-cloud-project').value.trim(),
+      apiKey: document.getElementById('fld-cloud-apikey').value.trim(),
+      region: document.getElementById('fld-cloud-region').value.trim() || 'asia-east1',
+      accessCode: document.getElementById('fld-code').value.trim(),
+      useEmulator: document.getElementById('fld-use-emulator').checked,
+      gateway: document.getElementById('fld-gateway').value.trim(),
+      emulatorPrefix: prefixFromField || saved.emulatorPrefix || '',
+    };
+  }
+
+  function fillCloudForm(settings) {
+    const s = settings || CloudSettings.load();
+    document.getElementById('fld-cloud-project').value = s.projectId || '';
+    document.getElementById('fld-cloud-apikey').value = s.apiKey || '';
+    document.getElementById('fld-cloud-region').value = s.region || 'asia-east1';
+    document.getElementById('fld-code').value = s.accessCode || '';
+    document.getElementById('fld-use-emulator').checked = Boolean(s.useEmulator);
+    document.getElementById('fld-gateway').value = s.gateway || '';
+    const posEl = document.getElementById('fld-pos-sign-key');
+    if (posEl && ControllerSecrets) {
+      posEl.value = ControllerSecrets.loadPosSignSecret();
+    }
+  }
+
+  function persistCloudForm() {
+    CloudSettings.save(readCloudForm());
+    if (ControllerSecrets) {
+      ControllerSecrets.savePosSignSecret(document.getElementById('fld-pos-sign-key').value);
+    }
+  }
+
+  function syncCloudUi() {
+    const mode = document.getElementById('fld-mode').value;
+    const prompt = document.getElementById('cloud-config-prompt');
+    const linkBlock = document.getElementById('board-link-block');
+    const incomplete = !CloudSettings.isComplete(readCloudForm());
+    if (prompt) {
+      prompt.hidden = mode !== 'cloud' || !incomplete;
+    }
+    if (linkBlock) {
+      linkBlock.hidden = mode !== 'cloud' || incomplete;
+    }
+    syncLocalModeNotice();
+  }
+
+  function siteBaseUrl() {
+    const path = window.location.pathname.replace(/\/controller\/?.*$/, '/');
+    return window.location.origin + path;
+  }
+
+  function drawQrCanvas(canvas, text) {
+    if (!window.qrcode || !canvas) {
+      return;
+    }
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    const cell = Math.max(2, Math.floor(160 / n));
+    canvas.width = n * cell;
+    canvas.height = n * cell;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    for (let r = 0; r < n; r += 1) {
+      for (let c = 0; c < n; c += 1) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(c * cell, r * cell, cell, cell);
+        }
+      }
+    }
+  }
+
+  function updateBoardLinks() {
+    const device = document.getElementById('fld-device').value.trim() || 'stb-01';
+    const store = storeId();
+    const simple =
+      siteBaseUrl() +
+      'receiver-demo/?store=' +
+      encodeURIComponent(store) +
+      '&mode=cloud&device=' +
+      encodeURIComponent(device);
+    const setup = simple + '#cfg=' + CloudSettings.encodeCfgHash(readCloudForm());
+    document.getElementById('fld-board-simple-url').value = simple;
+    document.getElementById('fld-board-setup-url').value = setup;
+    drawQrCanvas(document.getElementById('board-setup-qr'), setup);
   }
 
   function showUserBanner(text) {
@@ -84,6 +192,72 @@
     }
     el.textContent = text;
     el.hidden = false;
+  }
+
+  function setCommandButtonsDisabled(disabled) {
+    const nodes = document.querySelectorAll('[data-dev-command="1"]');
+    for (let i = 0; i < nodes.length; i += 1) {
+      nodes[i].disabled = Boolean(disabled);
+    }
+  }
+
+  function hideCommandErrorAlert() {
+    const box = document.getElementById('command-error-alert');
+    if (!box) {
+      return;
+    }
+    box.hidden = true;
+    const msg = document.querySelector('[data-testid="command-error-message"]');
+    const detail = document.querySelector('[data-testid="command-error-detail"]');
+    if (msg) {
+      msg.textContent = '';
+    }
+    if (detail) {
+      detail.textContent = '';
+    }
+  }
+
+  function showCommandErrorAlert(opts) {
+    const box = document.getElementById('command-error-alert');
+    const msgEl = document.querySelector('[data-testid="command-error-message"]');
+    const detailEl = document.querySelector('[data-testid="command-error-detail"]');
+    if (!box || !msgEl || !detailEl) {
+      return;
+    }
+    msgEl.textContent = opts.userMessage || '';
+    const status = opts.status ? Number(opts.status) : 0;
+    if (CmdErrors && CmdErrors.formatErrorDetailText) {
+      detailEl.textContent = CmdErrors.formatErrorDetailText(status, opts.response);
+    } else {
+      detailEl.textContent = JSON.stringify({ httpStatus: status, response: opts.response || {} }, null, 2);
+    }
+    box.hidden = false;
+  }
+
+  function presentConnectError(err) {
+    const status = err && err.status ? Number(err.status) : 0;
+    const response = err && err.response ? err.response : null;
+    const userMessage =
+      CmdErrors && CmdErrors.connectUserMessage
+        ? CmdErrors.connectUserMessage(err)
+        : err && err.message
+          ? String(err.message)
+          : '雲端暫時出錯。請稍後再連線。';
+    showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
+    pushLog({ summary: '連線失敗 · ' + userMessage });
+  }
+
+  function presentDevCommandError(err, validationCode) {
+    const status = err && err.status ? Number(err.status) : 0;
+    const response = err && err.response ? err.response : null;
+    const userMessage =
+      CmdErrors && CmdErrors.devCommandUserMessage
+        ? CmdErrors.devCommandUserMessage(err, { validationCode: validationCode })
+        : err && err.message
+          ? String(err.message)
+          : '指令送出失敗';
+    showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
+    pushLog({ summary: '指令失敗 · ' + userMessage, kind: 'command' });
   }
 
   function requireConnect() {
@@ -178,13 +352,25 @@
     document.getElementById('fld-no').value = String(next);
   }
 
-  function buildConfig() {
+  function buildConfig(mode) {
+    const m = mode || document.getElementById('fld-mode').value;
+    persistCloudForm();
     const params = new URLSearchParams(window.location.search);
-    const gateway = document.getElementById('fld-gateway').value.trim();
-    const key = document.getElementById('fld-key').value.trim();
-    if (gateway) params.set('gateway', gateway);
-    if (key) params.set('key', key);
-    return window.QMS.Transport.resolveFirebaseConfig(params, window.MILKSHA_FIREBASE_CONFIG);
+    const form = readCloudForm();
+    if (form.gateway) {
+      params.set('gateway', form.gateway);
+    }
+    if (form.apiKey) {
+      params.set('key', form.apiKey);
+    }
+    if (form.projectId) {
+      params.set('project', form.projectId);
+    }
+    const base = window.MILKSHA_FIREBASE_CONFIG || {};
+    const posSecret = ControllerSecrets ? ControllerSecrets.loadPosSignSecret() : '';
+    const resolved = window.QMS.Transport.resolveConfigForMode(m, params, base);
+    const cfg = resolved || window.QMS.Transport.resolveFirebaseConfig(params, base);
+    return Object.assign({}, cfg, { posSignSecret: posSecret });
   }
 
   function storeId() {
@@ -217,15 +403,20 @@
     return {
       isEncrypt: false,
       serviceSpecialData_Json: {
-        target: s.target,
+        target: Validate.milkshaTargetForAccount(s.account),
         data: { number_content: numberContent, newsTicker_content: [], newsTickerSpeed: 0 },
       },
       merchant_id: s.merchant_id,
       account: s.account,
-      timeStmp: '2026-10-02-12-00-00:0000',
-      serviceSpecialData_Json_Md5Hash: 'demo',
-      signature: 'pending',
     };
+  }
+
+  function formatPosUserMessage(res) {
+    const info = res && res.information ? String(res.information) : '';
+    if (info.indexOf('入口 A 未啟用') >= 0) {
+      return '雲端的入口 A 沒開，請找後端開啟';
+    }
+    return info;
   }
 
   async function cloudCall(fn) {
@@ -238,39 +429,66 @@
   }
 
   async function posSend(numberContent, wrongSign, wrongStore) {
+    if (posInFlight) {
+      return { isSuccess: false, information: '上一筆叫號仍在送出中' };
+    }
+    posInFlight = true;
+    setPosButtonsDisabled(true);
     const body = wrapRequest(numberContent);
     if (wrongStore) {
       body.serviceSpecialData_Json.target = 'wrong-target-000';
       body.account = 'wrong-store';
     }
+    persistCloudForm();
     const secret = buildConfig().posSignSecret;
+    if (!secret) {
+      showUserBanner('請在進階設定輸入測試環境專用 POS 金鑰');
+      pushLog({ kind: 'posReceiver', summary: '叫號失敗 · 未設定 POS 金鑰' });
+      posInFlight = false;
+      setPosButtonsDisabled(false);
+      return { isSuccess: false, information: '未設定 POS 金鑰' };
+    }
     const signed = await PosSign.applyPosSignature(body, secret, wrongSign);
+    const wire =
+      signed && typeof signed.wireText === 'string'
+        ? signed.wireText
+        : signed && signed.__wireText
+          ? signed.__wireText
+          : signed;
     try {
       const res = await cloudCall(function () {
-        return transport.cloudApi.posReceiver(signed);
+        return transport.cloudApi.posReceiver(wire);
       });
       window.__controllerTelemetry.lastPosResponse = res;
       if (typeof res.seq === 'number') {
         lastBoardSeq = res.seq;
         window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
       }
+      const userMsg = formatPosUserMessage(res);
       pushLog({
         kind: 'posReceiver',
         summary:
-          'posReceiver isSuccess=' +
+          '叫號回應 isSuccess=' +
           res.isSuccess +
           ' · ' +
-          (res.information || '') +
+          (userMsg || res.information || '') +
           (res.seq ? ' seq=' + res.seq : ''),
-        payload: signed,
         response: res,
       });
+      if (res && res.isSuccess === false) {
+        showUserBanner(userMsg || '叫號未成功，請查看原因');
+      } else {
+        showUserBanner('');
+      }
       await refreshBoardLists();
       return res;
     } catch (e) {
       const info = e.response && e.response.information ? e.response.information : e.message;
       pushLog({ kind: 'posReceiver', summary: 'posReceiver 失敗 · ' + info, response: e.response });
       throw e;
+    } finally {
+      posInFlight = false;
+      setPosButtonsDisabled(false);
     }
   }
 
@@ -368,39 +586,124 @@
     }, 4000);
   }
 
+  let connectInFlight = false;
+  let posInFlight = false;
+
+  function setConnectButtonDisabled(disabled) {
+    const btn = document.getElementById('btn-connect');
+    if (btn) {
+      btn.disabled = disabled;
+    }
+  }
+
+  function setPosButtonsDisabled(disabled) {
+    [
+      'btn-add-ticket',
+      'btn-one-ready',
+      'btn-all-ready',
+      'btn-clear-board',
+      'btn-wrong-sign',
+      'btn-wrong-store',
+      'btn-pos-raw',
+      'btn-bulk-ready',
+      'btn-send-nc',
+    ].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.disabled = disabled;
+      }
+    });
+  }
+
   async function connect() {
+    if (connectInFlight) {
+      return;
+    }
+    connectInFlight = true;
+    setConnectButtonDisabled(true);
     const mode = document.getElementById('fld-mode').value;
+    if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
+      showUserBanner('請先在進階設定填寫雲端設定與存取碼');
+      syncCloudUi();
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
+      return;
+    }
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
     const accessCode = document.getElementById('fld-code').value.trim();
-    const config = buildConfig();
-    transport = window.QMS.Transport.createTransport(mode, {
+    const transportMode = mode === 'firestore' ? 'firestore' : mode;
+    const config = buildConfig(mode);
+    if ((mode === 'cloud' || mode === 'firestore') && !config.functionsBaseUrl) {
+      showUserBanner('雲端連線設定不完整');
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
+      return;
+    }
+    transport = window.QMS.Transport.createTransport(transportMode, {
       storeId: storeId(),
       config: config,
       role: 'controller',
       deviceId: 'controller-web',
       accessCode: accessCode,
     });
-    if (transport.session && transport.session.ensureIdToken) {
-      await transport.session.ensureIdToken();
+    try {
+      if (transport.session && transport.session.ensureIdToken) {
+        await transport.session.ensureIdToken();
+      }
+      setConnectedState(true, mode);
+      pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
+      await refreshBoardLists();
+      await pollDevice();
+      startPolling();
+      await mergeCloudLogs();
+    } catch (e) {
+      setConnectedState(false, '');
+      presentConnectError(e);
+      throw e;
+    } finally {
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
     }
-    setConnectedState(true, mode);
-    pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
-    await refreshBoardLists();
-    await pollDevice();
-    startPolling();
-    await mergeCloudLogs();
   }
 
   async function sendCommand(type, params) {
-    await cloudCall(function () {
-      return transport.cloudApi.devCommand({
-        storeId: storeId(),
-        deviceId: document.getElementById('fld-device').value.trim() || 'stb-01',
-        type: type,
-        params: params || {},
+    if (commandInFlight) {
+      return;
+    }
+    const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    const built = DevCmd
+      ? DevCmd.buildDevCommandRequest({
+          storeId: storeId(),
+          deviceId: deviceId,
+          type: type,
+          params: params || {},
+        })
+      : { ok: true, body: { storeId: storeId(), deviceId: deviceId, type: type, params: params || {} } };
+    if (!built.ok) {
+      presentDevCommandError(
+        {
+          status: 400,
+          response: { code: built.code, message: built.message },
+        },
+        built.code,
+      );
+      return;
+    }
+    commandInFlight = true;
+    setCommandButtonsDisabled(true);
+    try {
+      await cloudCall(function () {
+        return transport.cloudApi.devCommand(built.body);
       });
-    });
-    pushLog({ summary: '指令 ' + type, kind: 'command' });
+      hideCommandErrorAlert();
+      pushLog({ summary: '指令 ' + type, kind: 'command' });
+    } catch (e) {
+      presentDevCommandError(e);
+    } finally {
+      commandInFlight = false;
+      setCommandButtonsDisabled(false);
+    }
   }
 
   function addTicketLocal(status, sourceKey, no) {
@@ -442,6 +745,9 @@
       const opt = document.createElement('option');
       opt.value = s.id;
       opt.textContent = s.name + ' (' + s.id + ')';
+      if (s.id === 's120030') {
+        opt.selected = true;
+      }
       sel.appendChild(opt);
     });
     const fromUrl = new URLSearchParams(window.location.search).get('store');
@@ -500,7 +806,31 @@
     el.hidden = document.getElementById('fld-mode').value !== 'local';
   }
 
-  document.getElementById('fld-mode').addEventListener('change', syncLocalModeNotice);
+  document.getElementById('fld-mode').addEventListener('change', function () {
+    syncCloudUi();
+    updateBoardLinks();
+  });
+  document.getElementById('fld-pos-sign-key').addEventListener('input', function () {
+    if (ControllerSecrets) {
+      ControllerSecrets.savePosSignSecret(document.getElementById('fld-pos-sign-key').value);
+    }
+  });
+  ['fld-cloud-project', 'fld-cloud-apikey', 'fld-cloud-region', 'fld-code', 'fld-device'].forEach(
+    function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', function () {
+          syncCloudUi();
+          updateBoardLinks();
+        });
+      }
+    },
+  );
+  document.getElementById('btn-gen-board-link').addEventListener('click', function () {
+    persistCloudForm();
+    updateBoardLinks();
+    showUserBanner('');
+  });
 
   document.getElementById('btn-connect').addEventListener('click', function () {
     connect().catch(function (e) {
@@ -606,7 +936,10 @@
   });
   document.getElementById('btn-slow').addEventListener('click', function () {
     if (!requireConnect()) return;
-    const ms = Number(document.getElementById('fld-delay').value) || 3000;
+    const delayEl = document.getElementById('fld-delay');
+    const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const ms = DevCmd && DevCmd.clampTimingMs ? DevCmd.clampTimingMs(delayEl.value) : Number(delayEl.value) || 3000;
+    delayEl.value = String(ms);
     sendCommand('slow', { delayMs: ms }).catch(function () {});
   });
   document.getElementById('btn-cable-pull').addEventListener('click', function () {
@@ -707,23 +1040,32 @@
     renderLogs();
   });
 
-  const defaultCode =
-    (window.MILKSHA_FIREBASE_CONFIG && window.MILKSHA_FIREBASE_CONFIG.defaultControllerAccessCode) ||
-    'dev-controller-access-2026';
-  document.getElementById('fld-code').value = defaultCode;
+  const commandErrorClose = document.getElementById('command-error-close');
+  if (commandErrorClose) {
+    commandErrorClose.addEventListener('click', hideCommandErrorAlert);
+  }
+
+  fillCloudForm(CloudSettings.load());
   const params = new URLSearchParams(window.location.search);
   const modeParam = params.get('mode');
   if (modeParam === 'firestore') {
     document.getElementById('fld-mode').value = 'firestore';
+    document.getElementById('fld-use-emulator').checked = true;
+  } else if (modeParam === 'cloud') {
+    document.getElementById('fld-mode').value = 'cloud';
   } else if (!modeParam || modeParam === 'local') {
     document.getElementById('fld-mode').value = 'local';
+  }
+  if (params.get('gateway')) {
+    document.getElementById('fld-gateway').value = params.get('gateway');
   }
   document.getElementById('fld-tammy').value = JSON.stringify(Validate.TAMMY_SAMPLE_REQUEST, null, 2);
 
   initStoreSelect();
   initSourceSelect();
   initMobileZones();
-  syncLocalModeNotice();
+  syncCloudUi();
+  updateBoardLinks();
   loadLogs();
   clockTimer = setInterval(tickClock, 1000);
   tickClock();
@@ -734,6 +1076,13 @@
     },
     getTransport: function () {
       return transport;
+    },
+    setDevCommandHandler: function (fn) {
+      if (!transport || !transport.cloudApi) {
+        return false;
+      }
+      transport.cloudApi.devCommand = fn;
+      return true;
     },
   };
 })();

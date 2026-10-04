@@ -1,5 +1,5 @@
 /**
- * Board seq merge and ready-zone diff (no catch-up ring on stale seq).
+ * Board seq acceptance and ready-zone diff (no catch-up ring on stale seq).
  */
 (function (root) {
   'use strict';

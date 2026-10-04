@@ -22,6 +22,12 @@
       getAuthHeaders: function () {
         return session.authHeaders();
       },
+      onHttpResponse:
+        session && session.noteBootServerTimeFromResponse
+          ? function (res) {
+              session.noteBootServerTimeFromResponse(res);
+            }
+          : undefined,
     });
     const cloudApi = QMS.Transport.createCloudApi(config, session);
 
@@ -29,6 +35,13 @@
 
     async function readBoard() {
       const doc = await client.getDocument(boardPath);
+      if (doc && doc.missing) {
+        return {
+          missing: true,
+          httpDate: doc.httpDate || '',
+          httpDateReadable: Boolean(doc.httpDateReadable),
+        };
+      }
       if (!doc) {
         return null;
       }
@@ -39,6 +52,8 @@
       return {
         data: norm.board,
         updateTime: doc.updateTime || norm.board.updatedAt || '',
+        httpDate: doc.httpDate || '',
+        httpDateReadable: Boolean(doc.httpDateReadable),
       };
     }
 

@@ -8,9 +8,9 @@
   QMS.Board = QMS.Board || {};
 
   /**
-   * @returns {string} YYYY-MM-DD in Asia/Taipei
+   * @returns {string} YYYY-MM-DD calendar date in Asia/Taipei
    */
-  function taipeiBusinessDate(d) {
+  function taipeiCalendarDate(d) {
     const date = d || new Date();
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Taipei',
@@ -28,6 +28,186 @@
       return p.type === 'day';
     });
     return (y ? y.value : '1970') + '-' + (m ? m.value : '01') + '-' + (day ? day.value : '01');
+  }
+
+  function addCalendarDays(ymd, delta) {
+    const parts = String(ymd).split('-');
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const da = Number(parts[2]);
+    const dt = new Date(Date.UTC(y, mo - 1, da));
+    dt.setUTCDate(dt.getUTCDate() + delta);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getUTCDate()).padStart(2, '0');
+    return yy + '-' + mm + '-' + dd;
+  }
+
+  /**
+   * Business day rolls at 03:00 Asia/Taipei.
+   * @returns {string} YYYY-MM-DD
+   */
+  function taipeiBusinessDate(d) {
+    const date = d || new Date();
+    const cal = taipeiCalendarDate(date);
+    const hm = taipeiHourMinute(date);
+    if (hm.hour < 3) {
+      return addCalendarDays(cal, -1);
+    }
+    return cal;
+  }
+
+  let sessionBusinessDate = '';
+
+  function normalizeBusinessDateString(businessDate) {
+    if (!businessDate) {
+      return '';
+    }
+    return String(businessDate).trim();
+  }
+
+  function setSessionBusinessDate(businessDate) {
+    const bd = normalizeBusinessDateString(businessDate);
+    if (bd) {
+      sessionBusinessDate = bd;
+    }
+  }
+
+  function getSessionBusinessDate() {
+    return sessionBusinessDate;
+  }
+
+  function hasSessionBusinessDate() {
+    return Boolean(sessionBusinessDate);
+  }
+
+  function clearSessionBusinessDate() {
+    sessionBusinessDate = '';
+  }
+
+  /**
+   * Business day from a readable HTTP Date header (never from box clock directly).
+   * @param {string} httpDateHeader
+   * @returns {string}
+   */
+  function businessDateFromHttpDate(httpDateHeader) {
+    const raw = String(httpDateHeader || '').trim();
+    if (!raw) {
+      return '';
+    }
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) {
+      return '';
+    }
+    return taipeiBusinessDate(d);
+  }
+
+  /**
+   * @param {{ boardBusinessDate?: string, httpDateHeader?: string, httpDateReadable?: boolean }} input
+   * @returns {{ ok: true, businessDate: string, source: 'board' | 'http_date' } | { ok: false }}
+   */
+  function resolveSessionBusinessDate(input) {
+    const boardBd = normalizeBusinessDateString(input && input.boardBusinessDate);
+    if (boardBd) {
+      return { ok: true, businessDate: boardBd, source: 'board' };
+    }
+    if (input && input.httpDateReadable && input.httpDateHeader) {
+      const fromHttp = businessDateFromHttpDate(input.httpDateHeader);
+      if (fromHttp) {
+        return { ok: true, businessDate: fromHttp, source: 'http_date' };
+      }
+    }
+    return { ok: false };
+  }
+
+  function businessDateDayIndex(ymd) {
+    const parts = String(ymd || '').split('-');
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const da = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(da)) {
+      return NaN;
+    }
+    return Math.floor(Date.UTC(y, mo - 1, da) / 86400000);
+  }
+
+  /**
+   * @param {string} trustedBusinessDate from cloud board or HTTP Date
+   * @param {string} [localBusinessDate] from box clock (default now)
+   */
+  function isClockSkewedFromTrusted(trustedBusinessDate, localBusinessDate) {
+    const trusted = normalizeBusinessDateString(trustedBusinessDate);
+    const local = normalizeBusinessDateString(localBusinessDate || taipeiBusinessDate());
+    if (!trusted || !local) {
+      return false;
+    }
+    const localYear = Number(local.split('-')[0]);
+    if (localYear < 2000) {
+      return true;
+    }
+    const trustedIdx = businessDateDayIndex(trusted);
+    const localIdx = businessDateDayIndex(local);
+    if (!Number.isFinite(trustedIdx) || !Number.isFinite(localIdx)) {
+      return false;
+    }
+    return Math.abs(trustedIdx - localIdx) > 1;
+  }
+
+  /**
+   * @param {string} businessDate
+   */
+  function isSameBusinessDate(a, b) {
+    const aa = normalizeBusinessDateString(a);
+    const bb = normalizeBusinessDateString(b);
+    if (!aa || !bb) {
+      return false;
+    }
+    return aa === bb;
+  }
+
+  /**
+   * Compare against active session business day (never box clock).
+   * @param {string} businessDate
+   */
+  function isCurrentBusinessDate(businessDate) {
+    if (!hasSessionBusinessDate()) {
+      return false;
+    }
+    return isSameBusinessDate(businessDate, sessionBusinessDate);
+  }
+
+  function isCacheBusinessDateCurrent(cachedBusinessDate) {
+    if (!hasSessionBusinessDate()) {
+      return false;
+    }
+    return isSameBusinessDate(cachedBusinessDate, sessionBusinessDate);
+  }
+
+  /**
+   * Boot-only (offline / before cloud): show cached numbers when box clock is plausible
+   * and its Taipei business day matches cache.businessDate. Never used for live cloud apply.
+   * @param {{ businessDate?: string, boardUpdatedAt?: string }} cache
+   * @param {Date} [now]
+   */
+  function shouldShowBootCache(cache, now) {
+    if (!cache || typeof cache !== 'object') {
+      return false;
+    }
+    const bd = normalizeBusinessDateString(cache.businessDate);
+    const updatedAtRaw = String(cache.boardUpdatedAt || '').trim();
+    if (!bd || !updatedAtRaw) {
+      return false;
+    }
+    const updatedAtMs = Date.parse(updatedAtRaw);
+    if (Number.isNaN(updatedAtMs)) {
+      return false;
+    }
+    const clock = now instanceof Date ? now : new Date();
+    if (clock.getTime() < updatedAtMs) {
+      return false;
+    }
+    const boxBd = taipeiBusinessDate(clock);
+    return isSameBusinessDate(boxBd, bd);
   }
 
   /**
@@ -199,10 +379,11 @@
    * @param {Array<object>} tickets
    * @param {'A'|'B'|'system'} source
    */
-  function buildTodayBoard(storeId, seq, tickets, source) {
+  function buildTodayBoard(storeId, seq, tickets, source, businessDate) {
+    const bd = normalizeBusinessDateString(businessDate) || taipeiBusinessDate();
     return {
       storeId: storeId,
-      businessDate: taipeiBusinessDate(),
+      businessDate: bd,
       seq: seq,
       updatedAt: new Date().toISOString(),
       source: source || 'A',
@@ -212,7 +393,20 @@
   }
 
   QMS.Board.TodayBoard = {
+    taipeiCalendarDate: taipeiCalendarDate,
     taipeiBusinessDate: taipeiBusinessDate,
+    setSessionBusinessDate: setSessionBusinessDate,
+    getSessionBusinessDate: getSessionBusinessDate,
+    hasSessionBusinessDate: hasSessionBusinessDate,
+    clearSessionBusinessDate: clearSessionBusinessDate,
+    businessDateFromHttpDate: businessDateFromHttpDate,
+    resolveSessionBusinessDate: resolveSessionBusinessDate,
+    businessDateDayIndex: businessDateDayIndex,
+    isClockSkewedFromTrusted: isClockSkewedFromTrusted,
+    isSameBusinessDate: isSameBusinessDate,
+    isCacheBusinessDateCurrent: isCacheBusinessDateCurrent,
+    shouldShowBootCache: shouldShowBootCache,
+    isCurrentBusinessDate: isCurrentBusinessDate,
     taipeiHourMinute: taipeiHourMinute,
     formatTaipeiClockHM: formatTaipeiClockHM,
     formatTaipeiDateTimeHuman: formatTaipeiDateTimeHuman,

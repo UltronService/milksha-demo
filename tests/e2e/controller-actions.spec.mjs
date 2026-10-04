@@ -5,6 +5,7 @@ import {
   resetCloudState,
   freshContext,
   guestBoardStyleFingerprint,
+  waitForReceiverOnline,
 } from './harness.mjs';
 
 const MODES = ['local', 'firestore'];
@@ -20,12 +21,14 @@ async function openSession(browser, mode, recvExtra = '') {
   const receiver = await ctx.newPage();
   const controller = await ctx.newPage();
   await receiver.goto(recv + recvExtra);
+  await receiver.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await controller.goto(ctrl);
   await connectController(controller, mode);
+  await waitForReceiverOnline(receiver, mode);
   if (mode === 'firestore') {
-    await controller.waitForTimeout(3000);
-  } else {
     await controller.waitForTimeout(1500);
+  } else {
+    await controller.waitForTimeout(800);
   }
   return { ctx, receiver, controller };
 }
@@ -89,6 +92,9 @@ for (const mode of MODES) {
 
   test(`${tag} | tammy json and auto-generate`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
+    await controller.locator('#tammy-advanced').evaluate((el) => {
+      el.open = true;
+    });
     await controller.click('#btn-send-tammy');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('1488', { timeout: 15000 });
     await controller.click('#btn-gen-normal');
@@ -222,11 +228,14 @@ test('board | no chime for ready while offline on reconnect', async ({ browser }
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });
-  const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   await controller.click('#btn-offline');
-  await controller.waitForTimeout(1500);
+  await receiver.waitForFunction(
+    () => window.receiverCloud && window.receiverCloud.isSimulatedOffline && window.receiverCloud.isSimulatedOffline(),
+    { timeout: 10000 },
+  );
+  const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   await controller.click('#btn-one-ready');
-  await controller.waitForTimeout(1500);
+  await controller.waitForTimeout(2000);
   await controller.click('#btn-restore');
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
@@ -281,10 +290,11 @@ test('board | POS list exact removal and empty clears screen', async ({ browser 
 test('board | receiveBoard API and no Firebase SDK', async ({ browser }) => {
   const { ctx, receiver } = await openSession(browser, 'local');
   await receiver.evaluate(() => {
+    const bd = window.QMS.Board.TodayBoard.taipeiBusinessDate();
     window.receiveBoard({
       seq: 99,
       storeId: 's120030',
-      businessDate: '2026-10-02',
+      businessDate: bd,
       updatedAt: new Date().toISOString(),
       source: 'A',
       tickets: [{ no: '2811', status: 'preparing', updatedAt: new Date().toISOString() }],
@@ -299,7 +309,8 @@ test('board | receiveBoard API and no Firebase SDK', async ({ browser }) => {
 test('board | clock shows Taipei when browser TZ is UTC', async ({ browser }) => {
   const ctx = await browser.newContext({ timezoneId: 'UTC', locale: 'en-US' });
   const page = await ctx.newPage();
-  await page.goto(urlsForMode('local').recv);
+  const { base } = urlsForMode('local');
+  await page.goto(`${base}/receiver-demo/?store=s120030&device=stb-01`);
   const match = await page.evaluate(() => {
     const clock = document.getElementById('rcv-clock');
     const shown = clock ? clock.textContent : '';
@@ -312,6 +323,15 @@ test('board | clock shows Taipei when browser TZ is UTC', async ({ browser }) =>
   if (utcHour <= 15) {
     expect(taipeiHour).toBeGreaterThanOrEqual(utcHour);
   }
+  await ctx.close();
+});
+
+test('cloud | receiver setup gate without saved config', async ({ browser }) => {
+  const ctx = await freshContext(browser);
+  const page = await ctx.newPage();
+  await page.goto(`${urlsForMode('local').base}/receiver-demo/?store=s120030&mode=cloud`);
+  await expect(page.locator('[data-testid="rcv-setup-gate"]')).toBeVisible();
+  await expect(page.locator('[data-testid="rcv-guest-stage"]')).toBeHidden();
   await ctx.close();
 });
 

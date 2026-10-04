@@ -8,17 +8,18 @@
   QMS.Transport = QMS.Transport || {};
 
   /**
-   * @param {'local' | 'firestore'} mode
+   * @param {'local' | 'firestore' | 'cloud'} mode
    * @param {object} options
    */
   function createTransport(mode, options) {
-    if (mode === 'firestore') {
+    if (mode === 'firestore' || mode === 'cloud') {
       const session = QMS.Transport.createAuthSession(options.config, {
         storeId: options.storeId,
         role: options.role || 'device',
         deviceId: options.deviceId,
         accessCode: options.accessCode,
         storage: options.storage,
+        onAuthSuccess: options.onAuthSuccess,
       });
       return QMS.Transport.Firestore.createFirestoreTransport({
         storeId: options.storeId,

@@ -10,7 +10,7 @@
 | 展示控制面板 | `?demo=1` |
 | 指定門市 | `?store=s120030`（可與 `demo=1` 併用） |
 | 雲端同步（local） | `?mode=local&store=s120030` — 與 `/controller/` 同瀏覽器測試 |
-| 雲端同步（firestore） | `?mode=firestore&gateway=…&device=stb-01&code=…` — REST 讀 `today_board`（Bearer），寫入經雲端函式 |
+| 雲端同步（firestore） | `?mode=firestore&gateway=…&device=stb-01` — 存取碼用 `#cfg=` 設定連結；REST 讀 `today_board`（Bearer） |
 
 看板雲端文件格式見 `controller/README.md`（`today_board.tickets[]`）。
 

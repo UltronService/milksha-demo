@@ -39,10 +39,39 @@ npx --yes serve -l 4173 .
 # 開啟 http://localhost:4173/?demo=1
 ```
 
+## 雲端模式（正式測試環境）
+
+控制端與機上盒看板可透過 Firebase 專案 `milksha-qms-dev`（asia-east1）同步。**請勿**把 API Key 或存取碼寫進 Git；在控制端 **進階設定 → 雲端設定** 填寫並存於瀏覽器本機。
+
+| 角色 | 說明 |
+|------|------|
+| 控制端 | `/controller/` → 連線方式選 **雲端模式** → 填雲端設定與存取碼 → 連線 |
+| 看板（簡易網址） | `/receiver-demo/?store=s120030&mode=cloud` |
+| 看板（首次設定） | 控制端按 **產生看板連結**，機上盒掃 QR 或開設定連結 |
+
+店長試用步驟見 [docs/OWNER-TRIAL.md](docs/OWNER-TRIAL.md)。  
+工程本機測試仍用 **本機連動** 或 **本機模擬雲端** + `npm run fake-cloud`（見 [docs/EMULATOR.md](docs/EMULATOR.md)）。
+
+### 機上盒認證（401）
+
+- **401**：`devLogin` 會再試一次；若仍失敗或 **refresh token 收到 401**，一般雲端輪詢（看板／裝置／heartbeat）會停止，並標記 `data-auth-stopped`。
+- 之後每 **10 分鐘**自動再試登入。
+- **僅本機／fake gateway**（`localhost`、`127.0.0.1` 等）可用工程用 URL 參數：`?testAuthRecheckMs=`（縮短重登間隔）、`?testDevicePollMs=`（停用自動裝置輪詢並開啟測試 hook）。正式網域上這些參數**不生效**。
+- **停止期間不會收到遠端 reload 指令**；重新登入成功後恢復輪詢，才會處理遠端 `reload`。
+- **遠端 reload／reboot**（兩道防護，避免雲端長期保留 `pendingCommand` 造成重複重整）：
+  1. **開機伺服器時間**：本輪開機第一次成功雲端 HTTP 回應的 `Date` 標頭（`bootServerTimeMs`，非裝置時鐘；毫秒精度）。`reload`／`reboot` 的伺服器時間取 `issuedAtMs`（優先）、`issuedAt`、`createdAt`；若 **嚴格早於** `bootServerTimeMs` 則略過（同一毫秒不略過）。時間缺漏或無法解析時**不**依時間略過，僅靠下一項。若沒有 `Date` 標頭，僅靠下一項。
+  2. **已執行指令 id**：執行前將 `cmd.id` 寫入 `localStorage`（`milksha:lastHandledCmd:<store>:<device>`），相同 id 不再執行。執行前仍會盡快送 heartbeat ack（短逾時），但不依賴 ack 清除雲端文件。
+- **403**：停止看板／裝置同步與 heartbeat，標記 `data-upload-stopped`；約每 **5 分鐘**自動再試登入。存取碼修正後登入成功即恢復，無需重開頁面。
+
+### 叫號提示音佇列
+
+- FIFO，僅在號碼離開「可取餐」時從佇列移除；**不會**因佇列長度而靜默丟棄最舊項目（僅保留極大的安全上限以防記憶體異常）。
+
 ## 測試
 
 ```bash
 npm test
+npm run test:e2e
 ```
 
 ## 目錄摘要

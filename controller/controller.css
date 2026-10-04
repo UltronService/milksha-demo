@@ -38,6 +38,86 @@ body {
   font-weight: 700;
   font-size: 1rem;
 }
+
+.controller-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 12px 16px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.controller-alert[hidden] {
+  display: none !important;
+}
+
+.controller-alert-error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #cf1322;
+}
+
+.controller-alert-icon {
+  flex: 0 0 auto;
+  color: #ff4d4f;
+  margin-top: 2px;
+}
+
+.controller-alert-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.controller-alert-message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.controller-alert-details {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.controller-alert-details summary {
+  cursor: pointer;
+  color: #595959;
+  font-weight: 600;
+}
+
+.controller-alert-detail-pre {
+  margin: 8px 0 0;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.controller-alert-close {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.controller-alert-close:hover {
+  color: #595959;
+}
+
+button[data-dev-command='1']:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .advanced {
   margin: 10px 0;
   padding: 8px;
@@ -48,6 +128,42 @@ body {
 .advanced summary {
   cursor: pointer;
   font-weight: 700;
+}
+.field-hint {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+}
+.cloud-prompt {
+  padding: 8px 10px;
+  background: #fff8e6;
+  border-radius: 8px;
+  border: 1px solid #e6d9a8;
+}
+.cloud-settings legend {
+  font-weight: 800;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.checkbox-row input {
+  width: auto;
+}
+.board-link-block {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+}
+#board-setup-qr {
+  display: block;
+  margin: 8px 0;
+  border: 1px solid #ddd;
 }
 .grid {
   display: grid;
@@ -165,15 +281,21 @@ ul {
   .status-dl {
     font-size: 1rem;
   }
+  .card.zone {
+    padding: 0;
+    overflow: hidden;
+  }
   .zone-toggle {
     display: block;
-    border-radius: 8px 8px 0 0;
-    margin: -12px -12px 8px;
+    width: 100%;
+    border-radius: 0;
+    margin: 0;
     min-height: 48px;
     font-size: 1rem;
+    box-sizing: border-box;
   }
-  .card.zone {
-    padding-top: 0;
+  .zone-body {
+    padding: 8px 12px 12px;
   }
   .zone-body[hidden] {
     display: none;

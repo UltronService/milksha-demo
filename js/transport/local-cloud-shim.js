@@ -47,6 +47,10 @@
     const storage = options.storage || root.localStorage;
     const config = options.config || {};
     const channel = options.broadcast || function () {};
+    const PosValidate = QMS.Transport.PosReceiverValidate;
+    const Md5 = QMS.Transport.MilkshaMd5;
+    const DevCmd = QMS.Transport.DevCommandValidation;
+    let entryAEnabled = options.posReceiverEntryAEnabled !== false;
 
     function nextSeq() {
       const cur = readJson(storage, boardKey(storeId));
@@ -89,16 +93,24 @@
 
     const api = {
       boxHeartbeat: async function (body) {
-        const devId = body.deviceId || 'stb-01';
+        const hv = DevCmd ? DevCmd.buildBoxHeartbeatRequest(body) : { ok: true, body: body };
+        if (!hv.ok) {
+          const err = new Error('boxHeartbeat');
+          err.status = 400;
+          err.response = { code: hv.code, message: hv.message };
+          throw err;
+        }
+        const hb = hv.body;
+        const devId = hb.deviceId;
         const doc = readJson(storage, deviceKey(storeId, devId)) || {};
         const merged = Object.assign(doc, {
           lastSeen: new Date().toISOString(),
-          online: !body.simulatedOffline,
-          appVersion: body.appVersion || '',
-          boardSeq: body.boardSeq || 0,
-          pendingUploads: body.pendingUploads || 0,
-          simulatedOffline: Boolean(body.simulatedOffline),
-          lastAckCommandId: body.ackCommandId || doc.lastAckCommandId || '',
+          online: !hb.simulatedOffline,
+          appVersion: hb.appVersion || '',
+          boardSeq: hb.boardSeq || 0,
+          pendingUploads: hb.pendingUploads || 0,
+          simulatedOffline: Boolean(hb.simulatedOffline),
+          lastAckCommandId: hb.ackCommandId || doc.lastAckCommandId || '',
           pendingCommand: doc.pendingCommand || null,
         });
         writeJson(storage, deviceKey(storeId, devId), merged);
@@ -106,15 +118,30 @@
         return { ok: true };
       },
       devCommand: async function (body) {
-        const devId = body.deviceId || 'stb-01';
-        const doc = readJson(storage, deviceKey(storeId, devId)) || {};
+        const cv = DevCmd ? DevCmd.buildDevCommandRequest(body) : { ok: true, body: body };
+        if (!cv.ok) {
+          const err = new Error('devCommand');
+          err.status = 400;
+          err.response = { code: cv.code, message: cv.message };
+          throw err;
+        }
+        const cmdBody = cv.body;
+        const devId = cmdBody.deviceId;
+        const existing = readJson(storage, deviceKey(storeId, devId));
+        if (!existing) {
+          const err = new Error('devCommand');
+          err.status = 404;
+          err.response = { code: 'device_not_found', message: 'device not found' };
+          throw err;
+        }
+        const doc = existing;
         const cmd = {
           id: 'cmd-' + Date.now(),
-          type: body.type,
-          params: body.params || {},
+          type: cmdBody.type,
+          params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
-        if (body.type === 'clear_now') {
+        if (cmdBody.type === 'clear_now') {
           const board = TodayBoard.buildTodayBoard(storeId, nextSeq(), [], 'system');
           writeJson(storage, boardKey(storeId), board);
           channel({ type: 'board', storeId: storeId });
@@ -126,41 +153,69 @@
         return { ok: true, commandId: cmd.id };
       },
       posReceiver: async function (body) {
-        if (!body || !body.serviceSpecialData_Json) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '叫號資料格式錯誤' });
-          const err = new Error('format');
-          err.response = { isSuccess: false, information: '叫號資料格式錯誤' };
-          throw err;
+        const reject = function (information) {
+          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: information });
+          return { isSuccess: false, information: information };
+        };
+        let parsed = body;
+        let rawInner = null;
+        const JsonRaw = QMS.Transport.JsonRaw;
+        if (typeof body === 'string') {
+          if (JsonRaw) {
+            rawInner = JsonRaw.extractRawJsonField(body, 'serviceSpecialData_Json');
+          }
+          try {
+            parsed = JSON.parse(body);
+          } catch (e) {
+            return reject('叫號資料格式錯誤');
+          }
         }
-        const secret = config.posSignSecret || 'dev-milksha-public-test-key-2026';
-        const valid = await PosSign.verifyPosBody(body, secret);
+        if (PosValidate && Md5) {
+          const innerRaw =
+            rawInner !== null && rawInner !== undefined
+              ? rawInner
+              : JSON.stringify(parsed.serviceSpecialData_Json);
+          const v = PosValidate.validatePosReceiverBody(parsed, {
+            entryAEnabled: entryAEnabled,
+            md5Hex: Md5.md5Hex,
+            serviceSpecialDataJsonRaw: innerRaw,
+          });
+          if (!v.ok) {
+            return reject(v.information);
+          }
+        } else if (!parsed || !parsed.serviceSpecialData_Json) {
+          return reject('叫號資料格式錯誤');
+        }
+        const reqTarget = parsed.serviceSpecialData_Json.target;
+        if (boundTarget && typeof reqTarget === 'string' && reqTarget !== boundTarget) {
+          return reject('找不到目標叫號機');
+        }
+        const secret = config.posSignSecret || '';
+        if (!secret) {
+          return reject('未設定 POS 金鑰');
+        }
+        const valid = await PosSign.verifyPosBody(parsed, secret);
         if (!valid) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '簽章錯誤' });
-          const err = new Error('invalid signature');
-          err.response = { isSuccess: false, information: '簽章錯誤' };
-          throw err;
+          return reject('簽章錯誤');
         }
-        const target = body.serviceSpecialData_Json.target || '';
-        if (boundTarget && target && target !== boundTarget) {
-          appendReceiveLog({ kind: 'posReceiver', isSuccess: false, information: '找不到目標叫號機' });
-          const err = new Error('wrong store');
-          err.response = { isSuccess: false, information: '找不到目標叫號機' };
-          throw err;
-        }
-        const nc = body.serviceSpecialData_Json.data && body.serviceSpecialData_Json.data.number_content;
-        const tickets = TodayBoard.numberContentToTickets(nc || []);
-        const board = TodayBoard.buildTodayBoard(storeId, nextSeq(), tickets, 'A');
-        writeJson(storage, boardKey(storeId), board);
-        channel({ type: 'board', storeId: storeId });
         const online = storeHasOnlineBox();
         const information = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        let seq = null;
+        if (online) {
+          const nc = parsed.serviceSpecialData_Json.data && parsed.serviceSpecialData_Json.data.number_content;
+          const tickets = TodayBoard.numberContentToTickets(nc || []);
+          seq = nextSeq();
+          const board = TodayBoard.buildTodayBoard(storeId, seq, tickets, 'A');
+          writeJson(storage, boardKey(storeId), board);
+          channel({ type: 'board', storeId: storeId });
+        }
         appendReceiveLog({
           kind: 'posReceiver',
           isSuccess: online,
           information: information,
-          seq: board.seq,
+          seq: seq,
         });
-        return { isSuccess: online, information: information, seq: board.seq };
+        return { isSuccess: online, information: information, seq: seq };
       },
     };
 
@@ -183,7 +238,12 @@
       if (!data) {
         return null;
       }
-      return { data: data, updateTime: data.updatedAt || '' };
+      return {
+        data: data,
+        updateTime: data.updatedAt || '',
+        httpDate: '',
+        httpDateReadable: false,
+      };
     }
 
     function readDevice(deviceId) {
