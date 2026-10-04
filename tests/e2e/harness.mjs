@@ -271,7 +271,31 @@ export async function waitForReceiverOnline(receiver, mode) {
   throw new Error('firestore receiver device not online on fake-cloud');
 }
 
+export async function expandControllerZone(page, zoneId) {
+  await page.evaluate((id) => {
+    const section = document.getElementById(id);
+    if (!section) {
+      return;
+    }
+    const btn = section.querySelector('.zone-toggle');
+    const body = section.querySelector('.zone-body');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'true');
+    }
+    if (body) {
+      body.hidden = false;
+    }
+  }, zoneId);
+}
+
 export async function connectController(page, mode) {
+  await expandControllerZone(page, 'sec-connect');
+  await page.evaluate(() => {
+    const adv = document.getElementById('advanced-settings');
+    if (adv) {
+      adv.open = true;
+    }
+  });
   if (mode === 'firestore') {
     await page.selectOption('#fld-mode', 'firestore');
     // 進階設定 is collapsed by default; set fields via script (URL params also feed buildConfig).
@@ -310,7 +334,12 @@ export async function connectController(page, mode) {
       },
     );
   } else {
-    await page.selectOption('#fld-mode', 'local');
+    await page.evaluate(() => {
+      const sel = document.getElementById('fld-mode');
+      if (sel) {
+        sel.value = 'local';
+      }
+    });
   }
   await page.evaluate((posSecret) => {
     const el = document.getElementById('fld-pos-sign-key');
@@ -320,7 +349,13 @@ export async function connectController(page, mode) {
     }
   }, FAKE_CLOUD_POS_SIGN_SECRET);
   await page.click('#btn-connect');
-  await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('online-state');
+      return el && el.getAttribute('data-connected') === '1';
+    },
+    { timeout: 15000 },
+  );
   if (mode === 'firestore') {
     try {
       await page.waitForFunction(
@@ -337,4 +372,5 @@ export async function connectController(page, mode) {
   } else {
     await page.waitForTimeout(400);
   }
+  await expandControllerZone(page, 'sec-pos');
 }

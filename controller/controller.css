@@ -218,6 +218,23 @@ button.primary {
   background: #333;
   color: #fff;
 }
+
+.btn-send-numbers {
+  width: 100%;
+  min-height: 3.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.quick-send-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.quick-send-hint {
+  margin: 0.75rem 0 0;
+}
+
 .cols2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -54,6 +54,7 @@
     const deviceId = options.deviceId || 'stb-01';
     const transport = options.transport;
     const demoApi = options.receiverDemo;
+    const milkshaRuntime = options.milkshaRuntime || null;
     const boardPollMs = options.boardPollIntervalMs || 2000;
     const devicePollMs = options.devicePollIntervalMs || 5000;
     const heartbeatMs = options.heartbeatIntervalMs || 15000;
@@ -372,10 +373,18 @@
         signature: 'CLOUD',
       };
 
-      const res = demoApi.pushFromObject(req, {
-        skipOfflineCheck: true,
-        newlyReadyIds: ringIds,
-      });
+      let res;
+      if (milkshaRuntime && typeof milkshaRuntime.applyPayload === 'function') {
+        milkshaRuntime.applyPayload(list, { silent: ringOpts.silent });
+        res = { isOK: true };
+      } else if (demoApi && typeof demoApi.pushFromObject === 'function') {
+        res = demoApi.pushFromObject(req, {
+          skipOfflineCheck: true,
+          newlyReadyIds: ringIds,
+        });
+      } else {
+        return { isOK: false };
+      }
       prevReadySet = nextReady;
       if (typeof seq === 'number') {
         localSeq = seq;
@@ -798,6 +807,12 @@
       start: start,
       destroy: destroy,
       receiveBoard: receiveBoard,
+      triggerBoardPoll: function () {
+        return pollBoard();
+      },
+      triggerDevicePoll: function () {
+        return pollDevice();
+      },
       getLocalSeq: function () {
         return localSeq;
       },

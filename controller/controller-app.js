@@ -440,15 +440,17 @@
       body.account = 'wrong-store';
     }
     persistCloudForm();
+    const mode = document.getElementById('fld-mode').value;
     const secret = buildConfig().posSignSecret;
-    if (!secret) {
+    const signSecret = secret || (mode === 'local' ? 'local-poc-unsigned' : '');
+    if (!signSecret) {
       showUserBanner('請在進階設定輸入測試環境專用 POS 金鑰');
       pushLog({ kind: 'posReceiver', summary: '叫號失敗 · 未設定 POS 金鑰' });
       posInFlight = false;
       setPosButtonsDisabled(false);
       return { isSuccess: false, information: '未設定 POS 金鑰' };
     }
-    const signed = await PosSign.applyPosSignature(body, secret, wrongSign);
+    const signed = await PosSign.applyPosSignature(body, signSecret, wrongSign);
     const wire =
       signed && typeof signed.wireText === 'string'
         ? signed.wireText
@@ -619,6 +621,9 @@
     if (connectInFlight) {
       return;
     }
+    if (connected) {
+      return;
+    }
     connectInFlight = true;
     setConnectButtonDisabled(true);
     const mode = document.getElementById('fld-mode').value;
@@ -765,38 +770,38 @@
   }
 
   function initMobileZones() {
-    const narrow = window.matchMedia('(max-width: 480px)');
     function applyLayout() {
       document.querySelectorAll('.zone').forEach(function (z) {
         const body = z.querySelector('.zone-body');
         const btn = z.querySelector('.zone-toggle');
-        if (!body || !btn) return;
-        if (narrow.matches) {
-          const def = z.getAttribute('data-default-expanded') === '1';
-          const open = btn.getAttribute('aria-expanded') === 'true';
-          if (btn.getAttribute('data-user-toggled') !== '1') {
-            btn.setAttribute('aria-expanded', def ? 'true' : 'false');
-            body.hidden = !def;
-          } else {
-            body.hidden = !open;
-          }
-        } else {
+        if (!body) {
+          return;
+        }
+        if (!btn) {
           body.hidden = false;
-          btn.setAttribute('aria-expanded', 'true');
+          return;
+        }
+        const def = z.getAttribute('data-default-expanded') === '1';
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        if (btn.getAttribute('data-user-toggled') !== '1') {
+          btn.setAttribute('aria-expanded', def ? 'true' : 'false');
+          body.hidden = !def;
+        } else {
+          body.hidden = !open;
         }
       });
     }
     document.querySelectorAll('.zone-toggle').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!narrow.matches) return;
         const open = btn.getAttribute('aria-expanded') === 'true';
         btn.setAttribute('aria-expanded', open ? 'false' : 'true');
         btn.setAttribute('data-user-toggled', '1');
         const body = btn.parentElement.querySelector('.zone-body');
-        if (body) body.hidden = open;
+        if (body) {
+          body.hidden = open;
+        }
       });
     });
-    narrow.addEventListener('change', applyLayout);
     applyLayout();
   }
 
@@ -916,6 +921,14 @@
 
   document.getElementById('btn-gen-normal').addEventListener('click', function () {
     if (!requireConnect()) return;
+    generateTickets('normal');
+    posSend(ticketsToNc(), false).catch(function () {});
+  });
+
+  document.getElementById('btn-send-numbers').addEventListener('click', function () {
+    if (!requireConnect()) {
+      return;
+    }
     generateTickets('normal');
     posSend(ticketsToNc(), false).catch(function () {});
   });
@@ -1085,4 +1098,11 @@
       return true;
     },
   };
+
+  if (document.getElementById('fld-mode').value === 'local') {
+    connect().catch(function (e) {
+      setConnectedState(false, '');
+      pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
+    });
+  }
 })();

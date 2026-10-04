@@ -28,11 +28,20 @@ function loadPosSign() {
 function loadShim() {
   const storage = new Map();
   const localStorage = {
-    getItem: (k) => storage.get(k) || null,
-    setItem: (k, v) => storage.set(k, v),
-    removeItem: (k) => storage.delete(k),
-    length: 0,
-    key: () => null,
+    getItem: (k) => (storage.has(k) ? storage.get(k) : null),
+    setItem: (k, v) => {
+      storage.set(k, v);
+    },
+    removeItem: (k) => {
+      storage.delete(k);
+    },
+    get length() {
+      return storage.size;
+    },
+    key: (i) => {
+      const keys = Array.from(storage.keys());
+      return keys[i] || null;
+    },
   };
   const sandbox = {
     globalThis: {},
@@ -81,4 +90,38 @@ test('local posReceiver rejects wrong store target', async function () {
   const res = await shim.api.posReceiver(signed);
   assert.equal(res.isSuccess, false);
   assert.match(res.information, /找不到目標叫號機/);
+});
+
+test('local posReceiver accepts body without configured posSignSecret when device online', async function () {
+  const PosSign = loadPosSign();
+  const create = loadShim();
+  const shim = create({
+    storeId: 's120030',
+    boundTarget: 'milkshas120030',
+    config: {},
+  });
+  await shim.api.boxHeartbeat({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    appVersion: 'test',
+    boardSeq: 0,
+    pendingUploads: 0,
+    simulatedOffline: false,
+  });
+  const inner = {
+    target: 'milkshas120030',
+    data: {
+      number_content: [{ source_type: 'From_Store_OK', number: '9001' }],
+    },
+  };
+  const draft = {
+    isEncrypt: false,
+    serviceSpecialData_Json: inner,
+    merchant_id: 'milksha',
+    account: 's120030',
+  };
+  const signed = await PosSign.signPosBody(draft, 'local-poc-unsigned');
+  const res = await shim.api.posReceiver(signed);
+  assert.equal(res.isSuccess, true);
+  assert.match(res.information, /資料顯示成功/);
 });
