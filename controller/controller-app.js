@@ -195,11 +195,114 @@
     el.hidden = false;
   }
 
-  function setCommandButtonsDisabled(disabled) {
-    const nodes = document.querySelectorAll('[data-dev-command="1"]');
-    for (let i = 0; i < nodes.length; i += 1) {
-      nodes[i].disabled = Boolean(disabled);
+  const POS_SEND_BUTTON_IDS = new Set([
+    'btn-send-numbers',
+    'btn-add-ticket',
+    'btn-one-ready',
+    'btn-pickup-scan',
+    'btn-send-board',
+    'btn-clear-board',
+    'btn-gen-normal',
+    'btn-gen-peak',
+    'btn-send-tammy',
+    'btn-bad-sign',
+    'btn-bad-store',
+    'btn-bad-format',
+    'btn-dup-list',
+  ]);
+
+  const PAUSE_CLOUD_EXEMPT_BUTTON_IDS = new Set([
+    'btn-cable-pull',
+    'btn-cable-restore',
+    'btn-export-json',
+    'btn-export-csv',
+    'btn-clear-log',
+    'btn-connect',
+    'btn-gen-board-link',
+  ]);
+
+  function usesOutboundApi(buttonId) {
+    if (PAUSE_CLOUD_EXEMPT_BUTTON_IDS.has(buttonId)) {
+      return false;
     }
+    if (buttonId === 'btn-refresh-logs') {
+      return false;
+    }
+    const btn = document.getElementById(buttonId);
+    if (!btn) {
+      return false;
+    }
+    return btn.hasAttribute('data-requires-connect') || btn.getAttribute('data-dev-command') === '1';
+  }
+
+  function initActionBlockReasons() {
+    document.querySelectorAll('main button[type="button"][id]').forEach(function (btn) {
+      const next = btn.nextElementSibling;
+      if (next && next.classList && next.classList.contains('action-block-reason')) {
+        return;
+      }
+      const span = document.createElement('span');
+      span.className = 'action-block-reason';
+      span.hidden = true;
+      span.setAttribute('data-testid', btn.id + '-block-reason');
+      btn.insertAdjacentElement('afterend', span);
+    });
+  }
+
+  function getActionBlockReason(btn) {
+    if (!btn || !btn.id) {
+      return '';
+    }
+    const id = btn.id;
+    if (id === 'btn-connect' && connectInFlight) {
+      return '連線中…';
+    }
+    if (btn.hasAttribute('data-requires-connect') && !connected) {
+      return '請先按連線';
+    }
+    if (commandInFlight && btn.getAttribute('data-dev-command') === '1') {
+      return '指令送出中…';
+    }
+    if (posInFlight && POS_SEND_BUTTON_IDS.has(id)) {
+      return '上一筆叫號仍在送出中';
+    }
+    if (pauseCloud && usesOutboundApi(id)) {
+      return '拔線測試中，API 已暫停';
+    }
+    return '';
+  }
+
+  function syncActionButtonStates() {
+    document.querySelectorAll('main button[type="button"][id]').forEach(function (btn) {
+      const reason = getActionBlockReason(btn);
+      const next = btn.nextElementSibling;
+      const reasonEl = next && next.classList && next.classList.contains('action-block-reason') ? next : null;
+      const shouldDisable =
+        Boolean(reason) &&
+        (btn.hasAttribute('data-requires-connect') ||
+          btn.getAttribute('data-dev-command') === '1' ||
+          btn.id === 'btn-connect');
+      if (shouldDisable) {
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+        if (reasonEl) {
+          reasonEl.textContent = reason;
+          reasonEl.hidden = false;
+        }
+      } else {
+        btn.disabled = false;
+        btn.removeAttribute('aria-disabled');
+        if (reasonEl) {
+          reasonEl.textContent = '';
+          reasonEl.hidden = true;
+        }
+      }
+    });
+  }
+
+  function setCommandButtonsDisabled(disabled) {
+    void disabled;
+    syncActionButtonStates();
   }
 
   function hideCommandErrorAlert() {
@@ -286,6 +389,32 @@
       el.textContent = '尚未連線';
     }
     window.__controllerTelemetry.connected = isOn;
+    syncActionButtonStates();
+  }
+
+  async function ensureLocalPocDeviceStub() {
+    const mode = document.getElementById('fld-mode').value;
+    if (mode !== 'local' || !transport || !transport.cloudApi || !transport.cloudApi.boxHeartbeat) {
+      return;
+    }
+    const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    try {
+      const existing = await transport.readDevice(deviceId);
+      if (existing && existing.data) {
+        return;
+      }
+    } catch (e) {
+      /* fall through to create stub */
+    }
+    await transport.cloudApi.boxHeartbeat({
+      storeId: storeId(),
+      deviceId: deviceId,
+      appVersion: 'controller-local-stub',
+      boardSeq: lastBoardSeq || 0,
+      pendingUploads: 0,
+      simulatedOffline: false,
+    });
+    pushLog({ summary: '本機連動：已建立看板裝置紀錄（' + deviceId + '）' });
   }
 
   function heartbeatTimeoutMs() {
@@ -524,6 +653,8 @@
 
   async function posSend(numberContent, wrongSign, wrongStore) {
     if (posInFlight) {
+      showUserBanner('上一筆叫號仍在送出中');
+      syncActionButtonStates();
       return { isSuccess: false, information: '上一筆叫號仍在送出中' };
     }
     posInFlight = true;
@@ -581,6 +712,11 @@
     } catch (e) {
       const info = e.response && e.response.information ? e.response.information : e.message;
       pushLog({ kind: 'posReceiver', summary: 'posReceiver 失敗 · ' + info, response: e.response });
+      if (e && e.message === 'cable_pull_pause') {
+        showUserBanner('拔線測試中，API 已暫停');
+      } else {
+        showUserBanner(info || '叫號送出失敗');
+      }
       throw e;
     } finally {
       posInFlight = false;
@@ -688,29 +824,13 @@
   let posInFlight = false;
 
   function setConnectButtonDisabled(disabled) {
-    const btn = document.getElementById('btn-connect');
-    if (btn) {
-      btn.disabled = disabled;
-    }
+    void disabled;
+    syncActionButtonStates();
   }
 
   function setPosButtonsDisabled(disabled) {
-    [
-      'btn-add-ticket',
-      'btn-one-ready',
-      'btn-all-ready',
-      'btn-clear-board',
-      'btn-wrong-sign',
-      'btn-wrong-store',
-      'btn-pos-raw',
-      'btn-bulk-ready',
-      'btn-send-nc',
-    ].forEach(function (id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.disabled = disabled;
-      }
-    });
+    void disabled;
+    syncActionButtonStates();
   }
 
   async function connect() {
@@ -761,6 +881,7 @@
       }
       setConnectedState(true, mode);
       pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
+      await ensureLocalPocDeviceStub();
       await refreshBoardLists();
       await pollDevice();
       startPolling();
@@ -777,6 +898,8 @@
 
   async function sendCommand(type, params) {
     if (commandInFlight) {
+      showUserBanner('指令送出中，請稍候');
+      syncActionButtonStates();
       return;
     }
     const DevCmd = window.QMS.Transport.DevCommandValidation;
@@ -918,6 +1041,7 @@
   document.getElementById('fld-mode').addEventListener('change', function () {
     syncCloudUi();
     updateBoardLinks();
+    syncActionButtonStates();
   });
   document.getElementById('fld-pos-sign-key').addEventListener('input', function () {
     if (ControllerSecrets) {
@@ -962,25 +1086,39 @@
 
   document.getElementById('btn-one-ready').addEventListener('click', function () {
     if (!requireConnect()) return;
+    let changed = false;
     for (let i = 0; i < tickets.length; i += 1) {
       if (tickets[i].status === 'preparing') {
         tickets[i].status = 'ready';
         tickets[i].updatedAt = new Date().toISOString();
+        changed = true;
         break;
       }
     }
-    posSend(ticketsToNc(), false).catch(function () {});
+    if (!changed) {
+      showUserBanner('沒有準備中的訂單');
+      pushLog({ summary: '一鍵可取餐：沒有準備中的訂單' });
+      return;
+    }
+    posSend(ticketsToNc(), false).catch(function (e) {
+      showUserBanner((e && e.message) || '叫號送出失敗');
+    });
   });
 
   document.getElementById('btn-pickup-scan').addEventListener('click', function () {
     if (!requireConnect()) return;
     const scan = document.getElementById('fld-pickup-scan').value.trim();
-    if (!scan) return;
+    if (!scan) {
+      showUserBanner('請輸入或掃描取餐號碼');
+      return;
+    }
     tickets = tickets.filter(function (t) {
       return !(t.status === 'ready' && t.no === scan);
     });
     document.getElementById('fld-pickup-scan').value = '';
-    posSend(ticketsToNc(), false).catch(function () {});
+    posSend(ticketsToNc(), false).catch(function (e) {
+      showUserBanner((e && e.message) || '叫號送出失敗');
+    });
   });
 
   document.getElementById('btn-send-board').addEventListener('click', function () {
@@ -1029,12 +1167,25 @@
     posSend(ticketsToNc(), false).catch(function () {});
   });
 
-  document.getElementById('btn-send-numbers').addEventListener('click', function () {
+  function sendQuickDemoNumber() {
     if (!requireConnect()) {
       return;
     }
-    generateTickets('normal');
-    posSend(ticketsToNc(), false).catch(function () {});
+    const no = allocateOrderNumber();
+    tickets.push({
+      no: no,
+      status: 'ready',
+      sourceKey: 'store',
+      updatedAt: new Date().toISOString(),
+    });
+    bumpNumberFieldAfterSend(no);
+    posSend(ticketsToNc(), false).catch(function (e) {
+      presentConnectError(e);
+    });
+  }
+
+  document.getElementById('btn-send-numbers').addEventListener('click', function () {
+    sendQuickDemoNumber();
   });
 
   document.getElementById('btn-gen-peak').addEventListener('click', function () {
@@ -1064,12 +1215,16 @@
     pauseCloud = true;
     window.__controllerTelemetry.pauseCloud = true;
     pushLog({ summary: '拔線測試：已暫停 outbound API', kind: 'network' });
+    showUserBanner('拔線測試中，API 已暫停');
+    syncActionButtonStates();
   });
   document.getElementById('btn-cable-restore').addEventListener('click', function () {
     if (!requireConnect()) return;
     pauseCloud = false;
     window.__controllerTelemetry.pauseCloud = false;
     pushLog({ summary: '拔線測試：已恢復 API', kind: 'network' });
+    showUserBanner('');
+    syncActionButtonStates();
   });
 
   document.getElementById('btn-clear-now').addEventListener('click', function () {
@@ -1180,12 +1335,15 @@
 
   initStoreSelect();
   initSourceSelect();
+  initActionBlockReasons();
   initMobileZones();
   syncCloudUi();
   updateBoardLinks();
   loadLogs();
   clockTimer = setInterval(tickClock, 1000);
   tickClock();
+
+  syncActionButtonStates();
 
   window.__controller = {
     getTickets: function () {

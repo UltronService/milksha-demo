@@ -41,9 +41,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   expect(deviceDoc && deviceDoc.online).toBe(true);
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '1002' })).toBeVisible({
-    timeout: 5000,
-  });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
   await ctx.close();
 });
 

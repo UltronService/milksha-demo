@@ -25,12 +25,8 @@ test('home board local POC: one button send shows numbers and board online', asy
 
   await controller.click('[data-testid="btn-send-numbers"]');
 
-  await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '1002' })).toBeVisible({
-    timeout: 2000,
-  });
-  await expect(board.locator('.milksha-prep .milksha-num').filter({ hasText: '1001' })).toBeVisible({
-    timeout: 2000,
-  });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
+  await expect(board.locator('.milksha-prep .milksha-num')).toHaveCount(0);
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
 
   await ctx.close();
