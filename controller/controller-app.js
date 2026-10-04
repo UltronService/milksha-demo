@@ -378,12 +378,17 @@
     const el = document.getElementById('online-state');
     el.setAttribute('data-connected', isOn ? '1' : '0');
     if (isOn) {
+      const boardStateLabel = boardLinkHint
+        ? boardLinkHint
+        : deviceOnline
+          ? '在線'
+          : '離線/未知';
       el.textContent =
         '已連線（' +
         modeDisplayName(mode) +
         '）· 看板 ' +
-        (deviceOnline ? '在線' : boardLinkHint || '離線/未知') +
-        (lastHeartbeatAt ? ' · 最後心跳 ' + lastHeartbeatAt : '');
+        boardStateLabel +
+        (lastHeartbeatAt && !boardLinkHint ? ' · 最後心跳 ' + lastHeartbeatAt : '');
       showUserBanner('');
     } else {
       el.textContent = '尚未連線';
@@ -398,6 +403,17 @@
       return;
     }
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    const Coord = window.QMS.Transport.LocalPocCoord;
+    if (Coord) {
+      const foreign = Coord.findForeignRecentHeartbeat(
+        window.localStorage,
+        storeId(),
+        heartbeatTimeoutMs(),
+      );
+      if (foreign) {
+        return;
+      }
+    }
     try {
       const existing = await transport.readDevice(deviceId);
       if (existing && existing.data) {
@@ -555,13 +571,34 @@
     return '';
   }
 
+  function hasRecentDeviceHeartbeat(storeIdValue, deviceIdValue) {
+    try {
+      const key = 'milksha:local:device:' + storeIdValue + ':' + deviceIdValue;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        return false;
+      }
+      const data = JSON.parse(raw);
+      if (!data || !data.online || !data.lastSeen) {
+        return false;
+      }
+      return Date.now() - Date.parse(data.lastSeen) < heartbeatTimeoutMs();
+    } catch (e) {
+      return false;
+    }
+  }
+
   function refreshBoardLinkHint(mode) {
     boardLinkHint = '';
-    if (mode !== 'local' || deviceOnline) {
+    if (mode !== 'local') {
       return;
     }
     const Coord = window.QMS.Transport.LocalPocCoord;
     if (!Coord) {
+      return;
+    }
+    const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    if (hasRecentDeviceHeartbeat(storeId(), deviceId)) {
       return;
     }
     try {
@@ -879,11 +916,11 @@
       if (transport.session && transport.session.ensureIdToken) {
         await transport.session.ensureIdToken();
       }
-      setConnectedState(true, mode);
-      pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
+      connected = true;
       await ensureLocalPocDeviceStub();
       await refreshBoardLists();
       await pollDevice();
+      pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
       startPolling();
       await mergeCloudLogs();
     } catch (e) {
@@ -1232,9 +1269,13 @@
     sendCommand('clear_now', {})
       .then(function () {
         tickets = [];
+        showUserBanner('看板已清空');
+        pushLog({ summary: '清空看板 · clear_now', kind: 'command' });
         return refreshBoardLists();
       })
-      .catch(function () {});
+      .catch(function (e) {
+        showUserBanner((e && e.message) || '清空看板失敗');
+      });
   });
   document.getElementById('btn-reload').addEventListener('click', function () {
     if (!requireConnect()) return;
