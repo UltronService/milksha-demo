@@ -125,3 +125,35 @@ test('local posReceiver accepts body without configured posSignSecret when devic
   assert.equal(res.isSuccess, true);
   assert.match(res.information, /資料顯示成功/);
 });
+
+test('controller device stub does not count as online box for posReceiver', async function () {
+  const PosSign = loadPosSign();
+  const create = loadShim();
+  const shim = create({
+    storeId: 's120030',
+    boundTarget: 'milkshas120030',
+    config: {},
+  });
+  await shim.api.boxHeartbeat({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    appVersion: 'controller-local-stub',
+    boardSeq: 0,
+    pendingUploads: 0,
+    simulatedOffline: false,
+  });
+  const inner = {
+    target: 'milkshas120030',
+    data: { number_content: [{ source_type: 'From_Store_OK', number: '9002' }] },
+  };
+  const draft = {
+    isEncrypt: false,
+    serviceSpecialData_Json: inner,
+    merchant_id: 'milksha',
+    account: 's120030',
+  };
+  const signed = await PosSign.signPosBody(draft, 'local-poc-unsigned');
+  const res = await shim.api.posReceiver(signed);
+  assert.equal(res.isSuccess, false);
+  assert.match(res.information, /尚未連線/);
+});

@@ -397,6 +397,21 @@
     syncActionButtonStates();
   }
 
+  const CONTROLLER_DEVICE_STUB_APP_VERSION = 'controller-local-stub';
+
+  function isRealBoardBoxDevice(data) {
+    if (!data || !data.lastSeen) {
+      return false;
+    }
+    if (data.controllerDeviceStub === true) {
+      return false;
+    }
+    if (data.appVersion === CONTROLLER_DEVICE_STUB_APP_VERSION) {
+      return false;
+    }
+    return Boolean(data.online);
+  }
+
   async function ensureLocalPocDeviceStub() {
     const mode = document.getElementById('fld-mode').value;
     if (mode !== 'local' || !transport || !transport.cloudApi || !transport.cloudApi.boxHeartbeat) {
@@ -425,7 +440,7 @@
     await transport.cloudApi.boxHeartbeat({
       storeId: storeId(),
       deviceId: deviceId,
-      appVersion: 'controller-local-stub',
+      appVersion: CONTROLLER_DEVICE_STUB_APP_VERSION,
       boardSeq: lastBoardSeq || 0,
       pendingUploads: 0,
       simulatedOffline: false,
@@ -579,7 +594,7 @@
         return false;
       }
       const data = JSON.parse(raw);
-      if (!data || !data.online || !data.lastSeen) {
+      if (!isRealBoardBoxDevice(data)) {
         return false;
       }
       return Date.now() - Date.parse(data.lastSeen) < heartbeatTimeoutMs();
@@ -831,13 +846,15 @@
     try {
       const dev = await transport.readDevice(deviceId);
       const last = dev && dev.data ? dev.data.lastSeen : '';
-      const onlineFlag = dev && dev.data ? dev.data.online : false;
-      if (last) {
+      if (last && isRealBoardBoxDevice(dev.data)) {
         lastHeartbeatAt = formatHeartbeatDisplay(last);
         const age = Date.now() - Date.parse(last);
-        deviceOnline = onlineFlag && age < heartbeatTimeoutMs();
+        deviceOnline = age < heartbeatTimeoutMs();
       } else {
         deviceOnline = false;
+        if (!last || !isRealBoardBoxDevice(dev && dev.data)) {
+          lastHeartbeatAt = '';
+        }
       }
       const mode = document.getElementById('fld-mode').value;
       refreshBoardLinkHint(mode);
@@ -1209,16 +1226,26 @@
       return;
     }
     const no = allocateOrderNumber();
-    tickets.push({
+    const ticket = {
       no: no,
       status: 'ready',
       sourceKey: 'store',
       updatedAt: new Date().toISOString(),
-    });
-    bumpNumberFieldAfterSend(no);
-    posSend(ticketsToNc(), false).catch(function (e) {
-      presentConnectError(e);
-    });
+    };
+    const ticketCountBefore = tickets.length;
+    tickets.push(ticket);
+    posSend(ticketsToNc(), false)
+      .then(function (res) {
+        if (res && res.isSuccess === false) {
+          tickets.splice(ticketCountBefore);
+          return;
+        }
+        bumpNumberFieldAfterSend(no);
+      })
+      .catch(function (e) {
+        tickets.splice(ticketCountBefore);
+        presentConnectError(e);
+      });
   }
 
   document.getElementById('btn-send-numbers').addEventListener('click', function () {

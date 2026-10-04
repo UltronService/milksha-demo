@@ -18,6 +18,20 @@
   }
 
   const LOCAL_DEVICE_STALE_MS = 300000;
+  const CONTROLLER_DEVICE_STUB_APP_VERSION = 'controller-local-stub';
+
+  function isRealBoardBoxDevice(data) {
+    if (!data || !data.lastSeen) {
+      return false;
+    }
+    if (data.controllerDeviceStub === true) {
+      return false;
+    }
+    if (data.appVersion === CONTROLLER_DEVICE_STUB_APP_VERSION) {
+      return false;
+    }
+    return Boolean(data.online);
+  }
 
   function receiveLogsKey(storeId) {
     return 'milksha:local:receive_logs:' + storeId;
@@ -96,7 +110,7 @@
         const k = storage.key(i);
         if (!k || k.indexOf(prefix) !== 0) continue;
         const data = readJson(storage, k);
-        if (data && data.online && data.lastSeen) {
+        if (isRealBoardBoxDevice(data)) {
           if (now - Date.parse(data.lastSeen) < LOCAL_DEVICE_STALE_MS) {
             return true;
           }
@@ -124,10 +138,12 @@
         const devId = hb.deviceId;
         const sid = activeStoreId();
         const doc = readJson(storage, deviceKey(sid, devId)) || {};
+        const isControllerStub = hb.appVersion === CONTROLLER_DEVICE_STUB_APP_VERSION;
         const merged = Object.assign(doc, {
           lastSeen: new Date().toISOString(),
-          online: !hb.simulatedOffline,
+          online: isControllerStub ? false : !hb.simulatedOffline,
           appVersion: hb.appVersion || '',
+          controllerDeviceStub: isControllerStub,
           boardSeq: hb.boardSeq || 0,
           pendingUploads: hb.pendingUploads || 0,
           simulatedOffline: Boolean(hb.simulatedOffline),
