@@ -23,9 +23,7 @@ test('controller stays online while board tab is in background', async ({ browse
 
   await expect(controller.locator('#online-state')).toContainText('看板 在線', { timeout: 10000 });
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '1002' })).toBeVisible({
-    timeout: 10000,
-  });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 10000 });
 
   await ctx.close();
 });

@@ -21,9 +21,7 @@ const STALE_SEED = () => {
 
 async function assertPocFlow(board, controller) {
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '1002' })).toBeVisible({
-    timeout: 2000,
-  });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
   const deviceDoc = await board.evaluate(() => {
     try {

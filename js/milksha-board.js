@@ -88,6 +88,7 @@
     const ready = [];
     const preparing = [];
     const readyIds = {};
+    const prepIds = {};
     const list = Array.isArray(numberContent) ? numberContent : [];
 
     for (let i = 0; i < list.length; i += 1) {
@@ -110,7 +111,10 @@
           ready.push(entry);
         }
       } else {
-        preparing.push(entry);
+        if (!readyIds[entry.id] && !prepIds[entry.id]) {
+          prepIds[entry.id] = true;
+          preparing.push(entry);
+        }
       }
     }
 

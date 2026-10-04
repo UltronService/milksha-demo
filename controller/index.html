@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261004d" />
-    <script src="../js/board/today-board.js?v=20261004d"></script>
+    <link rel="stylesheet" href="controller.css?v=20261004h" />
+    <script src="../js/board/today-board.js?v=20261004h"></script>
   </head>
   <body>
     <header class="top">
@@ -48,7 +48,7 @@
         ×
       </button>
     </div>
-    <main class="grid" id="main-grid">
+    <main class="controller-main" id="main-grid">
       <section id="sec-quick-send" class="card zone quick-send" data-zone="quick" data-default-expanded="1">
         <div class="zone-body quick-send-body">
           <button
@@ -60,12 +60,13 @@
           >
             送出號碼
           </button>
-          <p class="hint quick-send-hint">產生示範號碼並送到看板（本機連動預設自動連線）。</p>
+          <p class="hint quick-send-hint">每次送出一筆示範號碼到看板（本機連動預設自動連線）。</p>
           <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
         </div>
       </section>
+      <div class="controller-zone-stack" data-testid="controller-zone-stack">
       <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="0">
-        <button type="button" class="zone-toggle" aria-expanded="false">1. 連線與狀態</button>
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-connect">1. 連線與狀態</button>
         <div class="zone-body" hidden>
           <label>選擇門市
             <select id="fld-store" data-testid="fld-store"></select>
@@ -153,7 +154,7 @@
       </section>
 
       <section id="sec-pos" class="card zone" data-zone="pos" data-default-expanded="0">
-        <button type="button" class="zone-toggle" aria-expanded="false">2. 模擬 POS</button>
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-pos">2. 模擬 POS</button>
         <div class="zone-body" hidden>
           <label>號碼 <input id="fld-no" value="2001" data-testid="fld-no" /></label>
           <label>來源
@@ -204,7 +205,7 @@
       </section>
 
       <section id="sec-net" class="card zone" data-zone="net" data-default-expanded="0">
-        <button type="button" class="zone-toggle" aria-expanded="false">3. 模擬網路</button>
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-net">3. 模擬網路</button>
         <div class="zone-body" hidden>
           <div class="row">
             <button type="button" id="btn-offline" data-testid="btn-offline" data-requires-connect="1" data-dev-command="1">模擬斷網</button>
@@ -220,10 +221,11 @@
       </section>
 
       <section id="sec-special" class="card zone" data-zone="special" data-default-expanded="0">
-        <button type="button" class="zone-toggle" aria-expanded="false">4. 特殊狀況</button>
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-special">4. 特殊狀況</button>
         <div class="zone-body" hidden>
+          <p class="hint zone-hint">本機連動：按「清空看板」會立刻清除同一瀏覽器內看板上的號碼（寫入 localStorage，無需重新整理看板分頁）。</p>
           <div class="row">
-            <button type="button" id="btn-clear-now" data-testid="btn-clear-now" data-requires-connect="1" data-dev-command="1">03:00 清空</button>
+            <button type="button" id="btn-clear-now" data-testid="btn-clear-now" data-requires-connect="1" data-dev-command="1">清空看板</button>
             <button type="button" id="btn-reload" data-testid="btn-reload" data-requires-connect="1" data-dev-command="1">要求重新整理</button>
             <button type="button" id="btn-reboot" data-testid="btn-reboot" data-requires-connect="1" data-dev-command="1">要求重開機</button>
           </div>
@@ -234,8 +236,8 @@
         </div>
       </section>
 
-      <section id="sec-log" class="card wide zone" data-zone="log" data-default-expanded="0">
-        <button type="button" class="zone-toggle" aria-expanded="false">5. 紀錄</button>
+      <section id="sec-log" class="card zone" data-zone="log" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-log">5. 紀錄</button>
         <div class="zone-body" hidden>
           <label>篩選關鍵字 <input id="log-filter" placeholder="叫號回應 / 指令…" data-testid="log-filter" /></label>
           <div class="row">
@@ -249,32 +251,33 @@
           <ul id="log-list" data-testid="log-list"></ul>
         </div>
       </section>
+      </div>
     </main>
-    <script src="../config/firebase.js?v=20261004d"></script>
-    <script src="../js/transport/paths.js?v=20261004d"></script>
-    <script src="../js/transport/firestore-value.js?v=20261004d"></script>
-    <script src="../js/transport/board-seq.js?v=20261004d"></script>
-    <script src="../js/transport/cloud-settings.js?v=20261004d"></script>
-    <script src="../js/transport/controller-secrets.js?v=20261004d"></script>
-    <script src="../js/transport/config-resolve.js?v=20261004d"></script>
-    <script src="../js/vendor/qrcode-generator.js?v=20261004d"></script>
-    <script src="../js/transport/auth-session.js?v=20261004d"></script>
-    <script src="../js/vendor/md5.min.js?v=20261004d"></script>
-    <script src="../js/transport/milksha-md5.js?v=20261004d"></script>
-    <script src="../js/transport/milksha-pos-sign.js?v=20261004d"></script>
-    <script src="../js/transport/milksha-pos-wire.js?v=20261004d"></script>
-    <script src="../js/transport/json-raw.js?v=20261004d"></script>
-    <script src="../js/transport/dev-command-validation.js?v=20261004d"></script>
-    <script src="../js/transport/controller-command-errors.js?v=20261004d"></script>
-    <script src="../js/transport/cloud-api.js?v=20261004d"></script>
-    <script src="../js/transport/firestore-rest.js?v=20261004d"></script>
-    <script src="../js/transport/pos-receiver-validate.js?v=20261004d"></script>
-    <script src="../js/transport/local-poc-coord.js?v=20261004d"></script>
-    <script src="../js/transport/local-cloud-shim.js?v=20261004d"></script>
-    <script src="../js/transport/local-transport.js?v=20261004d"></script>
-    <script src="../js/transport/firestore-transport.js?v=20261004d"></script>
-    <script src="../js/transport/create-transport.js?v=20261004d"></script>
-    <script src="../js/receiver/validate-request.js?v=20261004d"></script>
-    <script src="controller-app.js?v=20261004d"></script>
+    <script src="../config/firebase.js?v=20261004h"></script>
+    <script src="../js/transport/paths.js?v=20261004h"></script>
+    <script src="../js/transport/firestore-value.js?v=20261004h"></script>
+    <script src="../js/transport/board-seq.js?v=20261004h"></script>
+    <script src="../js/transport/cloud-settings.js?v=20261004h"></script>
+    <script src="../js/transport/controller-secrets.js?v=20261004h"></script>
+    <script src="../js/transport/config-resolve.js?v=20261004h"></script>
+    <script src="../js/vendor/qrcode-generator.js?v=20261004h"></script>
+    <script src="../js/transport/auth-session.js?v=20261004h"></script>
+    <script src="../js/vendor/md5.min.js?v=20261004h"></script>
+    <script src="../js/transport/milksha-md5.js?v=20261004h"></script>
+    <script src="../js/transport/milksha-pos-sign.js?v=20261004h"></script>
+    <script src="../js/transport/milksha-pos-wire.js?v=20261004h"></script>
+    <script src="../js/transport/json-raw.js?v=20261004h"></script>
+    <script src="../js/transport/dev-command-validation.js?v=20261004h"></script>
+    <script src="../js/transport/controller-command-errors.js?v=20261004h"></script>
+    <script src="../js/transport/cloud-api.js?v=20261004h"></script>
+    <script src="../js/transport/firestore-rest.js?v=20261004h"></script>
+    <script src="../js/transport/pos-receiver-validate.js?v=20261004h"></script>
+    <script src="../js/transport/local-poc-coord.js?v=20261004h"></script>
+    <script src="../js/transport/local-cloud-shim.js?v=20261004h"></script>
+    <script src="../js/transport/local-transport.js?v=20261004h"></script>
+    <script src="../js/transport/firestore-transport.js?v=20261004h"></script>
+    <script src="../js/transport/create-transport.js?v=20261004h"></script>
+    <script src="../js/receiver/validate-request.js?v=20261004h"></script>
+    <script src="controller-app.js?v=20261004h"></script>
   </body>
 </html>
