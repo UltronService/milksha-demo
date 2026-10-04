@@ -36,12 +36,10 @@ function loadMilkshaBoard() {
   return sandbox.QMS.MilkshaBoard;
 }
 
-test('empty board message and full-empty detection', function () {
+test('empty board has no centered hint copy', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.EMPTY_BOARD_MESSAGE, '目前沒有號碼');
   assert.equal(MB.isBoardFullyEmpty([], []), true);
-  assert.equal(MB.isBoardFullyEmpty([{ id: 'a:1' }], []), false);
-  assert.equal(MB.isBoardFullyEmpty([], [{ id: 'a:2' }]), false);
+  assert.equal('EMPTY_BOARD_MESSAGE' in MB, false);
 });
 
 test('hint copy applies only when both zones are empty', function () {

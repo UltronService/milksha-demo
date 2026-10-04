@@ -4,8 +4,8 @@
   "displayName": "迷客夏",
   "layout": "milksha-callboard",
   "theme": {
-    "primary": "#161616",
-    "accent": "#1565FF",
+    "primary": "#88A040",
+    "accent": "#F2F5A9",
     "bannerOpacity": 0.85,
     "bannerOpacityMin": 0.75
   },

@@ -1,5 +1,5 @@
 /**
- * Milksha dual-zone call board (ready + preparing). Vanilla JS, STB-oriented.
+ * Milksha dual-zone call board (preparing left, ready right). Vanilla JS, STB-oriented.
  */
 (function (root) {
   'use strict';
@@ -7,13 +7,10 @@
   const QMS = (root.QMS = root.QMS || {});
 
   const PAGE_INTERVAL_MS = 6000;
-  const FRESH_BORDER_MS = 10000;
-  const OVERLAY_TOTAL_MS = 2800;
-  const OVERLAY_IN_MS = 300;
-  const OVERLAY_HOLD_MS = 2200;
-  const OVERLAY_OUT_MS = 300;
   const MAX_POP_PER_PUSH = 3;
-  const EMPTY_BOARD_MESSAGE = '目前沒有號碼';
+  const PAGE_SIZE = 10;
+  const GRID_COLS = 2;
+  const GRID_ROWS = 5;
 
   const SOURCE_DEFS = [
     { prefix: 'From_Store_', key: 'store' },
@@ -23,35 +20,31 @@
     { prefix: 'From_Udd_', key: 'udd' },
   ];
 
-  const TAG_STYLES = {
-    store: { t: '現場', bg: '#F2F2F2', fg: '#111', bd: '2px solid #111', icon: '店' },
-    point: { t: '迷點', bg: '#009E73', fg: '#000', bd: '2px solid #009E73', icon: '迷' },
-    fp: { t: '熊貓', bg: '#CC79A7', fg: '#000', bd: '2px solid #CC79A7', icon: '熊' },
-    uber: { t: 'Uber', bg: '#0072B2', fg: '#fff', bd: '2px solid #0072B2', icon: 'U' },
-    udd: { t: 'UDD', bg: '#E69F00', fg: '#000', bd: '2px solid #E69F00', icon: 'D' },
-  };
-
   const LAYOUT_LANDSCAPE = {
     W: 1920,
     H: 1080,
-    header: 80,
     split: 'row',
-    readyFrac: 0.62,
-    ready: { cols: 3, rows: 4, font: 140, tagSize: 30, titleH: 84, titleF: 50 },
-    prep: { cols: 2, rows: 9, font: 64, tagSize: 24, titleH: 84, titleF: 42 },
-    overlay: { font: 320, tag: 64 },
+    titleTop: 65,
+    titleH: 112,
+    titleZh: 72,
+    titleEn: 28,
+    numFont: 88,
+    creamPad: 44,
   };
 
   const LAYOUT_PORTRAIT = {
     W: 1080,
     H: 1920,
-    header: 90,
     split: 'col',
-    readyFrac: 0.6,
-    ready: { cols: 2, rows: 4, font: 180, tagSize: 34, titleH: 90, titleF: 52 },
-    prep: { cols: 3, rows: 5, font: 80, tagSize: 26, titleH: 84, titleF: 44 },
-    overlay: { font: 300, tag: 64 },
+    titleTop: 115,
+    titleH: 112,
+    titleZh: 64,
+    titleEn: 26,
+    numFont: 76,
+    creamPad: 36,
   };
+
+  const PREP_WAVES_SRC = 'assets/milksha-prep-waves.svg';
 
   /**
    * @param {string} sourceType
@@ -173,46 +166,50 @@
   }
 
   /**
-   * @param {string} sourceKey
-   * @param {number} sizePx
-   * @returns {string}
+   * @param {number} itemCount
+   * @param {number} [perPage]
+   * @returns {number}
    */
-  function renderTagHtml(sourceKey, sizePx) {
-    const s = TAG_STYLES[sourceKey];
-    if (!s) {
-      return '';
+  function pageCountForItems(itemCount, perPage) {
+    const size = perPage || PAGE_SIZE;
+    if (itemCount <= 0) {
+      return 1;
     }
-    return (
-      '<span class="milksha-tag" style="background:' +
-      s.bg +
-      ';color:' +
-      s.fg +
-      ';border:' +
-      s.bd +
-      ';font-size:' +
-      sizePx +
-      'px"><b class="ic">' +
-      s.icon +
-      '</b>' +
-      s.t +
-      '</span>'
-    );
+    return Math.max(1, Math.ceil(itemCount / size));
   }
 
   /**
-   * @param {typeof root} win
-   * @param {string} orientation
-   * @returns {'landscape' | 'portrait'}
+   * @param {Array<{ number: string }>} items
+   * @param {number} page
+   * @param {number} [perPage]
+   * @returns {Array<{ number: string } | null>}
    */
-  function resolveOrientation(win, orientation) {
-    const o = (orientation || '').trim().toLowerCase();
-    if (o === 'landscape' || o === 'portrait') {
-      return o;
+  function layoutPageGrid(items, page, perPage) {
+    const size = perPage || PAGE_SIZE;
+    const start = page * size;
+    const slice = items.slice(start, start + size);
+    const cells = new Array(size).fill(null);
+    for (let i = 0; i < slice.length && i < size; i += 1) {
+      cells[i] = slice[i];
     }
-    if (win && win.innerWidth && win.innerHeight) {
-      return win.innerWidth >= win.innerHeight ? 'landscape' : 'portrait';
+    return cells;
+  }
+
+  /**
+   * @param {Array<{ number: string } | null>} cells
+   * @returns {{ row: number, col: number }[]}
+   */
+  function gridPositionsForCells(cells) {
+    const positions = [];
+    for (let i = 0; i < cells.length; i += 1) {
+      if (!cells[i]) {
+        continue;
+      }
+      const col = i < GRID_ROWS ? 0 : 1;
+      const row = i < GRID_ROWS ? i : i - GRID_ROWS;
+      positions.push({ row: row, col: col, index: i, number: cells[i].number });
     }
-    return 'landscape';
+    return positions;
   }
 
   /**
@@ -244,14 +241,10 @@
     rootEl.className = 'milksha-stage';
     rootEl.innerHTML =
       '<div class="milksha-board-viewport" id="milksha-board-viewport">' +
-      '<div class="milksha-board" id="milksha-board"></div></div>' +
-      '<div class="milksha-ov" id="milksha-ov" aria-hidden="true">' +
-      '<div class="milksha-ovbox" id="milksha-ovbox"></div></div>';
+      '<div class="milksha-board" id="milksha-board"></div></div>';
 
     const boardViewportEl = doc.getElementById('milksha-board-viewport');
     const boardEl = doc.getElementById('milksha-board');
-    const ovEl = doc.getElementById('milksha-ov');
-    const ovBoxEl = doc.getElementById('milksha-ovbox');
 
     let prevReadyIdSet = new Set();
     let isFirstPayload = true;
@@ -289,17 +282,14 @@
     const metaById = {};
     let readyItems = [];
     let prepItems = [];
-    let freshUntil = {};
     let readyPage = 0;
     let prepPage = 0;
     let readyPageStartedAt = Date.now();
     let prepPageStartedAt = Date.now();
     let readyTimer = null;
     let prepTimer = null;
-    let freshTimer = null;
-    let clockTimer = null;
-    let popQueue = [];
-    let popRunning = false;
+    let ringQueue = [];
+    let ringRunning = false;
     let scale = 1;
 
     function layoutConfig() {
@@ -339,34 +329,7 @@
       boardEl.style.transformOrigin = 'top left';
       boardEl.style.marginLeft = '0';
       boardEl.style.marginTop = '0';
-      const shortLandscape = orientation === 'landscape' && vh <= 500;
-      const ovNumPx = Math.min(
-        cfg.overlay.font,
-        Math.round(vw * (shortLandscape ? 0.12 : 0.22)),
-        Math.round(vh * (shortLandscape ? 0.26 : 0.55)),
-      );
-      const ovTagPx = Math.min(
-        cfg.overlay.tag,
-        Math.round(vw * (shortLandscape ? 0.055 : 0.08)),
-        Math.round(vh * (shortLandscape ? 0.08 : 0.12)),
-      );
-      rootEl.style.setProperty('--milksha-ov-num', ovNumPx + 'px');
-      rootEl.style.setProperty('--milksha-ov-tag', ovTagPx + 'px');
-      rootEl.style.setProperty('--milksha-ov-peak', shortLandscape ? '0.72' : '1');
-    }
-
-    function formatClock() {
-      const d = new Date();
-      const h = String(d.getHours()).padStart(2, '0');
-      const m = String(d.getMinutes()).padStart(2, '0');
-      return h + ':' + m;
-    }
-
-    function pageCount(items, perPage) {
-      if (!perPage || items.length === 0) {
-        return 1;
-      }
-      return Math.max(1, Math.ceil(items.length / perPage));
+      rootEl.style.setProperty('--milksha-num-font', cfg.numFont + 'px');
     }
 
     function clampPage(page, count) {
@@ -382,16 +345,6 @@
       return page;
     }
 
-    function slicePage(items, page, perPage) {
-      const start = page * perPage;
-      return items.slice(start, start + perPage);
-    }
-
-    function progressWidth(startedAt) {
-      const elapsed = Date.now() - startedAt;
-      return Math.min(1, elapsed / PAGE_INTERVAL_MS);
-    }
-
     function scheduleZoneTimers() {
       if (readyTimer) {
         clearInterval(readyTimer);
@@ -400,9 +353,7 @@
         clearInterval(prepTimer);
       }
       readyTimer = setInterval(function () {
-        const cfg = layoutConfig();
-        const perPage = cfg.ready.cols * cfg.ready.rows;
-        const pages = pageCount(readyItems, perPage);
+        const pages = pageCountForItems(readyItems.length, PAGE_SIZE);
         if (pages <= 1) {
           return;
         }
@@ -411,9 +362,7 @@
         renderBoard();
       }, PAGE_INTERVAL_MS);
       prepTimer = setInterval(function () {
-        const cfg = layoutConfig();
-        const perPage = cfg.prep.cols * cfg.prep.rows;
-        const pages = pageCount(prepItems, perPage);
+        const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
         if (pages <= 1) {
           return;
         }
@@ -423,265 +372,166 @@
       }, PAGE_INTERVAL_MS);
     }
 
-    function scheduleFreshSweep() {
-      if (freshTimer) {
-        clearInterval(freshTimer);
+    function renderZoneHtml(cls, x, y, w, h, titleZh, titleEn, page, totalPages, items, pageStartedAt) {
+      const cfg = layoutConfig();
+      const cells = layoutPageGrid(items, page, PAGE_SIZE);
+      let z =
+        '<div class="milksha-zone ' +
+        cls +
+        '" style="left:' +
+        x +
+        'px;top:' +
+        y +
+        'px;width:' +
+        w +
+        'px;height:' +
+        h +
+        'px">';
+      if (cls.indexOf('prep') >= 0) {
+        z +=
+          '<img class="milksha-prep-waves" src="' +
+          PREP_WAVES_SRC +
+          '" alt="" decoding="async" />';
       }
-      freshTimer = setInterval(function () {
-        const now = Date.now();
-        let changed = false;
-        const keys = Object.keys(freshUntil);
-        for (let i = 0; i < keys.length; i += 1) {
-          if (freshUntil[keys[i]] <= now) {
-            delete freshUntil[keys[i]];
-            changed = true;
-          }
+      z += '<div class="milksha-ztitle" style="margin-top:' + cfg.titleTop + 'px;height:' + cfg.titleH + 'px">';
+      z +=
+        '<span class="milksha-ztitle-zh" style="font-size:' +
+        cfg.titleZh +
+        'px">' +
+        titleZh +
+        '</span>';
+      z +=
+        '<span class="milksha-ztitle-en" style="font-size:' +
+        cfg.titleEn +
+        'px">' +
+        titleEn +
+        '</span>';
+      z += '</div>';
+      const bodyTop = cfg.titleTop + cfg.titleH;
+      const bodyH = h - bodyTop;
+      z +=
+        '<div class="milksha-zone-body" style="top:' +
+        bodyTop +
+        'px;height:' +
+        bodyH +
+        'px">';
+      z += '<div class="milksha-cream" style="padding:' + cfg.creamPad + 'px">';
+      z += '<div class="milksha-cream-grid">';
+      for (let i = 0; i < PAGE_SIZE; i += 1) {
+        const cell = cells[i];
+        if (cell && cell.number) {
+          z +=
+            '<div class="milksha-num-cell"><span class="milksha-num">' +
+            cell.number +
+            '</span></div>';
+        } else {
+          z += '<div class="milksha-num-cell"></div>';
         }
-        if (changed) {
-          renderBoard();
-        }
-      }, 500);
+      }
+      z += '</div>';
+      if (totalPages > 1) {
+        z +=
+          '<div class="milksha-pg-indicator" data-started-at="' +
+          pageStartedAt +
+          '">' +
+          (page + 1) +
+          '/' +
+          totalPages +
+          '</div>';
+      }
+      z += '</div></div></div>';
+      return z;
     }
 
     function renderBoard() {
       const cfg = layoutConfig();
       const vert = cfg.split === 'col';
-      const logoSrc = brand.assets && brand.assets.logo ? brand.assets.logo : '';
-      const hH = cfg.header;
-      const rW = vert ? cfg.W : Math.round(cfg.W * cfg.readyFrac);
-      const rH = vert ? Math.round((cfg.H - hH) * cfg.readyFrac) : cfg.H - hH;
-      const pW = vert ? cfg.W : cfg.W - rW;
-      const pH = vert ? cfg.H - hH - rH : cfg.H - hH;
+      const halfW = Math.round(cfg.W / 2);
+      const fullH = cfg.H;
 
-      const readyPer = cfg.ready.cols * cfg.ready.rows;
-      const prepPer = cfg.prep.cols * cfg.prep.rows;
-      const readyPages = pageCount(readyItems, readyPer);
-      const prepPages = pageCount(prepItems, prepPer);
+      const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
+      const prepPages = pageCountForItems(prepItems.length, PAGE_SIZE);
       readyPage = clampPage(readyPage, readyPages);
       prepPage = clampPage(prepPage, prepPages);
 
-      const boardFullyEmpty = isBoardFullyEmpty(readyItems, prepItems);
-      const readyZoneEmpty = readyItems.length === 0;
-      const prepZoneEmpty = prepItems.length === 0;
-      const readySlice = slicePage(readyItems, readyPage, readyPer);
-      const prepSlice = slicePage(prepItems, prepPage, prepPer);
+      let html = '';
 
-      function zoneHtml(
-        cls,
-        x,
-        y,
-        w,
-        hh,
-        title,
-        sub,
-        page,
-        totalPages,
-        zcfg,
-        slice,
-        isReady,
-        progStart,
-        zoneListEmpty,
-        boardFullyEmpty,
-      ) {
-        const showPager = !zoneListEmpty && !boardFullyEmpty && totalPages > 1;
-        let z =
-          '<div class="milksha-zone ' +
-          cls +
-          (vert ? ' portrait' : '') +
-          '" style="left:' +
-          x +
-          'px;top:' +
-          y +
-          'px;width:' +
-          w +
-          'px;height:' +
-          hh +
-          'px">';
-        z +=
-          '<div class="milksha-ztitle" style="height:' +
-          zcfg.titleH +
-          'px;font-size:' +
-          zcfg.titleF +
-          'px"><span>' +
-          title +
-          ' <em>' +
-          sub +
-          '</em></span>';
-        if (showPager) {
-          z +=
-            '<span class="milksha-pg" style="font-size:' +
-            Math.round(zcfg.titleF * 0.7) +
-            'px">' +
-            (page + 1) +
-            '/' +
-            totalPages +
-            '</span>';
-        }
-        z += '</div>';
-        const bodyH = hh - zcfg.titleH - 24;
-        if (boardFullyEmpty || zoneListEmpty) {
-          z +=
-            '<div class="milksha-zone-body milksha-zone-body--idle" style="height:' +
-            bodyH +
-            'px"></div>';
-        } else {
-          z +=
-            '<div class="milksha-grid" style="grid-template-columns:repeat(' +
-            zcfg.cols +
-            ',minmax(0,1fr));grid-template-rows:repeat(' +
-            zcfg.rows +
-            ',1fr);height:' +
-            bodyH +
-            'px">';
-          for (let i = 0; i < zcfg.cols * zcfg.rows; i += 1) {
-            const item = slice[i];
-            if (!item) {
-              z += '<div class="milksha-card ' + (isReady ? 'r' : 'p') + '"></div>';
-              continue;
-            }
-            const fresh = isReady && freshUntil[item.id] && freshUntil[item.id] > Date.now();
-            if (isReady) {
-              z +=
-                '<div class="milksha-card r' +
-                (fresh ? ' fresh' : '') +
-                '"><div>' +
-                renderTagHtml(item.sourceKey, zcfg.tagSize) +
-                '</div><div class="milksha-num" style="font-size:' +
-                zcfg.font +
-                'px">' +
-                item.number +
-                '</div></div>';
-            } else {
-              z +=
-                '<div class="milksha-card p">' +
-                renderTagHtml(item.sourceKey, zcfg.tagSize) +
-                '<span class="milksha-num" style="font-size:' +
-                zcfg.font +
-                'px">' +
-                item.number +
-                '</span></div>';
-            }
-          }
-          z += '</div>';
-        }
-        if (showPager) {
-          const pw = progressWidth(progStart);
-          z +=
-            '<div class="milksha-prog-wrap"><span class="milksha-prog-bar" style="transform:scaleX(' +
-            pw +
-            ')"></span></div>';
-        }
-        return z + '</div>';
-      }
-
-      const logoTag = logoSrc
-        ? '<img src="' + logoSrc + '" alt="' + brand.displayName + '">'
-        : brand.displayName;
-
-      let html =
-        '<div class="milksha-hdr" style="height:' +
-        hH +
-        'px"><div class="milksha-logo milksha-logo-fallback">' +
-        logoTag +
-        '</div><div class="milksha-htitle">取餐叫號</div><div class="milksha-clock" id="milksha-clock">' +
-        formatClock() +
-        '</div></div>';
-
-      html += zoneHtml(
-        'milksha-ready ready',
-        0,
-        hH,
-        rW,
-        rH,
-        '可取餐',
-        '請取餐 Ready',
-        readyPage,
-        readyPages,
-        cfg.ready,
-        readySlice,
-        true,
-        readyPageStartedAt,
-        readyZoneEmpty,
-        boardFullyEmpty,
-      );
-      html += zoneHtml(
-        'milksha-prep prep',
-        vert ? 0 : rW,
-        vert ? hH + rH : hH,
-        pW,
-        pH,
-        '製作中',
-        'Preparing',
-        prepPage,
-        prepPages,
-        cfg.prep,
-        prepSlice,
-        false,
-        prepPageStartedAt,
-        prepZoneEmpty,
-        boardFullyEmpty,
-      );
-
-      if (boardFullyEmpty) {
-        html +=
-          '<div class="milksha-empty-board-hint" style="top:' +
-          hH +
-          'px;height:' +
-          (cfg.H - hH) +
-          'px">' +
-          EMPTY_BOARD_MESSAGE +
-          '</div>';
+      if (vert) {
+        const halfH = Math.round(cfg.H / 2);
+        html += renderZoneHtml(
+          'milksha-prep prep',
+          0,
+          0,
+          cfg.W,
+          halfH,
+          '準備中',
+          'Preparing',
+          prepPage,
+          prepPages,
+          prepItems,
+          prepPageStartedAt,
+        );
+        html += renderZoneHtml(
+          'milksha-ready ready',
+          0,
+          halfH,
+          cfg.W,
+          halfH,
+          '請取餐',
+          'Pick Up Now',
+          readyPage,
+          readyPages,
+          readyItems,
+          readyPageStartedAt,
+        );
+      } else {
+        html += renderZoneHtml(
+          'milksha-prep prep',
+          0,
+          0,
+          halfW,
+          fullH,
+          '準備中',
+          'Preparing',
+          prepPage,
+          prepPages,
+          prepItems,
+          prepPageStartedAt,
+        );
+        html += renderZoneHtml(
+          'milksha-ready ready',
+          halfW,
+          0,
+          halfW,
+          fullH,
+          '請取餐',
+          'Pick Up Now',
+          readyPage,
+          readyPages,
+          readyItems,
+          readyPageStartedAt,
+        );
       }
 
       boardEl.innerHTML = html;
     }
 
-    function runPopQueue() {
-      if (popRunning || popQueue.length === 0) {
+    function runRingQueue() {
+      if (ringRunning || ringQueue.length === 0) {
         return;
       }
-      const nextId = popQueue.shift();
+      const nextId = ringQueue.shift();
       const item = findItem(nextId);
       if (!item) {
-        runPopQueue();
+        runRingQueue();
         return;
       }
-      popRunning = true;
-      const cfg = layoutConfig();
-      ovBoxEl.className = 'milksha-ovbox';
-      ovBoxEl.innerHTML =
-        '<div>' +
-        renderTagHtml(item.sourceKey, cfg.overlay.tag) +
-        '</div><div class="milksha-ovnum">' +
-        item.number +
-        '</div><div class="milksha-ovtxt">' +
-        brand.copy.pickupHint +
-        '</div>';
-      ovEl.style.opacity = '1';
-      ovEl.classList.add('visible');
-      ovEl.setAttribute('aria-hidden', 'false');
-
+      ringRunning = true;
       audio.playDingDong().then(function () {
         logSound(item.id);
+        ringRunning = false;
+        runRingQueue();
       });
-
-      requestAnimationFrame(function () {
-        ovBoxEl.classList.add('phase-in');
-      });
-
-      setTimeout(function () {
-        ovBoxEl.classList.remove('phase-in');
-        ovBoxEl.classList.add('phase-out');
-      }, OVERLAY_IN_MS + OVERLAY_HOLD_MS);
-
-      setTimeout(function () {
-        ovEl.style.opacity = '0';
-        ovEl.classList.remove('visible');
-        ovEl.setAttribute('aria-hidden', 'true');
-        ovBoxEl.className = 'milksha-ovbox';
-        popRunning = false;
-        runPopQueue();
-      }, OVERLAY_TOTAL_MS);
     }
 
     /**
@@ -747,7 +597,6 @@
       Object.keys(metaById).forEach(function (k) {
         if (!nextMeta[k]) {
           delete metaById[k];
-          delete freshUntil[k];
         }
       });
       Object.keys(nextMeta).forEach(function (k) {
@@ -762,14 +611,9 @@
         readyPageStartedAt = now;
         const split = splitPopQueue(ringIds);
         for (let p = 0; p < split.popIds.length; p += 1) {
-          popQueue.push(split.popIds[p]);
+          ringQueue.push(split.popIds[p]);
         }
-        runPopQueue();
-      }
-      if (!silentApply && newReadyIds.length > 0) {
-        for (let f = 0; f < newReadyIds.length; f += 1) {
-          freshUntil[newReadyIds[f]] = now + FRESH_BORDER_MS;
-        }
+        runRingQueue();
       }
 
       prevReadyIdSet = nextReadyIdSet;
@@ -794,13 +638,6 @@
     applyScale();
     renderBoard();
     scheduleZoneTimers();
-    scheduleFreshSweep();
-    clockTimer = setInterval(function () {
-      const el = doc.getElementById('milksha-clock');
-      if (el) {
-        el.textContent = formatClock();
-      }
-    }, 10000);
 
     win.addEventListener('resize', applyScale);
     doc.addEventListener('click', unlockAudio, { once: true });
@@ -827,17 +664,27 @@
         if (prepTimer) {
           clearInterval(prepTimer);
         }
-        if (freshTimer) {
-          clearInterval(freshTimer);
-        }
-        if (clockTimer) {
-          clearInterval(clockTimer);
-        }
       },
     };
 
     QMS.runtime = runtime;
     return runtime;
+  }
+
+  /**
+   * @param {typeof root} win
+   * @param {string} orientation
+   * @returns {'landscape' | 'portrait'}
+   */
+  function resolveOrientation(win, orientation) {
+    const o = (orientation || '').trim().toLowerCase();
+    if (o === 'landscape' || o === 'portrait') {
+      return o;
+    }
+    if (win && win.innerWidth && win.innerHeight) {
+      return win.innerWidth >= win.innerHeight ? 'landscape' : 'portrait';
+    }
+    return 'landscape';
   }
 
   QMS.MilkshaBoard = {
@@ -847,8 +694,13 @@
     splitPopQueue: splitPopQueue,
     makeItemId: makeItemId,
     MAX_POP_PER_PUSH: MAX_POP_PER_PUSH,
-    EMPTY_BOARD_MESSAGE: EMPTY_BOARD_MESSAGE,
+    PAGE_SIZE: PAGE_SIZE,
+    GRID_COLS: GRID_COLS,
+    GRID_ROWS: GRID_ROWS,
     isBoardFullyEmpty: isBoardFullyEmpty,
+    pageCountForItems: pageCountForItems,
+    layoutPageGrid: layoutPageGrid,
+    gridPositionsForCells: gridPositionsForCells,
     bootMilkshaBoard: bootMilkshaBoard,
   };
   QMS.bootMilkshaBoard = bootMilkshaBoard;
