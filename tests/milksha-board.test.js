@@ -124,3 +124,153 @@ test('splitPopQueue caps at three', function () {
   assert.deepEqual(split.popIds, ['a:1', 'a:2', 'a:3']);
   assert.deepEqual(split.silentFreshIds, ['a:4', 'a:5']);
 });
+
+test('each column page holds ten numbers in two-by-five grid', function () {
+  const MB = loadMilkshaBoard();
+  assert.equal(MB.PAGE_SIZE, 10);
+  assert.equal(MB.pageCountForItems(0), 1);
+  assert.equal(MB.pageCountForItems(10), 1);
+  assert.equal(MB.pageCountForItems(11), 2);
+  assert.equal(MB.pageCountForItems(25), 3);
+
+  const items = [];
+  for (let n = 1; n <= 12; n += 1) {
+    items.push({ number: String(1000 + n) });
+  }
+  const page0 = MB.layoutPageGrid(items, 0);
+  assert.equal(page0.length, 10);
+  assert.equal(page0[0].number, '1001');
+  assert.equal(page0[9].number, '1010');
+  const page1 = MB.layoutPageGrid(items, 1);
+  assert.equal(page1[0].number, '1011');
+  assert.equal(page1[1].number, '1012');
+
+  const positions = MB.gridPositionsForCells(page0);
+  const leftCol = positions.filter(function (p) {
+    return p.col === 0;
+  });
+  const rightCol = positions.filter(function (p) {
+    return p.col === 1;
+  });
+  assert.equal(leftCol.length, 5);
+  assert.equal(rightCol.length, 5);
+  assert.equal(leftCol[0].number, '1001');
+  assert.equal(leftCol[4].number, '1005');
+  assert.equal(rightCol[0].number, '1006');
+  assert.equal(rightCol[4].number, '1010');
+});
+
+test('boot rings on new ready without overlay markup', async function () {
+  const dom = {};
+  const root = {
+    className: '',
+    innerHTML: '',
+    style: { setProperty: function () {} },
+  };
+  dom['board-root'] = root;
+
+  const played = [];
+  const sandbox = {
+    console: console,
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    clearInterval: clearInterval,
+    setInterval: setInterval,
+    Date: Date,
+    JSON: JSON,
+    Object: Object,
+    Array: Array,
+    Math: Math,
+    Promise: Promise,
+    Set: Set,
+    URLSearchParams: URLSearchParams,
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+    addEventListener: function () {},
+    innerWidth: 1920,
+    innerHeight: 1080,
+    __milkshaSoundLog: [],
+  };
+  sandbox.document = {
+    getElementById: function (id) {
+      if (id === 'board-root') {
+        return root;
+      }
+      if (id === 'milksha-board-viewport' || id === 'milksha-board') {
+        if (!dom[id]) {
+          dom[id] = { innerHTML: '', style: {} };
+        }
+        return dom[id];
+      }
+      return dom[id] || null;
+    },
+    addEventListener: function () {},
+  };
+  sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
+
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
+
+  sandbox.QMS.createAudioManager = function () {
+    return {
+      setBrandAudio: function () {},
+      setMuted: function () {},
+      unlock: function () {},
+      playDingDong: function () {
+        played.push('ding');
+        return Promise.resolve();
+      },
+    };
+  };
+
+  const brand = {
+    displayName: '迷客夏',
+    audio: { dingDong: true, mutedDefault: false },
+    copy: { pickupHint: '請取餐' },
+    assets: {},
+  };
+  const runtime = sandbox.QMS.bootMilkshaBoard(brand, { document: sandbox.document, window: sandbox });
+
+  runtime.applyPayload([
+    { source_type: 'From_Store_OK', number: '9001' },
+    { source_type: 'From_Store_OK', number: '9002' },
+  ]);
+  assert.equal(played.length, 0);
+  assert.equal(sandbox.__milkshaSoundLog.length, 0);
+  assert.match(dom['milksha-board'].innerHTML, /milksha-cream/);
+  assert.doesNotMatch(dom['milksha-board'].innerHTML, /milksha-ov/);
+
+  runtime.applyPayload([
+    { source_type: 'From_Store_OK', number: '9001' },
+    { source_type: 'From_Store_OK', number: '9002' },
+    { source_type: 'From_Store_OK', number: '9003' },
+  ]);
+  await Promise.resolve();
+  assert.equal(played.length, 1);
+  assert.deepEqual(sandbox.__milkshaSoundLog, ['store:9003']);
+
+  runtime.applyPayload(
+    [
+      { source_type: 'From_Store_OK', number: '9001' },
+      { source_type: 'From_Store_OK', number: '9002' },
+      { source_type: 'From_Store_OK', number: '9003' },
+    ],
+    { silent: true },
+  );
+  await Promise.resolve();
+  assert.equal(played.length, 1);
+
+  runtime.applyPayload([
+    { source_type: 'From_Store_OK', number: '9001' },
+    { source_type: 'From_Store_OK', number: '9002' },
+    { source_type: 'From_Store_OK', number: '9003' },
+    { source_type: 'From_Store_OK', number: '9004' },
+  ]);
+  await Promise.resolve();
+  assert.equal(played.length, 2);
+  assert.deepEqual(sandbox.__milkshaSoundLog, ['store:9003', 'store:9004']);
+  runtime.destroy();
+});
