@@ -656,6 +656,17 @@
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
         applyNumberContent([], localSeq, { silent: true });
+      } else if (type === 'push_numbers') {
+        const ready = Array.isArray(params.ready) ? params.ready : [];
+        const preparing = Array.isArray(params.preparing) ? params.preparing : [];
+        const nc = [];
+        ready.forEach(function (no) {
+          nc.push({ source_type: 'From_Store_OK', number: String(no) });
+        });
+        preparing.forEach(function (no) {
+          nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
+        });
+        applyNumberContent(nc, localSeq, { silent: false });
       }
     }
 

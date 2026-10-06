@@ -93,23 +93,22 @@
     const saved = CloudSettings.load();
     const prefixEl = document.getElementById('fld-emulator-prefix');
     const prefixFromField = prefixEl ? prefixEl.value.trim() : '';
-    return {
+    const fromFields = {
       projectId: document.getElementById('fld-cloud-project').value.trim(),
       apiKey: document.getElementById('fld-cloud-apikey').value.trim(),
       region: document.getElementById('fld-cloud-region').value.trim() || 'asia-east1',
-      accessCode: document.getElementById('fld-code').value.trim(),
       useEmulator: document.getElementById('fld-use-emulator').checked,
       gateway: document.getElementById('fld-gateway').value.trim(),
       emulatorPrefix: prefixFromField || saved.emulatorPrefix || '',
     };
+    return CloudSettings.effective ? CloudSettings.effective(fromFields) : fromFields;
   }
 
   function fillCloudForm(settings) {
-    const s = settings || CloudSettings.load();
+    const s = settings || (CloudSettings.effective ? CloudSettings.effective() : CloudSettings.load());
     document.getElementById('fld-cloud-project').value = s.projectId || '';
     document.getElementById('fld-cloud-apikey').value = s.apiKey || '';
     document.getElementById('fld-cloud-region').value = s.region || 'asia-east1';
-    document.getElementById('fld-code').value = s.accessCode || '';
     document.getElementById('fld-use-emulator').checked = Boolean(s.useEmulator);
     document.getElementById('fld-gateway').value = s.gateway || '';
     const posEl = document.getElementById('fld-pos-sign-key');
@@ -125,6 +124,59 @@
     }
   }
 
+  function hideStoreNotAllowedBanner() {
+    const el = document.getElementById('store-not-allowed-banner');
+    if (!el) {
+      return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+  }
+
+  function showStoreNotAllowedBanner(message) {
+    const el = document.getElementById('store-not-allowed-banner');
+    if (!el) {
+      return;
+    }
+    el.textContent = message || (CmdErrors && CmdErrors.USER_MSG_STORE_NOT_ALLOWED) || '';
+    el.hidden = !el.textContent;
+  }
+
+  function routeLabelForMode(mode) {
+    if (mode === 'cloud') {
+      return '雲端';
+    }
+    if (mode === 'firestore') {
+      return '本機模擬雲端';
+    }
+    return '本機';
+  }
+
+  function syncTransportRoute() {
+    const el = document.getElementById('transport-route');
+    if (!el) {
+      return;
+    }
+    const modeEl = document.getElementById('fld-mode');
+    const mode = modeEl ? modeEl.value : 'local';
+    const route = routeLabelForMode(mode);
+    let boardState = '看板狀態未知';
+    if (connected) {
+      if (boardLinkHint) {
+        boardState = boardLinkHint;
+      } else if (deviceOnline) {
+        boardState = '看板在線';
+      } else {
+        boardState = '看板離線';
+      }
+    } else {
+      boardState = '尚未連線';
+    }
+    el.textContent = '路由：' + route + ' · ' + boardState;
+    el.setAttribute('data-route', mode === 'cloud' ? 'cloud' : mode === 'firestore' ? 'firestore' : 'local');
+    el.setAttribute('data-board-online', connected && deviceOnline && !boardLinkHint ? '1' : '0');
+  }
+
   function syncCloudUi() {
     const mode = document.getElementById('fld-mode').value;
     const prompt = document.getElementById('cloud-config-prompt');
@@ -137,6 +189,7 @@
       linkBlock.hidden = mode !== 'cloud' || incomplete;
     }
     syncLocalModeNotice();
+    syncTransportRoute();
   }
 
   function siteBaseUrl() {
@@ -341,13 +394,21 @@
   function presentConnectError(err) {
     const status = err && err.status ? Number(err.status) : 0;
     const response = err && err.response ? err.response : null;
+    const code =
+      CmdErrors && CmdErrors.resolveErrorCode ? CmdErrors.resolveErrorCode(err, {}) : '';
     const userMessage =
       CmdErrors && CmdErrors.connectUserMessage
         ? CmdErrors.connectUserMessage(err)
         : err && err.message
           ? String(err.message)
           : '雲端暫時出錯。請稍後再連線。';
-    showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
+    if (code === 'store_not_allowed') {
+      hideCommandErrorAlert();
+      showStoreNotAllowedBanner(userMessage);
+    } else {
+      hideStoreNotAllowedBanner();
+      showCommandErrorAlert({ userMessage: userMessage, status: status, response: response });
+    }
     pushLog({ summary: '連線失敗 · ' + userMessage });
   }
 
@@ -395,6 +456,7 @@
     }
     window.__controllerTelemetry.connected = isOn;
     syncActionButtonStates();
+    syncTransportRoute();
   }
 
   const CONTROLLER_DEVICE_STUB_APP_VERSION = 'controller-local-stub';
@@ -691,6 +753,9 @@
     if (info.indexOf('入口 A 未啟用') >= 0) {
       return '雲端的入口 A 沒開，請找後端開啟';
     }
+    if (info.indexOf('找不到機台') >= 0 || info.indexOf('目標叫號機尚未連線') >= 0) {
+      return '請先打開看板';
+    }
     return info;
   }
 
@@ -703,7 +768,115 @@
     return fn();
   }
 
+  function transportUsesDevCommandNumbers() {
+    const mode = document.getElementById('fld-mode').value;
+    return mode === 'cloud' || mode === 'firestore';
+  }
+
+  function ticketsToPushParams() {
+    const ready = [];
+    const preparing = [];
+    tickets.forEach(function (t) {
+      if (t.status === 'ready') {
+        ready.push(String(t.no));
+      } else {
+        preparing.push(String(t.no));
+      }
+    });
+    return { ready: ready, preparing: preparing };
+  }
+
+  async function pushNumbersViaDevCommand() {
+    if (posInFlight) {
+      showUserBanner('上一筆叫號仍在送出中');
+      syncActionButtonStates();
+      return { isSuccess: false, information: '上一筆叫號仍在送出中' };
+    }
+    posInFlight = true;
+    setPosButtonsDisabled(true);
+    persistCloudForm();
+    const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
+    const built = DevCmd
+      ? DevCmd.buildDevCommandRequest({
+          storeId: storeId(),
+          deviceId: deviceId,
+          type: 'push_numbers',
+          params: ticketsToPushParams(),
+        })
+      : {
+          ok: true,
+          body: {
+            storeId: storeId(),
+            deviceId: deviceId,
+            type: 'push_numbers',
+            params: ticketsToPushParams(),
+          },
+        };
+    if (!built.ok) {
+      presentDevCommandError(
+        {
+          status: 400,
+          response: { code: built.code, message: built.message },
+        },
+        built.code,
+      );
+      posInFlight = false;
+      setPosButtonsDisabled(false);
+      return { isSuccess: false, information: built.message };
+    }
+    try {
+      const res = await cloudCall(function () {
+        return transport.cloudApi.devCommand(built.body);
+      });
+      const boardSeq = res && typeof res.boardSeq === 'number' ? res.boardSeq : null;
+      if (boardSeq != null) {
+        lastBoardSeq = boardSeq;
+        window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
+      }
+      pushLog({
+        kind: 'devCommand',
+        summary:
+          'push_numbers commandId=' +
+          (res && res.commandId ? res.commandId : '') +
+          (boardSeq != null ? ' seq=' + boardSeq : ''),
+        response: res,
+      });
+      showUserBanner('');
+      await refreshBoardLists();
+      return {
+        isSuccess: true,
+        information: '資料顯示成功',
+        seq: boardSeq,
+        commandId: res && res.commandId,
+      };
+    } catch (e) {
+      const userMessage =
+        CmdErrors && CmdErrors.devCommandUserMessage
+          ? CmdErrors.devCommandUserMessage(e, {})
+          : e && e.message
+            ? String(e.message)
+            : '叫號送出失敗';
+      showUserBanner(userMessage);
+      pushLog({ kind: 'devCommand', summary: 'push_numbers 失敗 · ' + userMessage, response: e.response });
+      if (e && e.message === 'cable_pull_pause') {
+        showUserBanner('拔線測試中，API 已暫停');
+      }
+      throw e;
+    } finally {
+      posInFlight = false;
+      setPosButtonsDisabled(false);
+    }
+  }
+
   async function posSend(numberContent, wrongSign, wrongStore) {
+    if (transportUsesDevCommandNumbers()) {
+      if (wrongSign || wrongStore) {
+        showUserBanner('此測試僅適用本機 POS 路徑');
+        return { isSuccess: false, information: '僅本機模式' };
+      }
+      return pushNumbersViaDevCommand();
+    }
     if (posInFlight) {
       showUserBanner('上一筆叫號仍在送出中');
       syncActionButtonStates();
@@ -905,15 +1078,15 @@
     connected = false;
     setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
+    hideStoreNotAllowedBanner();
     if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
-      showUserBanner('請先在進階設定填寫雲端設定與存取碼');
+      showUserBanner('請先在進階設定填寫雲端設定');
       syncCloudUi();
       connectInFlight = false;
       setConnectButtonDisabled(false);
       return;
     }
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
-    const accessCode = document.getElementById('fld-code').value.trim();
     const transportMode = mode === 'firestore' ? 'firestore' : mode;
     const config = buildConfig(mode);
     if ((mode === 'cloud' || mode === 'firestore') && !config.functionsBaseUrl) {
@@ -927,13 +1100,13 @@
       config: config,
       role: 'controller',
       deviceId: 'controller-web',
-      accessCode: accessCode,
     });
     try {
       if (transport.session && transport.session.ensureIdToken) {
         await transport.session.ensureIdToken();
       }
       connected = true;
+      hideStoreNotAllowedBanner();
       await ensureLocalPocDeviceStub();
       await refreshBoardLists();
       await pollDevice();
@@ -1102,7 +1275,7 @@
       ControllerSecrets.savePosSignSecret(document.getElementById('fld-pos-sign-key').value);
     }
   });
-  ['fld-cloud-project', 'fld-cloud-apikey', 'fld-cloud-region', 'fld-code', 'fld-device'].forEach(
+  ['fld-cloud-project', 'fld-cloud-apikey', 'fld-cloud-region', 'fld-device'].forEach(
     function (id) {
       const el = document.getElementById(id);
       if (el) {
@@ -1183,6 +1356,10 @@
   document.getElementById('btn-clear-board').addEventListener('click', function () {
     if (!requireConnect()) return;
     tickets = [];
+    if (transportUsesDevCommandNumbers()) {
+      sendCommand('clear_now', {}).catch(function () {});
+      return;
+    }
     posSend([], false).catch(function () {});
   });
 
@@ -1393,7 +1570,11 @@
     document.getElementById('fld-use-emulator').checked = true;
   } else if (modeParam === 'cloud') {
     document.getElementById('fld-mode').value = 'cloud';
-  } else if (!modeParam || modeParam === 'local') {
+  } else if (modeParam === 'local') {
+    document.getElementById('fld-mode').value = 'local';
+  } else if (CloudSettings.prefersDefaultCloudMode && CloudSettings.prefersDefaultCloudMode()) {
+    document.getElementById('fld-mode').value = 'cloud';
+  } else {
     document.getElementById('fld-mode').value = 'local';
   }
   if (params.get('gateway')) {
@@ -1429,11 +1610,15 @@
     },
   };
 
-  if (document.getElementById('fld-mode').value === 'local') {
+  const bootMode = document.getElementById('fld-mode').value;
+  if (bootMode === 'local') {
     pinLocalPocTargets();
+  }
+  if (bootMode === 'local' || bootMode === 'cloud') {
     connect().catch(function (e) {
       setConnectedState(false, '');
       pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
     });
   }
+  syncTransportRoute();
 })();

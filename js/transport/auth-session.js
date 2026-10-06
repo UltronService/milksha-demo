@@ -38,9 +38,9 @@
     if (isSecureTargetUrl(urlStr)) {
       return;
     }
-    const err = new Error('access code requires https target');
+    const err = new Error('cloud auth requires https target');
     err.status = 400;
-    err.response = { code: 'insecure_transport', message: 'access code requires https target' };
+    err.response = { code: 'insecure_transport', message: 'cloud auth requires https target' };
     throw err;
   }
 
@@ -155,18 +155,6 @@
       throw err;
     }
 
-    function resolveAccessCode() {
-      const fromCreds = String(creds.accessCode || '').trim();
-      if (fromCreds) {
-        return fromCreds;
-      }
-      if (QMS.Transport.CloudSettings && QMS.Transport.CloudSettings.load) {
-        const saved = QMS.Transport.CloudSettings.load();
-        return String(saved.accessCode || '').trim();
-      }
-      return '';
-    }
-
     async function devLoginOnce() {
       throwIfAuthStopped();
       const loginUrl = functionsUrl('devLogin');
@@ -175,7 +163,6 @@
         storeId: creds.storeId,
         role: creds.role,
         deviceId: creds.deviceId || 'controller-web',
-        accessCode: resolveAccessCode(),
       };
       const res = await fetch(loginUrl, {
         method: 'POST',

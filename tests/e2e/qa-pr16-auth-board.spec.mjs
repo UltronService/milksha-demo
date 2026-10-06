@@ -10,7 +10,6 @@ function cloudSettingsInitScript() {
         JSON.stringify({
           projectId: 'milksha-qms-dev',
           apiKey: 'e2e-placeholder-key',
-          accessCode: 'fake-milksha-controller-access-code',
           region: 'asia-east1',
           useEmulator: false,
           gateway: '',
@@ -34,7 +33,6 @@ function firestoreCloudSettingsInitScript() {
         JSON.stringify({
           projectId: 'milksha-qms-dev',
           apiKey: 'fake-api-key-for-emulator',
-          accessCode: 'fake-milksha-controller-access-code',
           region: 'asia-east1',
           useEmulator: true,
           gateway: '127.0.0.1:8877',
@@ -57,7 +55,7 @@ test('malformed cfg hash is removed from url', async ({ browser }) => {
   await ctx.close();
 });
 
-test('receiver ignores ?code= query param for access code', async ({ browser }) => {
+test('receiver devLogin body has no accessCode field', async ({ browser }) => {
   const { base } = urlsForMode('firestore');
   const ctx = await browser.newContext();
   await ctx.addInitScript(cloudSettingsInitScript());
@@ -73,7 +71,7 @@ test('receiver ignores ?code= query param for access code', async ({ browser }) 
   );
   await receiver.waitForTimeout(1500);
   expect(devLoginBodies.length).toBeGreaterThan(0);
-  expect(devLoginBodies[0].accessCode).toBe('fake-milksha-controller-access-code');
+  expect(devLoginBodies[0].accessCode).toBeUndefined();
   await ctx.close();
 });
 
@@ -403,12 +401,19 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
   });
   await expect(receiver.locator('.rcv-ready .rcv-num').filter({ hasText: '5566' })).toBeVisible();
   await waitReceiverCloudReady(receiver);
-  const wrongCodeRes = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessCode: 'wrong-access-code-for-e2e' }),
+  let devLoginFail = false;
+  await receiver.route('**/devLogin', async (route) => {
+    if (devLoginFail) {
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'store_not_allowed', message: 'store not allowed' }),
+      });
+      return;
+    }
+    await route.continue();
   });
-  expect(wrongCodeRes.ok).toBe(true);
+  devLoginFail = true;
   await receiver.evaluate(() => {
     const authKey = Object.keys(localStorage).find((k) => k.startsWith('milksha:auth:'));
     if (authKey) {
@@ -428,26 +433,7 @@ test('receiver 403 after board data keeps numbers halts upload heartbeats and re
   const hbBefore = heartbeatCalls;
   await receiver.waitForTimeout(3500);
   expect(heartbeatCalls).toBe(hbBefore);
-  const restoreRes = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginAccessCode`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessCode: 'fake-milksha-controller-access-code' }),
-  });
-  expect(restoreRes.ok).toBe(true);
-  const probeLogin = await fetch(
-    `http://127.0.0.1:${PORT_CLOUD}/fn/milksha-qms-dev/asia-east1/devLogin`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storeId: 's120030',
-        role: 'device',
-        deviceId: 'stb-01',
-        accessCode: 'fake-milksha-controller-access-code',
-      }),
-    },
-  );
-  expect(probeLogin.ok).toBe(true);
+  devLoginFail = false;
   await receiver.waitForTimeout(1100);
   await expect
     .poll(

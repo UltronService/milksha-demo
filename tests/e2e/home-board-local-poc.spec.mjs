@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('home board local POC: one button send shows numbers and board online', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  const base = `http://127.0.0.1:${PORT_SITE}`;
+  const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
 
-  await board.goto(`${base}/`);
+  await board.goto(boardUrl);
   await board.waitForFunction(
     () =>
       Boolean(
@@ -19,7 +19,7 @@ test('home board local POC: one button send shows numbers and board online', asy
     { timeout: 25000 },
   );
 
-  await controller.goto(`${base}/controller/`);
+  await controller.goto(ctrlUrl);
   await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
   await waitForReceiverOnline(board, 'local');
 

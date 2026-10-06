@@ -19,6 +19,7 @@
     reload: [],
     reboot: [],
     clear_now: [],
+    push_numbers: ['ready', 'preparing'],
   };
 
   const HEARTBEAT_KEYS = [
@@ -97,6 +98,27 @@
     return { ok: true, value: n };
   }
 
+  function normalizeStringNumberList(value, label) {
+    if (value === undefined || value === null) {
+      return { ok: true, list: [] };
+    }
+    if (!Array.isArray(value)) {
+      return invalidCommandParams(label + ' 必須為字串陣列');
+    }
+    const list = [];
+    for (let i = 0; i < value.length; i += 1) {
+      const s = String(value[i] == null ? '' : value[i]).trim();
+      if (!s) {
+        return invalidCommandParams(label + ' 不可含空白號碼');
+      }
+      if (s.length > 32) {
+        return invalidCommandParams(label + ' 單號過長');
+      }
+      list.push(s);
+    }
+    return { ok: true, list: list };
+  }
+
   function normalizeParams(type, params) {
     const allowed = COMMAND_PARAM_KEYS[type];
     if (!allowed) {
@@ -110,6 +132,23 @@
       return invalidCommandParams('指令參數含有不允許的欄位');
     }
     const out = {};
+    if (type === 'push_numbers') {
+      const readyNorm = normalizeStringNumberList(raw.ready, 'ready');
+      if (!readyNorm.ok) {
+        return readyNorm;
+      }
+      const prepNorm = normalizeStringNumberList(raw.preparing, 'preparing');
+      if (!prepNorm.ok) {
+        return prepNorm;
+      }
+      out.ready = readyNorm.list;
+      out.preparing = prepNorm.list;
+      const paramsJson = JSON.stringify(out);
+      if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
+        return invalidCommandParams('指令參數超過 1024 位元組上限');
+      }
+      return { ok: true, params: out };
+    }
     for (let i = 0; i < allowed.length; i += 1) {
       const key = allowed[i];
       if (raw[key] === undefined) {

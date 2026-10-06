@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { freshContext, PORT_SITE } from './harness.mjs';
 
-const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/`;
+const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local`;
 const PUBLIC_CTRL = 'https://ultronservice.github.io/milksha-demo/controller/';
 
 const ZONE_TOGGLES = [

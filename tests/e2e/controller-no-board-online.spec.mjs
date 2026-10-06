@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
-
-const BASE = `http://127.0.0.1:${PORT_SITE}`;
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('local-link: controller-only shows offline; send fails until board opens', async ({ browser }) => {
   test.setTimeout(90000);
   const ctx = await freshContext(browser);
   const controller = await ctx.newPage();
-  await controller.goto(`${BASE}/controller/`);
+  const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
+  await controller.goto(ctrlUrl);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
@@ -16,15 +15,15 @@ test('local-link: controller-only shows offline; send fails until board opens', 
   await expect(controller.locator('#online-state')).toContainText(/離線|未知/);
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(controller.locator('[data-testid="user-banner"]')).toContainText('尚未連線', {
+  await expect(controller.locator('[data-testid="user-banner"]')).toContainText('請先打開看板', {
     timeout: 8000,
   });
   const posFail = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
   expect(posFail && posFail.isSuccess).toBe(false);
-  expect(String(posFail && posFail.information)).toMatch(/尚未連線/);
+  expect(String(posFail && posFail.information)).toMatch(/機台|尚未連線/);
 
   const board = await ctx.newPage();
-  await board.goto(`${BASE}/`);
+  await board.goto(boardUrl);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
 

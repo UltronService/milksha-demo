@@ -17,8 +17,13 @@ import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
-const FAKE_DEV_ACCESS_CODE = 'fake-milksha-controller-access-code';
-let devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
+function isAllowedDevLoginStore(storeId) {
+  const id = String(storeId || '').trim();
+  if (id === 's120030') {
+    return true;
+  }
+  return id.indexOf('zz-qa-') === 0;
+}
 let devLoginRequestCount = 0;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
@@ -131,6 +136,30 @@ function numberToTickets(nc) {
     updatedAt: now,
     source_type: row.source_type || 'From_Store_Preparing',
   }));
+}
+
+function pushParamsToTickets(params) {
+  const now = new Date().toISOString();
+  const tickets = [];
+  const ready = params && Array.isArray(params.ready) ? params.ready : [];
+  const preparing = params && Array.isArray(params.preparing) ? params.preparing : [];
+  for (const no of ready) {
+    tickets.push({
+      no: String(no),
+      status: 'ready',
+      updatedAt: now,
+      source_type: 'From_Store_OK',
+    });
+  }
+  for (const no of preparing) {
+    tickets.push({
+      no: String(no),
+      status: 'preparing',
+      updatedAt: now,
+      source_type: 'From_Store_Preparing',
+    });
+  }
+  return tickets;
 }
 
 function md5Hex(text) {
@@ -260,24 +289,19 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/test/reset' && req.method === 'POST') {
+      const resetBody = req.method === 'POST' ? await readBody(req) : {};
       docs.clear();
       logs.clear();
       posReceiverEntryAEnabled = true;
       pendingCommandClearOnAck = true;
-      devLoginExpectedAccessCode = FAKE_DEV_ACCESS_CODE;
       devLoginRequestCount = 0;
-      seedE2eDevice();
+      if (resetBody.seedDevice !== false) {
+        seedE2eDevice();
+      }
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
-    }
-    if (url.pathname === '/test/devLoginAccessCode' && req.method === 'POST') {
-      const body = await readBody(req);
-      if (typeof body.accessCode === 'string' && body.accessCode.trim()) {
-        devLoginExpectedAccessCode = body.accessCode.trim();
-      }
-      return json(res, 200, { ok: true, accessCode: devLoginExpectedAccessCode });
     }
     if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
       const body = await readBody(req);
@@ -337,10 +361,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       devLoginRequestCount += 1;
       const body = await readBody(req);
-      if (String(body.accessCode || '') !== devLoginExpectedAccessCode) {
+      if (!isAllowedDevLoginStore(body.storeId)) {
         return json(res, 403, {
-          code: 'invalid_access_code',
-          message: 'wrong access code for fake cloud',
+          code: 'store_not_allowed',
+          message: 'store not allowed for controller dev login',
         });
       }
       return json(res, 200, { customToken: `fake-${body.storeId}-${body.role}` });
@@ -374,7 +398,7 @@ const server = http.createServer(async (req, res) => {
           return json(res, 200, { isSuccess: false, information: '簽章錯誤' });
         }
         const online = storeHasOnlineBox(storeId);
-        const info = online ? '資料顯示成功' : '目標叫號機尚未連線';
+        const info = online ? '資料顯示成功' : '找不到機台';
         let seq = null;
         if (online) {
           const nc = body.serviceSpecialData_Json?.data?.number_content || [];
@@ -411,10 +435,15 @@ const server = http.createServer(async (req, res) => {
         }
         const hb = hv.body;
         const dk = deviceKey(hb.storeId, hb.deviceId);
-        if (!docs.has(dk)) {
-          return json(res, 404, apiError('device_not_found', 'device not found'));
-        }
-        const prev = docs.get(dk) || {};
+        const prev = docs.get(dk) || {
+          online: false,
+          lastSeen: '',
+          appVersion: '',
+          boardSeq: 0,
+          pendingUploads: 0,
+          simulatedOffline: false,
+          pendingCommand: null,
+        };
         let nextPending = prev.pendingCommand || null;
         if (
           pendingCommandClearOnAck &&
@@ -470,25 +499,39 @@ const server = http.createServer(async (req, res) => {
           params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
+        let boardSeq = Number(prev.boardSeq) || 0;
         if (cmdBody.type === 'clear_now') {
+          boardSeq = nextSeq(cmdBody.storeId);
           docs.set(boardKey(cmdBody.storeId), {
             storeId: cmdBody.storeId,
             businessDate: taipeiBusinessDate(),
-            seq: nextSeq(cmdBody.storeId),
+            seq: boardSeq,
             updatedAt: new Date().toISOString(),
             source: 'system',
             tickets: [],
             clearedAt: new Date().toISOString(),
           });
+        } else if (cmdBody.type === 'push_numbers') {
+          const tickets = pushParamsToTickets(cmdBody.params);
+          boardSeq = nextSeq(cmdBody.storeId);
+          docs.set(boardKey(cmdBody.storeId), {
+            storeId: cmdBody.storeId,
+            businessDate: taipeiBusinessDate(),
+            seq: boardSeq,
+            updatedAt: new Date().toISOString(),
+            source: 'A',
+            tickets,
+            clearedAt: tickets.length ? null : new Date().toISOString(),
+          });
         }
-        docs.set(dk, { ...prev, pendingCommand: cmd });
+        docs.set(dk, { ...prev, pendingCommand: cmd, boardSeq });
         docs.set(commandLogKey(cmdBody.storeId, cmd.id), {
           at: new Date().toISOString(),
           type: cmdBody.type,
           deviceId: cmdBody.deviceId,
           commandId: cmd.id,
         });
-        return json(res, 200, { ok: true, commandId: cmd.id });
+        return json(res, 200, { ok: true, commandId: cmd.id, boardSeq });
       }
 
       return json(res, 404, apiError('not_found', 'Cloud function not found.'));

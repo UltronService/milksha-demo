@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261004h" />
-    <script src="../js/board/today-board.js?v=20261004h"></script>
+    <link rel="stylesheet" href="controller.css?v=20261006b" />
+    <script src="../js/board/today-board.js?v=20261006b"></script>
   </head>
   <body>
     <header class="top">
@@ -60,7 +60,8 @@
           >
             送出號碼
           </button>
-          <p class="hint quick-send-hint">每次送出一筆示範號碼到看板（本機連動預設自動連線）。</p>
+          <p class="hint quick-send-hint">每次送出一筆示範號碼到看板（預設雲端連線，免填金鑰）。</p>
+          <p id="transport-route" class="transport-route" data-testid="transport-route">路由：—</p>
           <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
         </div>
       </section>
@@ -72,14 +73,14 @@
             <select id="fld-store" data-testid="fld-store"></select>
           </label>
           <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
-            請先展開「進階設定」，在「雲端設定」填寫專案與金鑰，並輸入測試用存取碼後再按連線。
+            請先展開「進階設定」，在「雲端設定」填寫專案與金鑰後再按連線。
           </p>
           <details class="advanced" id="advanced-settings">
             <summary>進階設定</summary>
             <label>連線方式
               <select id="fld-mode" data-testid="fld-mode">
-                <option value="local" selected>本機連動（同一瀏覽器）</option>
-                <option value="cloud">雲端模式（店內／機上盒）</option>
+                <option value="local">本機連動（同一瀏覽器）</option>
+                <option value="cloud" selected>雲端模式（店內／機上盒）</option>
                 <option value="firestore">本機模擬雲端（工程測試）</option>
               </select>
             </label>
@@ -96,9 +97,6 @@
               <label>函式區域
                 <input id="fld-cloud-region" value="asia-east1" data-testid="fld-cloud-region" />
                 <span class="field-hint">預設 asia-east1</span>
-              </label>
-              <label>測試用存取碼
-                <input id="fld-code" type="password" placeholder="請輸入後端提供的存取碼" data-testid="fld-code" autocomplete="off" />
               </label>
               <label>測試環境專用 POS 金鑰
                 <input id="fld-pos-sign-key" type="password" placeholder="僅存於本機，不會放入看板連結" data-testid="fld-pos-sign-key" autocomplete="off" />
@@ -132,6 +130,13 @@
             <button type="button" id="btn-gen-board-link" data-testid="btn-gen-board-link">產生看板連結</button>
           </div>
           <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
+          <p
+            id="store-not-allowed-banner"
+            class="store-not-allowed-banner"
+            hidden
+            role="alert"
+            data-testid="store-not-allowed-banner"
+          ></p>
           <dl class="status-dl">
             <dt>台北時間</dt>
             <dd id="status-taipei-time" data-testid="status-taipei-time">—</dd>
@@ -253,31 +258,31 @@
       </section>
       </div>
     </main>
-    <script src="../config/firebase.js?v=20261004h"></script>
-    <script src="../js/transport/paths.js?v=20261004h"></script>
-    <script src="../js/transport/firestore-value.js?v=20261004h"></script>
-    <script src="../js/transport/board-seq.js?v=20261004h"></script>
-    <script src="../js/transport/cloud-settings.js?v=20261004h"></script>
-    <script src="../js/transport/controller-secrets.js?v=20261004h"></script>
-    <script src="../js/transport/config-resolve.js?v=20261004h"></script>
-    <script src="../js/vendor/qrcode-generator.js?v=20261004h"></script>
-    <script src="../js/transport/auth-session.js?v=20261004h"></script>
-    <script src="../js/vendor/md5.min.js?v=20261004h"></script>
-    <script src="../js/transport/milksha-md5.js?v=20261004h"></script>
-    <script src="../js/transport/milksha-pos-sign.js?v=20261004h"></script>
-    <script src="../js/transport/milksha-pos-wire.js?v=20261004h"></script>
-    <script src="../js/transport/json-raw.js?v=20261004h"></script>
-    <script src="../js/transport/dev-command-validation.js?v=20261004h"></script>
-    <script src="../js/transport/controller-command-errors.js?v=20261004h"></script>
-    <script src="../js/transport/cloud-api.js?v=20261004h"></script>
-    <script src="../js/transport/firestore-rest.js?v=20261004h"></script>
-    <script src="../js/transport/pos-receiver-validate.js?v=20261004h"></script>
-    <script src="../js/transport/local-poc-coord.js?v=20261004h"></script>
-    <script src="../js/transport/local-cloud-shim.js?v=20261004h"></script>
-    <script src="../js/transport/local-transport.js?v=20261004h"></script>
-    <script src="../js/transport/firestore-transport.js?v=20261004h"></script>
-    <script src="../js/transport/create-transport.js?v=20261004h"></script>
-    <script src="../js/receiver/validate-request.js?v=20261004h"></script>
-    <script src="controller-app.js?v=20261004h"></script>
+    <script src="../config/firebase.js?v=20261006b"></script>
+    <script src="../js/transport/paths.js?v=20261006b"></script>
+    <script src="../js/transport/firestore-value.js?v=20261006b"></script>
+    <script src="../js/transport/board-seq.js?v=20261006b"></script>
+    <script src="../js/transport/cloud-settings.js?v=20261006b"></script>
+    <script src="../js/transport/controller-secrets.js?v=20261006b"></script>
+    <script src="../js/transport/config-resolve.js?v=20261006b"></script>
+    <script src="../js/vendor/qrcode-generator.js?v=20261006b"></script>
+    <script src="../js/transport/auth-session.js?v=20261006b"></script>
+    <script src="../js/vendor/md5.min.js?v=20261006b"></script>
+    <script src="../js/transport/milksha-md5.js?v=20261006b"></script>
+    <script src="../js/transport/milksha-pos-sign.js?v=20261006b"></script>
+    <script src="../js/transport/milksha-pos-wire.js?v=20261006b"></script>
+    <script src="../js/transport/json-raw.js?v=20261006b"></script>
+    <script src="../js/transport/dev-command-validation.js?v=20261006b"></script>
+    <script src="../js/transport/controller-command-errors.js?v=20261006b"></script>
+    <script src="../js/transport/cloud-api.js?v=20261006b"></script>
+    <script src="../js/transport/firestore-rest.js?v=20261006b"></script>
+    <script src="../js/transport/pos-receiver-validate.js?v=20261006b"></script>
+    <script src="../js/transport/local-poc-coord.js?v=20261006b"></script>
+    <script src="../js/transport/local-cloud-shim.js?v=20261006b"></script>
+    <script src="../js/transport/local-transport.js?v=20261006b"></script>
+    <script src="../js/transport/firestore-transport.js?v=20261006b"></script>
+    <script src="../js/transport/create-transport.js?v=20261006b"></script>
+    <script src="../js/receiver/validate-request.js?v=20261006b"></script>
+    <script src="controller-app.js?v=20261006b"></script>
   </body>
 </html>

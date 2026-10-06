@@ -1,19 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('controller stays online while board tab is in background', async ({ browser }) => {
   test.setTimeout(150000);
   const ctx = await freshContext(browser);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  const base = `http://127.0.0.1:${PORT_SITE}`;
+  const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
 
-  await board.goto(`${base}/`);
+  await board.goto(boardUrl);
   await board.waitForFunction(
     () => window.QMS?.runtime?.applyPayload && window.receiverCloud,
     { timeout: 25000 },
   );
-  await controller.goto(`${base}/controller/`);
+  await controller.goto(ctrlUrl);
   await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
   await waitForReceiverOnline(board, 'local');
   await expect(controller.locator('#online-state')).toContainText('看板 在線', { timeout: 15000 });
@@ -32,7 +32,7 @@ test('board idle keeps DOM churn low between paging ticks', async ({ browser }) 
   test.setTimeout(90000);
   const ctx = await freshContext(browser);
   const board = await ctx.newPage();
-  await board.goto(`http://127.0.0.1:${PORT_SITE}/`);
+  await board.goto(urlsLocalHomePoc().board);
   await board.waitForFunction(() => window.QMS?.runtime?.applyPayload, { timeout: 25000 });
 
   const rows = [];

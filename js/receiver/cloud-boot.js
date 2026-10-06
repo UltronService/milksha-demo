@@ -34,7 +34,7 @@
     return 5 * 60 * 1000;
   }
 
-  function readCreds(params) {
+  function readCreds(params, transportMode) {
     const home = isHomeBoardPage();
     const storeParam = params.get('store');
     const deviceParam = params.get('device');
@@ -52,21 +52,21 @@
           /* ignore */
         }
       }
-      const Coord = root.QMS && root.QMS.Transport && root.QMS.Transport.LocalPocCoord;
-      if (Coord) {
-        const poc = Coord.readLocalPocTarget(root.localStorage);
-        if (poc) {
-          storeId = poc.storeId;
-          deviceId = poc.deviceId;
+      if (transportMode !== 'cloud') {
+        const Coord = root.QMS && root.QMS.Transport && root.QMS.Transport.LocalPocCoord;
+        if (Coord) {
+          const poc = Coord.readLocalPocTarget(root.localStorage);
+          if (poc) {
+            storeId = poc.storeId;
+            deviceId = poc.deviceId;
+          }
         }
       }
     }
-    const saved = root.QMS.Transport.CloudSettings.load();
-    const code = saved.accessCode || '';
     if (params.get('device')) {
       root.localStorage.setItem('milksha:deviceId', deviceId);
     }
-    return { storeId: storeId, deviceId: deviceId, accessCode: code };
+    return { storeId: storeId, deviceId: deviceId };
   }
 
   function showSetupGate(show) {
@@ -258,13 +258,16 @@
     const homeBoard = isHomeBoardPage();
     let mode = (params.get('mode') || '').toLowerCase();
     if (!mode && homeBoard) {
-      mode = 'local';
+      const preferCloud =
+        QMS.Transport.CloudSettings.prefersDefaultCloudMode &&
+        QMS.Transport.CloudSettings.prefersDefaultCloudMode();
+      mode = preferCloud ? 'cloud' : 'local';
     }
     if (!homeBoard && mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
       return;
     }
 
-    if (mode === 'cloud' && !QMS.Transport.CloudSettings.isComplete()) {
+    if (mode === 'cloud' && !QMS.Transport.CloudSettings.isBundledCloudReady()) {
       if (homeBoard) {
         mode = 'local';
       } else {
@@ -297,14 +300,13 @@
     }
 
     showSetupGate(false);
-    const creds = readCreds(params);
     const transportMode = mode === 'cloud' ? 'cloud' : mode === 'firestore' ? 'firestore' : 'local';
+    const creds = readCreds(params, transportMode);
     const transport = QMS.Transport.createTransport(transportMode, {
       storeId: creds.storeId,
       config: modeResolved.config,
       role: 'device',
       deviceId: creds.deviceId,
-      accessCode: creds.accessCode,
       homeBoard: homeBoard,
       onAuthSuccess: function () {
         clearGuestAuthDebug();

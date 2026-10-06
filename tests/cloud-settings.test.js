@@ -8,7 +8,7 @@ const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
 
-function loadCloudSettings() {
+function loadCloudSettings(milkshaConfig) {
   const storage = new Map();
   const localStorage = {
     getItem: (k) => storage.get(k) || null,
@@ -17,6 +17,12 @@ function loadCloudSettings() {
   };
   const sandbox = {
     globalThis: {},
+    MILKSHA_FIREBASE_CONFIG: milkshaConfig || {
+      projectId: 'milksha-qms-dev',
+      apiKey: 'bundled-key',
+      region: 'asia-east1',
+      defaultCloudMode: true,
+    },
     localStorage,
     location: { hash: '', pathname: '/receiver-demo/', search: '?mode=cloud', replaceState: () => {} },
     history: { replaceState: () => {} },
@@ -52,7 +58,6 @@ test('cloud settings round-trip and hash import', function () {
     projectId: 'demo-proj',
     apiKey: 'key-abc',
     region: 'asia-east1',
-    accessCode: 'secret-code',
   });
   assert.equal(CS.isComplete(CS.load()), true);
   const hash = CS.encodeCfgHash(CS.load());
@@ -60,10 +65,9 @@ test('cloud settings round-trip and hash import', function () {
   assert.equal(CS.applyHashImport(), true);
   const loaded = CS.load();
   assert.equal(loaded.projectId, 'demo-proj');
-  assert.equal(loaded.accessCode, 'secret-code');
 });
 
-test('applyHashImport stores accessCode and strips cfg from address bar', function () {
+test('applyHashImport stores settings and strips cfg from address bar', function () {
   const { CS, sandbox } = loadCloudSettings();
   let replaced = '';
   sandbox.history.replaceState = function (_s, _t, url) {
@@ -73,11 +77,10 @@ test('applyHashImport stores accessCode and strips cfg from address bar', functi
     projectId: 'demo-proj',
     apiKey: 'k1',
     region: 'asia-east1',
-    accessCode: 'trial-access-99',
   });
   sandbox.location.hash = '#cfg=' + hash;
   assert.equal(CS.applyHashImport(), true);
-  assert.equal(CS.load().accessCode, 'trial-access-99');
+  assert.equal(CS.load().projectId, 'demo-proj');
   assert.equal(replaced, '/receiver-demo/?mode=cloud');
 });
 
@@ -88,7 +91,6 @@ test('board setup hash never contains POS signing key', function () {
     projectId: 'demo-proj',
     apiKey: 'web-api-key-abc',
     region: 'asia-east1',
-    accessCode: 'access-only',
     posSignSecret: posKey,
     posSignKey: posKey,
   });
@@ -102,7 +104,7 @@ test('board setup hash never contains POS signing key', function () {
   const payload = CS.cfgPayload(
     Object.assign(CS.load(), { posSignSecret: posKey, posSigningKey: posKey }),
   );
-  assert.deepEqual(Object.keys(payload).sort(), ['accessCode', 'apiKey', 'projectId', 'region']);
+  assert.deepEqual(Object.keys(payload).sort(), ['apiKey', 'projectId', 'region']);
 });
 
 test('decodeCfgHash rejects invalid projectId and keeps only cfg fields', function () {
@@ -111,7 +113,6 @@ test('decodeCfgHash rejects invalid projectId and keeps only cfg fields', functi
     projectId: 'bad',
     apiKey: 'k1',
     region: 'asia-east1',
-    accessCode: 'x',
   });
   sandbox.location.hash = '#cfg=' + bad;
   assert.equal(CS.applyHashImport(), false);
@@ -119,7 +120,6 @@ test('decodeCfgHash rejects invalid projectId and keeps only cfg fields', functi
     projectId: 'demo-proj',
     apiKey: 'k1',
     region: 'asia-east1',
-    accessCode: 'x',
     gateway: 'http://evil',
   });
   const decoded = CS.decodeCfgHash('#cfg=' + good);
@@ -132,4 +132,13 @@ test('production endpoints match Firebase functions URL pattern', function () {
   const ep = CS.productionEndpoints('milksha-qms-dev', 'asia-east1');
   assert.equal(ep.functionsBaseUrl, 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/');
   assert.ok(ep.firestoreRestBase.includes('firestore.googleapis.com'));
+});
+
+test('effective() merges bundled MILKSHA_FIREBASE_CONFIG when localStorage empty', function () {
+  const { CS } = loadCloudSettings();
+  assert.equal(CS.load().projectId, '');
+  assert.equal(CS.isBundledCloudReady(), true);
+  const eff = CS.effective();
+  assert.equal(eff.projectId, 'milksha-qms-dev');
+  assert.equal(eff.apiKey, 'bundled-key');
 });

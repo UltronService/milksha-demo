@@ -125,7 +125,6 @@
       functionsBaseUrl: functionsBaseUrl,
       identityToolkitBaseUrl: identityToolkitBaseUrl,
       useEmulator: useEmulator,
-      defaultControllerAccessCode: b.defaultControllerAccessCode || '',
     });
   }
 
@@ -141,14 +140,15 @@
     const saved = CloudSettings.load();
 
     if (mode === 'cloud') {
-      if (!CloudSettings.isComplete(saved)) {
+      const eff = CloudSettings.effective ? CloudSettings.effective(saved) : saved;
+      if (!CloudSettings.isComplete(eff)) {
         return null;
       }
-      const prod = CloudSettings.productionEndpoints(saved.projectId, saved.region);
+      const prod = CloudSettings.productionEndpoints(eff.projectId, eff.region);
       return Object.assign(sharedTiming(b), {
-        projectId: saved.projectId,
-        apiKey: saved.apiKey,
-        region: saved.region || 'asia-east1',
+        projectId: eff.projectId,
+        apiKey: eff.apiKey,
+        region: eff.region || 'asia-east1',
         functionsBaseUrl: prod.functionsBaseUrl,
         firestoreRestBase: prod.firestoreRestBase,
         identityToolkitBaseUrl: prod.identityToolkitBaseUrl,

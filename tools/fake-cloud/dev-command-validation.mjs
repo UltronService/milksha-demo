@@ -10,6 +10,7 @@ const COMMAND_PARAM_KEYS = {
   reload: [],
   reboot: [],
   clear_now: [],
+  push_numbers: ['ready', 'preparing'],
 };
 
 const HEARTBEAT_KEYS = [
@@ -73,6 +74,24 @@ export function validateDeviceId(deviceId) {
   return { ok: true, deviceId: id };
 }
 
+function normalizeStringNumberList(value) {
+  if (value === undefined || value === null) {
+    return { ok: true, list: [] };
+  }
+  if (!Array.isArray(value)) {
+    return invalidCommandParams('invalid params');
+  }
+  const list = [];
+  for (const item of value) {
+    const s = String(item == null ? '' : item).trim();
+    if (!s || s.length > 32) {
+      return invalidCommandParams('invalid params');
+    }
+    list.push(s);
+  }
+  return { ok: true, list };
+}
+
 function normalizeParams(type, params) {
   const allowed = COMMAND_PARAM_KEYS[type];
   if (!allowed) {
@@ -86,6 +105,19 @@ function normalizeParams(type, params) {
     return invalidCommandParams('invalid params');
   }
   const out = {};
+  if (type === 'push_numbers') {
+    const readyNorm = normalizeStringNumberList(raw.ready);
+    if (!readyNorm.ok) return readyNorm;
+    const prepNorm = normalizeStringNumberList(raw.preparing);
+    if (!prepNorm.ok) return prepNorm;
+    out.ready = readyNorm.list;
+    out.preparing = prepNorm.list;
+    const paramsJson = JSON.stringify(out);
+    if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
+      return invalidCommandParams('params too large');
+    }
+    return { ok: true, params: out };
+  }
   for (const key of allowed) {
     if (raw[key] === undefined) continue;
     if (key === 'durationMs' || key === 'delayMs') {

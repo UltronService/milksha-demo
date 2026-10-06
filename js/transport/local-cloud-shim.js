@@ -179,16 +179,35 @@
           params: cmdBody.params || {},
           issuedAt: new Date().toISOString(),
         };
+        let boardSeq = Number(doc.boardSeq) || 0;
         if (cmdBody.type === 'clear_now') {
-          const board = TodayBoard.buildTodayBoard(sid, nextSeq(), [], 'system');
+          boardSeq = nextSeq();
+          const board = TodayBoard.buildTodayBoard(sid, boardSeq, [], 'system');
+          writeJson(storage, boardKey(sid), board);
+          channel({ type: 'board', storeId: sid });
+        } else if (cmdBody.type === 'push_numbers') {
+          const params = cmdBody.params || {};
+          const ready = Array.isArray(params.ready) ? params.ready : [];
+          const preparing = Array.isArray(params.preparing) ? params.preparing : [];
+          const nc = [];
+          ready.forEach(function (no) {
+            nc.push({ source_type: 'From_Store_OK', number: String(no) });
+          });
+          preparing.forEach(function (no) {
+            nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
+          });
+          const tickets = TodayBoard.numberContentToTickets(nc);
+          boardSeq = nextSeq();
+          const board = TodayBoard.buildTodayBoard(sid, boardSeq, tickets, 'A');
           writeJson(storage, boardKey(sid), board);
           channel({ type: 'board', storeId: sid });
         }
         doc.pendingCommand = cmd;
+        doc.boardSeq = boardSeq;
         writeJson(storage, deviceKey(sid, devId), doc);
         channel({ type: 'command', storeId: sid, deviceId: devId });
         appendCommandLog({ kind: 'devCommand', body: body, command: cmd });
-        return { ok: true, commandId: cmd.id };
+        return { ok: true, commandId: cmd.id, boardSeq: boardSeq };
       },
       posReceiver: async function (body) {
         const reject = function (information) {

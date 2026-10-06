@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync, readFileSync } from 'node:fs';
-import { urlsForMode, connectController, resetCloudState, guestBoardStyleFingerprint, expandControllerZone } from './harness.mjs';
+import {
+  urlsForMode,
+  connectController,
+  resetCloudState,
+  guestBoardStyleFingerprint,
+  expandControllerZone,
+  installBundledCloudRouteShim,
+} from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -134,7 +141,9 @@ test('save cloud mode screenshots', async ({ browser }) => {
     }
   });
   const controller = await ctx.newPage();
-  await controller.goto(`${base}/controller/`);
+  await installBundledCloudRouteShim(controller);
+  await controller.goto(`${base}/controller/?mode=cloud`);
+  await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
   await expandControllerZone(controller, 'sec-connect');
   await controller.evaluate(() => {
     const adv = document.getElementById('advanced-settings');
@@ -147,13 +156,11 @@ test('save cloud mode screenshots', async ({ browser }) => {
     }
     document.getElementById('fld-cloud-project').value = 'milksha-qms-dev';
     document.getElementById('fld-cloud-apikey').value = 'e2e-placeholder-key';
-    document.getElementById('fld-code').value = 'e2e-placeholder-code';
     document.getElementById('fld-device').value = 'stb-01';
     if (window.QMS?.Transport?.CloudSettings) {
       window.QMS.Transport.CloudSettings.save({
         projectId: 'milksha-qms-dev',
         apiKey: 'e2e-placeholder-key',
-        accessCode: 'e2e-placeholder-code',
         region: 'asia-east1',
       });
     }
@@ -169,10 +176,12 @@ test('save cloud mode screenshots', async ({ browser }) => {
   await controller.screenshot({ path: `${ART}/controller-mobile.png`, fullPage: false });
 
   const board = await ctx.newPage();
+  await installBundledCloudRouteShim(board);
   await board.goto(`${base}/receiver-demo/?store=s120030&mode=cloud`);
+  await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
   await board.setViewportSize({ width: 1366, height: 768 });
-  await expect(board.locator('[data-testid="rcv-setup-gate"]')).toBeVisible();
-  await board.screenshot({ path: `${ART}/board-setup-needed-1366.png`, fullPage: false });
+  await expect(board.locator('#rcv-stage')).toBeVisible();
+  await board.screenshot({ path: `${ART}/board-cloud-receiver-1366.png`, fullPage: false });
 
   await ctx.close();
 });

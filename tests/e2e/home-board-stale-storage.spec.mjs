@@ -38,10 +38,10 @@ test('stale deviceId: board first then controller shows online and numbers', asy
   await ctx.addInitScript(STALE_SEED);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  await board.goto(`${BASE}/`);
+  await board.goto(`${BASE}/?mode=local`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(`${BASE}/controller/?mode=local`);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
@@ -56,12 +56,12 @@ test('stale deviceId: controller first then board shows online and numbers', asy
   await ctx.addInitScript(STALE_SEED);
   const controller = await ctx.newPage();
   const board = await ctx.newPage();
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(`${BASE}/controller/?mode=local`);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
   );
-  await board.goto(`${BASE}/`);
+  await board.goto(`${BASE}/?mode=local`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
