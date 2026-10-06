@@ -166,6 +166,15 @@ export function stopHarness() {
   stopOwnedCloud();
 }
 
+export function urlsLocalHomePoc() {
+  const base = `http://127.0.0.1:${PORT_SITE}`;
+  return {
+    base,
+    board: `${base}/?mode=local`,
+    ctrl: `${base}/controller/?mode=local`,
+  };
+}
+
 export function urlsForMode(mode) {
   const base = `http://127.0.0.1:${PORT_SITE}`;
   const gw = `127.0.0.1:${PORT_SITE}`;

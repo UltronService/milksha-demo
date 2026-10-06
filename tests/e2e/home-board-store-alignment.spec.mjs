@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
-
-const BASE = `http://127.0.0.1:${PORT_SITE}`;
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 const WRONG_STORE_SEED = () => {
   localStorage.setItem(
@@ -15,7 +13,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   const ctx = await freshContext(browser);
   await ctx.addInitScript(WRONG_STORE_SEED);
   const controller = await ctx.newPage();
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(urlsLocalHomePoc().ctrl);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
@@ -25,7 +23,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   });
 
   const board = await ctx.newPage();
-  await board.goto(`${BASE}/?store=s110012&device=stb-01`);
+  await board.goto(`${urlsLocalHomePoc().board}&store=s110012&device=stb-01`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
 
@@ -49,11 +47,11 @@ test('board already open on wrong store realigns when controller connects', asyn
   const ctx = await freshContext(browser);
   await ctx.addInitScript(WRONG_STORE_SEED);
   const board = await ctx.newPage();
-  await board.goto(`${BASE}/?store=s110012&device=stb-01`);
+  await board.goto(`${urlsLocalHomePoc().board}&store=s110012&device=stb-01`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
 
   const controller = await ctx.newPage();
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(urlsLocalHomePoc().ctrl);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },

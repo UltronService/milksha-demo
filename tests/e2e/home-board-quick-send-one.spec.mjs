@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
-
-const BASE = `http://127.0.0.1:${PORT_SITE}`;
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('one quick send click adds exactly one ready number', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  await board.goto(`${BASE}/`);
+  const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
+  await board.goto(boardUrl);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(ctrlUrl);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
@@ -47,9 +46,10 @@ test('ten quick sends yield ten ready numbers; clear board works', async ({ brow
   });
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  await board.goto(`${BASE}/`);
+  const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
+  await board.goto(boardUrl);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
-  await controller.goto(`${BASE}/controller/`);
+  await controller.goto(ctrlUrl);
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
