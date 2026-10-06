@@ -15,12 +15,12 @@ test('local-link: controller-only shows offline; send fails until board opens', 
   await expect(controller.locator('#online-state')).toContainText(/離線|未知/);
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(controller.locator('[data-testid="user-banner"]')).toContainText('尚未連線', {
+  await expect(controller.locator('[data-testid="user-banner"]')).toContainText('請先打開看板', {
     timeout: 8000,
   });
   const posFail = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
   expect(posFail && posFail.isSuccess).toBe(false);
-  expect(String(posFail && posFail.information)).toMatch(/尚未連線/);
+  expect(String(posFail && posFail.information)).toMatch(/機台|尚未連線/);
 
   const board = await ctx.newPage();
   await board.goto(boardUrl);

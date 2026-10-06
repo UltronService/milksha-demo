@@ -178,9 +178,10 @@ test('save cloud mode screenshots', async ({ browser }) => {
   const board = await ctx.newPage();
   await installBundledCloudRouteShim(board);
   await board.goto(`${base}/receiver-demo/?store=s120030&mode=cloud`);
+  await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
   await board.setViewportSize({ width: 1366, height: 768 });
-  await expect(board.locator('[data-testid="rcv-setup-gate"]')).toBeVisible();
-  await board.screenshot({ path: `${ART}/board-setup-needed-1366.png`, fullPage: false });
+  await expect(board.locator('#rcv-stage')).toBeVisible();
+  await board.screenshot({ path: `${ART}/board-cloud-receiver-1366.png`, fullPage: false });
 
   await ctx.close();
 });

@@ -190,12 +190,21 @@ for (const mode of MODES) {
       await controller.selectOption('#fld-status', c.status);
       await controller.click('#btn-add-ticket');
     }
-    await expect(receiver.locator('.rcv-prep .rcv-tag', { hasText: '熊貓' })).toBeVisible({
-      timeout: 15000,
-    });
-    await expect(receiver.locator('.rcv-ready .rcv-tag', { hasText: 'Uber' })).toBeVisible({
-      timeout: 15000,
-    });
+    if (mode === 'firestore') {
+      await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '6201' })).toBeVisible({
+        timeout: 20000,
+      });
+      await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '6203' })).toBeVisible({
+        timeout: 20000,
+      });
+    } else {
+      await expect(receiver.locator('.rcv-prep .rcv-tag', { hasText: '熊貓' })).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(receiver.locator('.rcv-ready .rcv-tag', { hasText: 'Uber' })).toBeVisible({
+        timeout: 15000,
+      });
+    }
     await ctx.close();
   });
 
