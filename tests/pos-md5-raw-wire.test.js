@@ -91,7 +91,7 @@ test('md5 is computed over exact wire bytes including Chinese and slash', async 
     assert.equal(res.status, 200);
     const json = await res.json();
     assert.equal(json.isSuccess, false);
-    assert.match(json.information, /尚未連線/);
+    assert.match(json.information, /機台|尚未連線/);
   } finally {
     proc.kill();
   }

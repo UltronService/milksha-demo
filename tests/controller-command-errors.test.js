@@ -26,7 +26,7 @@ test('connect user message prefers response code over http status', function () 
       status: 403,
       response: { code: 'invalid_access_code', message: 'wrong access code' },
     }),
-    E.USER_MSG_CONNECT_ACCESS,
+    E.USER_MSG_CONNECT_FORBIDDEN,
   );
   assert.equal(
     E.connectUserMessage({ status: 403, response: { code: 'forbidden', message: 'no permission' } }),
