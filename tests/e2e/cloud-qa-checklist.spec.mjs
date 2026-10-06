@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  restartCloud,
+  ensureCloudRunning,
   resetCloudState,
   startSite,
   PORT_SITE,
@@ -14,7 +14,7 @@ const FULL_BG = process.env.PR22_FULL_QA === '1';
 
 test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
   test.beforeAll(async () => {
-    await restartCloud();
+    await ensureCloudRunning();
     await startSite();
   });
 

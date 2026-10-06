@@ -51,7 +51,7 @@ test('controller connect 401 shows access code alert', async ({ browser }) => {
   await ctx.close();
 });
 
-test('controller connect 403 invalid_access_code shows access code alert', async ({ browser }) => {
+test('controller connect 403 invalid_access_code shows forbidden alert', async ({ browser }) => {
   const ctx = await browser.newContext();
   const controller = await ctx.newPage();
   let attempts = 0;
@@ -65,7 +65,7 @@ test('controller connect 403 invalid_access_code shows access code alert', async
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
   await controller.click('#btn-connect');
-  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401, { timeout: 10000 });
+  await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
   expect(attempts).toBe(1);
   await ctx.close();
 });

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  restartCloud,
+  ensureCloudRunning,
   resetCloudState,
   startSite,
   PORT_SITE,
@@ -13,7 +13,7 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
 test.describe('cloud remote send (isolated contexts)', () => {
   test.beforeAll(async () => {
-    await restartCloud();
+    await ensureCloudRunning();
     await startSite();
   });
 

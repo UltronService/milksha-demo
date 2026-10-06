@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  restartCloud,
+  ensureCloudRunning,
   resetCloudState,
   startSite,
   PORT_SITE,
@@ -17,7 +17,7 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
 async function main() {
   mkdirSync(OUT, { recursive: true });
-  await restartCloud();
+  await ensureCloudRunning();
   await resetCloudState({ seedDevice: true });
   await startSite();
   const browser = await chromium.launch();

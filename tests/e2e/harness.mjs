@@ -48,31 +48,17 @@ export async function ensureCloudRunning() {
   await waitCloudReady();
 }
 
-function killProcessOnPort(port) {
-  try {
-    const out = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf8' }).trim();
-    if (!out) {
-      return;
-    }
-    for (const pid of out.split(/\s+/)) {
-      if (pid) {
-        try {
-          process.kill(Number(pid), 'SIGKILL');
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  } catch {
-    /* ignore */
-}
-}
-
-/** Kill any stale fake-cloud and start the current workspace server.mjs. */
+/** Kill owned fake-cloud and start the current workspace server.mjs (local dev). */
 export async function restartCloud() {
   stopOwnedCloud();
-  killProcessOnPort(PORT_CLOUD);
-  await new Promise((r) => setTimeout(r, 150));
+  try {
+    const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/health`);
+    if (res.ok) {
+      return;
+    }
+  } catch {
+    /* start below */
+  }
   startCloud();
   await waitCloudReady();
 }
