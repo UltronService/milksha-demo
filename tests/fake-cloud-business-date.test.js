@@ -52,7 +52,7 @@ test('fake-cloud clears stale businessDate board on read', async function () {
   }
 });
 
-test('fake-cloud boxHeartbeat returns 404 for unknown device', async function () {
+test('fake-cloud boxHeartbeat registers unknown device (PR #8)', async function () {
   const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
     stdio: 'ignore',
@@ -77,10 +77,9 @@ test('fake-cloud boxHeartbeat returns 404 for unknown device', async function ()
         }),
       },
     );
-    assert.equal(res.status, 404);
+    assert.equal(res.status, 200);
     const json = await res.json();
-    assert.equal(json.code, 'device_not_found');
-    assert.equal(json.error, undefined);
+    assert.equal(json.ok, true);
   } finally {
     proc.kill();
   }

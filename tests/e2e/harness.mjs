@@ -48,17 +48,43 @@ export async function ensureCloudRunning() {
   await waitCloudReady();
 }
 
+function killProcessOnPort(port) {
+  try {
+    const out = execSync(`lsof -ti :${port} 2>/dev/null || true`, { encoding: 'utf8' }).trim();
+    if (!out) {
+      return;
+    }
+    for (const pid of out.split(/\s+/)) {
+      if (pid) {
+        try {
+          process.kill(Number(pid), 'SIGKILL');
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+}
+}
+
 /** Kill any stale fake-cloud and start the current workspace server.mjs. */
 export async function restartCloud() {
   stopOwnedCloud();
+  killProcessOnPort(PORT_CLOUD);
   await new Promise((r) => setTimeout(r, 150));
   startCloud();
   await waitCloudReady();
 }
 
-export async function resetCloudState() {
+export async function resetCloudState(options) {
+  const opts = options && typeof options === 'object' ? options : {};
   try {
-    await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, { method: 'POST' });
+    await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seedDevice: opts.seedDevice !== false }),
+    });
   } catch {
     /* ignore */
   }
@@ -167,6 +193,65 @@ export function urlsForMode(mode) {
   return { recv, ctrl, base };
 }
 
+export async function installBundledCloudRouteShim(page) {
+  const base = `http://127.0.0.1:${PORT_CLOUD}`;
+  async function proxyToFakeCloud(route, targetUrl) {
+    const req = route.request();
+    const headers = { ...req.headers() };
+    delete headers.host;
+    const res = await fetch(targetUrl, {
+      method: req.method(),
+      headers,
+      body: req.postDataBuffer(),
+    });
+    const body = Buffer.from(await res.arrayBuffer());
+    const outHeaders = {};
+    res.headers.forEach((value, key) => {
+      outHeaders[key] = value;
+    });
+    await route.fulfill({ status: res.status, headers: outHeaders, body });
+  }
+
+  await page.route('https://asia-east1-milksha-qms-dev.cloudfunctions.net/**', async (route) => {
+    const u = new URL(route.request().url());
+    const fn = u.pathname.replace(/^\//, '');
+    await proxyToFakeCloud(route, `${base}/fn/milksha-qms-dev/asia-east1/${fn}${u.search}`);
+  });
+  await page.route('https://identitytoolkit.googleapis.com/**', async (route) => {
+    const u = new URL(route.request().url());
+    await proxyToFakeCloud(route, `${base}/identity${u.pathname}${u.search}`);
+  });
+  await page.route('https://securetoken.googleapis.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id_token: 'fake-id-token',
+        refresh_token: 'fake-refresh',
+        expires_in: '3600',
+        token_type: 'Bearer',
+      }),
+    });
+  });
+  await page.route('https://firestore.googleapis.com/**', async (route) => {
+    const u = new URL(route.request().url());
+    await proxyToFakeCloud(route, `${base}${u.pathname}${u.search}`);
+  });
+}
+
+export async function isolatedCloudContext(browser) {
+  const ctx = await browser.newContext();
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+  return ctx;
+}
+
 export async function freshContext(browser) {
   const ctx = await browser.newContext();
   await ctx.addInitScript(() => {
@@ -182,7 +267,6 @@ export async function freshContext(browser) {
         JSON.stringify({
           projectId: 'milksha-qms-dev',
           apiKey: 'fake-api-key-for-emulator',
-          accessCode: 'fake-milksha-controller-access-code',
           region: 'asia-east1',
           useEmulator: true,
           gateway: '',
@@ -300,18 +384,16 @@ export async function connectController(page, mode) {
     await page.selectOption('#fld-mode', 'firestore');
     // 進階設定 is collapsed by default; set fields via script (URL params also feed buildConfig).
     await page.evaluate(
-      ({ host, key, code }) => {
+      ({ host, key }) => {
         const adv = document.getElementById('advanced-settings');
         if (adv) adv.open = true;
         const g = document.getElementById('fld-gateway');
         const k = document.getElementById('fld-cloud-apikey');
         const p = document.getElementById('fld-cloud-project');
-        const c = document.getElementById('fld-code');
         const emu = document.getElementById('fld-use-emulator');
         if (g) g.value = host;
         if (k) k.value = key;
         if (p) p.value = 'milksha-qms-dev';
-        if (c) c.value = code;
         if (emu) emu.checked = true;
         const prefixEl = document.getElementById('fld-emulator-prefix');
         if (prefixEl) prefixEl.value = '__emulator';
@@ -319,7 +401,6 @@ export async function connectController(page, mode) {
           window.QMS.Transport.CloudSettings.save({
             projectId: 'milksha-qms-dev',
             apiKey: key,
-            accessCode: code,
             gateway: host,
             useEmulator: true,
             emulatorPrefix: '__emulator',
@@ -330,7 +411,6 @@ export async function connectController(page, mode) {
       {
         host: `127.0.0.1:${PORT_SITE}`,
         key: 'fake-api-key-for-emulator',
-        code: 'fake-milksha-controller-access-code',
       },
     );
   } else {

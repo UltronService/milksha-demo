@@ -147,13 +147,11 @@ test('save cloud mode screenshots', async ({ browser }) => {
     }
     document.getElementById('fld-cloud-project').value = 'milksha-qms-dev';
     document.getElementById('fld-cloud-apikey').value = 'e2e-placeholder-key';
-    document.getElementById('fld-code').value = 'e2e-placeholder-code';
     document.getElementById('fld-device').value = 'stb-01';
     if (window.QMS?.Transport?.CloudSettings) {
       window.QMS.Transport.CloudSettings.save({
         projectId: 'milksha-qms-dev',
         apiKey: 'e2e-placeholder-key',
-        accessCode: 'e2e-placeholder-code',
         region: 'asia-east1',
       });
     }

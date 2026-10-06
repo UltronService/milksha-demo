@@ -9,13 +9,22 @@
 
   const POS_SIGN_KEY = 'milksha:controller-pos-sign-key';
 
+  function bundledPosSignSecret() {
+    const b = root.MILKSHA_FIREBASE_CONFIG || {};
+    return String(b.posSignSecret || '').trim();
+  }
+
   function loadPosSignSecret(storage) {
     const s = storage || root.localStorage;
     try {
-      return String(s.getItem(POS_SIGN_KEY) || '').trim();
+      const stored = String(s.getItem(POS_SIGN_KEY) || '').trim();
+      if (stored) {
+        return stored;
+      }
     } catch (e) {
-      return '';
+      /* ignore */
     }
+    return bundledPosSignSecret();
   }
 
   function savePosSignSecret(value, storage) {

@@ -328,9 +328,16 @@ test('board | clock shows Taipei when browser TZ is UTC', async ({ browser }) =>
   await ctx.close();
 });
 
-test('cloud | receiver setup gate without saved config', async ({ browser }) => {
-  const ctx = await freshContext(browser);
+test('cloud | receiver setup gate without bundled or saved config', async ({ browser }) => {
+  const ctx = await browser.newContext();
   const page = await ctx.newPage();
+  await page.route('**/config/firebase.js*', async (route) => {
+    await route.fulfill({
+      contentType: 'text/javascript',
+      body:
+        "(function (r) { r.MILKSHA_FIREBASE_CONFIG = { projectId: '', apiKey: '', region: 'asia-east1', defaultCloudMode: false }; })(typeof globalThis !== 'undefined' ? globalThis : window);",
+    });
+  });
   await page.goto(`${urlsForMode('local').base}/receiver-demo/?store=s120030&mode=cloud`);
   await expect(page.locator('[data-testid="rcv-setup-gate"]')).toBeVisible();
   await expect(page.locator('[data-testid="rcv-guest-stage"]')).toBeHidden();

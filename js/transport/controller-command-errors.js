@@ -10,10 +10,12 @@
   const USER_MSG_401 = '登入已過期。請重新登入，再送出指令。';
   const USER_MSG_403 =
     '這個帳號沒有這間店的權限。請檢查店號。';
-  const USER_MSG_CONNECT_ACCESS = '存取碼錯誤。請重新確認，再連線。';
+  const USER_MSG_CONNECT_ACCESS = '登入失敗。請稍後再按連線。';
   const USER_MSG_CONNECT_FORBIDDEN = USER_MSG_403;
+  const USER_MSG_STORE_NOT_ALLOWED = '這家店不能用控制端測試，請用 s120030';
   const USER_MSG_CONNECT_CLOUD = '雲端暫時出錯。請稍後再連線。';
-  const USER_MSG_404 = '找不到這台機上盒。請檢查裝置編號。';
+  const USER_MSG_DEVICE_NOT_FOUND = '請先打開看板';
+  const USER_MSG_404 = USER_MSG_DEVICE_NOT_FOUND;
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
   const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
   const USER_MSG_INTERNAL_ERROR = '雲端暫時出錯。請稍後再送一次。';
@@ -56,13 +58,11 @@
   function connectUserMessage(err) {
     const status = err && err.status ? Number(err.status) : 0;
     const code = resolveErrorCode(err, {});
-    if (
-      code === 'invalid_access_code' ||
-      code === 'invalid_token' ||
-      code === 'unauthorized' ||
-      status === 401
-    ) {
+    if (code === 'invalid_token' || code === 'unauthorized' || status === 401) {
       return USER_MSG_CONNECT_ACCESS;
+    }
+    if (code === 'store_not_allowed') {
+      return USER_MSG_STORE_NOT_ALLOWED;
     }
     if (status === 403 || code === 'forbidden') {
       return USER_MSG_CONNECT_FORBIDDEN;
@@ -164,6 +164,7 @@
     USER_MSG_CONNECT_ACCESS: USER_MSG_CONNECT_ACCESS,
     USER_MSG_CONNECT_FORBIDDEN: USER_MSG_CONNECT_FORBIDDEN,
     USER_MSG_CONNECT_CLOUD: USER_MSG_CONNECT_CLOUD,
+    USER_MSG_STORE_NOT_ALLOWED: USER_MSG_STORE_NOT_ALLOWED,
     connectUserMessage: connectUserMessage,
     devCommandUserMessage: devCommandUserMessage,
     resolveErrorCode: resolveErrorCode,

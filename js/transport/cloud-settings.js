@@ -29,7 +29,6 @@
       projectId: '',
       apiKey: '',
       region: 'asia-east1',
-      accessCode: '',
       useEmulator: false,
       gateway: '',
       emulatorPrefix: '',
@@ -46,6 +45,15 @@
     return s;
   }
 
+  function bundledFromConfig() {
+    const b = root.MILKSHA_FIREBASE_CONFIG || {};
+    return {
+      projectId: String(b.projectId || '').trim(),
+      apiKey: String(b.apiKey || '').trim(),
+      region: String(b.region || 'asia-east1').trim() || 'asia-east1',
+    };
+  }
+
   function load(storage) {
     const s = storage || root.localStorage;
     try {
@@ -59,6 +67,32 @@
     }
   }
 
+  /** Saved settings merged with MILKSHA_FIREBASE_CONFIG (Pages 內建、免手動填寫). */
+  function effective(partial, storage) {
+    const saved = stripDevFields(Object.assign(defaults(), partial || load(storage)));
+    const bundled = bundledFromConfig();
+    return stripDevFields({
+      projectId: saved.projectId || bundled.projectId,
+      apiKey: saved.apiKey || bundled.apiKey,
+      region: saved.region || bundled.region,
+      useEmulator: saved.useEmulator,
+      gateway: saved.gateway,
+      emulatorPrefix: saved.emulatorPrefix,
+    });
+  }
+
+  function isBundledCloudReady() {
+    return isComplete(effective());
+  }
+
+  function prefersDefaultCloudMode() {
+    const b = root.MILKSHA_FIREBASE_CONFIG || {};
+    if (b.defaultCloudMode === false) {
+      return false;
+    }
+    return Boolean(b.defaultCloudMode) || isBundledCloudReady();
+  }
+
   function save(partial, storage) {
     const s = storage || root.localStorage;
     const merged = stripDevFields(Object.assign(load(s), partial || {}));
@@ -67,11 +101,8 @@
   }
 
   function isComplete(settings) {
-    const s = settings || load();
+    const s = settings ? effective(settings) : effective();
     if (!String(s.projectId || '').trim() || !String(s.apiKey || '').trim()) {
-      return false;
-    }
-    if (!String(s.accessCode || '').trim()) {
       return false;
     }
     if (!PROJECT_ID_RE.test(String(s.projectId || '').trim())) {
@@ -110,12 +141,11 @@
   }
 
   function cfgPayload(settings) {
-    const s = settings || load();
+    const s = effective(settings);
     return {
       projectId: String(s.projectId || '').trim(),
       apiKey: String(s.apiKey || '').trim(),
       region: String(s.region || 'asia-east1').trim() || 'asia-east1',
-      accessCode: String(s.accessCode || '').trim(),
     };
   }
 
@@ -126,7 +156,6 @@
     const projectId = String(json.projectId || '').trim();
     const apiKey = String(json.apiKey || '').trim();
     const region = String(json.region || 'asia-east1').trim() || 'asia-east1';
-    const accessCode = String(json.accessCode || '').trim();
     if (!PROJECT_ID_RE.test(projectId)) {
       return null;
     }
@@ -140,7 +169,6 @@
       projectId: projectId,
       apiKey: apiKey,
       region: region,
-      accessCode: accessCode,
       useEmulator: false,
       gateway: '',
       emulatorPrefix: '',
@@ -251,6 +279,10 @@
     defaults: defaults,
     load: load,
     save: save,
+    effective: effective,
+    bundledFromConfig: bundledFromConfig,
+    isBundledCloudReady: isBundledCloudReady,
+    prefersDefaultCloudMode: prefersDefaultCloudMode,
     isComplete: isComplete,
     encodeCfgHash: encodeCfgHash,
     decodeCfgHash: decodeCfgHash,

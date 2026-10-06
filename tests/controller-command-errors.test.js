@@ -41,6 +41,10 @@ test('connect user message prefers response code over http status', function () 
     E.USER_MSG_CONNECT_ACCESS,
   );
   assert.equal(E.connectUserMessage({ status: 503, response: { code: 'unavailable' } }), E.USER_MSG_CONNECT_CLOUD);
+  assert.equal(
+    E.connectUserMessage({ status: 403, response: { code: 'store_not_allowed', message: 'denied' } }),
+    E.USER_MSG_STORE_NOT_ALLOWED,
+  );
 });
 
 test('devCommand user messages map by response code', function () {

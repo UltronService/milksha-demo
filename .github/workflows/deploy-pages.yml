@@ -25,6 +25,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Inject bundled Firebase credentials (Pages)
+        env:
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
+        run: node scripts/inject-firebase-config.mjs config/firebase.js
       - name: Prepare site artifact
         run: |
           mkdir -p _site

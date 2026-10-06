@@ -21,6 +21,29 @@ body {
   opacity: 0.85;
   font-size: 0.85rem;
 }
+.transport-route {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1d3a6b;
+}
+
+.store-not-allowed-banner {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
+  color: #cf1322;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  border-radius: 6px;
+}
+
+.store-not-allowed-banner[hidden] {
+  display: none !important;
+}
+
 .local-notice {
   margin: 0;
   padding: 10px 16px;

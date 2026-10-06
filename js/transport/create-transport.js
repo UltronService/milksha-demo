@@ -17,7 +17,6 @@
         storeId: options.storeId,
         role: options.role || 'device',
         deviceId: options.deviceId,
-        accessCode: options.accessCode,
         storage: options.storage,
         onAuthSuccess: options.onAuthSuccess,
       });
