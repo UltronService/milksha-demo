@@ -1,4 +1,4 @@
-import { spawn, execSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from '../../tools/fake-cloud/sign-secret.mjs';
 import { createServer, request as httpRequest } from 'node:http';
 import { readFileSync } from 'node:fs';
