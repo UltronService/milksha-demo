@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  ensureCloudRunning,
+  restartCloud,
   startSite,
   resetCloudState,
   PORT_SITE,
@@ -15,7 +15,7 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
 test.describe('PR23 login rate', () => {
   test.beforeAll(async () => {
-    await ensureCloudRunning();
+    await restartCloud();
     await startSite();
   });
 

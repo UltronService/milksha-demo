@@ -308,6 +308,16 @@
   }
 
   function cfgPayload(settings) {
+    if (settings && typeof settings === 'object') {
+      const stripped = stripDevFields(Object.assign(defaults(), settings));
+      const normalized = normalizeImportedCfg(stripped);
+      const src = normalized || stripped;
+      return {
+        projectId: String(src.projectId || '').trim(),
+        apiKey: String(src.apiKey || '').trim(),
+        region: String(src.region || 'asia-east1').trim() || 'asia-east1',
+      };
+    }
     const s = effective(settings);
     return {
       projectId: String(s.projectId || '').trim(),
