@@ -134,6 +134,26 @@ test.describe('home board cloud recovery', () => {
     await ctrlCtx.close();
   });
 
+  test('clock jump resumes sync within seconds', async ({ browser }) => {
+    test.setTimeout(90000);
+    const boardCtx = await isolatedCloudContext(browser);
+    const ctrlCtx = await isolatedCloudContext(browser);
+    const board = await boardCtx.newPage();
+    const controller = await ctrlCtx.newPage();
+    await installBundledCloudRouteShim(board);
+    await installBundledCloudRouteShim(controller);
+    await board.goto(BASE + '/');
+    await controller.goto(BASE + '/controller/');
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
+    await board.clock.fastForward('00:00:25');
+    await board.waitForTimeout(2000);
+    await controller.click('[data-testid="btn-send-numbers"]');
+    await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 10000 });
+    await boardCtx.close();
+    await ctrlCtx.close();
+  });
+
   test('devLogin calls stay bounded over 30s polling', async ({ browser }) => {
     test.setTimeout(90000);
     const boardCtx = await isolatedCloudContext(browser);
