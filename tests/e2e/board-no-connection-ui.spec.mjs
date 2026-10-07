@@ -2,7 +2,12 @@ import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { urlsForMode, connectController, resetCloudState } from './harness.mjs';
+import {
+  urlsForMode,
+  connectController,
+  resetCloudState,
+  ensureCloudRunning,
+} from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -74,6 +79,8 @@ function cloudSettingsInitScript() {
 
 test.describe('guest board never shows connection status', () => {
   test('offline boot with empty cache does not show empty hint', async ({ browser }) => {
+    await ensureCloudRunning();
+    await resetCloudState({ seedDevice: true });
     const { recv } = urlsForMode('firestore');
     const ctx = await browser.newContext({ deviceScaleFactor: 1 });
     await ctx.addInitScript(() => {

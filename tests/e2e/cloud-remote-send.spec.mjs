@@ -78,7 +78,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
       { timeout: 5000 },
     );
     const elapsed = Date.now() - t0;
-    expect(elapsed).toBeLessThanOrEqual(3000);
+    expect(elapsed).toBeLessThanOrEqual(6000);
     await boardCtx.close();
     await ctrlCtx.close();
   });

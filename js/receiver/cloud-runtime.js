@@ -471,6 +471,14 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      if (
+        !milkshaRuntime &&
+        numberContent.length === 0 &&
+        localSeq <= 0 &&
+        prevReadySet.size === 0
+      ) {
+        return { ignored: true, reason: 'guest_boot_empty_cloud' };
+      }
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
@@ -740,8 +748,12 @@
         }
         if (board.missing) {
           onStatusLine('board: 無名單');
-          await applyMissingCloudBoard(board);
-          lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
+          if (milkshaRuntime || showCloudOfflineUi) {
+            await applyMissingCloudBoard(board);
+            lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
+          } else {
+            revealGuestClockFromCloudBoard(board);
+          }
           markCloudReachable();
           return;
         }
