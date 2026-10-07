@@ -64,6 +64,7 @@
     const onSyncAuthUi = options.onSyncAuthUi || function () {};
     const onCloudResync = options.onCloudResync || null;
     const showCloudOfflineUi = Boolean(options.showCloudOfflineUi);
+    const skipBootReceiverCache = options.skipBootReceiverCache === true;
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
     const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
 
@@ -473,6 +474,9 @@
         return { ignored: true, reason: Validate.MSG.format };
       }
       const board = norm.board;
+      if (board.storeId && String(board.storeId) !== String(storeId)) {
+        return { ignored: true, reason: 'wrong_store' };
+      }
       const seq = board.seq;
       const resolved = TodayBoard.resolveSessionBusinessDate({
         boardBusinessDate: board.businessDate,
@@ -1004,7 +1008,11 @@
       lastResolvedSource = '';
       clockSkewSilentRefetchPending = false;
 
-      tryApplyBootCache();
+      if (!skipBootReceiverCache) {
+        tryApplyBootCache();
+      } else if (milkshaRuntime && typeof milkshaRuntime.applyPayload === 'function') {
+        milkshaRuntime.applyPayload([], { silent: true });
+      }
       syncGuestClockAfterBoot();
 
       const kick = function () {

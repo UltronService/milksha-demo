@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-10-07T17:50:00.000Z",
+  "items": [
+    {
+      "id": "A",
+      "name": "Legacy-key seed: board/controller auto cloud login + storage migration",
+      "result": "PASS",
+      "evidence": "tests/e2e/legacy-settings-two-store.spec.mjs (migration assertions)"
+    },
+    {
+      "id": "B",
+      "name": "Legacy browser: store A send then switch to B without stale numbers",
+      "result": "PASS",
+      "evidence": "tests/e2e/home-board-per-store-switch.spec.mjs › legacy-key seed: switching ?store= A to B"
+    },
+    {
+      "id": "C",
+      "name": "Fresh browser (isolatedCloudContext) per-store flows",
+      "result": "PASS",
+      "evidence": "tests/e2e/home-board-per-store-isolation.spec.mjs (existing)"
+    },
+    {
+      "id": "D",
+      "name": "Unit + e2e regression (PR23 recovery, legacy seed)",
+      "result": "PASS",
+      "evidence": "npm test; home-board-cloud-recovery.spec.mjs; pr23-login-count.spec.mjs (isolated)"
+    },
+    {
+      "id": "E",
+      "name": "Old Chromium safe (no new modern-only APIs)",
+      "result": "PASS",
+      "evidence": "ES5-style IIFE changes only; no optional chaining added in touched boot paths"
+    }
+  ]
+}
