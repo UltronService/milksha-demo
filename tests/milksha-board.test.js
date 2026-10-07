@@ -274,3 +274,13 @@ test('boot rings on new ready without overlay markup', async function () {
   assert.deepEqual(sandbox.__milkshaSoundLog, ['store:9003', 'store:9004']);
   runtime.destroy();
 });
+
+test('computeViewportScale uniform fit without upscale cap', function () {
+  const MB = loadMilkshaBoard();
+  assert.equal(MB.DESIGN_LANDSCAPE_W, 1920);
+  assert.equal(MB.DESIGN_LANDSCAPE_H, 1080);
+  assert.equal(MB.computeViewportScale(1920, 1080, 1920, 1080), 1);
+  assert.equal(MB.computeViewportScale(3840, 2160, 1920, 1080), 2);
+  assert.equal(MB.computeViewportScale(1440, 1080, 1920, 1080), 0.75);
+  assert.ok(Math.abs(MB.computeViewportScale(1920, 800, 1920, 1080) - 800 / 1080) < 1e-9);
+});

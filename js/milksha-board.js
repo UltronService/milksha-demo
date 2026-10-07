@@ -46,6 +46,28 @@
 
   const PREP_WAVES_SRC = 'assets/milksha-prep-waves.svg';
 
+  const DESIGN_LANDSCAPE_W = LAYOUT_LANDSCAPE.W;
+  const DESIGN_LANDSCAPE_H = LAYOUT_LANDSCAPE.H;
+
+  /**
+   * Uniform scale to fit design canvas in viewport (no upscale cap).
+   * @param {number} viewportW
+   * @param {number} viewportH
+   * @param {number} designW
+   * @param {number} designH
+   * @returns {number}
+   */
+  function computeViewportScale(viewportW, viewportH, designW, designH) {
+    const vw = Number(viewportW);
+    const vh = Number(viewportH);
+    const dw = Number(designW);
+    const dh = Number(designH);
+    if (!vw || !vh || !dw || !dh) {
+      return 1;
+    }
+    return Math.min(vw / dw, vh / dh);
+  }
+
   /**
    * @param {string} sourceType
    * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
@@ -244,12 +266,14 @@
 
     rootEl.className = 'milksha-stage';
     rootEl.innerHTML =
+      '<div class="milksha-board-viewport" id="milksha-board-viewport">' +
+      '<div class="milksha-board-canvas" id="milksha-board-canvas">' +
       '<div class="milksha-cloud-offline" id="milksha-cloud-offline" hidden aria-live="polite">離線</div>' +
       '<div class="milksha-cloud-paused" id="milksha-cloud-paused" hidden aria-live="polite">連線暫停</div>' +
-      '<div class="milksha-board-viewport" id="milksha-board-viewport">' +
-      '<div class="milksha-board" id="milksha-board"></div></div>';
+      '<div class="milksha-board" id="milksha-board"></div></div></div>';
 
     const boardViewportEl = doc.getElementById('milksha-board-viewport');
+    const boardCanvasEl = doc.getElementById('milksha-board-canvas');
     const boardEl = doc.getElementById('milksha-board');
     const cloudOfflineEl = doc.getElementById('milksha-cloud-offline');
     const cloudPausedEl = doc.getElementById('milksha-cloud-paused');
@@ -324,19 +348,22 @@
       const cfg = layoutConfig();
       const vw = win.innerWidth || cfg.W;
       const vh = win.innerHeight || cfg.H;
-      scale = Math.min(vw / cfg.W, vh / cfg.H, 1);
+      scale = computeViewportScale(vw, vh, cfg.W, cfg.H);
       const viewW = Math.round(cfg.W * scale);
       const viewH = Math.round(cfg.H * scale);
       if (boardViewportEl) {
         boardViewportEl.style.width = viewW + 'px';
         boardViewportEl.style.height = viewH + 'px';
       }
+      if (boardCanvasEl) {
+        boardCanvasEl.style.width = cfg.W + 'px';
+        boardCanvasEl.style.height = cfg.H + 'px';
+        boardCanvasEl.style.transform = 'scale(' + scale + ')';
+        boardCanvasEl.style.transformOrigin = 'top left';
+      }
       boardEl.style.width = cfg.W + 'px';
       boardEl.style.height = cfg.H + 'px';
-      boardEl.style.transform = 'scale(' + scale + ')';
-      boardEl.style.transformOrigin = 'top left';
-      boardEl.style.marginLeft = '0';
-      boardEl.style.marginTop = '0';
+      boardEl.style.transform = 'none';
       rootEl.style.setProperty('--milksha-num-font', cfg.numFont + 'px');
     }
 
@@ -700,6 +727,9 @@
     scheduleZoneTimers();
 
     win.addEventListener('resize', applyScale);
+    win.addEventListener('orientationchange', applyScale);
+    doc.addEventListener('fullscreenchange', applyScale);
+    doc.addEventListener('webkitfullscreenchange', applyScale);
     doc.addEventListener('click', unlockAudio, { once: true });
     doc.addEventListener('keydown', unlockAudio, { once: true });
 
@@ -766,6 +796,9 @@
     pageCountForItems: pageCountForItems,
     layoutPageGrid: layoutPageGrid,
     gridPositionsForCells: gridPositionsForCells,
+    computeViewportScale: computeViewportScale,
+    DESIGN_LANDSCAPE_W: DESIGN_LANDSCAPE_W,
+    DESIGN_LANDSCAPE_H: DESIGN_LANDSCAPE_H,
     bootMilkshaBoard: bootMilkshaBoard,
   };
   QMS.bootMilkshaBoard = bootMilkshaBoard;
