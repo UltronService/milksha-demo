@@ -1,5 +1,5 @@
 /**
- * GitHub Pages 示範站內建雲端連線（milksha-qms-dev / s120030）。
+ * GitHub Pages 示範站內建雲端連線（milksha-qms-dev；看板無 store 時預設 c030020）。
  * Web API 金鑰為 Firebase 公開識別用；店別權限由 milksha-cloud devLogin 白名單控管（無存取碼）。
  * 部署時可由 scripts/inject-firebase-config.mjs 以 GitHub Actions secrets 覆寫 apiKey / posSignSecret。
  */

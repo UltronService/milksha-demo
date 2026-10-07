@@ -14,7 +14,7 @@ const STALE_SEED = () => {
     }),
   );
   localStorage.setItem(
-    'milksha:local:device:s120030:stb-old-99',
+    'milksha:local:device:c030020:stb-old-99',
     JSON.stringify({ online: true, lastSeen: new Date().toISOString() }),
   );
 };
@@ -25,7 +25,7 @@ async function assertPocFlow(board, controller) {
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
   const deviceDoc = await board.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('milksha:local:device:s120030:stb-01') || 'null');
+      return JSON.parse(localStorage.getItem('milksha:local:device:c030020:stb-01') || 'null');
     } catch {
       return null;
     }
@@ -86,7 +86,7 @@ test('stale cloud settings without mode query still boots home local link', asyn
   await board.goto(`${BASE}/?mode=cloud`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   const pinned = await board.evaluate(() => {
-    const raw = localStorage.getItem('milksha:local:device:s120030:stb-01');
+    const raw = localStorage.getItem('milksha:local:device:c030020:stb-01');
     return {
       deviceId: localStorage.getItem('milksha:deviceId'),
       hasHeartbeat: Boolean(raw),

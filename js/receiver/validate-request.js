@@ -30,7 +30,16 @@
     stale: '資料序號過舊，已忽略',
   };
 
+  const DEFAULT_HOME_BOARD_STORE_ID = 'c030020';
+
   const STORES = [
+    {
+      id: 'c030020',
+      name: '試點門市',
+      merchant_id: 'milksha',
+      account: 'c030020',
+      target: 'milkshac030020',
+    },
     {
       id: 's120030',
       name: '迷客夏臺南東安店',
@@ -170,6 +179,7 @@
     SOURCE_DEFS: SOURCE_DEFS,
     VALID_TYPES: VALID_TYPES,
     MSG: MSG,
+    DEFAULT_HOME_BOARD_STORE_ID: DEFAULT_HOME_BOARD_STORE_ID,
     STORES: STORES,
     ORDER_SOURCES: ORDER_SOURCES,
     TAMMY_SAMPLE_REQUEST: TAMMY_SAMPLE_REQUEST,

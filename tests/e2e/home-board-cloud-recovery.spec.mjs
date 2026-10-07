@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  ensureCloudRunning,
+  restartCloud,
   startSite,
   resetCloudState,
   PORT_SITE,
@@ -13,7 +13,7 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
 test.describe('home board cloud recovery', () => {
   test.beforeAll(async () => {
-    await ensureCloudRunning();
+    await restartCloud();
     await startSite();
   });
 
@@ -129,7 +129,10 @@ test.describe('home board cloud recovery', () => {
     await board.waitForTimeout(4000);
     await expect(board.locator('.milksha-ready .milksha-num').first()).toHaveText(firstNum.trim());
     await expect(board.locator('#milksha-cloud-offline')).toBeHidden();
+    await expect(board.locator('#milksha-cloud-paused')).toBeVisible({ timeout: 8000 });
+    await expect(board.locator('#milksha-cloud-paused')).toHaveText('連線暫停');
     await expect(board.locator('#board-root')).not.toHaveAttribute('data-cloud-offline', '1');
+    await expect(board.locator('#board-root')).toHaveAttribute('data-cloud-paused', '1');
     await boardCtx.close();
     await ctrlCtx.close();
   });

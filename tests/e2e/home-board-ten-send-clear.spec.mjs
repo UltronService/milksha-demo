@@ -86,7 +86,7 @@ async function assertTenSendsAndClear(board, controller) {
   await expect(controller.locator('[data-testid="user-banner"]')).toContainText('看板已清空', { timeout: 8000 });
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 8000 });
   const boardKeyEmpty = await board.evaluate(() => {
-    const raw = localStorage.getItem('milksha:local:board:s120030');
+    const raw = localStorage.getItem('milksha:local:board:c030020');
     if (!raw) return true;
     try {
       const doc = JSON.parse(raw);

@@ -19,7 +19,7 @@ import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-dat
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 function isAllowedDevLoginStore(storeId) {
   const id = String(storeId || '').trim();
-  if (id === 's120030') {
+  if (id === 's120030' || id === 'c030020') {
     return true;
   }
   return id.indexOf('zz-qa-') === 0;
@@ -91,7 +91,7 @@ function deviceKey(storeId, deviceId) {
 }
 
 function seedE2eDevice() {
-  docs.set(deviceKey('s120030', 'stb-01'), {
+  const emptyDevice = {
     online: false,
     lastSeen: '',
     appVersion: '',
@@ -99,7 +99,11 @@ function seedE2eDevice() {
     pendingUploads: 0,
     simulatedOffline: false,
     pendingCommand: null,
-  });
+  };
+  docs.set(deviceKey('s120030', 'stb-01'), { ...emptyDevice });
+  docs.set(deviceKey('c030020', 'stb-01'), { ...emptyDevice });
+  docs.set(deviceKey('zz-qa-store-a', 'stb-01'), { ...emptyDevice });
+  docs.set(deviceKey('zz-qa-store-b', 'stb-01'), { ...emptyDevice });
 }
 
 /** @param {object} board */
@@ -268,7 +272,7 @@ function storeIdForAuthToken(token) {
     return '';
   }
   if (t === 'fake-id-token' || t === 'e2e-fake-id-token') {
-    return 's120030';
+    return '';
   }
   const m = /^fake-([^-]+)-/.exec(t);
   if (m && m[1]) {

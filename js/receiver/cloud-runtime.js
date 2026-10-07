@@ -233,16 +233,34 @@
       }
     }
 
-    function syncCloudOfflineUi(offline) {
+    function isUploadHalted() {
+      const session = transport.session;
+      return Boolean(session && session.isUploadHalted && session.isUploadHalted());
+    }
+
+    function syncCloudGuestStatusUi(offlineOverride) {
       if (!showCloudOfflineUi) {
         return;
       }
+      const uploadHalted = isUploadHalted();
+      let offline = false;
       if (simulateOffline) {
         offline = false;
+      } else if (uploadHalted) {
+        offline = false;
+      } else if (offlineOverride === true) {
+        offline = true;
+      } else if (offlineOverride === false) {
+        offline = false;
+      } else {
+        offline = !cloudReachable;
       }
       cloudOfflineUiVisible = offline;
       if (milkshaRuntime && typeof milkshaRuntime.setCloudOfflineVisible === 'function') {
         milkshaRuntime.setCloudOfflineVisible(offline);
+      }
+      if (milkshaRuntime && typeof milkshaRuntime.setCloudPausedVisible === 'function') {
+        milkshaRuntime.setCloudPausedVisible(uploadHalted);
       }
       const doc = root.document;
       if (!doc) {
@@ -255,7 +273,16 @@
         } else {
           stage.removeAttribute('data-cloud-offline');
         }
+        if (uploadHalted) {
+          stage.setAttribute('data-cloud-paused', '1');
+        } else {
+          stage.removeAttribute('data-cloud-paused');
+        }
       }
+    }
+
+    function syncCloudOfflineUi(offline) {
+      syncCloudGuestStatusUi(offline);
     }
 
     function guestClockReferenceMs(boardDoc) {
@@ -645,12 +672,17 @@
       if (simulateOffline) {
         return;
       }
-      cloudReachable = false;
-      if (isPermissionOrAuthFailure(err)) {
-        syncCloudOfflineUi(false);
+      if (isUploadHalted()) {
+        cloudReachable = true;
+        syncCloudGuestStatusUi(false);
         return;
       }
-      syncCloudOfflineUi(true);
+      cloudReachable = false;
+      if (isPermissionOrAuthFailure(err)) {
+        syncCloudGuestStatusUi(false);
+        return;
+      }
+      syncCloudGuestStatusUi(true);
     }
 
     function scheduleCloudResync(reason) {
@@ -710,7 +742,7 @@
     async function pollBoard(pollOpts) {
       const forcePoll = Boolean(pollOpts && pollOpts.force);
       if (authBlocksBoardSync()) {
-        syncCloudOfflineUi(false);
+        syncCloudGuestStatusUi(false);
         return;
       }
       if (simulateOffline) {
@@ -995,6 +1027,7 @@
         tickMs += 1000;
         noteTickWallClock();
         onSyncAuthUi();
+        syncCloudGuestStatusUi();
         if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
         }
@@ -1044,6 +1077,9 @@
     const api = {
       start: start,
       destroy: destroy,
+      refreshGuestCloudStatus: function () {
+        syncCloudGuestStatusUi();
+      },
       receiveBoard: receiveBoard,
       triggerBoardPoll: function (pollOpts) {
         return pollBoard(pollOpts);

@@ -224,12 +224,10 @@
   function updateBoardLinks() {
     const device = document.getElementById('fld-device').value.trim() || 'stb-01';
     const store = storeId();
-    const simple =
-      siteBaseUrl() +
-      'receiver-demo/?store=' +
-      encodeURIComponent(store) +
-      '&mode=cloud&device=' +
-      encodeURIComponent(device);
+    let simple = siteBaseUrl() + '?store=' + encodeURIComponent(store) + '&mode=cloud';
+    if (document.getElementById('fld-device').value.trim()) {
+      simple += '&device=' + encodeURIComponent(device);
+    }
     const setup = simple + '#cfg=' + CloudSettings.encodeCfgHash(readCloudForm());
     document.getElementById('fld-board-simple-url').value = simple;
     document.getElementById('fld-board-setup-url').value = setup;
@@ -611,7 +609,9 @@
   }
 
   function storeId() {
-    return document.getElementById('fld-store').value.trim() || 's120030';
+    const fallback =
+      (Validate && Validate.DEFAULT_HOME_BOARD_STORE_ID) || 'c030020';
+    return document.getElementById('fld-store').value.trim() || fallback;
   }
 
   function publishLocalPocTargetFromForm() {
@@ -700,7 +700,7 @@
     const params = new URLSearchParams(window.location.search);
     const storeSel = document.getElementById('fld-store');
     if (storeSel && !params.get('store')) {
-      storeSel.value = 's120030';
+      storeSel.value = Validate.DEFAULT_HOME_BOARD_STORE_ID || 'c030020';
     }
     const devEl = document.getElementById('fld-device');
     if (devEl && !params.get('device')) {
@@ -1204,7 +1204,7 @@
       const opt = document.createElement('option');
       opt.value = s.id;
       opt.textContent = s.name + ' (' + s.id + ')';
-      if (s.id === 's120030') {
+      if (s.id === (Validate.DEFAULT_HOME_BOARD_STORE_ID || 'c030020')) {
         opt.selected = true;
       }
       sel.appendChild(opt);

@@ -34,6 +34,14 @@
     return 5 * 60 * 1000;
   }
 
+  function defaultHomeBoardStoreId() {
+    const Validate = root.QMS && root.QMS.Receiver && root.QMS.Receiver.Validate;
+    if (Validate && Validate.DEFAULT_HOME_BOARD_STORE_ID) {
+      return Validate.DEFAULT_HOME_BOARD_STORE_ID;
+    }
+    return 'c030020';
+  }
+
   function readCreds(params, transportMode) {
     const home = isHomeBoardPage();
     const storeParam = params.get('store');
@@ -42,7 +50,7 @@
     let deviceId = deviceParam || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
     if (home) {
       if (!storeParam) {
-        storeId = 's120030';
+        storeId = defaultHomeBoardStoreId();
       }
       if (!deviceParam) {
         deviceId = 'stb-01';
@@ -50,16 +58,6 @@
           root.localStorage.setItem('milksha:deviceId', deviceId);
         } catch (e) {
           /* ignore */
-        }
-      }
-      if (transportMode !== 'cloud') {
-        const Coord = root.QMS && root.QMS.Transport && root.QMS.Transport.LocalPocCoord;
-        if (Coord) {
-          const poc = Coord.readLocalPocTarget(root.localStorage);
-          if (poc) {
-            storeId = poc.storeId;
-            deviceId = poc.deviceId;
-          }
         }
       }
     }
@@ -81,7 +79,7 @@
   }
 
   function guestAuthDebugStage() {
-    return root.document.getElementById('rcv-stage');
+    return root.document.getElementById('board-root') || root.document.getElementById('rcv-stage');
   }
 
   function setGuestAuthDebug(err) {
@@ -415,6 +413,9 @@
         setUploadStopped();
         pendingRecheckDelayMs = recheck403Ms;
         scheduleSlowAuthRecheck(recheck403Ms);
+        if (root.receiverCloud && root.receiverCloud.refreshGuestCloudStatus) {
+          root.receiverCloud.refreshGuestCloudStatus();
+        }
         return;
       }
       if (sessionStopped) {

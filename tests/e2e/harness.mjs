@@ -48,17 +48,17 @@ export async function ensureCloudRunning() {
   await waitCloudReady();
 }
 
-/** Kill owned fake-cloud and start the current workspace server.mjs (local dev). */
+/** Kill fake-cloud on PORT_CLOUD and start the current workspace server.mjs. */
 export async function restartCloud() {
   stopOwnedCloud();
   try {
-    const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/health`);
-    if (res.ok) {
-      return;
-    }
+    const { execSync } = await import('node:child_process');
+    execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
+    execSync("pkill -f 'tools/fake-cloud/server.mjs' 2>/dev/null || true", { stdio: 'ignore' });
   } catch {
-    /* start below */
+    /* ignore */
   }
+  cloudProc = null;
   startCloud();
   await waitCloudReady();
 }
@@ -184,7 +184,8 @@ export function urlsForMode(mode) {
     `${base}/receiver-demo/?mode=${mode}&store=s120030&device=stb-01` +
     (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
   const ctrl =
-    `${base}/controller/?mode=${mode}` + (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
+    `${base}/controller/?mode=${mode}&store=s120030` +
+    (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
   return { recv, ctrl, base };
 }
 
@@ -307,8 +308,8 @@ export async function guestBoardStyleFingerprint(page) {
   });
 }
 
-export async function waitForReceiverOnline(receiver, mode) {
-  const storeId = 's120030';
+export async function waitForReceiverOnline(receiver, mode, storeOverride) {
+  const storeId = storeOverride || 'c030020';
   const deviceId = 'stb-01';
   if (mode === 'local') {
     await receiver.waitForFunction(
