@@ -232,7 +232,7 @@
       "e2e": {
         "pr23LoginCount": { "passed": 2, "failed": 0, "note": "5m idle + 2m outage; devLogin counted via fake-cloud /test/devLoginCount" },
         "fullSuiteLocalPreFix": { "passed": 114, "failed": 4 },
-        "fullSuiteCi": "pending run on HEAD 94b66fb"
+        "fullSuiteCi": { "passed": 121, "failed": 0, "run": "https://github.com/UltronService/milksha-demo/actions/runs/37670295213", "head": "b62e455" }
       }
     }
   ]
