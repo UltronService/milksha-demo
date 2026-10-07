@@ -308,8 +308,26 @@ export async function guestBoardStyleFingerprint(page) {
   });
 }
 
+async function resolveReceiverStoreId(receiver, storeOverride) {
+  if (storeOverride) {
+    return storeOverride;
+  }
+  return receiver.evaluate(() => {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get('store');
+    if (fromUrl) {
+      return fromUrl;
+    }
+    const path = location.pathname.replace(/\/$/, '') || '/';
+    if (path.includes('receiver-demo')) {
+      return 's120030';
+    }
+    return 'c030020';
+  });
+}
+
 export async function waitForReceiverOnline(receiver, mode, storeOverride) {
-  const storeId = storeOverride || 'c030020';
+  const storeId = await resolveReceiverStoreId(receiver, storeOverride);
   const deviceId = 'stb-01';
   if (mode === 'local') {
     await receiver.waitForFunction(
