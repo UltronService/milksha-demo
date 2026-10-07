@@ -45,8 +45,11 @@ test.describe('cloud remote send (isolated contexts)', () => {
     await installBundledCloudRouteShim(controller);
     await controller.goto(`${BASE}/controller/`);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
-    await expect(controller.locator('#user-banner')).toContainText('請先打開看板', { timeout: 8000 });
+    const sendBtn = controller.getByTestId('btn-send-numbers');
+    await expect(sendBtn).toBeDisabled();
+    await expect(controller.getByTestId('btn-send-numbers-block-reason')).toContainText(/請先打開看板|等待看板連線/, {
+      timeout: 8000,
+    });
 
     const boardCtx = await isolatedCloudContext(browser);
     const board = await boardCtx.newPage();

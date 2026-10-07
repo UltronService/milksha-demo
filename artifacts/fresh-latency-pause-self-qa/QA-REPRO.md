@@ -1,5 +1,13 @@
 # Live QA repro (fresh browser)
 
+## Live timing (branch @ 8877, real cloud)
+
+```bash
+node scripts/fresh-browser-live-timing.mjs
+```
+
+Output: `artifacts/fresh-latency-pause-self-qa/live-timing-3runs.json` (3 fresh contexts, zz-qa-store-a only).
+
 ## 1. First-send latency (zz-qa-store-a only)
 
 1. New browser profile (no prior milksha localStorage).

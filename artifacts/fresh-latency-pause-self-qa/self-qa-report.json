@@ -54,6 +54,11 @@
     "e2e": "tests/e2e/fresh-browser-pause-heartbeat.spec.mjs PASS (heartbeat 403, devLogin count 0)",
     "liveFreshForbiddenStore": { "pass": true, "devLoginCalls": 1, "pausedText": "連線暫停" }
   },
+  "devLoginBurst0513Taipei": {
+    "verdict": "live_agent_qa_not_app_loop",
+    "detail": "Production board auth recheck is 5–10min; controller does not auto-reconnect on failure. ~3s spacing matches devLogin backoff (2s base) only when something repeatedly calls ensureIdToken after errors—not a steady-state loop. The 05:13–05:14 Taipei burst aligns with Cloud Agent live QA (fresh Playwright contexts, pause/timing scripts, board+controller pair ≈2 devLogin per load). Session devLoginCallsDuringSession=2 on zz-qa local run.",
+    "appGuards": "auth-session single-flight devLogin, 403 backoff without per-poll devLogin, controller one warm+connect per page load"
+  },
   "backendRecommendation": {
     "neededForControllerBoot": true,
     "detail": "Fresh browser controller ensureIdToken ~3.5s (devLogin + signIn cold). Consider Cloud Functions min instances / reduced cold start for devLogin in milksha-qms-dev; frontend cannot remove network RTT.",

@@ -89,6 +89,23 @@
     return '本機連動';
   }
 
+  function syncBundledApiKeyFromStorage() {
+    const saved = CloudSettings.effective ? CloudSettings.effective(CloudSettings.load()) : CloudSettings.load();
+    const apiKeyEl = document.getElementById('fld-cloud-apikey');
+    const fromField = apiKeyEl ? apiKeyEl.value.trim() : '';
+    const apiKey = fromField || (saved && saved.apiKey) || '';
+    if (!apiKey || apiKey.indexOf('fake-api') >= 0) {
+      return;
+    }
+    const base = window.MILKSHA_FIREBASE_CONFIG || {};
+    window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, base, {
+      apiKey: apiKey,
+      projectId: (saved && saved.projectId) || base.projectId || 'milksha-qms-dev',
+      functionsBaseUrl:
+        base.functionsBaseUrl || 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/',
+    });
+  }
+
   function readCloudForm() {
     const saved = CloudSettings.load();
     const prefixEl = document.getElementById('fld-emulator-prefix');
@@ -314,6 +331,15 @@
       }
       return '請先按連線';
     }
+    if (btn.hasAttribute('data-requires-connect') && connected && !boardReadyForOutboundSend()) {
+      if (connectInFlight || autoConnectPending) {
+        return '連線中…';
+      }
+      if (boardLinkHint) {
+        return boardLinkHint;
+      }
+      return '等待看板連線…';
+    }
     if (commandInFlight && btn.getAttribute('data-dev-command') === '1') {
       return '指令送出中…';
     }
@@ -426,13 +452,29 @@
     pushLog({ summary: '指令失敗 · ' + userMessage, kind: 'command' });
   }
 
-  function requireConnect() {
-    if (connected) {
-      showUserBanner('');
+  function boardReadyForOutboundSend() {
+    const modeEl = document.getElementById('fld-mode');
+    const mode = modeEl ? modeEl.value : 'local';
+    if (mode === 'local') {
       return true;
     }
-    showUserBanner('請先按連線');
-    return false;
+    if (mode === 'cloud' || mode === 'firestore') {
+      return connected && deviceOnline && !boardLinkHint;
+    }
+    return connected;
+  }
+
+  function requireConnect() {
+    if (!connected) {
+      showUserBanner('請先按連線');
+      return false;
+    }
+    if (!boardReadyForOutboundSend()) {
+      showUserBanner(boardLinkHint || '請先打開看板並等待連線');
+      return false;
+    }
+    showUserBanner('');
+    return true;
   }
 
   function setConnectedState(isOn, mode) {
@@ -1098,6 +1140,7 @@
   }
 
   function startCloudAuthWarm() {
+    syncBundledApiKeyFromStorage();
     const modeEl = document.getElementById('fld-mode');
     if (!modeEl) {
       return;
@@ -1128,9 +1171,7 @@
       deviceId: 'controller-web',
     });
     if (transport.session && transport.session.ensureIdToken) {
-      cloudAuthWarmPromise = transport.session.ensureIdToken().catch(function () {
-        /* connect() surfaces errors */
-      });
+      cloudAuthWarmPromise = transport.session.ensureIdToken();
     }
   }
 
@@ -1148,6 +1189,7 @@
     if (connectInFlight) {
       return;
     }
+    syncBundledApiKeyFromStorage();
     connectInFlight = true;
     setConnectButtonDisabled(true);
     pinLocalPocTargets();
@@ -1659,6 +1701,7 @@
     CloudSettings.reconcileLegacyStorageOnBoot();
   }
   fillCloudForm(CloudSettings.load());
+  syncBundledApiKeyFromStorage();
   const params = new URLSearchParams(window.location.search);
   const modeParam = params.get('mode');
   if (modeParam === 'firestore') {
@@ -1716,7 +1759,7 @@
   if (bootMode === 'local' || bootMode === 'cloud') {
     autoConnectPending = true;
     syncActionButtonStates();
-    if (bootMode === 'cloud') {
+    if (bootMode === 'cloud' && params.get('noCloudWarm') !== '1') {
       startCloudAuthWarm();
       syncActionButtonStates();
     }
