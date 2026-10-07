@@ -274,9 +274,13 @@ function storeIdForAuthToken(token) {
   if (t === 'fake-id-token' || t === 'e2e-fake-id-token') {
     return '';
   }
-  const m = /^fake-([^-]+)-/.exec(t);
-  if (m && m[1]) {
-    return m[1];
+  const roleSuffixes = ['controller-web', 'controller', 'device'];
+  for (let i = 0; i < roleSuffixes.length; i += 1) {
+    const role = roleSuffixes[i];
+    const suffix = '-' + role;
+    if (t.startsWith('fake-') && t.endsWith(suffix)) {
+      return t.slice('fake-'.length, t.length - suffix.length);
+    }
   }
   return 's120030';
 }
@@ -375,8 +379,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && url.pathname === '/identity/v1/accounts:signInWithCustomToken') {
+      const body = await readBody(req);
+      const customToken = String(body.token || '').trim();
+      const idToken =
+        customToken && customToken.startsWith('fake-') ? customToken : 'fake-id-token';
       return json(res, 200, {
-        idToken: 'fake-id-token',
+        idToken,
         refreshToken: 'fake-refresh',
         expiresIn: '3600',
       });

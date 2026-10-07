@@ -218,11 +218,22 @@ export async function installBundledCloudRouteShim(page) {
     await proxyToFakeCloud(route, `${base}/identity${u.pathname}${u.search}`);
   });
   await page.route('https://securetoken.googleapis.com/**', async (route) => {
+    const req = route.request();
+    let idToken = 'fake-id-token';
+    try {
+      const body = JSON.parse(req.postData() || '{}');
+      const refresh = String(body.refresh_token || '').trim();
+      if (refresh.startsWith('fake-')) {
+        idToken = refresh;
+      }
+    } catch {
+      /* keep default */
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        id_token: 'fake-id-token',
+        id_token: idToken,
         refresh_token: 'fake-refresh',
         expires_in: '3600',
         token_type: 'Bearer',
