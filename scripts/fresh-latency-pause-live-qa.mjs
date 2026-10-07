@@ -6,12 +6,21 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startSite } from '../tests/e2e/harness.mjs';
+import {
+  startSite,
+  restartCloud,
+  resetCloudState,
+  installBundledCloudRouteShim,
+} from '../tests/e2e/harness.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ART = join(ROOT, 'artifacts', 'fresh-latency-pause-self-qa');
 const PAGES = process.env.MILKSHA_PAGES_BASE || 'https://ultronservice.github.io/milksha-demo';
 const STORE = 'zz-qa-store-a';
+
+function isLocalPages() {
+  return PAGES.includes('127.0.0.1') || PAGES.includes('localhost');
+}
 
 function loadApiKey() {
   const fromEnv = String(process.env.MILKSHA_FIREBASE_API_KEY || '').trim();
@@ -57,7 +66,7 @@ function classifyResource(url) {
 
 async function measureFiveSends(browser, apiKey) {
   const ctx = await browser.newContext();
-  if (apiKey) {
+  if (apiKey && !isLocalPages()) {
     await ctx.addInitScript((key) => {
       window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
         apiKey: key,
@@ -73,6 +82,19 @@ async function measureFiveSends(browser, apiKey) {
   }
   const board = await ctx.newPage();
   const ctrl = await ctx.newPage();
+  if (isLocalPages()) {
+    await installBundledCloudRouteShim(board);
+    await installBundledCloudRouteShim(ctrl);
+  }
+  let devLoginCalls = 0;
+  const onDevLogin = (req) => {
+    if (req.url().includes('devLogin') && req.method() === 'POST') {
+      devLoginCalls += 1;
+    }
+  };
+  board.on('request', onDevLogin);
+  ctrl.on('request', onDevLogin);
+
   const resources = [];
   const onResponse = (res) => {
     const url = res.url();
@@ -91,22 +113,42 @@ async function measureFiveSends(browser, apiKey) {
   ctrl.on('response', onResponse);
 
   const t0 = Date.now();
-  await board.goto(`${PAGES}/?mode=cloud&store=${STORE}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await ctrl.goto(`${PAGES}/controller/?mode=cloud&store=${STORE}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  const boardUrl = isLocalPages()
+    ? `${PAGES}/?store=${STORE}`
+    : `${PAGES}/?mode=cloud&store=${STORE}`;
+  const ctrlUrl = isLocalPages()
+    ? `${PAGES}/controller/?store=${STORE}`
+    : `${PAGES}/controller/?mode=cloud&store=${STORE}`;
+  await board.goto(boardUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await ctrl.goto(ctrlUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 120000 });
   const tBoardReady = Date.now();
   await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 120000 });
+  await ctrl.waitForFunction(
+    () => {
+      const el = document.getElementById('transport-route');
+      return el && el.getAttribute('data-board-online') === '1';
+    },
+    { timeout: 120000 },
+  );
   const tCtrlReady = Date.now();
 
   const sends = [];
   for (let i = 0; i < 5; i += 1) {
+    await ctrl.waitForFunction(
+      () => {
+        const b = document.getElementById('btn-send-numbers');
+        return b && !b.disabled;
+      },
+      { timeout: 30000 },
+    );
     const before = await board.locator('.milksha-ready .milksha-num').count();
     const clickAt = Date.now();
     await ctrl.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       (prev) => document.querySelectorAll('.milksha-ready .milksha-num').length > prev,
       before,
-      { timeout: 30000 },
+      { timeout: 90000 },
     );
     sends.push({ index: i + 1, latencyMs: Date.now() - clickAt });
     await board.waitForTimeout(400);
@@ -115,9 +157,61 @@ async function measureFiveSends(browser, apiKey) {
   await ctx.close();
   return {
     bootMs: { boardReady: tBoardReady - t0, controllerReady: tCtrlReady - t0 },
+    devLoginCallsDuringSession: devLoginCalls,
     sends,
     resources,
   };
+}
+
+async function measureEarlyClick(browser, apiKey) {
+  const ctx = await browser.newContext();
+  if (apiKey && !isLocalPages()) {
+    await ctx.addInitScript((key) => {
+      window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
+        apiKey: key,
+        projectId: 'milksha-qms-dev',
+        defaultCloudMode: true,
+        functionsBaseUrl: 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/',
+      });
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({ projectId: 'milksha-qms-dev', apiKey: key, region: 'asia-east1' }),
+      );
+    }, apiKey);
+  }
+  const board = await ctx.newPage();
+  const ctrl = await ctx.newPage();
+  if (isLocalPages()) {
+    await installBundledCloudRouteShim(board);
+    await installBundledCloudRouteShim(ctrl);
+  }
+  const boardUrl = isLocalPages()
+    ? `${PAGES}/?store=${STORE}`
+    : `${PAGES}/?mode=cloud&store=${STORE}`;
+  const ctrlUrl = isLocalPages()
+    ? `${PAGES}/controller/?store=${STORE}`
+    : `${PAGES}/controller/?mode=cloud&store=${STORE}`;
+  const t0 = Date.now();
+  await Promise.all([
+    board.goto(boardUrl, { waitUntil: 'domcontentloaded', timeout: 120000 }),
+    ctrl.goto(ctrlUrl, { waitUntil: 'domcontentloaded', timeout: 120000 }),
+  ]);
+  const clickAt = Date.now();
+  await ctrl.click('[data-testid="btn-send-numbers"]');
+  const before = await board.locator('.milksha-ready .milksha-num').count();
+  let firstNumberMs = null;
+  try {
+    await board.waitForFunction(
+      (prev) => document.querySelectorAll('.milksha-ready .milksha-num').length > prev,
+      before,
+      { timeout: 120000 },
+    );
+    firstNumberMs = Date.now() - clickAt;
+  } catch {
+    firstNumberMs = null;
+  }
+  await ctx.close();
+  return { pageOpenMs: clickAt - t0, clickToFirstNumberMs: firstNumberMs };
 }
 
 async function pauseReproFresh(browser) {
@@ -191,8 +285,10 @@ function launchBrowser() {
 async function main() {
   mkdirSync(ART, { recursive: true });
   const apiKey = loadApiKey();
-  if (PAGES.includes('127.0.0.1') || PAGES.includes('localhost')) {
+  if (isLocalPages()) {
+    await restartCloud();
     await startSite();
+    await resetCloudState({ seedDevice: true });
   }
   const browser = await launchBrowser();
   const report = {
@@ -201,6 +297,7 @@ async function main() {
     store: STORE,
     apiKeyConfigured: Boolean(apiKey),
     timing: null,
+    earlyClick: null,
     pauseFreshStore: null,
     pauseExistingSession: null,
   };
@@ -208,6 +305,11 @@ async function main() {
     report.timing = await measureFiveSends(browser, apiKey);
   } catch (e) {
     report.timing = { error: e.message || String(e) };
+  }
+  try {
+    report.earlyClick = await measureEarlyClick(browser, apiKey);
+  } catch (e) {
+    report.earlyClick = { error: e.message || String(e) };
   }
   try {
     report.pauseFreshStore = await pauseReproFresh(browser);

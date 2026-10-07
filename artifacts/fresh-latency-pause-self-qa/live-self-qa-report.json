@@ -1,10 +1,270 @@
 {
-  "generatedAt": "2026-10-07T21:03:19.466Z",
+  "generatedAt": "2026-10-07T22:07:16.158Z",
   "pages": "http://127.0.0.1:8877",
   "store": "zz-qa-store-a",
   "apiKeyConfigured": true,
   "timing": {
-    "error": "page.waitForFunction: Timeout 30000ms exceeded."
+    "bootMs": {
+      "boardReady": 168,
+      "controllerReady": 197
+    },
+    "devLoginCallsDuringSession": 2,
+    "sends": [
+      {
+        "index": 1,
+        "latencyMs": 4928
+      },
+      {
+        "index": 2,
+        "latencyMs": 80
+      },
+      {
+        "index": 3,
+        "latencyMs": 94
+      },
+      {
+        "index": 4,
+        "latencyMs": 92
+      },
+      {
+        "index": 5,
+        "latencyMs": 88
+      }
+    ],
+    "resources": [
+      {
+        "phase": "devLogin",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devLogin",
+        "status": 200,
+        "start": 1791410836313.8909
+      },
+      {
+        "phase": "signInWithCustomToken",
+        "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836326.04
+      },
+      {
+        "phase": "boxHeartbeat",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+        "status": 200,
+        "start": 1791410836331.285
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 404,
+        "start": 1791410836336.174
+      },
+      {
+        "phase": "boxHeartbeat",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+        "status": 200,
+        "start": 1791410836336.925
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836336.536
+      },
+      {
+        "phase": "devLogin",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devLogin",
+        "status": 200,
+        "start": 1791410836353.6292
+      },
+      {
+        "phase": "signInWithCustomToken",
+        "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836359.015
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 404,
+        "start": 1791410836366.8062
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836369.0032
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/receive_logs",
+        "status": 404,
+        "start": 1791410836373.741
+      },
+      {
+        "phase": "devCommand",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+        "status": 200,
+        "start": 1791410836440.431
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836457.212
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410836814.5718
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410837314.3818
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410837814.307
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410838314.366
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410838814.506
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410839314.447
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410839814.414
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410840314.293
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410840375.0269
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410840375.102
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410840814.2168
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410841314.291
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410841314.328
+      },
+      {
+        "phase": "devCommand",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+        "status": 200,
+        "start": 1791410841769.402
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410841775.3271
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410841813.7202
+      },
+      {
+        "phase": "devCommand",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+        "status": 200,
+        "start": 1791410842252.972
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410842259.36
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410842313.752
+      },
+      {
+        "phase": "devCommand",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+        "status": 200,
+        "start": 1791410842752.998
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410842758.774
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410842813.7688
+      },
+      {
+        "phase": "devCommand",
+        "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+        "status": 200,
+        "start": 1791410843272.011
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410843278.1611
+      },
+      {
+        "phase": "firestore",
+        "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=fake-api-key-for-emulator",
+        "status": 200,
+        "start": 1791410843314.644
+      }
+    ]
+  },
+  "earlyClick": {
+    "pageOpenMs": 83,
+    "clickToFirstNumberMs": 520
   },
   "pauseFreshStore": {
     "devLoginCalls": 1,
@@ -15,7 +275,7 @@
     "pass": false,
     "error": "page.waitForSelector: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator('#milksha-cloud-paused:not([hidden])') to be visible\n"
   },
-  "firstSendMs": null,
+  "firstSendMs": 4928,
   "pass": {
     "firstSendUnder3s": false,
     "pauseFresh": true,

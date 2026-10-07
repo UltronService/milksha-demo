@@ -14,13 +14,26 @@
       "fiveSendsClickToVisibleMs": [45, 2360, 1527, 1517, 1515],
       "notes": "QA 4472ms likely measured before controller finished connecting or included boot; devCommand itself ~45ms once connected. Sends 2–5 dominated by boardPollIntervalMs=2000 on deployed main."
     },
+    "afterFixBranchLocal8877": {
+      "method": "PR branch static server + fake-cloud shim; fresh context zz-qa-store-a",
+      "phasesMs": {
+        "boardReceiverCloud": 168,
+        "controllerConnectedAndBoardOnline": 197,
+        "devLoginCallsBoardPlusController": 2
+      },
+      "fiveSendsClickToVisibleMs": [4928, 80, 94, 92, 88],
+      "earlyClickPageOpenMs": 83,
+      "earlyClickToFirstNumberMs": 520,
+      "notes": "Send 1 includes first Firestore doc create + poll; sends 2–5 ~90ms. Controller pre-warm overlaps devLogin with board boot."
+    },
     "afterFixFrontend": {
       "changes": [
         "boardPollIntervalMs 2000→1000",
         "20s fast board poll every 500ms after boot",
-        "403 on boxHeartbeat/devCommand/Firestore marks upload halt + refreshes 連線暫停 UI"
+        "403 on boxHeartbeat/devCommand/Firestore marks upload halt + refreshes 連線暫停 UI",
+        "controller startCloudAuthWarm at page load; auto-connect reuses warm transport"
       ],
-      "expectedSends2to5Ms": "≤1000 typical (poll + fast window)",
+      "expectedSends2to5Ms": "≤1000 typical (poll + fast window); measured ~90ms local fake-cloud",
       "firstSendClickTargetMs": 3000,
       "firstSendClickExpectedMs": "≤500 once controller connected (same as before); controller cold devLogin ~3.5s is parallel with board load"
     }

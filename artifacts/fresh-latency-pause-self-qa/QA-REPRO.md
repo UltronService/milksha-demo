@@ -10,6 +10,11 @@
 
 Repeat 5 sends; record each click→visible ms.
 
+### Controller UX (this branch)
+
+- **Send before online:** `送出號碼` has `data-requires-connect`; it stays disabled with reason **連線中…** during auto-connect, then **請先按連線** only if connect failed and user must press 連線. Clicks are not queued.
+- **Pre-warm:** On cloud boot, controller creates transport and starts `ensureIdToken()` at page load; auto-`connect()` reuses that transport so devLogin overlaps with board boot.
+
 ## 2. 連線暫停 (fresh session)
 
 **Do not** visit zz-qa stores first.

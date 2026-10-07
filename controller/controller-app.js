@@ -309,6 +309,9 @@
       return '連線中…';
     }
     if (btn.hasAttribute('data-requires-connect') && !connected) {
+      if (connectInFlight || autoConnectPending) {
+        return '連線中…';
+      }
       return '請先按連線';
     }
     if (commandInFlight && btn.getAttribute('data-dev-command') === '1') {
@@ -1069,6 +1072,67 @@
 
   let connectInFlight = false;
   let posInFlight = false;
+  let autoConnectPending = false;
+  let allowWarmTransportReuse = false;
+  let cloudAuthWarmKey = '';
+  /** @type {Promise<void>|null} */
+  let cloudAuthWarmPromise = null;
+
+  function cloudConnectFingerprint(transportMode, config) {
+    const cfg = config || {};
+    return [
+      transportMode,
+      storeId(),
+      cfg.functionsBaseUrl || '',
+      cfg.projectId || '',
+      cfg.apiKey || '',
+      cfg.gateway || '',
+    ].join('\0');
+  }
+
+  function disposeTransport() {
+    if (transport && transport.destroy) {
+      transport.destroy();
+    }
+    transport = null;
+  }
+
+  function startCloudAuthWarm() {
+    const modeEl = document.getElementById('fld-mode');
+    if (!modeEl) {
+      return;
+    }
+    const mode = modeEl.value;
+    if (mode !== 'cloud' && mode !== 'firestore') {
+      return;
+    }
+    if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
+      return;
+    }
+    const transportMode = mode === 'firestore' ? 'firestore' : mode;
+    const config = buildConfig(mode);
+    if ((mode === 'cloud' || mode === 'firestore') && !config.functionsBaseUrl) {
+      return;
+    }
+    const fingerprint = cloudConnectFingerprint(transportMode, config);
+    if (transport && cloudAuthWarmKey === fingerprint && cloudAuthWarmPromise) {
+      return;
+    }
+    disposeTransport();
+    cloudAuthWarmKey = fingerprint;
+    cloudAuthWarmPromise = null;
+    transport = window.QMS.Transport.createTransport(transportMode, {
+      storeId: storeId(),
+      config: config,
+      role: 'controller',
+      deviceId: 'controller-web',
+    });
+    if (transport.session && transport.session.ensureIdToken) {
+      cloudAuthWarmPromise = transport.session.ensureIdToken().catch(function () {
+        /* connect() surfaces errors */
+      });
+    }
+  }
 
   function setConnectButtonDisabled(disabled) {
     void disabled;
@@ -1092,10 +1156,6 @@
       clearInterval(pollTimer);
       pollTimer = null;
     }
-    if (transport && transport.destroy) {
-      transport.destroy();
-    }
-    transport = null;
     connected = false;
     setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
@@ -1116,14 +1176,26 @@
       setConnectButtonDisabled(false);
       return;
     }
-    transport = window.QMS.Transport.createTransport(transportMode, {
-      storeId: storeId(),
-      config: config,
-      role: 'controller',
-      deviceId: 'controller-web',
-    });
+    const fingerprint = cloudConnectFingerprint(transportMode, config);
+    const reuseWarmTransport =
+      allowWarmTransportReuse && transport && cloudAuthWarmKey === fingerprint;
+    if (!reuseWarmTransport) {
+      disposeTransport();
+      cloudAuthWarmKey = '';
+      cloudAuthWarmPromise = null;
+      transport = window.QMS.Transport.createTransport(transportMode, {
+        storeId: storeId(),
+        config: config,
+        role: 'controller',
+        deviceId: 'controller-web',
+      });
+      cloudAuthWarmKey = fingerprint;
+    }
     try {
-      if (transport.session && transport.session.ensureIdToken) {
+      if (cloudAuthWarmPromise && cloudAuthWarmKey === fingerprint) {
+        await cloudAuthWarmPromise;
+        cloudAuthWarmPromise = null;
+      } else if (transport.session && transport.session.ensureIdToken) {
         await transport.session.ensureIdToken();
       }
       connected = true;
@@ -1642,10 +1714,23 @@
     pinCloudDeviceDefaults();
   }
   if (bootMode === 'local' || bootMode === 'cloud') {
-    connect().catch(function (e) {
-      setConnectedState(false, '');
-      pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
-    });
+    autoConnectPending = true;
+    syncActionButtonStates();
+    if (bootMode === 'cloud') {
+      startCloudAuthWarm();
+      syncActionButtonStates();
+    }
+    allowWarmTransportReuse = true;
+    connect()
+      .catch(function (e) {
+        setConnectedState(false, '');
+        pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
+      })
+      .finally(function () {
+        allowWarmTransportReuse = false;
+        autoConnectPending = false;
+        syncActionButtonStates();
+      });
   }
   syncTransportRoute();
 })();

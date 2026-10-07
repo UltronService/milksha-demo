@@ -88,4 +88,5 @@ test('devCommand does not refresh on 403', async function () {
   );
   assert.equal(devCommandCalls, 1);
   assert.equal(refreshCalls, 0);
+  assert.equal(halted, true);
 });
