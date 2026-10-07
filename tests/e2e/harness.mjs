@@ -427,6 +427,8 @@ export async function connectController(page, mode) {
         key: 'fake-api-key-for-emulator',
       },
     );
+  } else if (mode === 'cloud') {
+    await page.selectOption('#fld-mode', 'cloud');
   } else {
     await page.evaluate(() => {
       const sel = document.getElementById('fld-mode');
@@ -463,6 +465,8 @@ export async function connectController(page, mode) {
       await page.waitForTimeout(4000);
     }
     await page.waitForTimeout(800);
+  } else if (mode === 'cloud') {
+    await page.waitForTimeout(2000);
   } else {
     await page.waitForTimeout(400);
   }

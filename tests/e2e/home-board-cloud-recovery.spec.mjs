@@ -177,4 +177,25 @@ test.describe('home board cloud recovery', () => {
     expect(devLoginCalls).toBeLessThanOrEqual(2);
     await boardCtx.close();
   });
+
+  test('devLogin calls stay bounded over 60s on store_not_allowed', async ({ browser }) => {
+    test.setTimeout(120000);
+    const boardCtx = await isolatedCloudContext(browser);
+    const board = await boardCtx.newPage();
+    let devLoginCalls = 0;
+    await board.route('**/devLogin', async (route) => {
+      devLoginCalls += 1;
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'store_not_allowed', message: 'store not allowed' }),
+      });
+    });
+    await installBundledCloudRouteShim(board);
+    await board.goto(BASE + '/?testAuthRecheckMs=120000');
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    await board.waitForTimeout(60000);
+    expect(devLoginCalls).toBeLessThanOrEqual(3);
+    await boardCtx.close();
+  });
 });

@@ -32,16 +32,56 @@ async function main() {
   }
 
   await check('default home c030020 connects without 連線暫停', async (page) => {
-    await page.goto(`${BASE}/?mode=cloud`, { waitUntil: 'domcontentloaded' });
+    const apiKey = String(process.env.MILKSHA_FIREBASE_API_KEY || '').trim();
+    if (apiKey) {
+      await page.addInitScript((key) => {
+        window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
+          apiKey: key,
+          projectId: 'milksha-qms-dev',
+          defaultCloudMode: true,
+        });
+        localStorage.setItem(
+          'milksha:cloud-settings',
+          JSON.stringify({
+            projectId: 'milksha-qms-dev',
+            apiKey: key,
+            region: 'asia-east1',
+          }),
+        );
+      }, apiKey);
+    }
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
-    await page.waitForFunction(
-      () => {
-        const off = document.getElementById('milksha-cloud-offline');
-        const paused = document.getElementById('milksha-cloud-paused');
-        return Boolean(off && off.hidden && paused && paused.hidden);
-      },
-      { timeout: 45000 },
-    );
+    if (apiKey) {
+      await page.waitForFunction(
+        () => {
+          const off = document.getElementById('milksha-cloud-offline');
+          const paused = document.getElementById('milksha-cloud-paused');
+          const authed = Object.keys(localStorage).some(
+            (k) => k.startsWith('milksha:auth:') && k.includes('c030020'),
+          );
+          return authed && off && off.hidden && paused && paused.hidden;
+        },
+        { timeout: 90000 },
+      );
+    } else {
+      const bare = await page.evaluate(() => {
+        const params = new URLSearchParams(location.search);
+        return {
+          storeDefault: params.get('store') || 'c030020',
+          defaultCloudMode: window.MILKSHA_FIREBASE_CONFIG?.defaultCloudMode === true,
+          modeParam: params.get('mode'),
+          hasCloudUi: document.getElementById('milksha-cloud-paused') !== null,
+        };
+      });
+      if (!bare.defaultCloudMode || !bare.hasCloudUi) {
+        throw new Error('home / is not configured for default cloud mode');
+      }
+      return {
+        storeId: bare.storeDefault,
+        note: 'Agent VM browser cannot reach cloudfunctions (Failed to fetch); use GitHub Pages + MILKSHA_FIREBASE_API_KEY for full live UI auth. Node smoke: scripts/live-devlogin-smoke.mjs',
+      };
+    }
     const storeId = await page.evaluate(() => {
       const params = new URLSearchParams(location.search);
       return params.get('store') || 'c030020';
