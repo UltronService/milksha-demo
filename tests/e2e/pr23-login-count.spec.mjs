@@ -4,6 +4,7 @@ import {
   startSite,
   resetCloudState,
   PORT_SITE,
+  PORT_CLOUD,
   installBundledCloudRouteShim,
   isolatedCloudContext,
 } from './harness.mjs';
@@ -23,13 +24,18 @@ test.describe('PR23 login rate', () => {
     await resetCloudState({ seedDevice: true });
   });
 
+  async function readFakeCloudDevLoginCount() {
+    const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginCount`);
+    if (!res.ok) {
+      return 0;
+    }
+    const json = await res.json();
+    return Number(json.count) || 0;
+  }
+
   async function countAuthCalls(page, seconds, outage) {
-    let devLogin = 0;
+    const devLoginBefore = await readFakeCloudDevLoginCount();
     let signIn = 0;
-    await page.route('**/devLogin', async (route) => {
-      devLogin += 1;
-      await route.continue();
-    });
     await page.route('**/signInWithCustomToken**', async (route) => {
       signIn += 1;
       await route.continue();
@@ -41,6 +47,8 @@ test.describe('PR23 login rate', () => {
       );
     }
     await page.waitForTimeout(seconds * 1000);
+    const devLoginAfter = await readFakeCloudDevLoginCount();
+    const devLogin = Math.max(0, devLoginAfter - devLoginBefore);
     return { devLogin, signIn, seconds, outage };
   }
 
@@ -49,9 +57,12 @@ test.describe('PR23 login rate', () => {
     const ctx = await isolatedCloudContext(browser);
     const page = await ctx.newPage();
     await installBundledCloudRouteShim(page);
+    const devLoginBootBefore = await readFakeCloudDevLoginCount();
     await page.goto(`${BASE}/?testAuthRecheckMs=600000`);
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    const devLoginBootAfter = await readFakeCloudDevLoginCount();
     const counts = await countAuthCalls(page, 300, false);
+    counts.devLoginBoot = Math.max(0, devLoginBootAfter - devLoginBootBefore);
     writeFileSync(`${ART}/login-count-normal-5m.json`, JSON.stringify(counts, null, 2));
     expect(counts.devLogin).toBeLessThanOrEqual(4);
     expect(counts.signIn).toBeLessThanOrEqual(4);

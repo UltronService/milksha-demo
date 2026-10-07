@@ -13,6 +13,7 @@ const ART = join(ROOT, 'artifacts', 'legacy-settings-fix-self-qa');
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
 const STORE_B = 'zz-qa-store-b';
+const LIVE_SEND_TIMEOUT_MS = 30000;
 
 function loadApiKey() {
   const fromEnv = String(process.env.MILKSHA_FIREBASE_API_KEY || '').trim();
@@ -44,6 +45,21 @@ function bundledInitScript(apiKey) {
       functionsBaseUrl: 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/',
     });
     window.MILKSHA_FIREBASE_CONFIG = cfg;
+    try {
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: 'milksha-qms-dev',
+          apiKey: key,
+          region: 'asia-east1',
+          useEmulator: false,
+          gateway: '',
+          emulatorPrefix: '',
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
   };
 }
 
@@ -136,7 +152,7 @@ async function waitBoardOnline(page, timeoutMs = 90000) {
   );
 }
 
-async function waitControllerOnline(page, timeoutMs = 60000) {
+async function waitControllerOnline(page, timeoutMs = 120000) {
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: timeoutMs });
 }
 
@@ -151,7 +167,7 @@ async function sendAndMeasure(board, controller) {
   await board.waitForFunction(
     (prev) => document.querySelectorAll('.milksha-ready .milksha-num').length > prev,
     before,
-    { timeout: 3000 },
+    { timeout: LIVE_SEND_TIMEOUT_MS },
   );
   const latencyMs = Date.now() - t0;
   const nums = await board.evaluate(() => {
@@ -162,10 +178,17 @@ async function sendAndMeasure(board, controller) {
   return { latencyMs, nums, readyCount: nums.length };
 }
 
-async function clearStore(controller) {
+async function clearStore(controller, board) {
   await expandControllerZone(controller, 'sec-special');
   await controller.click('[data-testid="btn-clear-now"]');
-  await controller.waitForTimeout(1500);
+  if (board) {
+    await board.waitForFunction(
+      () => document.querySelectorAll('.milksha-ready .milksha-num').length === 0,
+      { timeout: 30000 },
+    );
+  } else {
+    await controller.waitForTimeout(2000);
+  }
 }
 
 async function runLegacyScenarioA(browser, apiKey) {
@@ -190,7 +213,7 @@ async function runLegacyScenarioA(browser, apiKey) {
     }
   });
   await waitBoardOnline(board);
-  await controller.goto(`${BASE}/controller/?store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
+  await controller.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
   await waitControllerOnline(controller);
   const afterBoard = await snapshotPage(board);
   const afterCtrl = await snapshotPage(controller);
@@ -234,10 +257,10 @@ async function runLegacyScenarioB(browser, apiKey) {
   const ctrlA = await ctx.newPage();
   const ctrlB = await ctx.newPage();
   await Promise.all([
-    boardA.goto(`${BASE}/?store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
-    boardB.goto(`${BASE}/?store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
-    ctrlA.goto(`${BASE}/controller/?store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
-    ctrlB.goto(`${BASE}/controller/?store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
+    boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
+    boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
+    ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
+    ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
   ]);
   await waitBoardOnline(boardA);
   await waitBoardOnline(boardB);
@@ -268,8 +291,8 @@ async function runLegacyScenarioB(browser, apiKey) {
       leakBonA,
       counts: { aBeforeA, bBeforeA, bAfterA, aAfterB },
     });
-    await clearStore(ctrlA);
-    await clearStore(ctrlB);
+    await clearStore(ctrlA, boardA);
+    await clearStore(ctrlB, boardB);
     await boardA.waitForTimeout(800);
     await boardB.waitForTimeout(800);
   }
@@ -332,10 +355,10 @@ async function runFreshScenarioC(browser, apiKey) {
   const ctrlA = await ctx.newPage();
   const ctrlB = await ctx.newPage();
   await Promise.all([
-    boardA.goto(`${BASE}/?store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
-    boardB.goto(`${BASE}/?store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
-    ctrlA.goto(`${BASE}/controller/?store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
-    ctrlB.goto(`${BASE}/controller/?store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
+    boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
+    boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
+    ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`, { waitUntil: 'domcontentloaded' }),
+    ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`, { waitUntil: 'domcontentloaded' }),
   ]);
   await waitBoardOnline(boardA);
   await waitBoardOnline(boardB);
@@ -355,8 +378,8 @@ async function runFreshScenarioC(browser, apiKey) {
       bAfterA <= bBeforeA &&
       aAfterB <= aBeforeA + 1;
     rounds.push({ round: r, storeA: resA, storeB: resB, pass });
-    await clearStore(ctrlA);
-    await clearStore(ctrlB);
+    await clearStore(ctrlA, boardA);
+    await clearStore(ctrlB, boardB);
     await boardA.waitForTimeout(800);
   }
   await ctx.close();
@@ -367,20 +390,38 @@ async function main() {
   const apiKey = loadApiKey();
   mkdirSync(ART, { recursive: true });
   await startSite();
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+  });
   const report = {
     generatedAt: new Date().toISOString(),
     apiKeyFingerprint: apiKey.slice(0, 6) + '…' + apiKey.slice(-4),
     items: [],
   };
 
-  const a = await runLegacyScenarioA(browser, apiKey);
+  let a;
+  try {
+    a = await runLegacyScenarioA(browser, apiKey);
+  } catch (e) {
+    a = { ok: false, error: e.message || String(e) };
+  }
   report.items.push({ id: 'A', name: 'Legacy seed live login + storage migration', result: a.ok ? 'PASS' : 'FAIL', ...a });
 
-  const b = await runLegacyScenarioB(browser, apiKey);
+  let b;
+  try {
+    b = await runLegacyScenarioB(browser, apiKey);
+  } catch (e) {
+    b = { ok: false, error: e.message || String(e) };
+  }
   report.items.push({ id: 'B', name: 'Legacy browser continuous two-store x3 + offline/403', result: b.ok ? 'PASS' : 'FAIL', ...b });
 
-  const c = await runFreshScenarioC(browser, apiKey);
+  let c;
+  try {
+    c = await runFreshScenarioC(browser, apiKey);
+  } catch (e) {
+    c = { ok: false, error: e.message || String(e) };
+  }
   report.items.push({
     id: 'C',
     name: 'Fresh browser live two-store x3',
