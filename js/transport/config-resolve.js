@@ -78,7 +78,8 @@
    */
   function resolveFirebaseConfig(params, base) {
     const b = base || root.MILKSHA_FIREBASE_CONFIG || {};
-    const saved = CloudSettings ? CloudSettings.load() : {};
+    const savedRaw = CloudSettings ? CloudSettings.load() : {};
+    const saved = CloudSettings.effective ? CloudSettings.effective(savedRaw) : savedRaw;
     const projectId = pickDevEndpointParam(params, 'project', saved.projectId || b.projectId || '');
     const apiKey = pickDevEndpointParam(params, 'key', saved.apiKey || b.apiKey || '');
     const region = pickDevEndpointParam(params, 'region', saved.region || b.region || 'asia-east1');

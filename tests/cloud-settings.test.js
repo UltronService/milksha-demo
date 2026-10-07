@@ -14,6 +14,13 @@ function loadCloudSettings(milkshaConfig) {
     getItem: (k) => storage.get(k) || null,
     setItem: (k, v) => storage.set(k, v),
     removeItem: (k) => storage.delete(k),
+    key: (i) => {
+      const keys = [...storage.keys()];
+      return keys[i] || null;
+    },
+    get length() {
+      return storage.size;
+    },
   };
   const sandbox = {
     globalThis: {},
@@ -141,4 +148,35 @@ test('effective() merges bundled MILKSHA_FIREBASE_CONFIG when localStorage empty
   const eff = CS.effective();
   assert.equal(eff.projectId, 'milksha-qms-dev');
   assert.equal(eff.apiKey, 'bundled-key');
+});
+
+test('effective() prefers bundled apiKey over stale legacy localStorage on production host', function () {
+  const { CS, sandbox } = loadCloudSettings();
+  sandbox.location.hostname = 'ultronservice.github.io';
+  sandbox.localStorage.setItem(
+    'milksha:cloud-settings',
+    JSON.stringify({
+      projectId: 'milksha-qms-dev',
+      apiKey: 'legacy-key',
+      accessCode: 'legacy-code',
+      region: 'asia-east1',
+    }),
+  );
+  sandbox.localStorage.setItem('milksha:auth:old:zz:device:stb-01', '{"idToken":"x"}');
+  const report = CS.reconcileLegacyStorageOnBoot();
+  assert.ok(report.actions.some((a) => a.indexOf('cleared-auth') >= 0));
+  const eff = CS.effective();
+  assert.equal(eff.apiKey, 'bundled-key');
+  assert.equal(eff.projectId, 'milksha-qms-dev');
+  const saved = JSON.parse(sandbox.localStorage.getItem('milksha:cloud-settings'));
+  assert.equal(saved.apiKey, 'bundled-key');
+  assert.equal(saved.accessCode, undefined);
+});
+
+test('localhost keeps intentional saved apiKey override', function () {
+  const { CS, storage, sandbox } = loadCloudSettings();
+  sandbox.location.hostname = '127.0.0.1';
+  CS.save({ projectId: 'milksha-qms-dev', apiKey: 'dev-override-key', region: 'asia-east1' });
+  const eff = CS.effective();
+  assert.equal(eff.apiKey, 'dev-override-key');
 });

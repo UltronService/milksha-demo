@@ -692,6 +692,26 @@
     }
   }
 
+  function pinCloudDeviceDefaults() {
+    const modeEl = document.getElementById('fld-mode');
+    if (!modeEl || modeEl.value !== 'cloud') {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const devEl = document.getElementById('fld-device');
+    if (devEl && !params.get('device')) {
+      devEl.value = 'stb-01';
+    }
+    try {
+      const legacy = localStorage.getItem('milksha:deviceId');
+      if (legacy && legacy !== 'stb-01' && !params.get('device')) {
+        localStorage.setItem('milksha:deviceId', 'stb-01');
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function pinLocalPocTargets() {
     const modeEl = document.getElementById('fld-mode');
     if (!modeEl || modeEl.value !== 'local') {
@@ -1067,6 +1087,7 @@
     connectInFlight = true;
     setConnectButtonDisabled(true);
     pinLocalPocTargets();
+    pinCloudDeviceDefaults();
     if (pollTimer) {
       clearInterval(pollTimer);
       pollTimer = null;
@@ -1562,6 +1583,9 @@
     commandErrorClose.addEventListener('click', hideCommandErrorAlert);
   }
 
+  if (CloudSettings.reconcileLegacyStorageOnBoot) {
+    CloudSettings.reconcileLegacyStorageOnBoot();
+  }
   fillCloudForm(CloudSettings.load());
   const params = new URLSearchParams(window.location.search);
   const modeParam = params.get('mode');
@@ -1613,6 +1637,9 @@
   const bootMode = document.getElementById('fld-mode').value;
   if (bootMode === 'local') {
     pinLocalPocTargets();
+  }
+  if (bootMode === 'cloud') {
+    pinCloudDeviceDefaults();
   }
   if (bootMode === 'local' || bootMode === 'cloud') {
     connect().catch(function (e) {

@@ -24,6 +24,22 @@
     }
   }
 
+  function isProductionPagesHost() {
+    try {
+      const loc = root.location;
+      if (!loc) {
+        return false;
+      }
+      const host = String(loc.hostname || '').toLowerCase();
+      if (!host) {
+        return false;
+      }
+      return host === 'ultronservice.github.io' || host.slice(-12) === '.github.io';
+    } catch (e) {
+      return false;
+    }
+  }
+
   function defaults() {
     return {
       projectId: '',
@@ -67,18 +83,169 @@
     }
   }
 
+  function isObviousLegacyApiKey(apiKey) {
+    const key = String(apiKey || '').trim();
+    return key === 'legacy-key' || key === 'old-key' || key === 'x';
+  }
+
+  function savedSettingsLookStale(saved, bundled) {
+    if (!String(bundled.projectId || '').trim() || !String(bundled.apiKey || '').trim()) {
+      return false;
+    }
+    if (saved.accessCode) {
+      return true;
+    }
+    if (saved.apiKey && saved.apiKey !== bundled.apiKey) {
+      if (isDevSettingsHost()) {
+        return isObviousLegacyApiKey(saved.apiKey);
+      }
+      return true;
+    }
+    if (saved.projectId && saved.projectId !== bundled.projectId) {
+      if (isDevSettingsHost()) {
+        return !PROJECT_ID_RE.test(String(saved.projectId || '').trim());
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function shouldPreferBundledOverSaved(saved, bundled) {
+    return savedSettingsLookStale(saved, bundled);
+  }
+
   /** Saved settings merged with MILKSHA_FIREBASE_CONFIG (Pages 內建、免手動填寫). */
   function effective(partial, storage) {
     const saved = stripDevFields(Object.assign(defaults(), partial || load(storage)));
     const bundled = bundledFromConfig();
+    const preferBundled = shouldPreferBundledOverSaved(saved, bundled);
     return stripDevFields({
-      projectId: saved.projectId || bundled.projectId,
-      apiKey: saved.apiKey || bundled.apiKey,
-      region: saved.region || bundled.region,
+      projectId: preferBundled
+        ? bundled.projectId || saved.projectId
+        : saved.projectId || bundled.projectId,
+      apiKey: preferBundled ? bundled.apiKey || saved.apiKey : saved.apiKey || bundled.apiKey,
+      region: preferBundled
+        ? bundled.region || saved.region
+        : saved.region || bundled.region,
       useEmulator: saved.useEmulator,
       gateway: saved.gateway,
       emulatorPrefix: saved.emulatorPrefix,
     });
+  }
+
+  function listAuthStorageKeys(storage) {
+    const s = storage || root.localStorage;
+    const keys = [];
+    if (!s) {
+      return keys;
+    }
+    try {
+      if (s.key) {
+        for (let i = 0; ; i += 1) {
+          const key = s.key(i);
+          if (!key) {
+            break;
+          }
+          if (key.indexOf('milksha:auth:') === 0) {
+            keys.push(key);
+          }
+        }
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return keys;
+  }
+
+  function clearAuthStorageKeys(storage) {
+    const keys = listAuthStorageKeys(storage);
+    const s = storage || root.localStorage;
+    if (!s) {
+      return 0;
+    }
+    for (let i = 0; i < keys.length; i += 1) {
+      try {
+        s.removeItem(keys[i]);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    return keys.length;
+  }
+
+  /**
+   * On production Pages, drop stale POC keys and align saved cloud settings with bundled config.
+   * @returns {{ migrated: boolean, actions: string[] }}
+   */
+  function reconcileLegacyStorageOnBoot(storage) {
+    const s = storage || root.localStorage;
+    const actions = [];
+    if (!s) {
+      return { migrated: false, actions: actions };
+    }
+    const saved = stripDevFields(Object.assign(defaults(), load(s)));
+    const bundled = bundledFromConfig();
+    const staleSettings = savedSettingsLookStale(saved, bundled);
+
+    if (!staleSettings && !isProductionPagesHost()) {
+      return { migrated: false, actions: actions };
+    }
+
+    if (staleSettings) {
+      const cleared = clearAuthStorageKeys(s);
+      if (cleared > 0) {
+        actions.push('cleared-auth:' + cleared);
+      }
+      try {
+        s.removeItem('milksha:local:poc-target');
+        actions.push('cleared-poc-target');
+      } catch (e) {
+        /* ignore */
+      }
+      try {
+        s.removeItem('milksha:receiver-cache:s120030');
+        actions.push('cleared-receiver-cache-s120030');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    if (staleSettings || saved.accessCode) {
+      const eff = effective(undefined, s);
+      const cleaned = stripDevFields(Object.assign(defaults(), eff));
+      try {
+        s.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        actions.push('rewrote-cloud-settings');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    if (isProductionPagesHost() && isBundledCloudReady()) {
+      try {
+        const devId = s.getItem('milksha:deviceId');
+        if (devId && devId !== 'stb-01') {
+          s.setItem('milksha:deviceId', 'stb-01');
+          actions.push('reset-deviceId');
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      try {
+        const pocRaw = s.getItem('milksha:local:poc-target');
+        if (pocRaw) {
+          const poc = JSON.parse(pocRaw);
+          if (poc && poc.storeId === 's120030') {
+            s.removeItem('milksha:local:poc-target');
+            actions.push('cleared-poc-target');
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    return { migrated: actions.length > 0, actions: actions };
   }
 
   function isBundledCloudReady() {
@@ -141,6 +308,16 @@
   }
 
   function cfgPayload(settings) {
+    if (settings && typeof settings === 'object') {
+      const stripped = stripDevFields(Object.assign(defaults(), settings));
+      const normalized = normalizeImportedCfg(stripped);
+      const src = normalized || stripped;
+      return {
+        projectId: String(src.projectId || '').trim(),
+        apiKey: String(src.apiKey || '').trim(),
+        region: String(src.region || 'asia-east1').trim() || 'asia-east1',
+      };
+    }
     const s = effective(settings);
     return {
       projectId: String(s.projectId || '').trim(),
@@ -272,6 +449,12 @@
     };
   }
 
+  try {
+    reconcileLegacyStorageOnBoot(root.localStorage);
+  } catch (e) {
+    /* ignore */
+  }
+
   QMS.Transport.CloudSettings = {
     STORAGE_KEY: STORAGE_KEY,
     PROJECT_ID_RE: PROJECT_ID_RE,
@@ -281,6 +464,9 @@
     save: save,
     effective: effective,
     bundledFromConfig: bundledFromConfig,
+    savedSettingsLookStale: savedSettingsLookStale,
+    reconcileLegacyStorageOnBoot: reconcileLegacyStorageOnBoot,
+    clearAuthStorageKeys: clearAuthStorageKeys,
     isBundledCloudReady: isBundledCloudReady,
     prefersDefaultCloudMode: prefersDefaultCloudMode,
     isComplete: isComplete,
@@ -293,5 +479,6 @@
     hashContainsForbiddenSecrets: hashContainsForbiddenSecrets,
     productionEndpoints: productionEndpoints,
     isDevSettingsHost: isDevSettingsHost,
+    isProductionPagesHost: isProductionPagesHost,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

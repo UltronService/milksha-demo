@@ -9,6 +9,100 @@
 
   const STORAGE_PREFIX = 'milksha:auth:';
 
+  const DEVLOGIN_PEER_LOCK_PREFIX = 'milksha:auth:devlogin-peer:';
+  const DEVLOGIN_PEER_TTL_MS = 20000;
+
+  function devLoginPeerLockKey(config) {
+    const apiKey = String(config && config.apiKey ? config.apiKey : '').trim();
+    if (apiKey.length >= 8) {
+      return DEVLOGIN_PEER_LOCK_PREFIX + apiKey.slice(-8);
+    }
+    return DEVLOGIN_PEER_LOCK_PREFIX + (apiKey || 'none');
+  }
+
+  function sleepMs(ms) {
+    return new Promise(function (resolve) {
+      root.setTimeout(resolve, ms);
+    });
+  }
+
+  async function withDevLoginPeerLock(config, run) {
+    const store = root.localStorage;
+    if (!store) {
+      return run();
+    }
+    const key = devLoginPeerLockKey(config);
+    const owner = String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
+    const deadline = Date.now() + 25000;
+    while (Date.now() < deadline) {
+      let raw = null;
+      try {
+        raw = store.getItem(key);
+      } catch (e) {
+        return run();
+      }
+      if (!raw) {
+        try {
+          store.setItem(key, JSON.stringify({ owner: owner, at: Date.now() }));
+          break;
+        } catch (e) {
+          return run();
+        }
+      }
+      let held = false;
+      try {
+        const parsed = JSON.parse(raw);
+        held = parsed && parsed.at && Date.now() - Number(parsed.at) < DEVLOGIN_PEER_TTL_MS;
+      } catch (e) {
+        held = false;
+      }
+      if (!held) {
+        try {
+          store.setItem(key, JSON.stringify({ owner: owner, at: Date.now() }));
+          break;
+        } catch (e) {
+          return run();
+        }
+      }
+      await sleepMs(120);
+    }
+    try {
+      return await run();
+    } finally {
+      try {
+        const raw = store.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.owner === owner) {
+            store.removeItem(key);
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }
+
+  function authStorageKey(config, creds) {
+    const apiKey = String(config && config.apiKey ? config.apiKey : '').trim();
+    let fingerprint = 'k0';
+    if (apiKey.length >= 6) {
+      fingerprint = apiKey.slice(0, 3) + apiKey.slice(-3);
+    } else if (apiKey) {
+      fingerprint = apiKey;
+    }
+    return (
+      STORAGE_PREFIX +
+      fingerprint +
+      ':' +
+      creds.storeId +
+      ':' +
+      creds.role +
+      ':' +
+      (creds.deviceId || 'ctrl')
+    );
+  }
+
   function isDevHttpAllowed() {
     if (QMS.Transport.isDevEndpointOverrideAllowed) {
       return QMS.Transport.isDevEndpointOverrideAllowed();
@@ -61,8 +155,7 @@
   function createAuthSession(config, creds) {
     const onAuthSuccess = creds.onAuthSuccess;
     const storage = creds.storage || root.localStorage;
-    const storageKey =
-      STORAGE_PREFIX + creds.storeId + ':' + creds.role + ':' + (creds.deviceId || 'ctrl');
+    const storageKey = authStorageKey(config, creds);
 
     let idToken = '';
     let refreshToken = '';
@@ -178,45 +271,47 @@
     }
 
     async function devLoginOnce() {
-      throwIfAuthStopped();
-      const loginUrl = functionsUrl('devLogin');
-      assertSecureTargetUrl(loginUrl);
-      const body = {
-        storeId: creds.storeId,
-        role: creds.role,
-        deviceId: creds.deviceId || 'controller-web',
-      };
-      const res = await fetch(loginUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const text = await res.text();
-      let json = null;
-      try {
-        json = text ? JSON.parse(text) : null;
-      } catch (e) {
-        json = null;
-      }
-      if (!res.ok) {
-        devLoginAttempts += 1;
-        noteDevLoginFailure(res.status);
-        if (res.status === 401 && devLoginAttempts >= 2) {
-          authStopped = true;
+      return withDevLoginPeerLock(config, async function () {
+        throwIfAuthStopped();
+        const loginUrl = functionsUrl('devLogin');
+        assertSecureTargetUrl(loginUrl);
+        const body = {
+          storeId: creds.storeId,
+          role: creds.role,
+          deviceId: creds.deviceId || 'controller-web',
+        };
+        const res = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = text ? JSON.parse(text) : null;
+        } catch (e) {
+          json = null;
         }
-        throw authHttpError(res, json, 'devLogin failed ' + res.status);
-      }
-      devLoginAttempts = 0;
-      authStopped = false;
-      accessDenied403 = false;
-      captureBootServerTimeFromResponse(res);
-      if (!json || !json.customToken) {
-        const err = new Error('devLogin missing customToken');
-        err.status = res.status || 500;
-        err.response = json || { code: 'invalid_response', message: 'devLogin missing customToken' };
-        throw err;
-      }
-      return json.customToken;
+        if (!res.ok) {
+          devLoginAttempts += 1;
+          noteDevLoginFailure(res.status);
+          if (res.status === 401 && devLoginAttempts >= 2) {
+            authStopped = true;
+          }
+          throw authHttpError(res, json, 'devLogin failed ' + res.status);
+        }
+        devLoginAttempts = 0;
+        authStopped = false;
+        accessDenied403 = false;
+        captureBootServerTimeFromResponse(res);
+        if (!json || !json.customToken) {
+          const err = new Error('devLogin missing customToken');
+          err.status = res.status || 500;
+          err.response = json || { code: 'invalid_response', message: 'devLogin missing customToken' };
+          throw err;
+        }
+        return json.customToken;
+      });
     }
 
     async function devLogin() {
@@ -248,6 +343,11 @@
         json = null;
       }
       if (!res.ok) {
+        if (res.status === 400 || res.status === 401) {
+          clearStored();
+          devLoginAttempts += 1;
+          noteDevLoginFailure(res.status);
+        }
         throw authHttpError(res, json, 'signInWithCustomToken failed ' + res.status);
       }
       captureBootServerTimeFromResponse(res);

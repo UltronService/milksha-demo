@@ -69,7 +69,7 @@ test('stale deviceId: controller first then board shows online and numbers', asy
   await ctx.close();
 });
 
-test('stale cloud settings without mode query still boots home local link', async ({ browser }) => {
+test('stale cloud settings on home board migrate to bundled and connect cloud', async ({ browser }) => {
   const ctx = await freshContext(browser);
   await ctx.addInitScript(() => {
     localStorage.setItem(
@@ -83,16 +83,17 @@ test('stale cloud settings without mode query still boots home local link', asyn
     );
   });
   const board = await ctx.newPage();
-  await board.goto(`${BASE}/?mode=cloud`);
+  await board.goto(`${BASE}/?mode=cloud&store=c030020`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   const pinned = await board.evaluate(() => {
-    const raw = localStorage.getItem('milksha:local:device:c030020:stb-01');
+    const settings = localStorage.getItem('milksha:cloud-settings') || '';
     return {
       deviceId: localStorage.getItem('milksha:deviceId'),
-      hasHeartbeat: Boolean(raw),
+      settings,
+      staleKeyGone: settings.indexOf('"apiKey":"x"') < 0,
     };
   });
   expect(pinned.deviceId).toBe('stb-01');
-  expect(pinned.hasHeartbeat).toBe(true);
+  expect(pinned.staleKeyGone).toBe(true);
   await ctx.close();
 });

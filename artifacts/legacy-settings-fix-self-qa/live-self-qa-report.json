@@ -1,0 +1,239 @@
+{
+  "generatedAt": "2026-10-07T18:17:10.449Z",
+  "apiKeyFingerprint": "AIzaSy…D80Q",
+  "items": [
+    {
+      "id": "A",
+      "name": "Legacy seed live login + storage migration",
+      "result": "PASS",
+      "ok": true,
+      "before": {
+        "localStorage": {
+          "__legacy_live_seed": "1",
+          "milksha:cloud-settings": "{\"projectId\":\"milksha-qms-dev\",\"apiKey\":\"legacy-key\",\"accessCode\":\"legacy-code\",\"region\":\"asia-east1\"}",
+          "milksha:local:device:s120030:stb-old-99": "{\"online\":true,\"lastSeen\":\"2026-10-07T18:17:10.507Z\"}",
+          "milksha:local:poc-target": "{\"storeId\":\"s120030\",\"deviceId\":\"stb-01\",\"pinnedAt\":1791397030507}",
+          "milksha:auth:old-key:s120030:device:stb-old-99": "{\"idToken\":\"x\"}",
+          "milksha:receiver-cache:s120030": "{\"seq\":9999,\"numberContent\":[{\"number\":\"9999\"}],\"businessDate\":\"2099-01-01\"}",
+          "milksha:deviceId": "stb-old-99",
+          "milksha:auth:legacy:zz:device:stb-01": "{\"idToken\":\"stale-token\"}"
+        },
+        "authKeys": [
+          "milksha:auth:old-key:s120030:device:stb-old-99",
+          "milksha:auth:legacy:zz:device:stb-01"
+        ]
+      },
+      "afterBoard": {
+        "ls": {
+          "__legacy_live_seed": "1",
+          "milksha:cloud-settings": "{\"projectId\":\"milksha-qms-dev\",\"apiKey\":\"AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q\",\"region\":\"asia-east1\",\"useEmulator\":false,\"gateway\":\"\",\"emulatorPrefix\":\"\"}",
+          "milksha:local:device:s120030:stb-old-99": "{\"online\":true,\"lastSeen\":\"2026-10-07T18:17:10.507Z\"}",
+          "milksha:controller-pos-sign-key": "fake-milksha-pos-sign-key-for-tests",
+          "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web": "{\"idToken\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6IjkwNGIwZjkxYmU2ZWIwODY3ZGFiYmFhYjU4N2RmYzJlMzNmMDBhMjQiLCJ0eXAiOiJKV1QifQ.eyJzdG9yZUlkIjoienotcWEtc3RvcmUtYSIsImRldmljZUlkIjoiY29udHJvbGxlci13ZWIiLCJyb2xlIjoiY29udHJvbGxlciIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9taWxrc2hhLXFtcy1kZXYiLCJhdWQiOiJtaWxrc2hhLXFtcy1kZXYiLCJhdXRoX3RpbWUiOjE3OTEzOTcwMzEsInVzZXJfaWQiOiJjb250cm9sbGVyOnp6LXFhLXN0b3JlLWE6Y29udHJvbGxlci13ZWIiLCJzdWIiOiJjb250cm9sbGVyOnp6LXFhLXN0b3JlLWE6Y29udHJvbGxlci13ZWIiLCJpYXQiOjE3OTEzOTcwMzEsImV4cCI6MTc5MTQwMDYzMSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6e30sInNpZ25faW5fcHJvdmlkZXIiOiJjdXN0b20ifX0.Hdnb4uulfUmAjgA4U5xX4TNcqgkIboFNvQMLc_CFIwLloojyxG39mJNeztjQz_ShZHGA8rW79wdx9WXXD5iX4H_pqLSexU0Gl7uwg5hPOByVrOIHJuDw0BGqL-vnaXeNJIJZJbrBDHlEvfAtfk_FAYMdJkzUm4qyB3FaVCT0LR2FYUwCQXxAtPWq4cELw1h7Z5vJADwWTp9NBb84TITxr3Dg9akcf4zLVrnQXnH7Uk7fu_oPTOdNiv2-n6-HPD0da2-R1CaxhqzvYNQYDdnUsLDUPtKCFRF1gUzqPxtnYRaVxO8Oc590fJy-XmVAIeFFVgNCbUkzcBhQb-9HolylRg\",\"refreshToken\":\"AMf-vByMSKuJELOA53scOhKyYZvDVRTod50TMConLIP5NMGlCdIi0PJnINTQVhwUclRXk0e3ifW7v4M2Iq1epgprBADKncbPMZjrpC_9rpBK-owj8vhOWYOfd0vSjbprz462Bqv4bEnQTTulr0PmJePxPDa3lqJrpLn4xDjLwP97747EWowRdKQXCQl5INKvyES5oF5nfFuk\",\"expiresAtMs\":1791400572001}",
+          "milksha:deviceId": "stb-01",
+          "milksha:controller:logs": "[{\"at\":\"2026-10-07T18:17:13.448Z\",\"summary\":\"連線 cloud store=zz-qa-store-a device=stb-01\"}]"
+        },
+        "authKeys": [
+          "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web"
+        ],
+        "deviceId": "stb-01",
+        "settings": "{\"projectId\":\"milksha-qms-dev\",\"apiKey\":\"AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q\",\"region\":\"asia-east1\",\"useEmulator\":false,\"gateway\":\"\",\"emulatorPrefix\":\"\"}",
+        "poc": null,
+        "s120Cache": null
+      },
+      "afterCtrl": {
+        "ls": {
+          "__legacy_live_seed": "1",
+          "milksha:cloud-settings": "{\"projectId\":\"milksha-qms-dev\",\"apiKey\":\"AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q\",\"region\":\"asia-east1\",\"useEmulator\":false,\"gateway\":\"\",\"emulatorPrefix\":\"\"}",
+          "milksha:local:device:s120030:stb-old-99": "{\"online\":true,\"lastSeen\":\"2026-10-07T18:17:10.507Z\"}",
+          "milksha:controller-pos-sign-key": "fake-milksha-pos-sign-key-for-tests",
+          "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web": "{\"idToken\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6IjkwNGIwZjkxYmU2ZWIwODY3ZGFiYmFhYjU4N2RmYzJlMzNmMDBhMjQiLCJ0eXAiOiJKV1QifQ.eyJzdG9yZUlkIjoienotcWEtc3RvcmUtYSIsImRldmljZUlkIjoiY29udHJvbGxlci13ZWIiLCJyb2xlIjoiY29udHJvbGxlciIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9taWxrc2hhLXFtcy1kZXYiLCJhdWQiOiJtaWxrc2hhLXFtcy1kZXYiLCJhdXRoX3RpbWUiOjE3OTEzOTcwMzEsInVzZXJfaWQiOiJjb250cm9sbGVyOnp6LXFhLXN0b3JlLWE6Y29udHJvbGxlci13ZWIiLCJzdWIiOiJjb250cm9sbGVyOnp6LXFhLXN0b3JlLWE6Y29udHJvbGxlci13ZWIiLCJpYXQiOjE3OTEzOTcwMzEsImV4cCI6MTc5MTQwMDYzMSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6e30sInNpZ25faW5fcHJvdmlkZXIiOiJjdXN0b20ifX0.Hdnb4uulfUmAjgA4U5xX4TNcqgkIboFNvQMLc_CFIwLloojyxG39mJNeztjQz_ShZHGA8rW79wdx9WXXD5iX4H_pqLSexU0Gl7uwg5hPOByVrOIHJuDw0BGqL-vnaXeNJIJZJbrBDHlEvfAtfk_FAYMdJkzUm4qyB3FaVCT0LR2FYUwCQXxAtPWq4cELw1h7Z5vJADwWTp9NBb84TITxr3Dg9akcf4zLVrnQXnH7Uk7fu_oPTOdNiv2-n6-HPD0da2-R1CaxhqzvYNQYDdnUsLDUPtKCFRF1gUzqPxtnYRaVxO8Oc590fJy-XmVAIeFFVgNCbUkzcBhQb-9HolylRg\",\"refreshToken\":\"AMf-vByMSKuJELOA53scOhKyYZvDVRTod50TMConLIP5NMGlCdIi0PJnINTQVhwUclRXk0e3ifW7v4M2Iq1epgprBADKncbPMZjrpC_9rpBK-owj8vhOWYOfd0vSjbprz462Bqv4bEnQTTulr0PmJePxPDa3lqJrpLn4xDjLwP97747EWowRdKQXCQl5INKvyES5oF5nfFuk\",\"expiresAtMs\":1791400572001}",
+          "milksha:deviceId": "stb-01",
+          "milksha:controller:logs": "[{\"at\":\"2026-10-07T18:17:13.448Z\",\"summary\":\"連線 cloud store=zz-qa-store-a device=stb-01\"}]"
+        },
+        "authKeys": [
+          "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web"
+        ],
+        "deviceId": "stb-01",
+        "settings": "{\"projectId\":\"milksha-qms-dev\",\"apiKey\":\"AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q\",\"region\":\"asia-east1\",\"useEmulator\":false,\"gateway\":\"\",\"emulatorPrefix\":\"\"}",
+        "poc": null,
+        "s120Cache": null
+      },
+      "devLoginHttp": {
+        "status": 200,
+        "ok": true,
+        "code": null
+      },
+      "devLoginCallsDuringBoot": 2
+    },
+    {
+      "id": "B",
+      "name": "Legacy browser continuous two-store x3 + offline/403",
+      "result": "PASS",
+      "ok": true,
+      "homeReadOnly": {
+        "store": "c030020",
+        "readyCount": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "storeA": {
+            "latencyMs": 1165,
+            "nums": [
+              "2003",
+              "2001",
+              "2002"
+            ],
+            "readyCount": 3
+          },
+          "storeB": {
+            "latencyMs": 2013,
+            "nums": [
+              "2001"
+            ],
+            "readyCount": 1
+          },
+          "pass": true,
+          "leakAonB": false,
+          "leakBonA": false,
+          "counts": {
+            "aBeforeA": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aAfterB": 3
+          }
+        },
+        {
+          "round": 2,
+          "storeA": {
+            "latencyMs": 375,
+            "nums": [
+              "2004"
+            ],
+            "readyCount": 1
+          },
+          "storeB": {
+            "latencyMs": 2013,
+            "nums": [
+              "2002"
+            ],
+            "readyCount": 1
+          },
+          "pass": true,
+          "leakAonB": false,
+          "leakBonA": false,
+          "counts": {
+            "aBeforeA": 0,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aAfterB": 1
+          }
+        },
+        {
+          "round": 3,
+          "storeA": {
+            "latencyMs": 377,
+            "nums": [
+              "2005"
+            ],
+            "readyCount": 1
+          },
+          "storeB": {
+            "latencyMs": 2030,
+            "nums": [
+              "2003"
+            ],
+            "readyCount": 1
+          },
+          "pass": true,
+          "leakAonB": false,
+          "leakBonA": false,
+          "counts": {
+            "aBeforeA": 0,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aAfterB": 1
+          }
+        }
+      ],
+      "offlineText": "離線",
+      "pausedText": "連線暫停",
+      "devLogin403DuringForbidden": 1
+    },
+    {
+      "id": "C",
+      "name": "Fresh browser live two-store x3",
+      "result": "PASS",
+      "ok": true,
+      "rounds": [
+        {
+          "round": 1,
+          "storeA": {
+            "latencyMs": 600,
+            "nums": [
+              "2001",
+              "2006"
+            ],
+            "readyCount": 2
+          },
+          "storeB": {
+            "latencyMs": 1114,
+            "nums": [
+              "2001"
+            ],
+            "readyCount": 1
+          },
+          "pass": true
+        },
+        {
+          "round": 2,
+          "storeA": {
+            "latencyMs": 1178,
+            "nums": [
+              "2002"
+            ],
+            "readyCount": 1
+          },
+          "storeB": {
+            "latencyMs": 2013,
+            "nums": [
+              "2002"
+            ],
+            "readyCount": 1
+          },
+          "pass": true
+        },
+        {
+          "round": 3,
+          "storeA": {
+            "latencyMs": 2180,
+            "nums": [
+              "2003"
+            ],
+            "readyCount": 1
+          },
+          "storeB": {
+            "latencyMs": 2030,
+            "nums": [
+              "2003"
+            ],
+            "readyCount": 1
+          },
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "name": "Unit + e2e (see CI); unit counts from local npm test",
+      "result": "PASS",
+      "unit": { "pass": 129, "fail": 0 },
+      "e2e": {
+        "pr23LoginCount": { "passed": 2, "failed": 0, "note": "5m idle + 2m outage; devLogin counted via fake-cloud /test/devLoginCount" },
+        "fullSuiteLocalPreFix": { "passed": 114, "failed": 4 },
+        "fullSuiteCi": { "passed": 121, "failed": 0, "run": "https://github.com/UltronService/milksha-demo/actions/runs/37670295213", "head": "b62e455" }
+      }
+    }
+  ]
+}

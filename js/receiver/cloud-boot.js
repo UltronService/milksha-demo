@@ -42,6 +42,35 @@
     return 'c030020';
   }
 
+  function clearOtherReceiverCaches(activeStoreId) {
+    const keep = String(activeStoreId || '').trim();
+    if (!keep) {
+      return;
+    }
+    const prefix = 'milksha:receiver-cache:';
+    try {
+      const storage = root.localStorage;
+      if (!storage || !storage.key) {
+        return;
+      }
+      const remove = [];
+      for (let i = 0; ; i += 1) {
+        const key = storage.key(i);
+        if (!key) {
+          break;
+        }
+        if (key.indexOf(prefix) === 0 && key !== prefix + keep) {
+          remove.push(key);
+        }
+      }
+      for (let j = 0; j < remove.length; j += 1) {
+        storage.removeItem(remove[j]);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function readCreds(params, transportMode) {
     const home = isHomeBoardPage();
     const storeParam = params.get('store');
@@ -199,7 +228,8 @@
     });
   }
 
-  function attachLocalSyncListeners(resolveStoreId, cloud) {
+  function attachLocalSyncListeners(resolveStoreId, cloud, options) {
+    const localModeOnly = options && options.localModeOnly;
     function kick() {
       if (cloud.triggerBoardPoll) {
         cloud.triggerBoardPoll();
@@ -239,7 +269,7 @@
       if (ev.key.indexOf(':board:' + storeId) >= 0 || ev.key.indexOf(':device:' + storeId) >= 0) {
         kick();
       }
-      if (ev.key === 'milksha:local:poc-target') {
+      if (localModeOnly && ev.key === 'milksha:local:poc-target') {
         kick();
       }
     });
@@ -300,6 +330,14 @@
     showSetupGate(false);
     const transportMode = mode === 'cloud' ? 'cloud' : mode === 'firestore' ? 'firestore' : 'local';
     const creds = readCreds(params, transportMode);
+    if (homeBoard && transportMode === 'cloud') {
+      clearOtherReceiverCaches(creds.storeId);
+      try {
+        root.localStorage.removeItem('milksha:receiver-cache:' + creds.storeId);
+      } catch (e) {
+        /* ignore */
+      }
+    }
     const transport = QMS.Transport.createTransport(transportMode, {
       storeId: creds.storeId,
       config: modeResolved.config,
@@ -312,6 +350,9 @@
     });
 
     function resolveHomeLocalStoreId() {
+      if (transportMode === 'cloud') {
+        return creds.storeId;
+      }
       const Coord = QMS.Transport.LocalPocCoord;
       if (Coord && homeBoard) {
         return Coord.resolveLocalDeviceContext(root.localStorage, {
@@ -531,6 +572,7 @@
         onAuthFailure: handleAuthFailure,
         onSyncAuthUi: syncAuthUiFromSession,
         showCloudOfflineUi: Boolean(homeBoard && milkshaRuntime),
+        skipBootReceiverCache: Boolean(homeBoard && transportMode === 'cloud'),
         onCloudResync: function () {
           if (transport.session && transport.session.refreshIdToken) {
             return transport.session
@@ -604,7 +646,9 @@
         scheduleHomeBuildVersionCheck();
       }
       if (milkshaRuntime) {
-        attachLocalSyncListeners(resolveHomeLocalStoreId, cloud);
+        attachLocalSyncListeners(resolveHomeLocalStoreId, cloud, {
+          localModeOnly: transportMode === 'local',
+        });
       }
     }
 
