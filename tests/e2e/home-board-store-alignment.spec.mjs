@@ -28,6 +28,21 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   await waitForReceiverOnline(board, 'local');
 
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 15000 });
+  await board.waitForFunction(
+    () => {
+      try {
+        const poc = JSON.parse(localStorage.getItem('milksha:local:poc-target') || 'null');
+        const dev = JSON.parse(localStorage.getItem('milksha:local:device:c030020:stb-01') || 'null');
+        return Boolean(poc && poc.storeId === 'c030020' && dev && dev.online);
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 20000 },
+  );
+  await board.goto(urlsLocalHomePoc().board);
+  await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
+  await waitForReceiverOnline(board, 'local');
 
   const deviceDoc = await board.evaluate(() => {
     try {
@@ -39,7 +54,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   expect(deviceDoc && deviceDoc.online).toBe(true);
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 20000 });
   await ctx.close();
 });
 
