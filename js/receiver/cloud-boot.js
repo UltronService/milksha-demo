@@ -381,8 +381,13 @@
         slowRecheckTimer = null;
         authHalted = false;
         auth401Retried = false;
-        if (transport.session && transport.session.resetAuthRetryState) {
+        if (transport.session && transport.session.prepareScheduledAuthRecheck) {
+          transport.session.prepareScheduledAuthRecheck();
+        } else if (transport.session && transport.session.resetAuthRetryState) {
           transport.session.resetAuthRetryState();
+        }
+        if (transport.session && transport.session.clearUploadHalt) {
+          transport.session.clearUploadHalt();
         }
         runEnsureIdToken(true);
       }, waitMs);
@@ -465,6 +470,9 @@
           }
           clearGuestAuthDebug();
           syncAuthUiFromSession();
+          if (root.receiverCloud && root.receiverCloud.scheduleCloudResync) {
+            root.receiverCloud.scheduleCloudResync('auth');
+          }
         })
         .catch(function (err) {
           handleAuthFailure(err);
@@ -521,6 +529,38 @@
         },
         onAuthFailure: handleAuthFailure,
         onSyncAuthUi: syncAuthUiFromSession,
+        showCloudOfflineUi: Boolean(homeBoard && milkshaRuntime),
+        onCloudResync: function () {
+          if (transport.session && transport.session.refreshIdToken) {
+            return transport.session
+              .refreshIdToken()
+              .catch(function () {
+                return runEnsureIdToken(true);
+              })
+              .then(function () {
+                if (cloud.triggerBoardPoll) {
+                  cloud.triggerBoardPoll({ force: true });
+                }
+                if (cloud.triggerDevicePoll) {
+                  cloud.triggerDevicePoll();
+                }
+                if (cloud.sendHeartbeat) {
+                  cloud.sendHeartbeat();
+                }
+              });
+          }
+          return runEnsureIdToken(true).then(function () {
+            if (cloud.triggerBoardPoll) {
+              cloud.triggerBoardPoll({ force: true });
+            }
+            if (cloud.triggerDevicePoll) {
+              cloud.triggerDevicePoll();
+            }
+            if (cloud.sendHeartbeat) {
+              cloud.sendHeartbeat();
+            }
+          });
+        },
       });
       cloud.start();
       root.receiveBoard = cloud.receiveBoard;
