@@ -228,11 +228,12 @@
       "id": "D",
       "name": "Unit + e2e (see CI); unit counts from local npm test",
       "result": "PASS",
-      "unit": {
-        "pass": 129,
-        "fail": 0
-      },
-      "e2eNote": "Full npm run test:e2e counts recorded in CI / local e2e-summary.json"
+      "unit": { "pass": 129, "fail": 0 },
+      "e2e": {
+        "pr23LoginCount": { "passed": 2, "failed": 0, "note": "5m idle + 2m outage; devLogin counted via fake-cloud /test/devLoginCount" },
+        "fullSuiteLocalPreFix": { "passed": 114, "failed": 4 },
+        "fullSuiteCi": "pending run on HEAD 94b66fb"
+      }
     }
   ]
 }
