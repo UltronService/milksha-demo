@@ -471,14 +471,6 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
-      if (
-        !milkshaRuntime &&
-        numberContent.length === 0 &&
-        localSeq <= 0 &&
-        prevReadySet.size === 0
-      ) {
-        return { ignored: true, reason: 'guest_boot_empty_cloud' };
-      }
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
