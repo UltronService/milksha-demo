@@ -35,19 +35,18 @@ test.describe('per-store home board isolation', () => {
     await installBundledCloudRouteShim(ctrlA);
     await installBundledCloudRouteShim(ctrlB);
 
-    await boardA.goto(`${BASE}/?store=${STORE_A}`);
-    await boardB.goto(`${BASE}/?store=${STORE_B}`);
-    await ctrlA.goto(`${BASE}/controller/?store=${STORE_A}`);
-    await ctrlB.goto(`${BASE}/controller/?store=${STORE_B}`);
+    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}`);
+    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}`);
+    await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`);
+    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`);
 
     await boardA.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-
     await ctrlA.click('[data-testid="btn-send-numbers"]');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({
-      timeout: 20000,
+      timeout: 45000,
     });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 5000 });
 

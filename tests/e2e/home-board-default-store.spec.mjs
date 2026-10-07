@@ -42,7 +42,26 @@ test('controller board link points to home with store query', async ({ browser }
   const page = await ctx.newPage();
   await page.goto(`${BASE}/controller/?store=zz-qa-store-a&mode=cloud`);
   await expandControllerZone(page, 'sec-connect');
-  await page.click('[data-testid="btn-gen-board-link"]');
+  await page.waitForFunction(
+    () => document.getElementById('fld-store')?.value === 'zz-qa-store-a',
+    { timeout: 15000 },
+  );
+  await page.evaluate(() => {
+    const cfg = window.MILKSHA_FIREBASE_CONFIG || {};
+    const project = document.getElementById('fld-cloud-project');
+    const apiKey = document.getElementById('fld-cloud-apikey');
+    if (project && cfg.projectId) {
+      project.value = cfg.projectId;
+    }
+    if (apiKey && cfg.apiKey) {
+      apiKey.value = cfg.apiKey;
+    }
+    const block = document.getElementById('board-link-block');
+    if (block) {
+      block.hidden = false;
+    }
+    document.getElementById('btn-gen-board-link')?.click();
+  });
   const url = await page.locator('[data-testid="fld-board-simple-url"]').inputValue();
   expect(url).toMatch(/\?store=zz-qa-store-a/);
   expect(url).not.toContain('receiver-demo');

@@ -61,6 +61,20 @@
       account: 's210008',
       target: 'milkshas210008',
     },
+    {
+      id: 'zz-qa-store-a',
+      name: 'QA 測試店 A',
+      merchant_id: 'milksha',
+      account: 'zz-qa-store-a',
+      target: 'milkshazz-qa-store-a',
+    },
+    {
+      id: 'zz-qa-store-b',
+      name: 'QA 測試店 B',
+      merchant_id: 'milksha',
+      account: 'zz-qa-store-b',
+      target: 'milkshazz-qa-store-b',
+    },
   ];
 
   const ORDER_SOURCES = [
