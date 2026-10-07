@@ -244,11 +244,13 @@
 
     rootEl.className = 'milksha-stage';
     rootEl.innerHTML =
+      '<div class="milksha-cloud-offline" id="milksha-cloud-offline" hidden aria-live="polite">離線</div>' +
       '<div class="milksha-board-viewport" id="milksha-board-viewport">' +
       '<div class="milksha-board" id="milksha-board"></div></div>';
 
     const boardViewportEl = doc.getElementById('milksha-board-viewport');
     const boardEl = doc.getElementById('milksha-board');
+    const cloudOfflineEl = doc.getElementById('milksha-cloud-offline');
 
     let prevReadyIdSet = new Set();
     let isFirstPayload = true;
@@ -673,6 +675,13 @@
       audio.setMuted(muted);
     }
 
+    function setCloudOfflineVisible(visible) {
+      if (!cloudOfflineEl) {
+        return;
+      }
+      cloudOfflineEl.hidden = !visible;
+    }
+
     function unlockAudio() {
       audio.unlock();
     }
@@ -688,6 +697,7 @@
     const runtime = {
       brand: brand,
       applyPayload: applyPayload,
+      setCloudOfflineVisible: setCloudOfflineVisible,
       setOrientation: setOrientation,
       setMuted: setMuted,
       getOrientation: function () {

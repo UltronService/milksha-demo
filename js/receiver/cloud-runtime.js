@@ -62,6 +62,8 @@
     const onBoardAck = options.onBoardAck || function () {};
     const onAuthFailure = options.onAuthFailure || function () {};
     const onSyncAuthUi = options.onSyncAuthUi || function () {};
+    const onCloudResync = options.onCloudResync || null;
+    const showCloudOfflineUi = Boolean(options.showCloudOfflineUi);
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
     const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
 
@@ -84,7 +86,11 @@
     let lastResolvedSource = '';
     let clockSkewSilentRefetchPending = false;
     let cloudReachable = true;
+    let cloudOfflineUiVisible = false;
     let lastHeartbeatSucceeded = true;
+    let lastTickWallMs = Date.now();
+    let resyncInFlight = null;
+    let reconnectHandlers = [];
     /** @type {object|null} */
     let deferredReloadCommand = null;
 
@@ -216,6 +222,39 @@
         );
       } catch (e) {
         /* ignore */
+      }
+    }
+
+    function clearReceiverCache() {
+      try {
+        root.localStorage.removeItem(cacheKey);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    function syncCloudOfflineUi(offline) {
+      if (!showCloudOfflineUi) {
+        return;
+      }
+      if (simulateOffline) {
+        offline = false;
+      }
+      cloudOfflineUiVisible = offline;
+      if (milkshaRuntime && typeof milkshaRuntime.setCloudOfflineVisible === 'function') {
+        milkshaRuntime.setCloudOfflineVisible(offline);
+      }
+      const doc = root.document;
+      if (!doc) {
+        return;
+      }
+      const stage = doc.getElementById('board-root') || doc.getElementById('rcv-stage');
+      if (stage) {
+        if (offline) {
+          stage.setAttribute('data-cloud-offline', '1');
+        } else {
+          stage.removeAttribute('data-cloud-offline');
+        }
       }
     }
 
@@ -497,27 +536,162 @@
         sendHeartbeat();
         return;
       }
-      sendHeartbeat();
-      pollBoard();
-      pollDevice();
+      scheduleCloudResync('visibility');
+    }
+
+    function onWindowOnline() {
+      scheduleCloudResync('online');
+    }
+
+    function onWindowFocus() {
+      scheduleCloudResync('focus');
+    }
+
+    function onPageShow(ev) {
+      if (ev && ev.persisted) {
+        scheduleCloudResync('pageshow');
+        return;
+      }
+      scheduleCloudResync('pageshow');
+    }
+
+    function noteTickWallClock() {
+      const now = Date.now();
+      const gap = now - lastTickWallMs;
+      lastTickWallMs = now;
+      if (gap > 20000) {
+        scheduleCloudResync('clock_gap');
+      }
+    }
+
+    function attachReconnectListeners() {
+      if (!root.addEventListener) {
+        return;
+      }
+      root.addEventListener('online', onWindowOnline);
+      reconnectHandlers.push(['online', onWindowOnline]);
+      root.addEventListener('focus', onWindowFocus);
+      reconnectHandlers.push(['focus', onWindowFocus]);
+      root.addEventListener('pageshow', onPageShow);
+      reconnectHandlers.push(['pageshow', onPageShow]);
+    }
+
+    function detachReconnectListeners() {
+      if (!root.removeEventListener) {
+        return;
+      }
+      for (let i = 0; i < reconnectHandlers.length; i += 1) {
+        const pair = reconnectHandlers[i];
+        root.removeEventListener(pair[0], pair[1]);
+      }
+      reconnectHandlers = [];
+    }
+
+    async function applyMissingCloudBoard(boardDoc) {
+      revealGuestClockFromCloudBoard(boardDoc);
+      const resolved = TodayBoard.resolveSessionBusinessDate({
+        httpDateHeader: boardDoc.httpDate || '',
+        httpDateReadable: Boolean(boardDoc.httpDateReadable),
+      });
+      if (!resolved.ok) {
+        return;
+      }
+      noteResolvedBusinessDate(resolved);
+      dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
+      noteSessionBusinessDateRoll(resolved.businessDate);
+      clearReceiverCache();
+      const nextSeq = localSeq > 0 ? localSeq + 1 : 1;
+      await applyNumberContent([], nextSeq, {
+        silent: true,
+        preserveFirstBatchFlag: true,
+        boardUpdatedAt: new Date().toISOString(),
+      });
     }
 
     function markCloudReachable() {
+      const wasOffline = !cloudReachable;
       cloudReachable = true;
+      if (wasOffline) {
+        syncCloudOfflineUi(false);
+      }
       tryFlushDeferredReloadCommand();
-    }
-
-    function markCloudUnreachable() {
-      cloudReachable = false;
-    }
-
-    function notifyAuthFailure(err) {
-      onAuthFailure(err);
     }
 
     function isAuthHttpError(err) {
       const status = err && err.status ? Number(err.status) : 0;
       return status === 401 || status === 403;
+    }
+
+    function isPermissionOrAuthFailure(err) {
+      if (authBlocksBoardSync() || authBlocksHeartbeat()) {
+        return true;
+      }
+      if (isAuthHttpError(err)) {
+        return true;
+      }
+      const msg = err && err.message ? String(err.message) : '';
+      if (msg.indexOf('Firestore GET 401') >= 0 || msg.indexOf('Firestore GET 403') >= 0) {
+        return true;
+      }
+      const response = err && err.response ? err.response : null;
+      const code = response && response.code != null ? String(response.code) : '';
+      if (code === 'store_not_allowed' || code === 'upload_halted' || code === 'forbidden') {
+        return true;
+      }
+      return false;
+    }
+
+    function markCloudUnreachable(err) {
+      if (simulateOffline) {
+        return;
+      }
+      cloudReachable = false;
+      if (isPermissionOrAuthFailure(err)) {
+        syncCloudOfflineUi(false);
+        return;
+      }
+      syncCloudOfflineUi(true);
+    }
+
+    function scheduleCloudResync(reason) {
+      if (simulateOffline || authBlocksBoardSync()) {
+        return Promise.resolve();
+      }
+      if (resyncInFlight) {
+        return resyncInFlight;
+      }
+      const recoveryOffline = !cloudReachable;
+      if (recoveryOffline) {
+        syncCloudOfflineUi(true);
+      }
+      lastBoardUpdateTime = '';
+      const kick = function () {
+        sendHeartbeat();
+        return pollBoard({ force: true }).then(function () {
+          return pollDevice();
+        });
+      };
+      if (onCloudResync) {
+        resyncInFlight = Promise.resolve()
+          .then(function () {
+            return onCloudResync(reason);
+          })
+          .catch(function () {
+            return kick();
+          })
+          .finally(function () {
+            resyncInFlight = null;
+          });
+        return resyncInFlight;
+      }
+      resyncInFlight = kick().finally(function () {
+        resyncInFlight = null;
+      });
+      return resyncInFlight;
+    }
+
+    function notifyAuthFailure(err) {
+      onAuthFailure(err);
     }
 
     async function tryFlushDeferredReloadCommand() {
@@ -533,8 +707,10 @@
       await handleCommand(cmd);
     }
 
-    async function pollBoard() {
+    async function pollBoard(pollOpts) {
+      const forcePoll = Boolean(pollOpts && pollOpts.force);
       if (authBlocksBoardSync()) {
+        syncCloudOfflineUi(false);
         return;
       }
       if (simulateOffline) {
@@ -563,16 +739,28 @@
           return;
         }
         if (board.missing) {
-          revealGuestClockFromCloudBoard(board);
           onStatusLine('board: 無名單');
+          if (milkshaRuntime || showCloudOfflineUi) {
+            await applyMissingCloudBoard(board);
+            lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
+          } else {
+            revealGuestClockFromCloudBoard(board);
+          }
+          markCloudReachable();
           return;
         }
         const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
-        if (marker && marker === lastBoardUpdateTime) {
+        if (!forcePoll && marker && marker === lastBoardUpdateTime) {
+          markCloudReachable();
           return;
         }
         lastBoardUpdateTime = marker;
         revealGuestClockFromCloudBoard(board);
+        const tickets = board.data.tickets;
+        const ticketList = Array.isArray(tickets) ? tickets : [];
+        if (ticketList.length === 0) {
+          clearReceiverCache();
+        }
         await tryApplyTodayBoard(board);
         markCloudReachable();
       } catch (e) {
@@ -580,7 +768,7 @@
           if (isAuthHttpError(e)) {
             notifyAuthFailure(e);
           }
-          markCloudUnreachable();
+          markCloudUnreachable(e);
         }
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
@@ -719,7 +907,7 @@
         if (isAuthHttpError(e)) {
           notifyAuthFailure(e);
         }
-        markCloudUnreachable();
+        markCloudUnreachable(e);
         onStatusLine('device 錯誤: ' + (e && e.message ? e.message : 'unknown'));
       }
     }
@@ -739,7 +927,7 @@
           appVersion: VERSION,
           boardSeq: localSeq,
           pendingUploads: 0,
-          simulatedOffline: simulateOffline,
+          simulatedOffline: simulateOffline || cloudOfflineUiVisible,
           ackCommandId: ack,
         });
         if (pendingAckCommandId) {
@@ -754,7 +942,7 @@
         if (isAuthHttpError(e)) {
           notifyAuthFailure(e);
         }
-        markCloudUnreachable();
+        markCloudUnreachable(e);
         onStatusLine('heartbeat 失敗');
       }
     }
@@ -799,9 +987,13 @@
         visibilityHandler = onVisibilityForHeartbeat;
         root.document.addEventListener('visibilitychange', visibilityHandler);
       }
+      if (onCloudResync || showCloudOfflineUi) {
+        attachReconnectListeners();
+      }
 
       tickTimer = setInterval(function () {
         tickMs += 1000;
+        noteTickWallClock();
         onSyncAuthUi();
         if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
           pollDevice();
@@ -821,6 +1013,7 @@
         root.document.removeEventListener('visibilitychange', visibilityHandler);
         visibilityHandler = null;
       }
+      detachReconnectListeners();
       if (tickTimer) {
         clearInterval(tickTimer);
         tickTimer = null;
@@ -852,8 +1045,15 @@
       start: start,
       destroy: destroy,
       receiveBoard: receiveBoard,
-      triggerBoardPoll: function () {
-        return pollBoard();
+      triggerBoardPoll: function (pollOpts) {
+        return pollBoard(pollOpts);
+      },
+      scheduleCloudResync: scheduleCloudResync,
+      isCloudReachable: function () {
+        return cloudReachable;
+      },
+      isCloudOfflineUiVisible: function () {
+        return cloudOfflineUiVisible;
       },
       triggerDevicePoll: function () {
         return pollDevice();

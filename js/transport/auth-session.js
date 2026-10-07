@@ -74,6 +74,9 @@
     let bootServerTimeMs = 0;
     /** @type {Promise<string> | null} */
     let devLoginInFlight = null;
+    /** @type {Promise<string> | null} */
+    let ensureIdTokenInFlight = null;
+    let devLoginBlockedUntilMs = 0;
 
     function loadStored() {
       try {
@@ -155,6 +158,25 @@
       throw err;
     }
 
+    function devLoginBackoffMs() {
+      const attempt = Math.max(1, devLoginAttempts);
+      const base = 2000;
+      const cap = 5 * 60 * 1000;
+      return Math.min(cap, base * Math.pow(2, Math.min(attempt - 1, 8)));
+    }
+
+    function noteDevLoginFailure(status) {
+      if (status === 403) {
+        accessDenied403 = true;
+        devLoginBlockedUntilMs = Date.now() + devLoginBackoffMs();
+        return;
+      }
+      if (status === 401) {
+        return;
+      }
+      devLoginBlockedUntilMs = Date.now() + devLoginBackoffMs();
+    }
+
     async function devLoginOnce() {
       throwIfAuthStopped();
       const loginUrl = functionsUrl('devLogin');
@@ -178,9 +200,7 @@
       }
       if (!res.ok) {
         devLoginAttempts += 1;
-        if (res.status === 403) {
-          accessDenied403 = true;
-        }
+        noteDevLoginFailure(res.status);
         if (res.status === 401 && devLoginAttempts >= 2) {
           authStopped = true;
         }
@@ -288,15 +308,17 @@
       return idToken;
     }
 
-    async function ensureIdToken() {
+    async function ensureIdTokenInner() {
       throwIfAuthStopped();
       loadStored();
       if (expiresAtMs > 0 && Date.now() >= expiresAtMs) {
         idToken = '';
       }
       if (accessDenied403) {
-        const custom = await devLogin();
-        return signInWithCustomToken(custom);
+        const err = new Error('upload halted after 403');
+        err.status = 403;
+        err.response = { code: 'upload_halted', message: 'upload halted after 403' };
+        throw err;
       }
       if (idToken && Date.now() < expiresAtMs) {
         return idToken;
@@ -310,8 +332,24 @@
           }
         }
       }
+      if (Date.now() < devLoginBlockedUntilMs) {
+        const err = new Error('devLogin backoff');
+        err.status = 429;
+        err.response = { code: 'dev_login_backoff', message: 'devLogin backoff' };
+        throw err;
+      }
       const custom = await devLogin();
       return signInWithCustomToken(custom);
+    }
+
+    async function ensureIdToken() {
+      if (ensureIdTokenInFlight) {
+        return ensureIdTokenInFlight;
+      }
+      ensureIdTokenInFlight = ensureIdTokenInner().finally(function () {
+        ensureIdTokenInFlight = null;
+      });
+      return ensureIdTokenInFlight;
     }
 
     async function authHeaders() {
@@ -328,6 +366,13 @@
       resetAuthRetryState: function () {
         authStopped = false;
         devLoginAttempts = 0;
+        devLoginBlockedUntilMs = 0;
+      },
+      prepareScheduledAuthRecheck: function () {
+        accessDenied403 = false;
+        authStopped = false;
+        devLoginAttempts = 0;
+        devLoginBlockedUntilMs = 0;
       },
       isAuthStopped: function () {
         return authStopped;
