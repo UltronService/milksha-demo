@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-10-07T21:03:19.466Z",
+  "pages": "http://127.0.0.1:8877",
+  "store": "zz-qa-store-a",
+  "apiKeyConfigured": true,
+  "timing": {
+    "error": "page.waitForFunction: Timeout 30000ms exceeded."
+  },
+  "pauseFreshStore": {
+    "devLoginCalls": 1,
+    "pausedText": "連線暫停",
+    "pass": true
+  },
+  "pauseExistingSession": {
+    "pass": false,
+    "error": "page.waitForSelector: Timeout 60000ms exceeded.\nCall log:\n  - waiting for locator('#milksha-cloud-paused:not([hidden])') to be visible\n"
+  },
+  "firstSendMs": null,
+  "pass": {
+    "firstSendUnder3s": false,
+    "pauseFresh": true,
+    "pauseExisting": false
+  }
+}

@@ -55,12 +55,16 @@ test('devCommand retries once on 401 after refresh', async function () {
 test('devCommand does not refresh on 403', async function () {
   let refreshCalls = 0;
   let devCommandCalls = 0;
+  let halted = false;
   const session = {
     authHeaders: async function () {
       return { Authorization: 'Bearer tok' };
     },
     refreshIdToken: async function () {
       refreshCalls += 1;
+    },
+    markUploadHaltedFrom403: function () {
+      halted = true;
     },
   };
   const fetch403 = async function () {

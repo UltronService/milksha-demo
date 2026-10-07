@@ -451,6 +451,9 @@
       const sessionStopped =
         transport.session && transport.session.isAuthStopped && transport.session.isAuthStopped();
       if (status === 403) {
+        if (transport.session && transport.session.markUploadHaltedFrom403) {
+          transport.session.markUploadHaltedFrom403(err);
+        }
         setUploadStopped();
         pendingRecheckDelayMs = recheck403Ms;
         scheduleSlowAuthRecheck(recheck403Ms);
