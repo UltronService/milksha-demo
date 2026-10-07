@@ -168,6 +168,11 @@
     function noteDevLoginFailure(status) {
       if (status === 403) {
         accessDenied403 = true;
+        devLoginBlockedUntilMs = Date.now() + devLoginBackoffMs();
+        return;
+      }
+      if (status === 401) {
+        return;
       }
       devLoginBlockedUntilMs = Date.now() + devLoginBackoffMs();
     }

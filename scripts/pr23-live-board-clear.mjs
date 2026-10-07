@@ -4,7 +4,7 @@
  * Env: MILKSHA_FIREBASE_API_KEY (required), MILKSHA_QA_STORE (default zz-qa-agent)
  */
 import { chromium } from 'playwright';
-import { startSite } from '../tests/e2e/harness.mjs';
+import { startSite, expandControllerZone } from '../tests/e2e/harness.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -111,7 +111,9 @@ async function main() {
   await board.goto(boardUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await controller.goto(ctrlUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 90000 });
-  await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
+  await expandControllerZone(controller, 'sec-connect');
+  await controller.click('#btn-connect');
+  await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 120000 });
 
   const testNo = '88' + String(Date.now()).slice(-2);
   const st = await devCommand(ctrlToken, {
