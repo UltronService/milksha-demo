@@ -48,17 +48,17 @@ export async function ensureCloudRunning() {
   await waitCloudReady();
 }
 
-/** Kill owned fake-cloud and start the current workspace server.mjs (local dev). */
+/** Kill fake-cloud on PORT_CLOUD and start the current workspace server.mjs. */
 export async function restartCloud() {
   stopOwnedCloud();
   try {
-    const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/health`);
-    if (res.ok) {
-      return;
-    }
+    const { execSync } = await import('node:child_process');
+    execSync(`fuser -k ${PORT_CLOUD}/tcp 2>/dev/null || true`, { stdio: 'ignore' });
+    execSync("pkill -f 'tools/fake-cloud/server.mjs' 2>/dev/null || true", { stdio: 'ignore' });
   } catch {
-    /* start below */
+    /* ignore */
   }
+  cloudProc = null;
   startCloud();
   await waitCloudReady();
 }
@@ -184,7 +184,8 @@ export function urlsForMode(mode) {
     `${base}/receiver-demo/?mode=${mode}&store=s120030&device=stb-01` +
     (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
   const ctrl =
-    `${base}/controller/?mode=${mode}` + (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
+    `${base}/controller/?mode=${mode}&store=s120030` +
+    (mode === 'firestore' ? `&gateway=${gw}${emu}${emuKey}` : '');
   return { recv, ctrl, base };
 }
 
@@ -217,11 +218,22 @@ export async function installBundledCloudRouteShim(page) {
     await proxyToFakeCloud(route, `${base}/identity${u.pathname}${u.search}`);
   });
   await page.route('https://securetoken.googleapis.com/**', async (route) => {
+    const req = route.request();
+    let idToken = 'fake-id-token';
+    try {
+      const body = JSON.parse(req.postData() || '{}');
+      const refresh = String(body.refresh_token || '').trim();
+      if (refresh.startsWith('fake-')) {
+        idToken = refresh;
+      }
+    } catch {
+      /* keep default */
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        id_token: 'fake-id-token',
+        id_token: idToken,
         refresh_token: 'fake-refresh',
         expires_in: '3600',
         token_type: 'Bearer',
@@ -307,8 +319,26 @@ export async function guestBoardStyleFingerprint(page) {
   });
 }
 
-export async function waitForReceiverOnline(receiver, mode) {
-  const storeId = 's120030';
+async function resolveReceiverStoreId(receiver, storeOverride) {
+  if (storeOverride) {
+    return storeOverride;
+  }
+  return receiver.evaluate(() => {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get('store');
+    if (fromUrl) {
+      return fromUrl;
+    }
+    const path = location.pathname.replace(/\/$/, '') || '/';
+    if (path.includes('receiver-demo')) {
+      return 's120030';
+    }
+    return 'c030020';
+  });
+}
+
+export async function waitForReceiverOnline(receiver, mode, storeOverride) {
+  const storeId = await resolveReceiverStoreId(receiver, storeOverride);
   const deviceId = 'stb-01';
   if (mode === 'local') {
     await receiver.waitForFunction(
@@ -408,6 +438,8 @@ export async function connectController(page, mode) {
         key: 'fake-api-key-for-emulator',
       },
     );
+  } else if (mode === 'cloud') {
+    await page.selectOption('#fld-mode', 'cloud');
   } else {
     await page.evaluate(() => {
       const sel = document.getElementById('fld-mode');
@@ -444,6 +476,8 @@ export async function connectController(page, mode) {
       await page.waitForTimeout(4000);
     }
     await page.waitForTimeout(800);
+  } else if (mode === 'cloud') {
+    await page.waitForTimeout(2000);
   } else {
     await page.waitForTimeout(400);
   }

@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-07T14:23:36.994Z",
+  "fn": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devLogin",
+  "results": [
+    {
+      "storeId": "c030020",
+      "status": 200,
+      "code": null,
+      "ok": true
+    },
+    {
+      "storeId": "zz-qa-store-a",
+      "status": 200,
+      "code": null,
+      "ok": true
+    },
+    {
+      "storeId": "zz-qa-store-b",
+      "status": 200,
+      "code": null,
+      "ok": true
+    },
+    {
+      "storeId": "s999999",
+      "status": 403,
+      "code": "store_not_allowed",
+      "ok": false
+    }
+  ]
+}

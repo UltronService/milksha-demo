@@ -9,7 +9,7 @@
 
   const POC_TARGET_KEY = 'milksha:local:poc-target';
   const POC_CHANNEL_NAME = 'milksha-local-poc';
-  const DEFAULT_STORE_ID = 's120030';
+  const DEFAULT_STORE_ID = 'c030020';
   const DEFAULT_DEVICE_ID = 'stb-01';
 
   /**

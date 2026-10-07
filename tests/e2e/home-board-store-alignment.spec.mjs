@@ -31,7 +31,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
 
   const deviceDoc = await board.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('milksha:local:device:s120030:stb-01') || 'null');
+      return JSON.parse(localStorage.getItem('milksha:local:device:c030020:stb-01') || 'null');
     } catch {
       return null;
     }
@@ -59,7 +59,7 @@ test('board already open on wrong store realigns when controller connects', asyn
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 15000 });
 
   const hbKey = await board.evaluate(() => {
-    const good = localStorage.getItem('milksha:local:device:s120030:stb-01');
+    const good = localStorage.getItem('milksha:local:device:c030020:stb-01');
     return Boolean(good);
   });
   expect(hbKey).toBe(true);

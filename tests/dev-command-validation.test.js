@@ -176,7 +176,10 @@ test('devCommand mismatched store id returns 403 forbidden', async function () {
     await waitHealth();
     const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer fake-s120030-controller',
+      },
       body: JSON.stringify({
         storeId: 's999999',
         deviceId: 'stb-01',

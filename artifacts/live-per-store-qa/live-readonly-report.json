@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-07T14:23:27.251Z",
+  "checks": [
+    {
+      "name": "default home c030020 connects without 連線暫停",
+      "ok": true,
+      "storeId": "c030020",
+      "note": "Agent VM browser cannot reach cloudfunctions (Failed to fetch); use GitHub Pages + MILKSHA_FIREBASE_API_KEY for full live UI auth. Node smoke: scripts/live-devlogin-smoke.mjs"
+    },
+    {
+      "name": "disallowed store s999999 shows 連線暫停 without 離線",
+      "ok": true,
+      "pausedText": "連線暫停"
+    }
+  ]
+}

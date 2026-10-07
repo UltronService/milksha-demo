@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
-  ensureCloudRunning,
+  restartCloud,
   startSite,
   resetCloudState,
   PORT_SITE,
@@ -13,7 +13,7 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
 test.describe('home board cloud recovery', () => {
   test.beforeAll(async () => {
-    await ensureCloudRunning();
+    await restartCloud();
     await startSite();
   });
 
@@ -129,7 +129,10 @@ test.describe('home board cloud recovery', () => {
     await board.waitForTimeout(4000);
     await expect(board.locator('.milksha-ready .milksha-num').first()).toHaveText(firstNum.trim());
     await expect(board.locator('#milksha-cloud-offline')).toBeHidden();
+    await expect(board.locator('#milksha-cloud-paused')).toBeVisible({ timeout: 8000 });
+    await expect(board.locator('#milksha-cloud-paused')).toHaveText('連線暫停');
     await expect(board.locator('#board-root')).not.toHaveAttribute('data-cloud-offline', '1');
+    await expect(board.locator('#board-root')).toHaveAttribute('data-cloud-paused', '1');
     await boardCtx.close();
     await ctrlCtx.close();
   });
@@ -172,6 +175,27 @@ test.describe('home board cloud recovery', () => {
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await board.waitForTimeout(30000);
     expect(devLoginCalls).toBeLessThanOrEqual(2);
+    await boardCtx.close();
+  });
+
+  test('devLogin calls stay bounded over 60s on store_not_allowed', async ({ browser }) => {
+    test.setTimeout(120000);
+    const boardCtx = await isolatedCloudContext(browser);
+    const board = await boardCtx.newPage();
+    let devLoginCalls = 0;
+    await board.route('**/devLogin', async (route) => {
+      devLoginCalls += 1;
+      await route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'store_not_allowed', message: 'store not allowed' }),
+      });
+    });
+    await installBundledCloudRouteShim(board);
+    await board.goto(BASE + '/?testAuthRecheckMs=120000');
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    await board.waitForTimeout(60000);
+    expect(devLoginCalls).toBeLessThanOrEqual(3);
     await boardCtx.close();
   });
 });

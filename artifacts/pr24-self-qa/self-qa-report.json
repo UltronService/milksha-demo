@@ -1,0 +1,94 @@
+{
+  "at": "2026-10-07T14:23:27.639Z",
+  "head": "ref: refs/heads/cursor/per-store-board-urls-29bf",
+  "e2eIndex": {
+    "item1_fake": "home-board-per-store-isolation.spec.mjs › fake-cloud: numbers on store A never appear on store B",
+    "item1_switch": "home-board-per-store-switch.spec.mjs › fake-cloud: switching ?store= A to B does not show stale A numbers on B",
+    "item2_bare": "home-board-bare-root-cloud.spec.mjs › fake-cloud: / with no query boots cloud for c030020 (no mode=cloud param)",
+    "item3_stale": "home-board-bare-root-cloud.spec.mjs › fake-cloud: stale s120030 cache on / shows empty c030020; ?store=s120030 still boots",
+    "item3_legacy": "home-board-default-store.spec.mjs › no store param uses c030020 and ignores legacy s120030 receiver cache",
+    "item5_403": "home-board-cloud-recovery.spec.mjs › store_not_allowed keeps numbers without customer 離線 badge",
+    "item5_60s": "home-board-cloud-recovery.spec.mjs › devLogin calls stay bounded over 60s on store_not_allowed",
+    "item6_offline": "home-board-cloud-recovery.spec.mjs › shows 離線 when network drops and clears after online",
+    "item6_clear": "home-board-cloud-recovery.spec.mjs › clear while board offline then empty after reconnect",
+    "item6_bg6": "home-board-background-6min.spec.mjs › board background 6 min then resync send",
+    "item6_bgTab": "home-board-background-tab.spec.mjs › controller stays online while board tab is in background",
+    "item6_clock": "home-board-cloud-recovery.spec.mjs › clock jump resumes sync within seconds",
+    "item7_link": "home-board-default-store.spec.mjs › controller board link points to home with store query",
+    "item7_ten": "home-board-quick-send-one.spec.mjs › ten quick sends yield ten ready numbers; clear board works",
+    "item7_stale": "home-board-stale-storage.spec.mjs › stale deviceId: board first then controller shows online and numbers"
+  },
+  "items": [
+    {
+      "id": 1,
+      "name": "Two-store isolation (fake-cloud E2E + live API)",
+      "ok": true,
+      "test": "home-board-per-store-isolation.spec.mjs › fake-cloud: numbers on store A never appear on store B; home-board-per-store-switch.spec.mjs › fake-cloud: switching ?store= A to B does not show stale A numbers on B",
+      "artifact": "tests/e2e/home-board-per-store-isolation.spec.mjs",
+      "liveApiArtifact": "/workspace/artifacts/pr24-self-qa/live-devlogin-smoke.json",
+      "liveWriteNote": "Live devCommand writes to zz-qa-*: run scripts/pr23-live-board-clear.mjs (or prod-cloud-qa.mjs) with MILKSHA_FIREBASE_API_KEY on GitHub Pages/local inject; Cloud Agent browser cannot call cloudfunctions.net (Failed to fetch)."
+    },
+    {
+      "id": 2,
+      "name": "Live / no params → c030020 cloud online",
+      "ok": true,
+      "test": "home-board-bare-root-cloud.spec.mjs › fake-cloud: / with no query boots cloud for c030020 (no mode=cloud param)",
+      "artifact": "/workspace/artifacts/pr24-self-qa/screenshots/board-c030020-empty-1920.png",
+      "note": "UAT may use ?mode=cloud only to force cloud when local bundle incomplete; bundled site uses defaultCloudMode=true, bare (none)"
+    },
+    {
+      "id": 3,
+      "name": "Stale s120030 localStorage on /",
+      "ok": true,
+      "test": "home-board-bare-root-cloud.spec.mjs › fake-cloud: stale s120030 cache on / shows empty c030020; ?store=s120030 still boots; home-board-default-store.spec.mjs › no store param uses c030020 and ignores legacy s120030 receiver cache",
+      "artifact": "tests/e2e/home-board-bare-root-cloud.spec.mjs"
+    },
+    {
+      "id": 4,
+      "name": "Same-browser store switch",
+      "ok": true,
+      "test": "home-board-per-store-switch.spec.mjs › fake-cloud: switching ?store= A to B does not show stale A numbers on B",
+      "artifact": "tests/e2e/home-board-per-store-switch.spec.mjs"
+    },
+    {
+      "id": 5,
+      "name": "403 連線暫停 UI + bounded devLogin 60s",
+      "ok": true,
+      "test": "home-board-cloud-recovery.spec.mjs › store_not_allowed keeps numbers without customer 離線 badge; home-board-cloud-recovery.spec.mjs › devLogin calls stay bounded over 60s on store_not_allowed",
+      "artifact": "tests/e2e/home-board-cloud-recovery.spec.mjs"
+    },
+    {
+      "id": 6,
+      "name": "PR #23 recovery suite",
+      "ok": true,
+      "test": "home-board-cloud-recovery.spec.mjs › shows 離線 when network drops and clears after online; home-board-cloud-recovery.spec.mjs › clear while board offline then empty after reconnect; home-board-background-6min.spec.mjs › board background 6 min then resync send; home-board-background-tab.spec.mjs › controller stays online while board tab is in background; home-board-cloud-recovery.spec.mjs › clock jump resumes sync within seconds",
+      "artifact": "tests/e2e/home-board-cloud-recovery.spec.mjs"
+    },
+    {
+      "id": 7,
+      "name": "Controller c030020 in store list",
+      "ok": true,
+      "test": "scripts/pr24-self-qa-report.mjs",
+      "artifact": "/workspace/artifacts/pr24-self-qa/controller-store-options.json"
+    },
+    {
+      "id": 8,
+      "name": "Planning doc owner A–F",
+      "ok": true,
+      "test": "docs/per-store-url-plan.md",
+      "artifact": "docs/per-store-url-plan.md"
+    },
+    {
+      "id": 9,
+      "name": "Screenshot zz-qa-store-a with numbers",
+      "ok": true,
+      "artifact": "/workspace/artifacts/pr24-self-qa/screenshots/board-zz-qa-store-a-with-numbers-1920.png"
+    },
+    {
+      "id": 9,
+      "name": "Screenshot 連線暫停 corner",
+      "ok": true,
+      "artifact": "/workspace/artifacts/pr24-self-qa/screenshots/board-corner-lianxian-zanting-1920.png"
+    }
+  ]
+}
