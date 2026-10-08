@@ -1,11 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   restartCloud,
   startSite,
-  stopSite,
   resetCloudState,
   PORT_SITE,
   installBundledCloudRouteShim,
@@ -13,16 +9,12 @@ import {
   expandControllerZone,
 } from './harness.mjs';
 
-const SITE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE = 'zz-qa-store-a';
 
 test.describe('clear then push (stale pending clear must not wipe board)', () => {
   test.beforeAll(async () => {
-    process.env.MILKSHA_SITE_ROOT = SITE_ROOT;
-    execSync('fuser -k 8877/tcp 2>/dev/null || true', { stdio: 'ignore' });
     await restartCloud();
-    stopSite();
     await startSite();
   });
 
