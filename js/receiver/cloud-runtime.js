@@ -506,6 +506,10 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      if (numberContent.length === 0 && prevReadySet.size > 0 && seq > localSeq) {
+        localSeq = seq;
+        return { ignored: true, reason: 'stale_empty_cloud' };
+      }
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
@@ -815,7 +819,23 @@
       }
     }
 
-    async function handleCommand(cmd) {
+    function resolveCommandBoardSeq(cmd, deviceData) {
+      if (cmd && Object.prototype.hasOwnProperty.call(cmd, 'boardSeq')) {
+        const fromCmd = Number(cmd.boardSeq);
+        if (Number.isFinite(fromCmd) && fromCmd > 0) {
+          return fromCmd;
+        }
+      }
+      if (deviceData && Object.prototype.hasOwnProperty.call(deviceData, 'boardSeq')) {
+        const fromDev = Number(deviceData.boardSeq);
+        if (Number.isFinite(fromDev) && fromDev > 0) {
+          return fromDev;
+        }
+      }
+      return localSeq > 0 ? localSeq + 1 : 1;
+    }
+
+    async function handleCommand(cmd, deviceData) {
       const type = cmd.type;
       const params = cmd.params || {};
       if (type === 'reload' || type === 'reboot') {
@@ -884,7 +904,8 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
-        applyNumberContent([], localSeq, { silent: true });
+        const seq = resolveCommandBoardSeq(cmd, deviceData);
+        applyNumberContent([], seq, { silent: true });
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
         const preparing = Array.isArray(params.preparing) ? params.preparing : [];
@@ -895,7 +916,8 @@
         preparing.forEach(function (no) {
           nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
         });
-        applyNumberContent(nc, localSeq, { silent: false });
+        const seq = resolveCommandBoardSeq(cmd, deviceData);
+        applyNumberContent(nc, seq, { silent: false });
       }
     }
 
@@ -940,7 +962,7 @@
           await acknowledgeSkippedPendingCommand(pending);
           return;
         }
-        await handleCommand(pending);
+        await handleCommand(pending, dev.data);
       } catch (e) {
         if (isFirestoreAbortError(e)) {
           return;
