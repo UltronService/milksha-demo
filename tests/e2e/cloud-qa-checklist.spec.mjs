@@ -126,7 +126,7 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length >= 1,
-      { timeout: 10000 },
+      { timeout: 8000 },
     );
     await boardCtx.close();
     await ctrlCtx.close();

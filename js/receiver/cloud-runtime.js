@@ -1337,6 +1337,14 @@
       }
     }
 
+    function pushBootTimeline(kind, detail) {
+      const tl = root.__rcvMatrixTimeline;
+      if (!Array.isArray(tl)) {
+        return;
+      }
+      tl.push(Object.assign({ ts: Date.now(), kind: kind }, detail || {}));
+    }
+
     async function sendHeartbeat() {
       if (authBlocksHeartbeat()) {
         return;
@@ -1346,6 +1354,7 @@
       }
       try {
         const ack = pendingAckCommandId || lastAckCommandId || undefined;
+        pushBootTimeline('heartbeat_send', { ackCommandId: ack ? String(ack) : '' });
         await cloudApi.boxHeartbeat({
           storeId: storeId,
           deviceId: deviceId,
@@ -1360,10 +1369,14 @@
           pendingAckCommandId = '';
         }
         lastHeartbeatSucceeded = true;
+        pushBootTimeline('heartbeat_ok', {});
         markCloudReachable();
         tryFlushDeferredReloadCommand();
       } catch (e) {
         lastHeartbeatSucceeded = false;
+        pushBootTimeline('heartbeat_fail', {
+          message: e && e.message ? String(e.message).slice(0, 120) : 'unknown',
+        });
         if (isAuthHttpError(e)) {
           notifyAuthFailure(e);
           syncCloudGuestStatusUi(false);
@@ -1418,10 +1431,13 @@
         pollDevice();
       };
       if (!skipInitialCloudKick) {
+        kick();
         ensureAuth()
           .then(function () {
             kick();
-            return startFirestoreRealtimeIfPossible();
+            startFirestoreRealtimeIfPossible().catch(function () {
+              /* fallback poll already active */
+            });
           })
           .catch(function () {
             kick();

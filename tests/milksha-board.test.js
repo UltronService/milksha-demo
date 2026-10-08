@@ -173,6 +173,47 @@ test('same readyAt tie-break: newest payload index first in ready', function () 
   }
 });
 
+test('staggered arrival then batch keeps newest-first without jumping', function () {
+  const origNow = Date.now;
+  let t = 1_700_000_000_000;
+  Date.now = function () {
+    return t;
+  };
+  try {
+    const sandbox = bootMilkshaBoardMinimal();
+    const runtime = sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
+      document: sandbox.document,
+      window: sandbox,
+    });
+    runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '2003' }], { silent: true });
+    t += 60_000;
+    runtime.applyPayload(
+      [
+        { source_type: 'From_Store_Preparing', number: '2003' },
+        { source_type: 'From_Store_Preparing', number: '2011' },
+        { source_type: 'From_Store_Preparing', number: '2012' },
+      ],
+      { silent: true },
+    );
+    runtime.applyPayload(
+      [
+        { source_type: 'From_Store_Preparing', number: '2003' },
+        { source_type: 'From_Store_Preparing', number: '2011' },
+        { source_type: 'From_Store_Preparing', number: '2012' },
+      ],
+      { silent: true },
+    );
+    const snap = runtime.getSnapshot();
+    assert.equal(
+      JSON.stringify(snap.preparing.map((p) => String(p.number))),
+      JSON.stringify(['2012', '2011', '2003']),
+    );
+    runtime.destroy();
+  } finally {
+    Date.now = origNow;
+  }
+});
+
 test('silent reconnect preserves tie-break order', function () {
   const origNow = Date.now;
   let t = 1_700_000_000_000;

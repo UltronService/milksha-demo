@@ -83,6 +83,17 @@
     }
   }
 
+  function pushAuthTimeline(kind) {
+    try {
+      const tl = root.__rcvMatrixTimeline;
+      if (Array.isArray(tl)) {
+        tl.push({ ts: Date.now(), kind: kind });
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function authStorageKey(config, creds) {
     const apiKey = String(config && config.apiKey ? config.apiKey : '').trim();
     let fingerprint = 'k0';
@@ -385,6 +396,7 @@
           /* ignore — REST session still valid; realtime may fall back to polling */
         }
       }
+      pushAuthTimeline('devlogin_complete');
       if (onAuthSuccess) {
         onAuthSuccess();
       }
@@ -447,6 +459,7 @@
         throw err;
       }
       if (idToken && Date.now() < expiresAtMs) {
+        pushAuthTimeline('auth_cached_token');
         return idToken;
       }
       if (refreshToken) {
