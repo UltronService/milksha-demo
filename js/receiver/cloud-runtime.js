@@ -506,10 +506,6 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
-      if (numberContent.length === 0 && prevReadySet.size > 0 && seq > localSeq) {
-        localSeq = seq;
-        return { ignored: true, reason: 'stale_empty_cloud' };
-      }
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);

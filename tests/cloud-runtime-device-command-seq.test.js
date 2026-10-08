@@ -166,6 +166,60 @@ test('duplicate pending command is not applied twice', async function () {
   assert.equal(runtime.cloud.getLocalSeq(), 3);
 });
 
+test('push then clear_now empties the board', async function () {
+  const runtime = makeRuntime([]);
+  runtime.setPending(
+    {
+      id: 'cmd-push-clear-1',
+      type: 'push_numbers',
+      params: { ready: ['1'], preparing: [] },
+      boardSeq: 4,
+    },
+    4,
+  );
+  await runtime.cloud.pollDeviceForTests();
+  assert.equal(runtime.getReadyCount(), 1);
+  runtime.setPending(
+    {
+      id: 'cmd-push-clear-2',
+      type: 'clear_now',
+      params: {},
+      boardSeq: 5,
+    },
+    5,
+  );
+  await runtime.cloud.pollDeviceForTests();
+  assert.equal(runtime.getReadyCount(), 0);
+  assert.equal(runtime.cloud.getLocalSeq(), 5);
+});
+
+test('newer empty cloud board clears display (POS / remote clear)', async function () {
+  const boardReads = [];
+  const runtime = makeRuntime(boardReads);
+  runtime.setPending(
+    {
+      id: 'cmd-pos-empty-1',
+      type: 'push_numbers',
+      params: { ready: ['2'], preparing: [] },
+      boardSeq: 8,
+    },
+    8,
+  );
+  await runtime.cloud.pollDeviceForTests();
+  assert.equal(runtime.getReadyCount(), 1);
+  boardReads.push(boardDoc(9, []));
+  await runtime.cloud.triggerBoardPoll();
+  assert.equal(runtime.getReadyCount(), 0);
+  assert.equal(runtime.cloud.getLocalSeq(), 9);
+});
+
+test('fresh board poll with empty cloud shows empty', async function () {
+  const runtime = makeRuntime([boardDoc(2, [])]);
+  await runtime.cloud.triggerBoardPoll();
+  assert.equal(runtime.getReadyCount(), 0);
+  assert.equal(runtime.cloud.getLocalSeq(), 2);
+});
+
 test('device boardSeq used when pendingCommand omits boardSeq', async function () {
   const runtime = makeRuntime([]);
   runtime.setPending(
