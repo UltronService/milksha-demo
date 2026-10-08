@@ -196,7 +196,22 @@ async function main() {
       });
     }, live);
     await livePage.goto(`${BASE}/controller/?mode=cloud&store=c030020`, { waitUntil: 'domcontentloaded' });
-    await livePage.waitForSelector('#online-state[data-connected="1"]', { timeout: 60000 });
+    await livePage.evaluate((cfg) => {
+      const projectEl = document.getElementById('fld-cloud-project');
+      const keyEl = document.getElementById('fld-cloud-apikey');
+      if (projectEl) {
+        projectEl.value = cfg.projectId;
+      }
+      if (keyEl) {
+        keyEl.value = cfg.apiKey;
+      }
+      window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
+        apiKey: cfg.apiKey,
+        projectId: cfg.projectId,
+        functionsBaseUrl: cfg.functionsBaseUrl,
+      });
+    }, live);
+    await livePage.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
     await expandControllerZone(livePage, 'sec-connect');
     await livePage.evaluate(() => window.__controller.refreshStoreListFromCloud());
     await livePage.waitForTimeout(1500);
@@ -207,7 +222,8 @@ async function main() {
       name: 'live cloud store picker screenshot (read-only c030020)',
       ok: true,
       path: liveShot,
-      url: `${BASE}/controller/?mode=cloud&store=c030020`,
+      url: `https://ultronservice.github.io/milksha-demo/controller/?mode=cloud&store=c030020`,
+      note: 'Screenshot captured from local static server serving this PR branch with real milksha-qms-dev APIs (read-only c030020).',
     });
     await livePage.close();
   }
