@@ -1,0 +1,144 @@
+{
+  "at": "2026-10-08T01:37:28.868Z",
+  "publicBase": "https://ultronservice.github.io/milksha-demo",
+  "mergeCommit": "a82cb9b",
+  "script": "scripts/public-pages-pr27-live-qa.mjs",
+  "contexts": [
+    {
+      "context": "fresh",
+      "lines": [
+        {
+          "context": "fresh",
+          "check": "a",
+          "pass": true,
+          "projectId": "milksha-qms-dev",
+          "hasS120Auth": false,
+          "storeFromAuth": "c030020",
+          "shows9999": false
+        },
+        {
+          "context": "fresh",
+          "check": "b",
+          "pass": true,
+          "preDisabled": true,
+          "preBlockReason": "連線中…",
+          "sendToDisplayMs": 959,
+          "pageOpenToFirstNumberMs": 2367,
+          "cleared": true
+        },
+        {
+          "context": "fresh",
+          "check": "c",
+          "pass": true,
+          "rounds": [
+            {
+              "round": 1,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 805,
+              "sendBMs": 514,
+              "pass": true
+            },
+            {
+              "round": 2,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 498,
+              "sendBMs": 999,
+              "pass": true
+            },
+            {
+              "round": 3,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 466,
+              "sendBMs": 530,
+              "pass": true
+            }
+          ]
+        },
+        {
+          "context": "fresh",
+          "check": "d",
+          "pass": true,
+          "pausedText": "連線暫停",
+          "devLoginTotal": 1,
+          "devLoginDuring60s": 0
+        },
+        {
+          "context": "fresh",
+          "check": "e",
+          "pass": true,
+          "offlineText": "離線",
+          "recoveredSend": true
+        }
+      ]
+    },
+    {
+      "context": "old-settings",
+      "lines": [
+        {
+          "context": "old-settings",
+          "check": "a",
+          "pass": true,
+          "projectId": "milksha-qms-dev",
+          "hasS120Auth": false,
+          "storeFromAuth": "c030020",
+          "shows9999": false
+        },
+        {
+          "context": "old-settings",
+          "check": "b",
+          "pass": true,
+          "preDisabled": true,
+          "preBlockReason": "連線中…",
+          "sendToDisplayMs": 586,
+          "pageOpenToFirstNumberMs": 2790,
+          "cleared": true
+        },
+        {
+          "context": "old-settings",
+          "check": "c",
+          "pass": false,
+          "rounds": [
+            {
+              "round": 1,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 0,
+              "bCount": 1,
+              "sendAMs": 755,
+              "sendBMs": 920,
+              "pass": false
+            }
+          ]
+        },
+        {
+          "context": "old-settings",
+          "check": "d",
+          "pass": true,
+          "pausedText": "連線暫停",
+          "devLoginTotal": 1,
+          "devLoginDuring60s": 0
+        },
+        {
+          "context": "old-settings",
+          "check": "e",
+          "pass": true,
+          "offlineText": "離線",
+          "recoveredSend": true
+        }
+      ]
+    }
+  ],
+  "c030020Final": {
+    "empty": true,
+    "readyCount": 0
+  }
+}
