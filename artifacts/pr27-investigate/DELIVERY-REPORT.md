@@ -4,11 +4,11 @@
 
 | 項目 | 狀態 |
 |------|------|
-| **#30** `f781689` | 問題 1／2／3（含 stale `clear_now`）+ 單元／fake-cloud e2e 已 push |
+| **#30** `384c397` | 問題 1／2／3 + CI 修復（e2e 勿 `fuser -k 8877`）；**CI 綠** run `37756344049` |
 | **#28** `34eb8ac` | github.io 整站 route + 矩陣腳本（main 對照沿用 `main-a82cb9b.json`） |
 | **矩陣 product 3×3** | **通過** `product-f781689.json`（fresh + old-settings，a–e 各 3 輪） |
 | **矩陣 main 對照** | 沿用既有 `main-a82cb9b.json`（未重跑） |
-| **CI** | 見 GitHub Actions（#28、#30） |
+| **CI** | #28 綠；#30 綠（`384c397`，見下「CI 根因」） |
 
 ---
 
@@ -45,6 +45,14 @@
 
 **單元：** `tests/cloud-runtime-device-command-seq.test.js`  
 **e2e：** `home-board-clear-then-push-stale-command.spec.mjs`
+
+---
+
+## #30 CI 三次失敗根因（已修 `384c397`）
+
+- **非產品：** `cloud-runtime.js` 無新增無限 poll；本機同 CI 跑 e2e 時 node+chrome RSS 約 **300MB** 級，無持續飆升。
+- **測試：** `home-board-clear-then-push-stale-command` / `home-board-first-number-after-open` 的 `beforeAll` 曾 `fuser -k 8877`，殺掉 Playwright `webServer`。`f781689` 新增前者後，job `37752325437` 在 **09:03:25** 出現 `[WebServer] Killed`，後續 `home-board-layout` 等 **connection refused**（`edb63ed` 僅較晚單檔殺端口，剩餘測試少故仍過）。
+- **修法：** 與 `home-board-cloud-recovery` 相同，只 `restartCloud()` + `startSite()`。
 
 ---
 
