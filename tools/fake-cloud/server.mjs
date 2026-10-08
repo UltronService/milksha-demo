@@ -271,10 +271,18 @@ function corsHeaders() {
   };
 }
 
+function httpDateHeader() {
+  const fixed = process.env.FAKE_CLOUD_HTTP_DATE;
+  if (fixed && String(fixed).trim()) {
+    return String(fixed).trim();
+  }
+  return new Date().toUTCString();
+}
+
 function json(res, status, body) {
   res.writeHead(status, {
     'Content-Type': 'application/json',
-    Date: new Date().toUTCString(),
+    Date: httpDateHeader(),
     ...corsHeaders(),
   });
   res.end(JSON.stringify(body));

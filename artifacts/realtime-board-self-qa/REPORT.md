@@ -2,59 +2,70 @@
 
 | 項目 | 值 |
 |------|-----|
-| **HEAD（分支）** | `git rev-parse HEAD` 見 `live-matrix.json` › `branchSha` |
-| **base main** | `6ef1359`（#25 固定 16:9 畫布）見 `live-matrix.json` › `baseMainSha` |
-| **合併** | `merge(main): 6ef1359` — 保留 `milksha-board-canvas` / cache-bust |
+| **HEAD（分支）** | 合併後見 `git rev-parse HEAD`；矩陣快照 `live-matrix.json` › `branchSha` 可能為較早探針 SHA |
+| **base main** | `7fb4f9c`（#25 畫布 + #33 1007 底圖／準備中最新號左上） |
+| **合併** | `merge(origin/main)` @ `7fb4f9c`；衝突 PNG 採 main（#33） |
 
 ## 1. Merge / 衝突
 
-- 已 `git merge origin/main`（非 force push），解決 `board-boot-no-data-1920.png` 採 main（#25）版本。
-- 合併後重跑：`npm test`（148）、`npm run test:e2e`（見 CI / `/tmp/full-e2e.log`）。
+- 已合入 `origin/main`（`7fb4f9c`），保留 #33「準備中」排序：`nextPrep.sort((a,b) => b.firstSeenAt - a.firstSeenAt)`（最新號左上）。
+- 合併衝突 `tests/e2e/committed-artifacts/*.png` 採 main 版本。
 
 ## 2. offline reconnect 5501（local + firestore）
 
-### main @ 6ef1359 實測（原始 local 腳本）
+- **main @ 7fb4f9c**：見 `main-5501-local-test.log`；產品層 main 仍為 offline 不寫板（shim + fake-cloud）；單元測 `fake-cloud-pos.test.js` 為證。
+- **#32**：`local-cloud-shim` + `fake-cloud` 仍寫板；e2e `controller-actions` local + firestore 5501；`main-5501-local-baseline.spec.mjs` 驗收修復後行為。
 
-- 指令：`tests/e2e/main-5501-local-baseline.spec.mjs`（內容同 main 上 local 測試）。
-- **在僅 main 程式樹、未修 shim 時：失敗**（15s 內 `.rcv-ready` 無 5501）。日誌：`main-5501-local-test.log`。
-- **根因**：`local` 走瀏覽器內 `local-cloud-shim.posReceiver`，模擬斷網時 `storeHasOnlineBox()` 為 false → **不寫** `today_board`；與 #32 realtime 無關。
-- **修復**（產品／假雲一致）：`local-cloud-shim` + `fake-cloud` 在簽章合法時**仍寫板**；`isSuccess: true`，`information` 仍可為離線文案；receiver `restore` 走 `applyBoardDocument({ force: true })` + `suppressRingOnNextApply`。
-- **#32 測試**：
-  - `board | no chime … (local)` — 恢復 main 行為並通過。
-  - `board | no chime … (firestore)` — 第二支，覆蓋 `push_numbers` 路徑。
+## 3. 真雲端延遲
 
-## 3. 真雲端延遲（可稽核）
+見 `live-matrix.json` 每輪 `timeline`（`devCommandMs`、`boardSnapshotMeta`、`domAfterButtonMs`）；獨立 context；`zz-qa-store-a` 送號。
 
-見 `live-matrix.json` 每輪 `timeline`：
+## 4. main 對照
 
-- `buttonPressedAt` / `devCommandResponseAt` / `devCommandMs`
-- `boardSnapshotAt` + `boardSnapshotMeta`（`fromCache`, `hasPendingWrites`, `seq`, `updatedAt`）
-- `domVisibleAt` / `domAfterButtonMs`
-- **獨立 context**（看板頁與控制台分頁）；`ticketNo` 每輪不同（8800+ 系列），`displayedReadyNo` 必與之一致。
+`live-matrix.json`：`branch.*` / `main.*` chromium & firefox 各 3 輪（main 樹 `boardListen: false`）。
 
-## 4. main 對照數字
+## 5. 讀取次數（REST/h 組成與 500 店）
 
-`live-matrix.json`：
+**實測 5 分鐘**（`readCountsMeasured`，`zz-qa-store-a` 單看板、雲端 mode）：
 
-- `branch.chromium[]` / `branch.firefox[]` — 各 3 輪 `sendToDisplayMs` + timeline
-- `main.chromium[]` / `main.firefox[]` — 同結構（main 樹無 `getRealtimeStats` / onSnapshot hook 時 `boardListen: false`）
+| | REST GET（5m） | 換算 REST/h | onSnapshot/h | boardListen |
+|--|--|--|--|--|
+| **#32 分支** | 84 | **~1008** | ~12 | true |
+| **main** | 400 | **~4800** | 0 | false |
 
-## 5. 讀取次數
+**分支 ~1008 REST/h 主要來源**（`js/receiver/cloud-runtime.js` + 探針 `measureReadTraffic` 計 Firestore `GET`）：
 
-- **實測（5 分鐘）**：`readCountsMeasured.branch` / `readCountsMeasured.main` — `restGet`、`onSnapshotEvents`、`perHour`（`method: "measured"`）。
-- **估算**：`readCountsEstimated`（標明 estimate only）。
+1. **60 秒保底板 REST**：`boardListenActive` 時 `tick` 每 `FALLBACK_BOARD_POLL_MS`（60000）`pollBoard()` → `readBoard` REST（約 **60/h**）。
+2. **裝置指令輪詢**：`commandMode === 'poll'` 時每 `devicePollIntervalMs`（設定常為 5000ms）`pollDevice()` → `readDevice` REST（理論上限約 **720/h**；實測受 auth／listener 降級影響）。
+3. **開機 20s 快取板輪詢**：`FAST_BOARD_POLL_MS` 500ms 窗口（僅啟動期，摊平後每小時較小）。
+4. **onSnapshot**：板文件 listener 推送（計入 `onSnapshotEvents`，**非** REST；上表 ~12/h）。
+5. **不計入 REST**：`boxHeartbeat` / `devLogin` 走 Cloud Functions，非 Firestore GET。
 
-## 6. Legacy / SDK
+**500 店 × 每月 Firestore REST（單看板／店，依實測率線性外推）**：
 
-- `SDK.md`：`legacyChrome78.uaSimulatedOnly`；Firebase 官方支援表連結。
-- Playwright 僅改 UA，**非**真 Chrome 78 引擎。
+- **#32**：1008 × 24 × 30 ≈ **725,760**／店／月 → 500 店 ≈ **3.63×10⁸** 次／月。
+- **main**：4800 × 24 × 30 ≈ **3,456,000**／店／月 → 500 店 ≈ **1.73×10⁹** 次／月。
+
+（僅 REST GET；未含 snapshot 推送與 Functions。）
+
+## 6. E2E 失敗歸因（修復摘要）
+
+| 失敗 | 歸因 | 處理 |
+|------|------|------|
+| `qa-pr16-auth-board` reload／stale | **#32**：boot 時間被 heartbeat／Firestore 先搶占；`testDevicePollMs` 停自動 poll + gateway 寫死 8877 | boot 僅 devLogin／signIn；`FAKE_CLOUD_HTTP_DATE`；gateway 用 `location.port`；`kickDevicePoll` 單次 evaluate |
+| `screenshots` cloud `receiverCloud` | **main／測試**：receiver-demo cloud 未寫入 cloud-settings | board 頁 init `milksha:cloud-settings` + `device=stb-01` |
+| 其餘（全量 e2e） | 見 CI／本輪 `npm run test:e2e` 終端數字 | 合併 #33 後重跑 |
+
+## 7. Legacy / SDK
+
+見 `SDK.md`（UA 模擬 Chrome 78，非真引擎）。
 
 ## 禁止項
 
-- 僅寫入 `zz-qa-store-a` 送號；未跑 `zz-deny-test`；未動 `s120030` / `c030020` 寫入。
+雲端寫入僅 `zz-qa-store-a`；未寫 `zz-deny-test`／`s120030`／`c030020` 業務寫入。
 
 ## UAT（PM）
 
-1. local：5501 preparing → 模擬斷網 → 一鍵可取餐 → 恢復 → ready 無多餘響鈴。
-2. 真雲 a 店：看板 `boardListen` 就緒後送新號 → 3s 內上屏（對照 `live-matrix.json` timeline）。
-3. `?realtime=0` 與 main 同 REST 輪詢。
+1. local：5501 準備中 → 斷線 → 一鍵可取餐 → 恢復 → ready 無多餘響鈴。  
+2. 真雲 a 店：送新號 ≤3s 上屏（對照 `live-matrix.json`）。  
+3. `?realtime=0` 行為同 main REST 輪詢。

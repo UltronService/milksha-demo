@@ -35,7 +35,7 @@ function firestoreCloudSettingsInitScript() {
           apiKey: 'fake-api-key-for-emulator',
           region: 'asia-east1',
           useEmulator: true,
-          gateway: '127.0.0.1:8877',
+          gateway: `${window.location.hostname}:${window.location.port}`,
           emulatorPrefix: '__emulator',
         }),
       );
@@ -197,12 +197,7 @@ async function wireFirestoreAuthRoutes(receiver, options = {}) {
       });
       return;
     }
-    await route.fulfill({
-      status: 200,
-      headers: { Date: bootDate },
-      contentType: 'application/json',
-      body: JSON.stringify({ customToken: 'e2e-custom-token' }),
-    });
+    await route.continue();
   });
   await receiver.route('**/accounts:signInWithCustomToken**', async (route) => {
     await route.fulfill({
@@ -243,16 +238,27 @@ async function waitReceiverCloudReady(receiver) {
 }
 
 async function kickDevicePoll(receiver) {
-  await receiver
-    .evaluate(async () => {
-      for (let i = 0; i < 25; i += 1) {
-        await window.receiverCloud.pollDeviceForTests();
-        await new Promise((resolve) => setTimeout(resolve, 150));
+  for (let i = 0; i < 25; i += 1) {
+    try {
+      const outcome = await receiver.evaluate(async () => {
+        if (
+          !window.receiverCloud ||
+          typeof window.receiverCloud.pollDeviceForTests !== 'function'
+        ) {
+          return { ready: false };
+        }
+        const poll = await window.receiverCloud.pollDeviceForTests();
+        return { ready: true, reloadFired: Boolean(poll && poll.reloadFired) };
+      });
+      if (outcome && outcome.reloadFired) {
+        return;
       }
-    })
-    .catch(() => {
-      /* reload may interrupt */
-    });
+    } catch {
+      /* navigation during poll ends the execution context */
+      return;
+    }
+    await receiver.waitForTimeout(150);
+  }
 }
 
 async function expectNoNavigationFor(receiver, ms) {

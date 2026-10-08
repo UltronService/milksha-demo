@@ -32,7 +32,12 @@ export function startCloud() {
   }
   stopOwnedCloud();
   cloudProc = spawn(execPath, [join(siteRoot(), 'tools', 'fake-cloud', 'server.mjs')], {
-    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT_CLOUD) },
+    env: {
+      ...process.env,
+      FAKE_CLOUD_PORT: String(PORT_CLOUD),
+      FAKE_CLOUD_HTTP_DATE:
+        process.env.FAKE_CLOUD_HTTP_DATE || 'Sat, 03 Oct 2026 12:00:00 GMT',
+    },
     stdio: 'ignore',
   });
   cloudProc.on('exit', () => {

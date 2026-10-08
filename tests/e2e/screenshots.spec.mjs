@@ -177,7 +177,21 @@ test('save cloud mode screenshots', async ({ browser }) => {
 
   const board = await ctx.newPage();
   await installBundledCloudRouteShim(board);
-  await board.goto(`${base}/receiver-demo/?store=s120030&mode=cloud`);
+  await board.addInitScript(() => {
+    try {
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: 'milksha-qms-dev',
+          apiKey: 'e2e-placeholder-key',
+          region: 'asia-east1',
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  });
+  await board.goto(`${base}/receiver-demo/?store=s120030&mode=cloud&device=stb-01`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
   await board.setViewportSize({ width: 1366, height: 768 });
   await expect(board.locator('#rcv-stage')).toBeVisible();
