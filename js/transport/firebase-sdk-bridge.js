@@ -10,7 +10,8 @@
   const SDK_VERSION = '10.14.1';
 
   let appInited = false;
-  let emulatorConnected = false;
+  let firestoreEmulatorConnected = false;
+  let authEmulatorConnected = false;
 
   function firebaseGlobal() {
     return root.firebase;
@@ -36,13 +37,21 @@
     if (!fb.apps || !fb.apps.length) {
       fb.initializeApp(cfg);
     }
-    const host = String(config.firestoreEmulatorHost || config.emulatorHost || '').trim();
-    if (host && !emulatorConnected) {
-      const parts = host.split(':');
+    const fsHost = String(config.firestoreEmulatorHost || config.emulatorHost || '').trim();
+    if (fsHost && !firestoreEmulatorConnected) {
+      const parts = fsHost.split(':');
       const hostname = parts[0] || '127.0.0.1';
       const port = Number(parts[1] || 8080);
       fb.firestore().useEmulator(hostname, port);
-      emulatorConnected = true;
+      firestoreEmulatorConnected = true;
+    }
+    const authHost = String(config.authEmulatorHost || '').trim();
+    if (authHost && !authEmulatorConnected) {
+      const parts = authHost.split(':');
+      const hostname = parts[0] || '127.0.0.1';
+      const port = Number(parts[1] || 9099);
+      fb.auth().useEmulator('http://' + hostname + ':' + String(port));
+      authEmulatorConnected = true;
     }
     appInited = true;
     return true;
@@ -60,6 +69,14 @@
     const auth = firebaseGlobal().auth();
     if (auth.currentUser) {
       return true;
+    }
+    if (session && session.ensureIdToken) {
+      try {
+        await session.ensureIdToken();
+      } catch (e) {
+        return false;
+      }
+      return Boolean(auth.currentUser);
     }
     if (!session || !session.devLogin) {
       return false;

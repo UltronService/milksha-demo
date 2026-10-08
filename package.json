@@ -4,12 +4,16 @@
   "description": "迷客夏取餐叫號看板 GitHub Pages 展示站",
   "scripts": {
     "test": "node scripts/run-unit-tests.mjs",
-    "test:rules": "node --test tests/firestore-rules/realtime-board.rules.test.mjs",
+    "test:rules": "firebase emulators:exec --only firestore --project milksha-qms-dev \"node --test --test-concurrency=1 tests/firestore-rules/realtime-board.rules.test.mjs\"",
+    "test:rules:exec": "firebase emulators:exec --only firestore --project milksha-qms-dev \"node --test --test-concurrency=1 tests/firestore-rules/realtime-board.rules.test.mjs\"",
     "fake-cloud": "node tools/fake-cloud/server.mjs",
-    "test:e2e": "playwright test tests/e2e"
+    "test:e2e": "playwright test tests/e2e",
+    "test:e2e:realtime": "firebase emulators:exec --only firestore,auth --project milksha-qms-dev \"playwright test tests/e2e/home-board-realtime-emulator.spec.mjs tests/e2e/home-board-realtime-flag.spec.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "3.0.4",
+    "firebase-admin": "12.7.0",
+    "firebase-tools": "13.29.1",
     "@playwright/test": "1.49.0",
     "firebase": "10.14.1",
     "playwright": "1.49.0"

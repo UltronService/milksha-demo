@@ -20,6 +20,15 @@
     }
   }
 
+  function isRealtimeQueryDisabled() {
+    try {
+      const v = new URLSearchParams(root.location.search).get('realtime');
+      return v === '0' || v === 'false';
+    } catch (e) {
+      return false;
+    }
+  }
+
   /** Offline is visible only in demo panel (?demo=1) and controller — never on the guest board. */
   function setSimulatedOfflineFlag(on, demoApi) {
     if (demoApi && typeof demoApi.setOffline === 'function') {
@@ -527,13 +536,16 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
-        noteSeqForensics('tryApplyTodayBoard', {
-          accept: false,
-          reason: 'stale',
-          incomingSeq: seq,
-          localSeq,
-        });
-        return { ignored: true, reason: Validate.MSG.stale };
+        const allowEqualSeqCatchUp = suppressRingOnNextApply && seq === localSeq;
+        if (!allowEqualSeqCatchUp) {
+          noteSeqForensics('tryApplyTodayBoard', {
+            accept: false,
+            reason: 'stale',
+            incomingSeq: seq,
+            localSeq,
+          });
+          return { ignored: true, reason: Validate.MSG.stale };
+        }
       }
       if (simulateOffline) {
         const numberContentOffline = TodayBoard.ticketsToNumberContent(board.tickets);
@@ -905,6 +917,16 @@
     }
 
     async function startFirestoreRealtimeIfPossible() {
+      if (isRealtimeQueryDisabled()) {
+        return;
+      }
+      if (boardListenActive) {
+        return;
+      }
+      if (firestoreRealtime) {
+        firestoreRealtime.stop();
+        firestoreRealtime = null;
+      }
       const Realtime = QMS.Transport.FirestoreRealtime;
       const Bridge = QMS.Transport.FirebaseSdkBridge;
       if (!Realtime || !Realtime.createFirestoreRealtimeListener) {
@@ -1100,10 +1122,12 @@
               Validate.itemId,
             );
           }
+          if (boardSnap) {
+            await applyBoardDocument(boardSnap, { force: true });
+          }
         } catch (e) {
           /* ignore */
         }
-        pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
@@ -1446,14 +1470,18 @@
         return VERSION;
       },
       getRealtimeStats: function () {
+        const base = {
+          boardListen: boardListenActive,
+          commandMode: commandListenMode,
+          realtimeDisabled: isRealtimeQueryDisabled(),
+          readCounts: { board: 0, command: 0 },
+        };
         if (!firestoreRealtime || !firestoreRealtime.getStats) {
-          return {
-            boardListen: boardListenActive,
-            commandMode: commandListenMode,
-            readCounts: { board: 0, command: 0 },
-          };
+          return base;
         }
-        return firestoreRealtime.getStats();
+        const stats = firestoreRealtime.getStats();
+        stats.realtimeDisabled = isRealtimeQueryDisabled();
+        return stats;
       },
       isSimulatedOffline: function () {
         return simulateOffline;

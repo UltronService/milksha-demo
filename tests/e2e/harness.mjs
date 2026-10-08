@@ -13,7 +13,7 @@ export function siteRoot() {
 }
 /** @deprecated use siteRoot() at request time; import-time ROOT ignores late env. */
 export const ROOT = siteRoot();
-export const PORT_SITE = 8877;
+export const PORT_SITE = Number(process.env.MILKSHA_E2E_PORT || 8877);
 export const PORT_CLOUD = 8787;
 
 let cloudProc;

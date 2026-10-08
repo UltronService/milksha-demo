@@ -379,12 +379,44 @@ const server = http.createServer(async (req, res) => {
           message: 'store not allowed for controller dev login',
         });
       }
+      if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+        try {
+          const { mintCustomToken } = await import('../emulator-qa/admin.mjs');
+          const token = await mintCustomToken({
+            storeId: body.storeId,
+            role: body.role || 'device',
+            deviceId: body.deviceId || 'stb-01',
+          });
+          return json(res, 200, { customToken: token });
+        } catch (e) {
+          return json(res, 500, { code: 'dev_login_mint_failed', message: String(e.message || e) });
+        }
+      }
       return json(res, 200, { customToken: `fake-${body.storeId}-${body.role}` });
     }
 
     if (req.method === 'POST' && url.pathname === '/identity/v1/accounts:signInWithCustomToken') {
       const body = await readBody(req);
       const customToken = String(body.token || '').trim();
+      const authEmu = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+      if (authEmu && customToken && !customToken.startsWith('fake-')) {
+        try {
+          const target =
+            'http://' +
+            authEmu.replace(/\/$/, '') +
+            '/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken' +
+            (url.search || '?key=fake-api-key-for-emulator');
+          const proxyRes = await fetch(target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const proxyJson = await proxyRes.json();
+          return json(res, proxyRes.status, proxyJson);
+        } catch (e) {
+          return json(res, 502, { code: 'auth_emulator_proxy_failed', message: String(e.message || e) });
+        }
+      }
       const idToken =
         customToken && customToken.startsWith('fake-') ? customToken : 'fake-id-token';
       return json(res, 200, {

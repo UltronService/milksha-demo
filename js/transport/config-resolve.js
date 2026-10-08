@@ -13,6 +13,23 @@
     return v !== null && v !== '' ? v : fallback;
   }
 
+  function pickEmulatorPrefixParam(params, fallback) {
+    if (!params.has('emulatorPrefix')) {
+      return fallback;
+    }
+    const v = params.get('emulatorPrefix');
+    return v !== null ? v : fallback;
+  }
+
+  function defaultEmulatorPrefixForParams(params) {
+    const fsEmu = pickDevEndpointParam(params, 'fsEmulator', '');
+    const authEmu = pickDevEndpointParam(params, 'authEmulator', '');
+    if (fsEmu || authEmu) {
+      return '';
+    }
+    return '__emulator';
+  }
+
   function isDevEndpointOverrideAllowed() {
     try {
       const loc = root.location;
@@ -101,12 +118,27 @@
         apiKey: apiKey,
         region: region,
         firestoreEmulatorHost: '',
+        authEmulatorHost: '',
         firestoreRestBase: '',
         functionsBaseUrl: '',
         identityToolkitBaseUrl: '',
         useEmulator: false,
       };
       applyEmulatorGateway(cfg, fakeGateway, emulatorPrefix, projectId, region);
+      const fsEmu = pickDevEndpointParam(params, 'fsEmulator', '');
+      const authEmu = pickDevEndpointParam(params, 'authEmulator', '');
+      if (fsEmu) {
+        cfg.firestoreEmulatorHost = fsEmu;
+        cfg.firestoreRestBase =
+          'http://' +
+          fsEmu.replace(/\/$/, '') +
+          '/v1/projects/' +
+          encodeURIComponent(projectId) +
+          '/databases/(default)/documents';
+      }
+      if (authEmu) {
+        cfg.authEmulatorHost = authEmu;
+      }
       return Object.assign(sharedTiming(b), cfg);
     }
 
@@ -117,11 +149,13 @@
       identityToolkitBaseUrl = prod.identityToolkitBaseUrl;
     }
 
+    const authEmulatorHost = pickDevEndpointParam(params, 'authEmulator', b.authEmulatorHost || '');
     return Object.assign(sharedTiming(b), {
       projectId: projectId,
       apiKey: apiKey,
       region: region,
       firestoreEmulatorHost: firestoreEmulatorHost,
+      authEmulatorHost: authEmulatorHost,
       firestoreRestBase: firestoreRestBase,
       functionsBaseUrl: functionsBaseUrl,
       identityToolkitBaseUrl: identityToolkitBaseUrl,
@@ -146,7 +180,7 @@
         return null;
       }
       const prod = CloudSettings.productionEndpoints(eff.projectId, eff.region);
-      return Object.assign(sharedTiming(b), {
+      const cfg = Object.assign(sharedTiming(b), {
         projectId: eff.projectId,
         apiKey: eff.apiKey,
         region: eff.region || 'asia-east1',
@@ -154,8 +188,27 @@
         firestoreRestBase: prod.firestoreRestBase,
         identityToolkitBaseUrl: prod.identityToolkitBaseUrl,
         firestoreEmulatorHost: '',
+        authEmulatorHost: '',
         useEmulator: false,
       });
+      if (isDevEndpointOverrideAllowed()) {
+        const fsEmu = pickDevEndpointParam(p, 'fsEmulator', '');
+        const authEmu = pickDevEndpointParam(p, 'authEmulator', '');
+        if (fsEmu) {
+          cfg.firestoreEmulatorHost = fsEmu;
+          cfg.firestoreRestBase =
+            'http://' +
+            fsEmu.replace(/\/$/, '') +
+            '/v1/projects/' +
+            encodeURIComponent(cfg.projectId) +
+            '/databases/(default)/documents';
+          cfg.useEmulator = true;
+        }
+        if (authEmu) {
+          cfg.authEmulatorHost = authEmu;
+        }
+      }
+      return cfg;
     }
 
     if (mode === 'local') {
@@ -174,15 +227,22 @@
         useEmulator: true,
       });
       if (merged.gateway) {
-        const cfg = resolveFirebaseConfig(
-          new URLSearchParams({
-            project: merged.projectId,
-            key: merged.apiKey,
-            gateway: merged.gateway,
-            emulatorPrefix: merged.emulatorPrefix || pickDevEndpointParam(p, 'emulatorPrefix', '__emulator'),
-          }),
-          b,
-        );
+        const gwParams = new URLSearchParams({
+          project: merged.projectId,
+          key: merged.apiKey,
+          gateway: merged.gateway,
+          emulatorPrefix:
+            merged.emulatorPrefix || pickEmulatorPrefixParam(p, defaultEmulatorPrefixForParams(p)),
+        });
+        const fsEmu = pickDevEndpointParam(p, 'fsEmulator', '');
+        const authEmu = pickDevEndpointParam(p, 'authEmulator', '');
+        if (fsEmu) {
+          gwParams.set('fsEmulator', fsEmu);
+        }
+      if (authEmu) {
+        gwParams.set('authEmulator', authEmu);
+      }
+        const cfg = resolveFirebaseConfig(gwParams, b);
         return cfg;
       }
       return resolveFirebaseConfig(p, b);

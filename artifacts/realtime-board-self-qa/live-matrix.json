@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-08T14:28:30.142Z",
+  "store": "zz-qa-store-a",
+  "apiKeyPresent": false,
+  "branchSiteRoot": "/workspace",
+  "runs": [],
+  "error": "MILKSHA_FIREBASE_API_KEY missing"
+}
