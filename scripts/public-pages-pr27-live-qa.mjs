@@ -7,20 +7,25 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import {
+  GITHUB_PAGES_BASE,
+  installGithubPagesSiteRoute,
+  resolveSiteRoot,
+  siteRouteActive,
+} from './lib/github-pages-site-route.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const PATCH_RUNTIME = process.env.MILKSHA_QA_PATCH_RUNTIME === '1';
-const RUNTIME_JS_PATH = join(ROOT, 'js/receiver/cloud-runtime.js');
+const SITE_ROOT = resolveSiteRoot(ROOT);
+const USE_PAGES_SITE_ROUTE = siteRouteActive();
+const PATCH_RUNTIME = !USE_PAGES_SITE_ROUTE && process.env.MILKSHA_QA_PATCH_RUNTIME === '1';
+const RUNTIME_JS_PATH = join(SITE_ROOT, 'js/receiver/cloud-runtime.js');
 const ART = join(ROOT, 'artifacts', 'pr27live');
 const SHOTS = join(ART, 'screenshots');
 const LOG = join(ART, 'run.log');
 const RESULTS = join(ART, 'results.json');
 
-const PUBLIC_BASE =
-  process.env.MILKSHA_PAGES_BASE ||
-  (process.env.MILKSHA_USE_LOCAL_SITE === '1'
-    ? 'http://127.0.0.1:8877'
-    : 'https://ultronservice.github.io/milksha-demo');
+const PUBLIC_BASE = process.env.MILKSHA_PAGES_BASE || GITHUB_PAGES_BASE;
 const BOARD_HOME = `${PUBLIC_BASE}/`;
 const CTRL = `${PUBLIC_BASE}/controller/`;
 const STORE_MAIN = 'c030020';
@@ -277,7 +282,11 @@ async function runIsolationRounds(tabA, tabB, ctrlA, ctrlB, contextName) {
   return { pass: true, rounds };
 }
 
-async function installRuntimePatch(ctx) {
+async function installPagesAssetRouting(ctx) {
+  if (USE_PAGES_SITE_ROUTE) {
+    await installGithubPagesSiteRoute(ctx, SITE_ROOT);
+    return;
+  }
   if (!PATCH_RUNTIME) {
     return;
   }
@@ -291,13 +300,22 @@ async function installRuntimePatch(ctx) {
   });
 }
 
+function runtimeSha16() {
+  try {
+    const body = readFileSync(RUNTIME_JS_PATH, 'utf8');
+    return createHash('sha256').update(body).digest('hex').slice(0, 16);
+  } catch {
+    return '';
+  }
+}
+
 async function runContext(browser, contextName, seedOld, apiKey) {
   const results = { context: contextName, lines: [] };
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   if (PUBLIC_BASE.includes('127.0.0.1')) {
     await installBundledCloudInit(ctx, apiKey);
   }
-  await installRuntimePatch(ctx);
+  await installPagesAssetRouting(ctx);
   if (seedOld) {
     await ctx.addInitScript(oldSettingsSeedSource());
   }
@@ -416,7 +434,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
     await ctrlB.close().catch(() => {});
 
     const dCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-    await installRuntimePatch(dCtx);
+    await installPagesAssetRouting(dCtx);
     const dPage = await dCtx.newPage();
     dPage.setDefaultTimeout(120000);
     let devLoginCalls = 0;
@@ -452,7 +470,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       await snap(dPage, join(SHOTS, `${contextName}-d-zz-deny-test.png`));
 
       const routeCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-      await installRuntimePatch(routeCtx);
+      await installPagesAssetRouting(routeCtx);
       const routePage = await routeCtx.newPage();
       let routeDevLogin = 0;
       try {
@@ -581,7 +599,7 @@ async function verifyC030020Empty(browser, apiKey) {
   if (PUBLIC_BASE.includes('127.0.0.1')) {
     await installBundledCloudInit(ctx, apiKey);
   }
-  await installRuntimePatch(ctx);
+  await installPagesAssetRouting(ctx);
   const page = await ctx.newPage();
   await page.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
   try {
@@ -614,7 +632,9 @@ async function main() {
   writeFileSync(LOG, '');
   const apiKey = loadApiKey();
   log('PR #27 public Pages QA');
-  log(`base=${PUBLIC_BASE} patch=${PATCH_RUNTIME}`);
+  log(
+    `base=${PUBLIC_BASE} pagesSiteRoute=${USE_PAGES_SITE_ROUTE} siteRoot=${SITE_ROOT} runtimeSha=${runtimeSha16()} legacySingleFilePatch=${PATCH_RUNTIME}`,
+  );
   await smokeCloudFromNode();
 
   const browser = await chromium.launch({
@@ -626,6 +646,9 @@ async function main() {
     at: new Date().toISOString(),
     publicBase: PUBLIC_BASE,
     mergeCommit: 'a82cb9b',
+    pagesSiteRoute: USE_PAGES_SITE_ROUTE,
+    siteRoot: USE_PAGES_SITE_ROUTE ? SITE_ROOT : null,
+    runtimeSha16: runtimeSha16(),
     runtimePatch: PATCH_RUNTIME,
     script: 'scripts/public-pages-pr27-live-qa.mjs',
     contexts: [],

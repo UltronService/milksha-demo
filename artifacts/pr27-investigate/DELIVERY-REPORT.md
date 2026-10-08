@@ -2,41 +2,40 @@
 
 ## 根因一句（注入後 c 90s）
 
-**分類 (b) + (a)：** #30 初版在 `pendingCommand` 無 `boardSeq` 時**直接使用偏低的 `device.boardSeq`**（heartbeat 落後），本地以過小 seq 顯示號碼後，**較大 seq 的空雲端板**仍會通過 `shouldAcceptBoard` 並清空 DOM → c 等不到號；**單檔注入 Pages** 亦與已部署 JS 混版，不適合作產品驗收。**已修：** `a1372a0` 改為 **`cmd.boardSeq` → 雲端 `today_board.seq`（忽略過期 device.boardSeq）**；驗收改 **本機 :8877 整棵分支**（見下）。
+**分類 (a) + (b)：** 舊驗收用 **只換 `cloud-runtime.js`**，其餘仍為 Pages 已部署版 → **來源與模組版本不一致**；#30 初版又在 `pendingCommand` 無 `boardSeq` 時採 **過低的 `device.boardSeq`**，大 seq 空雲端板會蓋掉剛送的號。**已修 seq：** `a1372a0`。**驗收改：** Playwright 將 **`https://ultronservice.github.io/milksha-demo/*` 整站** 由本機分支檔回應（瀏覽器來源仍是 github.io，CORS 可過）；**不可用 `127.0.0.1:8877` 直連真雲端**（預檢無 `access-control-allow-origin`）。
 
 ---
 
 ## PR
 
-| PR | HEAD | CI |
-|----|------|-----|
-| [#30 產品](https://github.com/UltronService/milksha-demo/pull/30) | `a1372a0` | 見 Actions |
-| [#28 QA](https://github.com/UltronService/milksha-demo/pull/28) | （本分支 push 後） | 見 Actions |
+| PR | HEAD | 說明 |
+|----|------|------|
+| [#30 產品](https://github.com/UltronService/milksha-demo/pull/30) | `a1372a0` | device command boardSeq |
+| [#28 QA](https://github.com/UltronService/milksha-demo/pull/28) | 本分支 | `github-pages-site-route` + 矩陣腳本 |
 
 合併順序：**#30 → #28**。
 
-證據：`artifacts/pr27-forensics/root-cause-pages-patch.json`（注入生效 `receiver-demo-2026-10-08-boardseq`；poll 空板 seq 499 在 localSeq 0 時被接受）。
-
 ---
 
-## 本機矩陣（:8877，真雲端，不注入）
+## 矩陣（Pages route，真雲端）
 
-腳本：`node scripts/local-branch-pr27-matrix-suite.mjs`  
-環境：`MILKSHA_SITE_ROOT` = `wt-main`（a82cb9b）或 `wt-product`（#30）；`MILKSHA_QA_PATCH_RUNTIME=0`。
+```bash
+node scripts/local-branch-pr27-matrix-suite.mjs
+```
 
 | 輸出 | 說明 |
 |------|------|
-| `artifacts/pr27-local-matrix/main-a82cb9b.json` | 對照：c 可偶發失敗 |
-| `artifacts/pr27-local-matrix/product-a1372a0.json` | 預期 3× fresh + legacy 全 a–e |
-| `artifacts/pr27-local-matrix/summary.json` | 總表 |
+| `artifacts/pr27-pages-route-matrix/main-a82cb9b.json` | 對照；c 可偶發失敗 |
+| `artifacts/pr27-pages-route-matrix/product-a1372a0.json` | 預期 3× fresh + legacy 全 a–e |
+| `artifacts/pr27-pages-route-matrix/summary.json` | 總表 |
 
-（跑完後補每輪失敗原因；重跑不抵銷。）
+環境：`MILKSHA_PAGES_SITE_ROUTE=1`、`MILKSHA_SITE_ROOT` = `wt-main` 或 `wt-product`；**不**攔截 cloudfunctions / securetoken / firestore。
 
 ---
 
-## 單元測試
+## 本機 e2e（與 #30 無關）
 
-`npm test`：**136**（含 stale `device.boardSeq`、清空三情境）。
+`guest-clock` ring-fit（Roboto 字型斷言）在 **main 與 #30 worktree 皆失敗**（Linux 無 Roboto，實際 `DejaVu Sans`）。`home-board-background-6min` 未列入上述失敗。
 
 ---
 
