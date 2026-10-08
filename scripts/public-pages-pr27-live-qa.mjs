@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Post-merge public GitHub Pages QA (PR #27+). Writes zz-qa-* only; c030020 one send + clear.
+ * Post-merge public GitHub Pages QA (PR #27+). Writes zz-qa-* only; c030020 read-only checks.
  * Fixes Playwright waitForFunction(arg vs options) and board-empty sync after clear_now.
  */
 import { chromium } from 'playwright';
@@ -242,12 +242,21 @@ async function waitBoardEmpty(board, timeoutMs = 90000) {
   );
 }
 
-async function waitBoardMinReady(board, min = 1, timeoutMs = 90000) {
+/** DOM has ≥min ready numbers; no post-wait (used for sendToDisplayMs SLA). */
+async function waitBoardMinReadyMeasure(board, min = 1, timeoutMs = 90000) {
   await board.waitForFunction(
     (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
     min,
     { timeout: timeoutMs },
   );
+  const localSeq = await board.evaluate(() =>
+    window.receiverCloud?.getLocalSeq ? window.receiverCloud.getLocalSeq() : null,
+  );
+  return { count: await board.locator('.milksha-ready .milksha-num').count(), localSeq };
+}
+
+async function waitBoardMinReady(board, min = 1, timeoutMs = 90000) {
+  const first = await waitBoardMinReadyMeasure(board, min, timeoutMs);
   await board.waitForTimeout(400);
   const count = await board.locator('.milksha-ready .milksha-num').count();
   if (count < min) {
@@ -400,10 +409,10 @@ async function runContext(browser, contextName, seedOld, apiKey) {
     let sendToDisplayMs = null;
     let pageOpenToFirstNumberMs = null;
     try {
-      await ctrlMain.goto(ctrlUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
+      await ctrlMain.goto(ctrlUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
       await ctrlMain.waitForFunction(
         (id) => document.getElementById('fld-store')?.value === id,
-        STORE_MAIN,
+        STORE_A,
         { timeout: 30000 },
       );
       const pre = await readSendBlockReason(ctrlMain);
@@ -411,12 +420,12 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       const preDisabledOk = pre.disabled && preReasonOk;
       await snap(ctrlMain, join(SHOTS, `${contextName}-b-send-disabled.png`));
       const boardNavStart = Date.now();
-      await boardB.goto(boardUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
-      await waitBoardCloudReady(boardB);
+      await boardB.goto(boardUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
+      await waitBoardCloudReady(boardB, STORE_A);
       await waitSendEnabled(ctrlMain);
       const pressAt = Date.now();
       await ctrlMain.click('[data-testid="btn-send-numbers"]');
-      await waitBoardMinReady(boardB, 1, 8000);
+      await waitBoardMinReadyMeasure(boardB, 1, 8000);
       const displayAt = Date.now();
       sendToDisplayMs = displayAt - pressAt;
       pageOpenToFirstNumberMs = displayAt - boardNavStart;
@@ -424,6 +433,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       await clearBoardViaController(ctrlMain, boardB, 'b');
       const pass = preDisabledOk && sendToDisplayMs <= 3000;
       record(results, contextName, 'b', pass, {
+        store: STORE_A,
         preDisabled: pre.disabled,
         preBlockReason: pre.reason,
         sendToDisplayMs,
