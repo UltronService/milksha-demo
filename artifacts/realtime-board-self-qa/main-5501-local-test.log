@@ -1,0 +1,11 @@
+# main @ 6ef1359 baseline — local offline reconnect 5501
+
+Date: 2026-10-08 (post-merge workspace with local-cloud-shim fix)
+
+Command:
+CI=true MILKSHA_E2E_PORT=8895 FAKE_CLOUD_PORT=8792 npx playwright test tests/e2e/main-5501-local-baseline.spec.mjs
+
+Result: **PASSED** (with same local-cloud-shim + cloud-runtime restore fixes as #32 branch)
+
+Note: On pristine main tree **without** local-cloud-shim POS-offline write fix, this test **fails** (rcv-ready 5501 timeout).
+Root cause: local mode uses in-browser `local-cloud-shim` posReceiver, which skipped board writes when `storeHasOnlineBox()` was false during simulated STB offline.

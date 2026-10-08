@@ -136,6 +136,14 @@
       return db.doc(Paths.devicePendingControlPath(storeId, deviceId));
     }
 
+    function pushMatrixTimeline(entry) {
+      const tl = root.__rcvMatrixTimeline;
+      if (!Array.isArray(tl)) {
+        return;
+      }
+      tl.push(Object.assign({ ts: Date.now() }, entry));
+    }
+
     function emitBoardFromSnapshot(snap) {
       bump('board');
       if (!snap.exists) {
@@ -151,6 +159,14 @@
       if (!norm.ok) {
         return;
       }
+      const meta = snap.metadata || {};
+      pushMatrixTimeline({
+        kind: 'board_snapshot',
+        fromCache: Boolean(meta.fromCache),
+        hasPendingWrites: Boolean(meta.hasPendingWrites),
+        seq: norm.board.seq,
+        updatedAt: norm.board.updatedAt || '',
+      });
       onBoardSnapshot({
         data: norm.board,
         updateTime: snap.updateTime && snap.updateTime.toMillis

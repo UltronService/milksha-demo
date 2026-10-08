@@ -256,23 +256,20 @@
         }
         const online = storeHasOnlineBox();
         const information = online ? '資料顯示成功' : '目標叫號機尚未連線';
-        let seq = null;
-        if (online) {
-          const nc = parsed.serviceSpecialData_Json.data && parsed.serviceSpecialData_Json.data.number_content;
-          const tickets = TodayBoard.numberContentToTickets(nc || []);
-          seq = nextSeq();
-          const sid = activeStoreId();
-          const board = TodayBoard.buildTodayBoard(sid, seq, tickets, 'A');
-          writeJson(storage, boardKey(sid), board);
-          channel({ type: 'board', storeId: sid });
-        }
+        const nc = parsed.serviceSpecialData_Json.data && parsed.serviceSpecialData_Json.data.number_content;
+        const tickets = TodayBoard.numberContentToTickets(nc || []);
+        const seq = nextSeq();
+        const sid = activeStoreId();
+        const board = TodayBoard.buildTodayBoard(sid, seq, tickets, 'A');
+        writeJson(storage, boardKey(sid), board);
+        channel({ type: 'board', storeId: sid });
         appendReceiveLog({
           kind: 'posReceiver',
-          isSuccess: online,
+          isSuccess: true,
           information: information,
           seq: seq,
         });
-        return { isSuccess: online, information: information, seq: seq };
+        return { isSuccess: true, information: information, seq: seq, boxOnline: online };
       },
     };
 

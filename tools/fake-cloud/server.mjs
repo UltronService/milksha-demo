@@ -448,21 +448,18 @@ const server = http.createServer(async (req, res) => {
         const online = storeHasOnlineBox(storeId);
         const info = online ? '資料顯示成功' : '找不到機台';
         let seq = null;
-        if (online) {
-          const nc = body.serviceSpecialData_Json?.data?.number_content || [];
-          const tickets = numberToTickets(nc);
-          seq = nextSeq(storeId);
-          const board = {
-            storeId,
-            businessDate: taipeiBusinessDate(),
-            seq: seq,
-            updatedAt: new Date().toISOString(),
-            source: 'A',
-            tickets,
-            clearedAt: tickets.length ? null : new Date().toISOString(),
-          };
-          docs.set(boardKey(storeId), board);
-        }
+        const nc = body.serviceSpecialData_Json?.data?.number_content || [];
+        const tickets = numberToTickets(nc);
+        seq = nextSeq(storeId);
+        docs.set(boardKey(storeId), {
+          storeId,
+          businessDate: taipeiBusinessDate(),
+          seq: seq,
+          updatedAt: new Date().toISOString(),
+          source: 'A',
+          tickets,
+          clearedAt: tickets.length ? null : new Date().toISOString(),
+        });
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
@@ -470,7 +467,12 @@ const server = http.createServer(async (req, res) => {
           information: info,
           seq: seq,
         });
-        return json(res, 200, { isSuccess: online, information: info, seq: seq });
+        return json(res, 200, {
+          isSuccess: true,
+          information: info,
+          seq: seq,
+          boxOnline: online,
+        });
       }
 
       const auth = requireAuth(req);

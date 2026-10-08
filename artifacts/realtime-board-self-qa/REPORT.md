@@ -1,70 +1,60 @@
-# Realtime board self-QA（`cursor/realtime-board-4a4f` / PR #32）
+# Realtime board self-QA（PR #32）
 
-## 1. offline reconnect 5501（已移除 skip）
+| 項目 | 值 |
+|------|-----|
+| **HEAD（分支）** | `git rev-parse HEAD` 見 `live-matrix.json` › `branchSha` |
+| **base main** | `6ef1359`（#25 固定 16:9 畫布）見 `live-matrix.json` › `baseMainSha` |
+| **合併** | `merge(main): 6ef1359` — 保留 `milksha-board-canvas` / cache-bust |
 
-| 項目 | 說明 |
-|------|------|
-| 測試 | `tests/e2e/controller-actions.spec.mjs` › `board \| no chime for ready while offline on reconnect` |
-| 根因（local） | 模擬斷網後 fake-cloud 視機台為 offline，`posReceiver` **不寫入** today_board；離線期間「一鍵可取餐」只改控制台本機 tickets，雲端板仍停在 preparing。restore 後無 ready 可補。 |
-| 根因（產品預期） | 真雲端／firestore 路徑用 `push_numbers` devCommand，**不依**機台 online 旗標更新板檔。 |
-| 修正 | 測試改為 **`firestore` 模式**（非產品 bug）；並等待 `#btn-one-ready` / `#btn-restore` 可點。 |
-| 斷言 | restore 後 `.rcv-ready` 顯示 5501，且 `ringCount` 不增加。 |
+## 1. Merge / 衝突
 
-## 2. 真雲端矩陣（公開站設定，無金鑰進 repo／報告）
+- 已 `git merge origin/main`（非 force push），解決 `board-boot-no-data-1920.png` 採 main（#25）版本。
+- 合併後重跑：`npm test`（148）、`npm run test:e2e`（見 CI / `/tmp/full-e2e.log`）。
 
-- 腳本：`scripts/realtime-board-live-matrix.mjs`
-- API key：自 `https://ultronservice.github.io/milksha-demo/config/firebase.js` 解析；Playwright **後註冊** route 覆寫分支內假 key。
-- 寫入店：僅 **`zz-qa-store-a`** 送號；`b–e` 只開板量測；**未跑** `zz-deny-test`。
-- 結果檔：`live-matrix.json`（含 chromium／firefox 各 3 次、`boardListen`、`commandMode`、3s 送號、main 對照、30s 斷網、店隔離、legacy UA）。
+## 2. offline reconnect 5501（local + firestore）
 
-### 送號延遲（就緒後按下 → 螢幕出號）
+### main @ 6ef1359 實測（原始 local 腳本）
 
-| 瀏覽器 | 三次 sendToDisplayMs | ≤3s |
-|--------|----------------------|-----|
-| Chromium | 821 / 38 / 38 ms（首輪較慢，後兩次） | 是 |
-| Firefox | 79 / 70 / 77 ms | 是 |
+- 指令：`tests/e2e/main-5501-local-baseline.spec.mjs`（內容同 main 上 local 測試）。
+- **在僅 main 程式樹、未修 shim 時：失敗**（15s 內 `.rcv-ready` 無 5501）。日誌：`main-5501-local-test.log`。
+- **根因**：`local` 走瀏覽器內 `local-cloud-shim.posReceiver`，模擬斷網時 `storeHasOnlineBox()` 為 false → **不寫** `today_board`；與 #32 realtime 無關。
+- **修復**（產品／假雲一致）：`local-cloud-shim` + `fake-cloud` 在簽章合法時**仍寫板**；`isSuccess: true`，`information` 仍可為離線文案；receiver `restore` 走 `applyBoardDocument({ force: true })` + `suppressRingOnNextApply`。
+- **#32 測試**：
+  - `board | no chime … (local)` — 恢復 main 行為並通過。
+  - `board | no chime … (firestore)` — 第二支，覆蓋 `push_numbers` 路徑。
 
-`boardListen=true`（等待 listener 就緒後）；`commandMode=poll`（milksha-cloud #18 control/pending 尚未部署到 dev）。
+## 3. 真雲端延遲（可稽核）
 
-### 30 秒斷線
+見 `live-matrix.json` 每輪 `timeline`：
 
-- 方法：Playwright `context.setOffline(true)` 30s 後恢復（快取號碼仍顯示）。
-- `offline30s.ok=true`（before／during／after 皆為同一 ready 號）。
+- `buttonPressedAt` / `devCommandResponseAt` / `devCommandMs`
+- `boardSnapshotAt` + `boardSnapshotMeta`（`fromCache`, `hasPendingWrites`, `seq`, `updatedAt`）
+- `domVisibleAt` / `domAfterButtonMs`
+- **獨立 context**（看板頁與控制台分頁）；`ticketNo` 每輪不同（8800+ 系列），`displayedReadyNo` 必與之一致。
 
-### 店隔離
+## 4. main 對照數字
 
-- store-a 送號後 store-b 看板 **未** 出現 a 的號碼（`isolated=true`）。
+`live-matrix.json`：
 
-## 3. Legacy Chrome 78
+- `branch.chromium[]` / `branch.firefox[]` — 各 3 輪 `sendToDisplayMs` + timeline
+- `main.chromium[]` / `main.firefox[]` — 同結構（main 樹無 `getRealtimeStats` / onSnapshot hook 時 `boardListen: false`）
 
-見 `SDK.md`；`live-matrix.json` › `legacyChrome78`：gstatic **10.14.1** 三件套載入；阻斷 `firebase-firestore-compat.js` 後 `boardListen=false`（poll fallback）。
+## 5. 讀取次數
 
-## 4. 讀取次數估算
+- **實測（5 分鐘）**：`readCountsMeasured.branch` / `readCountsMeasured.main` — `restGet`、`onSnapshotEvents`、`perHour`（`method: "measured"`）。
+- **估算**：`readCountsEstimated`（標明 estimate only）。
 
-| 情境 | 粗估 |
-|------|------|
-| **main** | REST 輪詢 board（config 約 0.5–2s）≈ **1800–7200 board reads/h／台** |
-| **#32 現況** | `today_board` onSnapshot：初始 1 + 每次寫板 1；`commandMode=poll` 時 device 每 5s ≈ **+720 REST/h** |
-| **#18 部署後** | `control/pending` onSnapshot，heartbeat **不再**為指令重讀 device；steady device REST ≈ **0**（僅板變更觸發 snapshot） |
+## 6. Legacy / SDK
 
-## 5. 為何 diff +11461 行
+- `SDK.md`：`legacyChrome78.uaSimulatedOnly`；Firebase 官方支援表連結。
+- Playwright 僅改 UA，**非**真 Chrome 78 引擎。
 
-| 來源 | 約略行數 |
-|------|----------|
-| `package-lock.json`（firebase-tools 等 devDeps） | **+9630** |
-| 其餘：realtime 程式、rules 測試、e2e、腳本、artifacts 報告 | ~800 |
-| **非** vendored Firebase SDK blob | — |
+## 禁止項
 
-不必要檔：未 commit `firestore-debug.log`；`artifacts/.main-tree` 為矩陣 main 對照暫存。
-
-## 6. CI／本機驗證
-
-- `npx playwright test tests/e2e/controller-actions.spec.mjs`：**30 passed**（含 5501 offline reconnect）。
-- `npm test`：**147** passed。
-- 推送後請以 PR #32 最新 HEAD CI 為準。
+- 僅寫入 `zz-qa-store-a` 送號；未跑 `zz-deny-test`；未動 `s120030` / `c030020` 寫入。
 
 ## UAT（PM）
 
-1. 開 PR 預覽或本機 `receiver-demo` firestore 模式：加單 5501 preparing → 模擬斷網 → 一鍵可取餐 → 恢復 → ready 有 5501 且無多餘響鈴。
-2. 真雲 `zz-qa-store-a`：開看板至 `boardListen` 就緒 → 控制台送號 → 3 秒內出號。
-3. URL `?realtime=0`：行為與 main 相同 REST 輪詢。
+1. local：5501 preparing → 模擬斷網 → 一鍵可取餐 → 恢復 → ready 無多餘響鈴。
+2. 真雲 a 店：看板 `boardListen` 就緒後送新號 → 3s 內上屏（對照 `live-matrix.json` timeline）。
+3. `?realtime=0` 與 main 同 REST 輪詢。
