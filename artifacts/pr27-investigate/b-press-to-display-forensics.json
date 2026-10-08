@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-10-08T11:45:50.226Z",
+  "store": "zz-qa-store-a",
+  "pagesRoute": true,
+  "pressToDomMs": 1245,
+  "marks": [
+    {
+      "name": "start",
+      "atMs": 1791459945992,
+      "deltaMs": 0
+    },
+    {
+      "name": "controller_dom",
+      "atMs": 1791459946352,
+      "deltaMs": 360
+    },
+    {
+      "name": "board_dom",
+      "atMs": 1791459946407,
+      "deltaMs": 415
+    },
+    {
+      "name": "board_ready",
+      "atMs": 1791459947482,
+      "deltaMs": 1490
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459948354,
+      "deltaMs": 2362
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459948454,
+      "deltaMs": 2462
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459948458,
+      "deltaMs": 2466
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459948885,
+      "deltaMs": 2893
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459948953,
+      "deltaMs": 2961
+    },
+    {
+      "name": "send_enabled",
+      "atMs": 1791459948982,
+      "deltaMs": 2990
+    },
+    {
+      "name": "press",
+      "atMs": 1791459948982,
+      "deltaMs": 2990
+    },
+    {
+      "name": "devCommand_request",
+      "atMs": 1791459949023,
+      "deltaMs": 3031
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459949456,
+      "deltaMs": 3464
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459949456,
+      "deltaMs": 3464
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459949509,
+      "deltaMs": 3517
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459949566,
+      "deltaMs": 3574
+    },
+    {
+      "name": "devCommand_response",
+      "atMs": 1791459949576,
+      "deltaMs": 3584
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459949579,
+      "deltaMs": 3587
+    },
+    {
+      "name": "today_board_read_request",
+      "atMs": 1791459949953,
+      "deltaMs": 3961
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459950031,
+      "deltaMs": 4039
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459950057,
+      "deltaMs": 4065
+    },
+    {
+      "name": "today_board_read_response",
+      "atMs": 1791459950182,
+      "deltaMs": 4190
+    },
+    {
+      "name": "dom_ready_count",
+      "atMs": 1791459950226,
+      "deltaMs": 4234
+    }
+  ],
+  "boardLocalSeq": 755,
+  "note": "Compare devCommand_response→today_board_read_*→dom_ready_count deltas for phase split."
+}

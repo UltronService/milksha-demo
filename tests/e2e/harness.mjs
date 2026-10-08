@@ -6,7 +6,13 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execPath } from 'node:process';
 
-export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const HARNESS_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+export function siteRoot() {
+  const fromEnv = process.env.MILKSHA_SITE_ROOT;
+  return fromEnv ? join(fromEnv) : HARNESS_ROOT;
+}
+/** @deprecated use siteRoot() at request time; import-time ROOT ignores late env. */
+export const ROOT = siteRoot();
 export const PORT_SITE = 8877;
 export const PORT_CLOUD = 8787;
 
@@ -25,7 +31,7 @@ export function startCloud() {
     return;
   }
   stopOwnedCloud();
-  cloudProc = spawn(execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+  cloudProc = spawn(execPath, [join(siteRoot(), 'tools', 'fake-cloud', 'server.mjs')], {
     env: { ...process.env, FAKE_CLOUD_PORT: String(PORT_CLOUD) },
     stdio: 'ignore',
   });
@@ -89,6 +95,13 @@ export async function waitCloudReady() {
   throw new Error('fake-cloud not ready');
 }
 
+export function stopSite() {
+  if (siteServer) {
+    siteServer.close();
+    siteServer = null;
+  }
+}
+
 export async function startSite() {
   if (siteServer) {
     return;
@@ -129,7 +142,7 @@ export async function startSite() {
       let p = urlPath;
       if (p === '/') p = '/index.html';
       if (p.endsWith('/')) p += 'index.html';
-      const file = join(ROOT, decodeURIComponent(p.replace(/^\//, '')));
+      const file = join(siteRoot(), decodeURIComponent(p.replace(/^\//, '')));
       const data = readFileSync(file);
       const ext = file.split('.').pop();
       const types = {

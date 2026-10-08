@@ -1,0 +1,138 @@
+{
+  "runs": 1,
+  "items": [
+    {
+      "label": "matrix-1",
+      "code": 1,
+      "results": {
+        "at": "2026-10-08T04:38:39.424Z",
+        "publicBase": "https://ultronservice.github.io/milksha-demo",
+        "mergeCommit": "a82cb9b",
+        "runtimePatch": true,
+        "script": "scripts/public-pages-pr27-live-qa.mjs",
+        "contexts": [
+          {
+            "context": "fresh",
+            "lines": [
+              {
+                "context": "fresh",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "fresh",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 976,
+                "pageOpenToFirstNumberMs": 2212,
+                "cleared": true
+              },
+              {
+                "context": "fresh",
+                "check": "c",
+                "pass": false,
+                "error": "page.waitForFunction: Timeout 90000ms exceeded."
+              },
+              {
+                "context": "fresh",
+                "check": "d",
+                "pass": true,
+                "pausedText": "連線暫停",
+                "devLoginTotal": 1,
+                "devLoginDuring60s": 0,
+                "d403Mode": "live_cloud",
+                "boardStore": "zz-deny-test",
+                "backendDeploy": "9940daf",
+                "note": "Live devLogin 403 store_not_allowed on public board ?mode=cloud&store=zz-deny-test (backend 9940daf)",
+                "routeSupplement": {
+                  "pass": true,
+                  "d403Mode": "route_simulated",
+                  "boardStore": "c030020",
+                  "pausedText": "連線暫停",
+                  "devLoginTotal": 1,
+                  "note": "Supplement: route-simulated 403 on c030020 board URL (no extra store opens)"
+                }
+              },
+              {
+                "context": "fresh",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          },
+          {
+            "context": "old-settings",
+            "lines": [
+              {
+                "context": "old-settings",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "old-settings",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1249,
+                "pageOpenToFirstNumberMs": 2720,
+                "cleared": true
+              },
+              {
+                "context": "old-settings",
+                "check": "c",
+                "pass": false,
+                "error": "page.waitForFunction: Timeout 90000ms exceeded."
+              },
+              {
+                "context": "old-settings",
+                "check": "d",
+                "pass": true,
+                "pausedText": "連線暫停",
+                "devLoginTotal": 1,
+                "devLoginDuring60s": 0,
+                "d403Mode": "live_cloud",
+                "boardStore": "zz-deny-test",
+                "backendDeploy": "9940daf",
+                "note": "Live devLogin 403 store_not_allowed on public board ?mode=cloud&store=zz-deny-test (backend 9940daf)",
+                "routeSupplement": {
+                  "pass": true,
+                  "d403Mode": "route_simulated",
+                  "boardStore": "c030020",
+                  "pausedText": "連線暫停",
+                  "devLoginTotal": 1,
+                  "note": "Supplement: route-simulated 403 on c030020 board URL (no extra store opens)"
+                }
+              },
+              {
+                "context": "old-settings",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          }
+        ],
+        "c030020Final": {
+          "empty": true,
+          "readyCount": 0
+        }
+      },
+      "outTail": "[2026-10-08T04:38:38.456Z] PR #27 public Pages QA\n[2026-10-08T04:38:39.424Z] context fresh\n[2026-10-08T04:38:43.668Z] b: clear_now synced\n[2026-10-08T04:38:48.393Z] fresh-c1-preclear-a: clear_now synced\n[2026-10-08T04:38:48.426Z] fresh-c1-preclear-b: clear_now synced\n[2026-10-08T04:38:52.034Z] fresh-c2-preclear-a: clear_now synced\n[2026-10-08T04:38:52.567Z] fresh-c2-preclear-b: clear_now synced\n[2026-10-08T04:41:28.427Z] e: clear_now synced\n[2026-10-08T04:41:28.432Z] context old-settings\n[2026-10-08T04:41:33.411Z] b: clear_now synced\n[2026-10-08T04:41:36.936Z] old-settings-c1-preclear-a: clear_now synced\n[2026-10-08T04:41:37.344Z] old-settings-c1-preclear-b: clear_now synced\n[2026-10-08T04:44:15.455Z] e: clear_now synced\n[2026-10-08T04:44:16.745Z] wrote /workspace/artifacts/pr27live/results.json\n"
+    }
+  ],
+  "pass": false
+}

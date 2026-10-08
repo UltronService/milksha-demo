@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-10-08T03:46:37.502Z",
+  "backendDeploy": "9940daf",
+  "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test",
+  "pausedText": "連線暫停",
+  "devLoginAtPause": 1,
+  "devLoginDuring15sIdle": 0,
+  "devLogin403Body": {
+    "code": "store_not_allowed",
+    "message": "This store is not allowed to use developer tools."
+  },
+  "pass": true
+}

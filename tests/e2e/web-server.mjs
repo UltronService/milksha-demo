@@ -1,6 +1,11 @@
 /**
  * Long-lived static site + fake-cloud for Playwright (survives worker restarts).
  */
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+process.env.MILKSHA_SITE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 import { startCloud, waitCloudReady, startSite, PORT_SITE } from './harness.mjs';
 
 startCloud();

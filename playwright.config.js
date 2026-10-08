@@ -8,7 +8,7 @@ module.exports = {
   webServer: {
     command: 'node tests/e2e/web-server.mjs',
     url: 'http://127.0.0.1:8877/controller/',
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   use: {

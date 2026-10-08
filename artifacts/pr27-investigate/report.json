@@ -1,0 +1,520 @@
+{
+  "generatedAt": "2026-10-08T01:32:41.384Z",
+  "publicBase": "https://ultronservice.github.io/milksha-demo",
+  "mergeCommit": "a82cb9b",
+  "freshCOnly": [
+    {
+      "runIndex": 1,
+      "pass": false,
+      "lastDiag": {
+        "tabA": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-a",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "tabB": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-b",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 1,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        }
+      },
+      "isolation": {
+        "pass": false,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 1087,
+            "sendBMs": 384,
+            "pass": true
+          },
+          {
+            "round": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 481,
+            "sendBMs": 498,
+            "pass": true
+          },
+          {
+            "round": 3,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 0,
+            "bCount": 1,
+            "sendAMs": 499,
+            "sendBMs": 515,
+            "pass": false
+          }
+        ],
+        "failRound": 3,
+        "reason": "isolation-leak"
+      }
+    },
+    {
+      "runIndex": 2,
+      "pass": true,
+      "isolation": {
+        "pass": true,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 480,
+            "sendBMs": 532,
+            "pass": true
+          },
+          {
+            "round": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 798,
+            "sendBMs": 533,
+            "pass": true
+          },
+          {
+            "round": 3,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 430,
+            "sendBMs": 532,
+            "pass": true
+          }
+        ]
+      }
+    },
+    {
+      "runIndex": 3,
+      "pass": false,
+      "lastDiag": {
+        "tabA": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-a",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "tabB": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-b",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "ctrlA": {
+          "url": "https://ultronservice.github.io/milksha-demo/controller/?store=zz-qa-store-a",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "ctrlB": {
+          "url": "https://ultronservice.github.io/milksha-demo/controller/?store=zz-qa-store-b",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        }
+      },
+      "isolation": {
+        "pass": false,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 781,
+            "sendBMs": 531,
+            "pass": true
+          }
+        ],
+        "failRound": 2,
+        "error": "page.waitForFunction: Timeout 90000ms exceeded."
+      }
+    }
+  ],
+  "dThenC": [
+    {
+      "runIndex": 1,
+      "pass": true,
+      "afterDeny": {
+        "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999",
+        "pausedVisible": true,
+        "offlineVisible": false,
+        "readyCount": 0,
+        "authKeys": [],
+        "peerLock": null,
+        "uploadHalted": false,
+        "sessionHalted": false
+      },
+      "readyMs": 1910,
+      "isolation": {
+        "pass": true,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 465,
+            "sendBMs": 532,
+            "pass": true
+          },
+          {
+            "round": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 816,
+            "sendBMs": 715,
+            "pass": true
+          },
+          {
+            "round": 3,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 450,
+            "sendBMs": 548,
+            "pass": true
+          }
+        ]
+      }
+    },
+    {
+      "runIndex": 2,
+      "pass": false,
+      "afterDeny": {
+        "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999",
+        "pausedVisible": true,
+        "offlineVisible": false,
+        "readyCount": 0,
+        "authKeys": [],
+        "peerLock": null,
+        "uploadHalted": false,
+        "sessionHalted": false
+      },
+      "readyMs": 1908,
+      "lastDiag": {
+        "tabA": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-a",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "tabB": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-b",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 1,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        }
+      },
+      "isolation": {
+        "pass": false,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 466,
+            "sendBMs": 531,
+            "pass": true
+          },
+          {
+            "round": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 799,
+            "sendBMs": 548,
+            "pass": true
+          },
+          {
+            "round": 3,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 0,
+            "bCount": 1,
+            "sendAMs": 465,
+            "sendBMs": 549,
+            "pass": false
+          }
+        ],
+        "failRound": 3,
+        "reason": "isolation-leak"
+      }
+    },
+    {
+      "runIndex": 3,
+      "pass": true,
+      "afterDeny": {
+        "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999",
+        "pausedVisible": true,
+        "offlineVisible": false,
+        "readyCount": 0,
+        "authKeys": [],
+        "peerLock": null,
+        "uploadHalted": false,
+        "sessionHalted": false
+      },
+      "readyMs": 3243,
+      "isolation": {
+        "pass": true,
+        "rounds": [
+          {
+            "round": 1,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 639,
+            "sendBMs": 516,
+            "pass": true
+          },
+          {
+            "round": 2,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 332,
+            "sendBMs": 499,
+            "pass": true
+          },
+          {
+            "round": 3,
+            "bBeforeA": 0,
+            "bAfterA": 0,
+            "aCount": 1,
+            "bCount": 1,
+            "sendAMs": 799,
+            "sendBMs": 514,
+            "pass": true
+          }
+        ]
+      }
+    }
+  ],
+  "fullFlows": [
+    {
+      "context": "fresh",
+      "checks": {
+        "a": {
+          "pass": true
+        },
+        "c": {
+          "pass": true,
+          "rounds": [
+            {
+              "round": 1,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 482,
+              "sendBMs": 532,
+              "pass": true
+            },
+            {
+              "round": 2,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 799,
+              "sendBMs": 531,
+              "pass": true
+            },
+            {
+              "round": 3,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 1,
+              "bCount": 1,
+              "sendAMs": 965,
+              "sendBMs": 515,
+              "pass": true
+            }
+          ]
+        },
+        "d": {
+          "pass": true,
+          "devLoginCalls": 1,
+          "denyDiag": {
+            "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999",
+            "pausedVisible": true,
+            "offlineVisible": false,
+            "readyCount": 0,
+            "authKeys": [
+              "milksha:auth:AIz80Q:zz-qa-store-a:device:stb-01",
+              "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+              "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web",
+              "milksha:auth:AIz80Q:zz-qa-store-b:device:stb-01",
+              "milksha:auth:AIz80Q:c030020:device:stb-01"
+            ],
+            "peerLock": null,
+            "uploadHalted": false,
+            "sessionHalted": false
+          }
+        }
+      }
+    },
+    {
+      "context": "old-settings",
+      "checks": {
+        "a": {
+          "pass": true
+        },
+        "c": {
+          "pass": false,
+          "rounds": [
+            {
+              "round": 1,
+              "bBeforeA": 0,
+              "bAfterA": 0,
+              "aCount": 0,
+              "bCount": 1,
+              "sendAMs": 314,
+              "sendBMs": 732,
+              "pass": false
+            }
+          ],
+          "failRound": 1,
+          "reason": "isolation-leak"
+        },
+        "d": {
+          "pass": true,
+          "devLoginCalls": 1,
+          "denyDiag": {
+            "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999",
+            "pausedVisible": true,
+            "offlineVisible": false,
+            "readyCount": 0,
+            "authKeys": [],
+            "peerLock": null,
+            "uploadHalted": false,
+            "sessionHalted": false
+          }
+        }
+      },
+      "lastDiag": {
+        "tabA": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-a",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 0,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        },
+        "tabB": {
+          "url": "https://ultronservice.github.io/milksha-demo/?store=zz-qa-store-b",
+          "pausedVisible": false,
+          "offlineVisible": false,
+          "readyCount": 1,
+          "authKeys": [
+            "milksha:auth:AIz80Q:zz-qa-store-a:controller:controller-web",
+            "milksha:auth:AIz80Q:zz-qa-store-b:controller:controller-web"
+          ],
+          "peerLock": null,
+          "uploadHalted": false,
+          "sessionHalted": false
+        }
+      }
+    }
+  ]
+}
