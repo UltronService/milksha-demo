@@ -1,49 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { freshContext, urlsLocalHomePoc } from './harness.mjs';
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const MEASURED = JSON.parse(
-  readFileSync(
-    join(ROOT, 'artifacts/board-background-self-qa/reference/measured-layout.json'),
-    'utf8',
-  ),
-);
-
-/** Reference art order: left col rows 0–4 then right col (1907..1898 per design). */
-const REF_NUMBERS = ['1907', '1906', '1905', '1904', '1903', '1902', '1901', '1900', '1899', '1898'];
+import { REF_BOARD_NUMBERS, buildRefBoardPayload } from './board-ref-fixtures.mjs';
 
 const CENTER_TOL_PX = 12;
-const FONT_TOL_RATIO = 0.1;
-
-function expectedCenters(zone) {
-  const cells = zone === 'prep' ? MEASURED.prepCells : MEASURED.readyCells;
-  const out = [];
-  for (let i = 0; i < 10; i += 1) {
-    const col = i < 5 ? 0 : 1;
-    const row = i < 5 ? i : i - 5;
-    const cell = cells.find((c) => c.row === row && c.col === col);
-    if (!cell) {
-      throw new Error('missing measured cell ' + zone + ' ' + i);
-    }
-    out.push({ cx: cell.cx, cy: cell.cy, refTextH: cell.textH > 80 ? 58 : cell.textH });
-  }
-  return out;
-}
-
-function refPayload() {
-  const prep = REF_NUMBERS.map((number) => ({
-    source_type: 'From_milksha_point_Preparing',
-    number,
-  }));
-  const ready = REF_NUMBERS.map((number) => ({
-    source_type: 'From_Store_OK',
-    number,
-  }));
-  return [...prep, ...ready];
-}
 
 async function readCanvasScale(page) {
   return page.evaluate(() => {
@@ -56,108 +15,147 @@ async function readCanvasScale(page) {
   });
 }
 
-async function measureAlignment(page, viewport) {
+async function applyRefPayload(page) {
+  await page.evaluate(() => window.QMS.runtime.applyPayload([]));
+  await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), buildRefBoardPayload());
+}
+
+async function measureBoard(page, viewport) {
   await page.setViewportSize(viewport);
   await page.waitForTimeout(250);
   const scale = await readCanvasScale(page);
-  return page.evaluate(
-    ({ scale, prepCenters, readyCenters, prepCream, readyCream, titleGuardY, refFontPx, centerTol, fontTol }) => {
-      const canvas = document.getElementById('milksha-board-canvas');
-      if (!canvas) {
-        return { ok: false, reason: 'no-canvas' };
-      }
-      const cRect = canvas.getBoundingClientRect();
-      const art = window.QMS?.Board?.LandscapeArtLayout;
-      const fontPx = art ? art.NUM_FONT_PX : refFontPx;
+  return page.evaluate(({ scale: s, centerTol }) => {
+    const art = window.QMS?.Board?.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    if (!art || !canvas) {
+      return { ok: false, reason: 'missing-art' };
+    }
+    const cRect = canvas.getBoundingClientRect();
 
-      function boardPoint(el) {
-        const r = el.getBoundingClientRect();
-        return {
-          cx: (r.left + r.width / 2 - cRect.left) / scale,
-          cy: (r.top + r.height / 2 - cRect.top) / scale,
-          top: (r.top - cRect.top) / scale,
-          bottom: (r.bottom - cRect.top) / scale,
-          left: (r.left - cRect.left) / scale,
-          right: (r.right - cRect.left) / scale,
-          textH: r.height / scale,
-          fontSize: parseFloat(getComputedStyle(el).fontSize),
-        };
-      }
-
-      function checkZone(selector, centers, cream) {
-        const cells = Array.from(document.querySelectorAll(selector + ' .milksha-num-cell'));
-        if (cells.length !== 10) {
-          return { ok: false, reason: 'cell-count', count: cells.length };
-        }
-        const gaps = [];
-        for (let i = 0; i < 10; i += 1) {
-          const numEl = cells[i].querySelector('.milksha-num');
-          if (!numEl) {
-            return { ok: false, reason: 'empty-cell', index: i };
-          }
-          const pt = boardPoint(numEl);
-          if (pt.top < titleGuardY) {
-            return { ok: false, reason: 'title-overlap', index: i, top: pt.top };
-          }
-          if (
-            pt.left < cream.left - 2 ||
-            pt.right > cream.left + cream.width + 2 ||
-            pt.top < cream.top - 2 ||
-            pt.bottom > cream.top + cream.height + 2
-          ) {
-            return { ok: false, reason: 'outside-cream', index: i, pt, cream };
-          }
-          const exp = centers[i];
-          const dx = Math.abs(pt.cx - exp.cx);
-          const dy = Math.abs(pt.cy - exp.cy);
-          gaps.push({
-            index: i,
-            number: numEl.textContent,
-            dx,
-            dy,
-            textH: pt.textH,
-            refTextH: exp.refTextH,
-            fontSize: pt.fontSize,
-          });
-          if (dx > centerTol || dy > centerTol) {
-            return { ok: false, reason: 'center-off', index: i, dx, dy, exp, pt };
-          }
-          if (Math.abs(pt.fontSize - fontPx) > fontPx * fontTol) {
-            return { ok: false, reason: 'font-size', index: i, fontSize: pt.fontSize, fontPx };
-          }
-          if (Math.abs(pt.textH - exp.refTextH) > exp.refTextH * fontTol + 4) {
-            return { ok: false, reason: 'text-height', index: i, textH: pt.textH, ref: exp.refTextH };
-          }
-        }
-        return { ok: true, gaps };
-      }
-
-      const prep = checkZone('.milksha-zone.prep', prepCenters, prepCream);
-      if (!prep.ok) {
-        return { ok: false, zone: 'prep', ...prep };
-      }
-      const ready = checkZone('.milksha-zone.ready', readyCenters, readyCream);
-      if (!ready.ok) {
-        return { ok: false, zone: 'ready', ...ready };
-      }
+    function measureInk(el) {
+      const style = getComputedStyle(el);
+      const font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+      const text = el.textContent || '';
+      const mctx = document.createElement('canvas').getContext('2d');
+      mctx.font = font;
+      const m = mctx.measureText(text);
+      const cap =
+        (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0);
+      const inkW = (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || 0);
+      const r = el.getBoundingClientRect();
       return {
-        ok: true,
-        scale,
-        gaps: { prep: prep.gaps, ready: ready.gaps },
+        capHeight: cap,
+        inkWidth: inkW,
+        box: {
+          left: (r.left - cRect.left) / s,
+          top: (r.top - cRect.top) / s,
+          width: r.width / s,
+          height: r.height / s,
+        },
+        center: {
+          cx: (r.left + r.width / 2 - cRect.left) / s,
+          cy: (r.top + r.height / 2 - cRect.top) / s,
+        },
+        text,
       };
-    },
-    {
-      scale,
-      prepCenters: expectedCenters('prep'),
-      readyCenters: expectedCenters('ready'),
-      prepCream: MEASURED.prep,
-      readyCream: MEASURED.ready,
-      titleGuardY: 330,
-      refFontPx: 62,
-      centerTol: CENTER_TOL_PX,
-      fontTol: FONT_TOL_RATIO,
-    },
-  );
+    }
+
+    function checkZone(selector, zoneKey) {
+      const cream = art.creamRectForZone(zoneKey);
+      const cells = Array.from(document.querySelectorAll(selector + ' .milksha-num-cell'));
+      if (cells.length !== 10) {
+        return { ok: false, reason: 'cell-count', count: cells.length };
+      }
+      const inks = [];
+      const colXs = [[], []];
+      const rowYs = [[], []];
+      for (let i = 0; i < 10; i += 1) {
+        const numEl = cells[i].querySelector('.milksha-num');
+        if (!numEl || !numEl.textContent) {
+          return { ok: false, reason: 'empty-cell', index: i };
+        }
+        const ink = measureInk(numEl);
+        const exp = art.cellCenterBoard(zoneKey, i);
+        const dx = Math.abs(ink.center.cx - exp.cx);
+        const dy = Math.abs(ink.center.cy - exp.cy);
+        if (ink.box.top < art.TITLE_GUARD_MAX_Y) {
+          return { ok: false, reason: 'title-overlap', index: i };
+        }
+        if (
+          ink.box.left < cream.left - 2 ||
+          ink.box.left + ink.box.width > cream.left + cream.width + 2 ||
+          ink.box.top < cream.top - 2 ||
+          ink.box.top + ink.box.height > cream.top + cream.height + 2
+        ) {
+          return { ok: false, reason: 'outside-cream', index: i, ink, cream };
+        }
+        if (dx > centerTol || dy > centerTol) {
+          return { ok: false, reason: 'center-off', index: i, dx, dy, exp, ink };
+        }
+        const col = i < 5 ? 0 : 1;
+        const row = i < 5 ? i : i - 5;
+        colXs[col].push(ink.center.cx);
+        rowYs[col].push(ink.center.cy);
+        const capTol = art.REF_INK_CAP_HEIGHT_PX * art.INK_METRIC_TOL_RATIO;
+        const wTol = art.REF_INK_WIDTH_1907_PX * art.INK_METRIC_TOL_RATIO;
+        if (ink.text === art.REF_INK_SAMPLE_TEXT) {
+          if (Math.abs(ink.capHeight - art.REF_INK_CAP_HEIGHT_PX) > capTol) {
+            return {
+              ok: false,
+              reason: 'ink-cap',
+              index: i,
+              capHeight: ink.capHeight,
+              ref: art.REF_INK_CAP_HEIGHT_PX,
+            };
+          }
+          if (Math.abs(ink.inkWidth - art.REF_INK_WIDTH_1907_PX) > wTol) {
+            return {
+              ok: false,
+              reason: 'ink-width',
+              index: i,
+              inkWidth: ink.inkWidth,
+              ref: art.REF_INK_WIDTH_1907_PX,
+            };
+          }
+        }
+        inks.push({ index: i, ...ink, expected: exp });
+      }
+      for (let col = 0; col < 2; col += 1) {
+        const xs = colXs[col];
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        if (maxX - minX > art.COL_X_TOL_PX) {
+          return { ok: false, reason: 'col-x-drift', col, spread: maxX - minX, xs };
+        }
+      }
+      for (let col = 0; col < 2; col += 1) {
+        const ys = rowYs[col].slice().sort((a, b) => a - b);
+        const pitches = [];
+        for (let r = 1; r < ys.length; r += 1) {
+          pitches.push(ys[r] - ys[r - 1]);
+        }
+        const minP = Math.min(...pitches);
+        const maxP = Math.max(...pitches);
+        if (maxP - minP > art.ROW_PITCH_TOL_PX) {
+          return { ok: false, reason: 'row-pitch-drift', col, pitches };
+        }
+      }
+      return { ok: true, inks };
+    }
+
+    const prep = checkZone('.milksha-zone.prep', 'prep');
+    if (!prep.ok) {
+      return { ok: false, zone: 'prep', ...prep };
+    }
+    const ready = checkZone('.milksha-zone.ready', 'ready');
+    if (!ready.ok) {
+      return { ok: false, zone: 'ready', ...ready };
+    }
+
+    const prepNums = prep.inks.map((x) => x.text);
+    const readyNums = ready.inks.map((x) => x.text);
+    return { ok: true, scale: s, prepNums, readyNums };
+  }, { scale, centerTol: CENTER_TOL_PX });
 }
 
 for (const viewport of [
@@ -170,9 +168,11 @@ for (const viewport of [
     const { board: boardUrl } = urlsLocalHomePoc();
     await board.goto(boardUrl);
     await board.waitForFunction(() => window.QMS?.runtime?.applyPayload, { timeout: 25000 });
-    await board.evaluate((rows) => window.QMS.runtime.applyPayload(rows), refPayload());
-    const result = await measureAlignment(board, viewport);
+    await applyRefPayload(board);
+    const result = await measureBoard(board, viewport);
     expect(result.ok, JSON.stringify(result)).toBe(true);
+    expect(result.prepNums).toEqual(REF_BOARD_NUMBERS);
+    expect(result.readyNums).toEqual(REF_BOARD_NUMBERS);
     await ctx.close();
   });
 }

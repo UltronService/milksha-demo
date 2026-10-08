@@ -1,36 +1,22 @@
 # Board background self-QA (1007)
 
-- **HEAD:** `480921c11502b84d2a96801075de2d3e162e9564`
-- **Base:** `6ef1359cea99cccb5dda74afeed7003888518515` (main, #25 merged)
-- **CI:** **SUCCESS** https://github.com/UltronService/milksha-demo/actions/runs/37824699878
-- **mergeable_state:** `MERGEABLE` / `CLEAN`（CI 綠後）
-- **Measured grid:** `js/board/landscape-art-layout.js` + `reference/measured-layout.json`
-- **Reference numbers (both zones):** 1907, 1906, 1905, 1904, 1903, 1902, 1901, 1900, 1899, 1898（準備用 `milksha_point`、取餐用 `store`，避免同號去重）
+- **HEAD:** `f4152c90c91cc9dccaa0559ea3185c28ef026032`
+- **Base:** `6ef1359cea99cccb5dda74afeed7003888518515`
+- **Font:** 81px Arial/Arimo; ink cap/width vs ref ±5% (canvas measureText)
+- **Grid:** fixed column X + uniform row pitch (reference averages)
 
-## Tests
+## Root cause (prep order on compare)
+Compare 圖曾亂序：同一 page 先跑 three-3 再跑 full-10 時 metaById 保留舊 firstSeenAt，準備中 ascending 排序把舊號排到左上。已改 descending + 每次 ref 前 applyPayload([])。
 
-| 項目 | 結果 |
-|------|------|
-| `npm test` | 141 / 141 |
-| `home-board-art-alignment.spec.mjs` | 1920 + 3840 pass（中心 ≤12px、字高 ±10%） |
-| `npm run test:e2e`（本機） | 125 pass，4 skipped，1 fail `guest-clock` Roboto 環境 |
-| **GitHub CI** | **125+ e2e + unit 全綠**（見上連結） |
+## Reference payload (all evidence shots)
+- Numbers: 1907, 1906, 1905, 1904, 1903, 1902, 1901, 1900, 1899, 1898
+- `buildRefBoardPayload()` + `applyPayload([])` before each capture
 
-## Screenshots
+## Artifacts
+- `cell-alignment-gaps.json` — per-cell DOM box + measureText ink vs reference
+- `screenshots/compare-full-10-vs-ref-1920.png` from `board-ref-compare-source-1920.png`
+- `screenshots/overlay-full-10-vs-ref-1920.png`
+- Scenarios + letterbox (see screenshots/)
 
-`artifacts/board-background-self-qa/screenshots/`
-
-- 情境 0/3/10/11+ × 1920、3840
-- `compare-full-10-vs-ref-1920.png`（左實作 / 右參考，雙邊各 10 格）
-- `overlay-full-10-vs-ref-1920.png`（50% 疊圖）
-- 黑邊：`letterbox-1440x1080.png`、`letterbox-1920x800.png`
-
-## Alignment
-
-- `cell-alignment-gaps.json`：每格 dx/dy（1920 座標，實測 <1px）
-
-## 變更摘要
-
-- 底圖全幅 + 量測座標絕對定位（62px 字級）
-- 留邊 `.milksha-stage` `#000`
-- 未改 `cloud-runtime.js`
+## CI
+- Run on this HEAD (see GitHub Actions after push)

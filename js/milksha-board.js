@@ -745,7 +745,7 @@
         });
       }
       nextPrep.sort(function (a, b) {
-        return a.firstSeenAt - b.firstSeenAt;
+        return b.firstSeenAt - a.firstSeenAt;
       });
 
       Object.keys(metaById).forEach(function (k) {

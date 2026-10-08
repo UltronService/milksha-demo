@@ -1,147 +1,693 @@
 {
   "scale": 1,
+  "fontPx": 81,
+  "prepOrder": [
+    "1907",
+    "1906",
+    "1905",
+    "1904",
+    "1903",
+    "1902",
+    "1901",
+    "1900",
+    "1899",
+    "1898"
+  ],
+  "readyOrder": [
+    "1907",
+    "1906",
+    "1905",
+    "1904",
+    "1903",
+    "1902",
+    "1901",
+    "1900",
+    "1899",
+    "1898"
+  ],
   "prep": [
     {
       "index": 0,
-      "number": "1902",
-      "dx": 0.016331434674270895,
-      "dy": 0.007220096119624486,
-      "fontSize": 62
+      "number": "1907",
+      "expectedCenter": {
+        "cx": 331.15,
+        "cy": 438.4425
+      },
+      "implementation": {
+        "text": "1907",
+        "capHeight": 58,
+        "inkWidth": 170.14501953125,
+        "domBox": {
+          "left": 237.796875,
+          "top": 397.9375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 331.140625,
+          "cy": 438.4375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.009374999999977263,
+        "centerDy": 0.0049999999999954525,
+        "capHeightDelta": 0,
+        "inkWidthDelta": 0
+      }
     },
     {
       "index": 1,
-      "number": "1901",
-      "dx": 0.0077128870673845995,
-      "dy": 0.01813904068001193,
-      "fontSize": 62
+      "number": "1906",
+      "expectedCenter": {
+        "cx": 331.15,
+        "cy": 548.85
+      },
+      "implementation": {
+        "text": "1906",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 237.796875,
+          "top": 508.34375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 331.140625,
+          "cy": 548.84375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.009374999999977263,
+        "centerDy": 0.006250000000022737,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 2,
-      "number": "1900",
-      "dx": 0.01538538338655826,
-      "dy": 0.006070287539955643,
-      "fontSize": 62
+      "number": "1905",
+      "expectedCenter": {
+        "cx": 331.15,
+        "cy": 659.2574999999999
+      },
+      "implementation": {
+        "text": "1905",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 237.796875,
+          "top": 618.75,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 331.140625,
+          "cy": 659.25
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.009374999999977263,
+        "centerDy": 0.007499999999936335,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 3,
-      "number": "1907",
-      "dx": 0.008200065274138524,
-      "dy": 0.010811031331627419,
-      "fontSize": 62
+      "number": "1904",
+      "expectedCenter": {
+        "cx": 331.15,
+        "cy": 769.665
+      },
+      "implementation": {
+        "text": "1904",
+        "capHeight": 58,
+        "inkWidth": 172.14501953125,
+        "domBox": {
+          "left": 237.796875,
+          "top": 729.15625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 331.140625,
+          "cy": 769.65625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.009374999999977263,
+        "centerDy": 0.00874999999996362,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 4,
-      "number": "1906",
-      "dx": 0.012718023255786193,
-      "dy": 0.010870455289932579,
-      "fontSize": 62
+      "number": "1903",
+      "expectedCenter": {
+        "cx": 331.15,
+        "cy": 880.0725
+      },
+      "implementation": {
+        "text": "1903",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 237.796875,
+          "top": 839.5625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 331.140625,
+          "cy": 880.0625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.009374999999977263,
+        "centerDy": 0.009999999999990905,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 5,
-      "number": "1905",
-      "dx": 0.009596868720677776,
-      "dy": 0.011145763563320088,
-      "fontSize": 62
+      "number": "1902",
+      "expectedCenter": {
+        "cx": 727.91,
+        "cy": 438.4425
+      },
+      "implementation": {
+        "text": "1902",
+        "capHeight": 58,
+        "inkWidth": 170.14501953125,
+        "domBox": {
+          "left": 634.5625,
+          "top": 397.9375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 727.90625,
+          "cy": 438.4375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.0037499999999681677,
+        "centerDy": 0.0049999999999954525,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 6,
-      "number": "1904",
-      "dx": 0.00008689607227552187,
-      "dy": 0.011296489398660015,
-      "fontSize": 62
+      "number": "1901",
+      "expectedCenter": {
+        "cx": 727.91,
+        "cy": 548.85
+      },
+      "implementation": {
+        "text": "1901",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 634.5625,
+          "top": 508.34375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 727.90625,
+          "cy": 548.84375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.0037499999999681677,
+        "centerDy": 0.006250000000022737,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 7,
-      "number": "1903",
-      "dx": 0.0057823321288879015,
-      "dy": 0.002305404998537597,
-      "fontSize": 62
+      "number": "1900",
+      "expectedCenter": {
+        "cx": 727.91,
+        "cy": 659.2574999999999
+      },
+      "implementation": {
+        "text": "1900",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 634.5625,
+          "top": 618.75,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 727.90625,
+          "cy": 659.25
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.0037499999999681677,
+        "centerDy": 0.007499999999936335,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 8,
       "number": "1899",
-      "dx": 0.01143981620964496,
-      "dy": 0.01308281862009153,
-      "fontSize": 62
+      "expectedCenter": {
+        "cx": 727.91,
+        "cy": 769.665
+      },
+      "implementation": {
+        "text": "1899",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 634.5625,
+          "top": 729.15625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 727.90625,
+          "cy": 769.65625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.0037499999999681677,
+        "centerDy": 0.00874999999996362,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 9,
       "number": "1898",
-      "dx": 0.017802521635303492,
-      "dy": 0.009097097881181071,
-      "fontSize": 62
+      "expectedCenter": {
+        "cx": 727.91,
+        "cy": 880.0725
+      },
+      "implementation": {
+        "text": "1898",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 634.5625,
+          "top": 839.5625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 727.90625,
+          "cy": 880.0625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.0037499999999681677,
+        "centerDy": 0.009999999999990905,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     }
   ],
   "ready": [
     {
       "index": 0,
-      "number": "1899",
-      "dx": 0.006370805981077865,
-      "dy": 0.0020172319474909273,
-      "fontSize": 62
+      "number": "1907",
+      "expectedCenter": {
+        "cx": 1248.4,
+        "cy": 438.4425
+      },
+      "implementation": {
+        "text": "1907",
+        "capHeight": 58,
+        "inkWidth": 170.14501953125,
+        "domBox": {
+          "left": 1155.046875,
+          "top": 397.9375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1248.390625,
+          "cy": 438.4375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.00937500000009095,
+        "centerDy": 0.0049999999999954525,
+        "capHeightDelta": 0,
+        "inkWidthDelta": 0
+      }
     },
     {
       "index": 1,
-      "number": "1898",
-      "dx": 0.0033596416383261385,
-      "dy": 0.011087302202895444,
-      "fontSize": 62
+      "number": "1906",
+      "expectedCenter": {
+        "cx": 1248.4,
+        "cy": 548.85
+      },
+      "implementation": {
+        "text": "1906",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1155.046875,
+          "top": 508.34375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1248.390625,
+          "cy": 548.84375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.00937500000009095,
+        "centerDy": 0.006250000000022737,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 2,
-      "number": "1907",
-      "dx": 0.007358314387829523,
-      "dy": 0.003932892172770153,
-      "fontSize": 62
+      "number": "1905",
+      "expectedCenter": {
+        "cx": 1248.4,
+        "cy": 659.2574999999999
+      },
+      "implementation": {
+        "text": "1905",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1155.046875,
+          "top": 618.75,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1248.390625,
+          "cy": 659.25
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.00937500000009095,
+        "centerDy": 0.007499999999936335,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 3,
-      "number": "1906",
-      "dx": 0.0007596218770231644,
-      "dy": 0.00990673531396169,
-      "fontSize": 62
+      "number": "1904",
+      "expectedCenter": {
+        "cx": 1248.4,
+        "cy": 769.665
+      },
+      "implementation": {
+        "text": "1904",
+        "capHeight": 58,
+        "inkWidth": 172.14501953125,
+        "domBox": {
+          "left": 1155.046875,
+          "top": 729.15625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1248.390625,
+          "cy": 769.65625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.00937500000009095,
+        "centerDy": 0.00874999999996362,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 4,
-      "number": "1905",
-      "dx": 0.005569203864070005,
-      "dy": 0.006058461025986617,
-      "fontSize": 62
+      "number": "1903",
+      "expectedCenter": {
+        "cx": 1248.4,
+        "cy": 880.0725
+      },
+      "implementation": {
+        "text": "1903",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1155.046875,
+          "top": 839.5625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1248.390625,
+          "cy": 880.0625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.00937500000009095,
+        "centerDy": 0.009999999999990905,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 5,
-      "number": "1904",
-      "dx": 0.003867415152626563,
-      "dy": 0.009100745629098128,
-      "fontSize": 62
+      "number": "1902",
+      "expectedCenter": {
+        "cx": 1645.31,
+        "cy": 438.4425
+      },
+      "implementation": {
+        "text": "1902",
+        "capHeight": 58,
+        "inkWidth": 170.14501953125,
+        "domBox": {
+          "left": 1551.953125,
+          "top": 397.9375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1645.296875,
+          "cy": 438.4375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.01312499999994543,
+        "centerDy": 0.0049999999999954525,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 6,
-      "number": "1903",
-      "dx": 0.003679078014101833,
-      "dy": 0.007491134751717254,
-      "fontSize": 62
+      "number": "1901",
+      "expectedCenter": {
+        "cx": 1645.31,
+        "cy": 548.85
+      },
+      "implementation": {
+        "text": "1901",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1551.953125,
+          "top": 508.34375,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1645.296875,
+          "cy": 548.84375
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.01312499999994543,
+        "centerDy": 0.006250000000022737,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 7,
-      "number": "1902",
-      "dx": 0.004595588235360992,
-      "dy": 0.014093137254917565,
-      "fontSize": 62
+      "number": "1900",
+      "expectedCenter": {
+        "cx": 1645.31,
+        "cy": 659.2574999999999
+      },
+      "implementation": {
+        "text": "1900",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1551.953125,
+          "top": 618.75,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1645.296875,
+          "cy": 659.25
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.01312499999994543,
+        "centerDy": 0.007499999999936335,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 8,
-      "number": "1901",
-      "dx": 0.012655196198693375,
-      "dy": 0.0033721643163744375,
-      "fontSize": 62
+      "number": "1899",
+      "expectedCenter": {
+        "cx": 1645.31,
+        "cy": 769.665
+      },
+      "implementation": {
+        "text": "1899",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1551.953125,
+          "top": 729.15625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1645.296875,
+          "cy": 769.65625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.01312499999994543,
+        "centerDy": 0.00874999999996362,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     },
     {
       "index": 9,
-      "number": "1900",
-      "dx": 0.00642938066471288,
-      "dy": 0.013850075528694106,
-      "fontSize": 62
+      "number": "1898",
+      "expectedCenter": {
+        "cx": 1645.31,
+        "cy": 880.0725
+      },
+      "implementation": {
+        "text": "1898",
+        "capHeight": 58,
+        "inkWidth": 171.14501953125,
+        "domBox": {
+          "left": 1551.953125,
+          "top": 839.5625,
+          "width": 186.6875,
+          "height": 81
+        },
+        "center": {
+          "cx": 1645.296875,
+          "cy": 880.0625
+        }
+      },
+      "referenceInk1907": {
+        "capHeight": 58,
+        "inkWidth": 170.14501953125
+      },
+      "delta": {
+        "centerDx": 0.01312499999994543,
+        "centerDy": 0.009999999999990905,
+        "capHeightDelta": null,
+        "inkWidthDelta": null
+      }
     }
-  ]
+  ],
+  "rootCauseNote": "Compare 圖曾亂序：同一 page 先跑 three-3 再跑 full-10 時 metaById 保留舊 firstSeenAt，準備中 ascending 排序把舊號排到左上。已改 descending + 每次 ref 前 applyPayload([])。"
 }

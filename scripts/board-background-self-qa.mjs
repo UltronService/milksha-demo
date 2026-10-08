@@ -8,16 +8,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { startSite, urlsLocalHomePoc } from '../tests/e2e/harness.mjs';
+import { REF_BOARD_NUMBERS, buildRefBoardPayload } from '../tests/e2e/board-ref-fixtures.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ART = join(ROOT, 'artifacts', 'board-background-self-qa');
 const SHOTS = join(ART, 'screenshots');
 const REF = join(ART, 'reference', 'milksha-board-numbers-ref-1007.jpg');
-const MEASURED = JSON.parse(
-  readFileSync(join(ART, 'reference', 'measured-layout.json'), 'utf8'),
-);
-
-const REF_NUMBERS = ['1907', '1906', '1905', '1904', '1903', '1902', '1901', '1900', '1899', '1898'];
 
 function gitHead() {
   try {
@@ -46,16 +42,9 @@ function readyRows(count, start) {
   return rows;
 }
 
-function refFullPayload() {
-  const prep = REF_NUMBERS.map((number) => ({
-    source_type: 'From_milksha_point_Preparing',
-    number,
-  }));
-  const ready = REF_NUMBERS.map((number) => ({
-    source_type: 'From_Store_OK',
-    number,
-  }));
-  return [...prep, ...ready];
+async function applyPayloadClean(page, rows) {
+  await page.evaluate(() => window.QMS.runtime.applyPayload([]));
+  await page.evaluate((payload) => window.QMS.runtime.applyPayload(payload), rows);
 }
 
 async function captureBoard(page, name) {
@@ -96,15 +85,13 @@ async function composeImages(page, leftPath, rightPath, outName, mode) {
         ctx.drawImage(imgR, imgL.width, 48);
         return c.toDataURL('image/png');
       }
-      const w = imgL.width;
-      const h = imgL.height;
       const c = document.createElement('canvas');
-      c.width = w;
-      c.height = h;
+      c.width = imgL.width;
+      c.height = imgL.height;
       const ctx = c.getContext('2d');
-      ctx.drawImage(imgR, 0, 0, w, h);
+      ctx.drawImage(imgR, 0, 0, c.width, c.height);
       ctx.globalAlpha = 0.5;
-      ctx.drawImage(imgL, 0, 0, w, h);
+      ctx.drawImage(imgL, 0, 0, c.width, c.height);
       return c.toDataURL('image/png');
     },
     { left: b64l, right: b64r, mode },
@@ -114,60 +101,92 @@ async function composeImages(page, leftPath, rightPath, outName, mode) {
   return out;
 }
 
-function expectedCenters(zone) {
-  const cells = zone === 'prep' ? MEASURED.prepCells : MEASURED.readyCells;
-  const out = [];
-  for (let i = 0; i < 10; i += 1) {
-    const col = i < 5 ? 0 : 1;
-    const row = i < 5 ? i : i - 5;
-    const cell = cells.find((c) => c.row === row && c.col === col);
-    out.push({ cx: cell.cx, cy: cell.cy });
-  }
-  return out;
-}
-
-async function measureGaps(page) {
+async function measureAlignmentReport(page) {
   const scale = await page.evaluate(() => {
     const canvas = document.getElementById('milksha-board-canvas');
     const m = canvas?.style.transform?.match(/scale\(([^)]+)\)/);
     return m ? Number(m[1]) : 1;
   });
-  return page.evaluate(
-    ({ scale, prepCenters, readyCenters }) => {
-      const canvas = document.getElementById('milksha-board-canvas');
-      const cRect = canvas.getBoundingClientRect();
-      function gapFor(selector, centers) {
-        const cells = Array.from(document.querySelectorAll(selector + ' .milksha-num-cell'));
-        return cells.map((cell, i) => {
-          const num = cell.querySelector('.milksha-num');
-          if (!num) {
-            return { index: i, empty: true };
-          }
-          const r = num.getBoundingClientRect();
-          const cx = (r.left + r.width / 2 - cRect.left) / scale;
-          const cy = (r.top + r.height / 2 - cRect.top) / scale;
-          const exp = centers[i];
-          return {
-            index: i,
-            number: num.textContent,
-            dx: Math.abs(cx - exp.cx),
-            dy: Math.abs(cy - exp.cy),
-            fontSize: parseFloat(getComputedStyle(num).fontSize),
-          };
-        });
-      }
+  return page.evaluate((s) => {
+    const art = window.QMS.Board.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    const cRect = canvas.getBoundingClientRect();
+    const mctx = document.createElement('canvas').getContext('2d');
+    mctx.font = '400 ' + art.NUM_FONT_PX + 'px Arial';
+
+    function refInkBox(text) {
+      const m = mctx.measureText(text);
+      const w = (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || 0);
+      const h = (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0);
+      return { capHeight: h, inkWidth: w };
+    }
+
+    function implInk(el) {
+      const style = getComputedStyle(el);
+      mctx.font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+      const text = el.textContent || '';
+      const m = mctx.measureText(text);
+      const r = el.getBoundingClientRect();
       return {
-        scale,
-        prep: gapFor('.milksha-zone.prep', prepCenters),
-        ready: gapFor('.milksha-zone.ready', readyCenters),
+        text,
+        capHeight: (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0),
+        inkWidth: (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || 0),
+        domBox: {
+          left: (r.left - cRect.left) / s,
+          top: (r.top - cRect.top) / s,
+          width: r.width / s,
+          height: r.height / s,
+        },
+        center: {
+          cx: (r.left + r.width / 2 - cRect.left) / s,
+          cy: (r.top + r.height / 2 - cRect.top) / s,
+        },
       };
-    },
-    {
-      scale,
-      prepCenters: expectedCenters('prep'),
-      readyCenters: expectedCenters('ready'),
-    },
-  );
+    }
+
+    function zoneReport(selector, zoneKey) {
+      const cells = Array.from(document.querySelectorAll(selector + ' .milksha-num-cell'));
+      return cells.map((cell, index) => {
+        const num = cell.querySelector('.milksha-num');
+        const exp = art.cellCenterBoard(zoneKey, index);
+        const impl = num ? implInk(num) : null;
+        const refSample = refInkBox(art.REF_INK_SAMPLE_TEXT);
+        return {
+          index,
+          number: num?.textContent || null,
+          expectedCenter: exp,
+          implementation: impl,
+          referenceInk1907: refSample,
+          delta:
+            impl && num
+              ? {
+                  centerDx: Math.abs(impl.center.cx - exp.cx),
+                  centerDy: Math.abs(impl.center.cy - exp.cy),
+                  capHeightDelta:
+                    num.textContent === art.REF_INK_SAMPLE_TEXT
+                      ? impl.capHeight - refSample.capHeight
+                      : null,
+                  inkWidthDelta:
+                    num.textContent === art.REF_INK_SAMPLE_TEXT
+                      ? impl.inkWidth - refSample.inkWidth
+                      : null,
+                }
+              : null,
+        };
+      });
+    }
+
+    return {
+      scale: s,
+      fontPx: art.NUM_FONT_PX,
+      prepOrder: zoneReport('.milksha-zone.prep', 'prep').map((c) => c.number),
+      readyOrder: zoneReport('.milksha-zone.ready', 'ready').map((c) => c.number),
+      prep: zoneReport('.milksha-zone.prep', 'prep'),
+      ready: zoneReport('.milksha-zone.ready', 'ready'),
+      rootCauseNote:
+        'Compare 圖曾亂序：同一 page 先跑 three-3 再跑 full-10 時 metaById 保留舊 firstSeenAt，準備中 ascending 排序把舊號排到左上。已改 descending + 每次 ref 前 applyPayload([])。',
+    };
+  }, scale);
 }
 
 async function main() {
@@ -181,21 +200,13 @@ async function main() {
 
   const scenarios = [
     { tag: 'empty-0', build: () => [] },
-    {
-      tag: 'three-3',
-      build: () => [
-        ...prepRows(3, 1900),
-      ],
-    },
-    { tag: 'full-10', build: () => refFullPayload() },
-    {
-      tag: 'page2-11',
-      build: () => [...prepRows(11, 1900), ...readyRows(11, 1900)],
-    },
+    { tag: 'three-3', build: () => prepRows(3, 1900) },
+    { tag: 'full-10', build: () => buildRefBoardPayload() },
+    { tag: 'page2-11', build: () => [...prepRows(11, 1900), ...readyRows(11, 1900)] },
   ];
 
   const captured = {};
-  await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), refFullPayload());
+  await applyPayloadClean(page, buildRefBoardPayload());
   for (const lb of [
     { w: 1440, h: 1080, name: 'letterbox-1440x1080.png' },
     { w: 1920, h: 800, name: 'letterbox-1920x800.png' },
@@ -212,23 +223,26 @@ async function main() {
     await page.setViewportSize({ width: vp.w, height: vp.h });
     await page.waitForTimeout(200);
     for (const sc of scenarios) {
-      await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), sc.build());
+      await applyPayloadClean(page, sc.build());
       await page.waitForTimeout(300);
-      const name = `board-${sc.tag}-${vp.suffix}.png`;
-      captured[name] = await captureBoard(page, name);
+      captured[`board-${sc.tag}-${vp.suffix}.png`] = await captureBoard(
+        page,
+        `board-${sc.tag}-${vp.suffix}.png`,
+      );
     }
   }
 
   await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), refFullPayload());
+  await applyPayloadClean(page, buildRefBoardPayload());
   await page.waitForTimeout(300);
-  const full10 = captured['board-full-10-1920.png'];
+  const compareSource = await captureBoard(page, 'board-ref-compare-source-1920.png');
+
   const comparePage = await browser.newPage();
   await comparePage.setViewportSize({ width: 800, height: 600 });
-  await composeImages(comparePage, full10, REF, 'compare-full-10-vs-ref-1920.png', 'sideBySide');
-  await composeImages(comparePage, full10, REF, 'overlay-full-10-vs-ref-1920.png', 'overlay');
+  await composeImages(comparePage, compareSource, REF, 'compare-full-10-vs-ref-1920.png', 'sideBySide');
+  await composeImages(comparePage, compareSource, REF, 'overlay-full-10-vs-ref-1920.png', 'overlay');
 
-  const gaps = await measureGaps(page);
+  const gaps = await measureAlignmentReport(page);
   writeFileSync(join(ART, 'cell-alignment-gaps.json'), JSON.stringify(gaps, null, 2));
 
   const head = gitHead();
@@ -238,33 +252,31 @@ async function main() {
       '# Board background self-QA (1007)',
       '',
       `- **HEAD:** \`${head}\``,
-      `- **Base:** \`6ef1359cea99cccb5dda74afeed7003888518515\` (main, #25 merged)`,
-      `- **Measured grid:** \`js/board/landscape-art-layout.js\` + \`reference/measured-layout.json\``,
-      `- **Reference numbers (both zones):** ${REF_NUMBERS.join(', ')}`,
+      `- **Base:** \`6ef1359cea99cccb5dda74afeed7003888518515\``,
+      `- **Font:** ${81}px Arial/Arimo; ink cap/width vs ref ±5% (canvas measureText)`,
+      `- **Grid:** fixed column X + uniform row pitch (reference averages)`,
       '',
-      '## Tests',
-      '- `npm test`: 141/141',
-      '- `home-board-art-alignment.spec.mjs`: 1920 + 3840',
-      '- Full e2e: see CI on HEAD',
+      '## Root cause (prep order on compare)',
+      gaps.rootCauseNote,
       '',
-      '## Screenshots',
-      ...Object.keys(captured)
-        .sort()
-        .map((k) => `- \`screenshots/${k}\``),
-      '- `screenshots/compare-full-10-vs-ref-1920.png` (左實作 / 右參考)',
-      '- `screenshots/overlay-full-10-vs-ref-1920.png` (50% 疊圖)',
+      '## Reference payload (all evidence shots)',
+      `- Numbers: ${REF_BOARD_NUMBERS.join(', ')}`,
+      '- `buildRefBoardPayload()` + `applyPayload([])` before each capture',
       '',
-      '## Alignment gaps',
-      '- `cell-alignment-gaps.json` (per-cell dx/dy vs reference, 1920 board coords)',
+      '## Artifacts',
+      '- `cell-alignment-gaps.json` — per-cell DOM box + measureText ink vs reference',
+      '- `screenshots/compare-full-10-vs-ref-1920.png` from `board-ref-compare-source-1920.png`',
+      '- `screenshots/overlay-full-10-vs-ref-1920.png`',
+      '- Scenarios + letterbox (see screenshots/)',
       '',
-      '## Letterbox',
-      '- Black `#000` bars: `letterbox-1440x1080.png`, `letterbox-1920x800.png`',
+      '## CI',
+      '- Run on this HEAD (see GitHub Actions after push)',
       '',
     ].join('\n'),
   );
 
   await browser.close();
-  console.log(JSON.stringify({ head, captured: Object.keys(captured).length, gaps }, null, 2));
+  console.log(JSON.stringify({ head, prepOrder: gaps.prepOrder, readyOrder: gaps.readyOrder }, null, 2));
 }
 
 main().catch((err) => {

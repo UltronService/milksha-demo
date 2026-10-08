@@ -1,78 +1,57 @@
 /**
- * Measured from milksha-board-numbers-ref-1007.jpg @ 1920×1080 (see scripts/measure-board-ref-layout.mjs).
+ * Regular 2×5 grid on 1007 art (1920×1080). Derived from reference JPEG averages.
  */
 (function (root) {
   'use strict';
 
   const QMS = (root.QMS = root.QMS || {});
 
-  /** @type {{ left: number, top: number, width: number, height: number }} */
   const PREP_CREAM = { left: 101, top: 341, width: 798, height: 639 };
-  /** @type {{ left: number, top: number, width: number, height: number }} */
   const READY_CREAM = { left: 1021, top: 341, width: 798, height: 638 };
 
-  const NUM_FONT_PX = 62;
+  const NUM_FONT_PX = 81;
   const TITLE_GUARD_MAX_Y = 330;
 
-  /**
-   * Grid index 0–4 left column, 5–9 right column (newest first in data → index 0).
-   * Centers in 1920×1080 board coordinates.
-   */
-  const PREP_CELL_CENTERS = [
-    { cx: 327.14, cy: 437.48 },
-    { cx: 333.46, cy: 548.39 },
-    { cx: 332.37, cy: 660.01 },
-    { cx: 331.4, cy: 770.28 },
-    { cx: 331.37, cy: 880.07 },
-    { cx: 726.99, cy: 439.43 },
-    { cx: 721.75, cy: 546.51 },
-    { cx: 730.18, cy: 660.1 },
-    { cx: 730.23, cy: 770.06 },
-    { cx: 730.42, cy: 880.12 },
-  ];
+  /** Column center X (board coords), averaged from reference art per zone. */
+  const PREP_COL_CX = [331.15, 727.91];
+  const READY_COL_CX = [1248.4, 1645.31];
 
-  const READY_CELL_CENTERS = [
-    { cx: 1244.55, cy: 437.46 },
-    { cx: 1250.71, cy: 548.37 },
-    { cx: 1249.91, cy: 659.99 },
-    { cx: 1247.88, cy: 770.21 },
-    { cx: 1248.96, cy: 880.04 },
-    { cx: 1644.35, cy: 439.4 },
-    { cx: 1638.91, cy: 546.48 },
-    { cx: 1647.63, cy: 659.98 },
-    { cx: 1647.65, cy: 770.0 },
-    { cx: 1648.02, cy: 880.06 },
-  ];
+  /** Row center Y (board coords), uniform pitch from reference row averages. */
+  const ROW_CY_FIRST = 438.4425;
+  const ROW_CY_PITCH = 110.4075;
+  const ROW_CY = [0, 1, 2, 3, 4].map(function (i) {
+    return ROW_CY_FIRST + i * ROW_CY_PITCH;
+  });
 
-  const REF_TEXT_HEIGHT_PX = 58;
+  /** Reference ink metrics for "1907" at NUM_FONT_PX (canvas measureText, Arial). */
+  const REF_INK_CAP_HEIGHT_PX = 58;
+  const REF_INK_WIDTH_1907_PX = 170.145;
+  const REF_INK_SAMPLE_TEXT = '1907';
 
-  /**
-   * @param {'prep' | 'ready'} zone
-   * @returns {{ left: number, top: number, width: number, height: number }}
-   */
+  const INK_METRIC_TOL_RATIO = 0.05;
+  const COL_X_TOL_PX = 2;
+  const ROW_PITCH_TOL_PX = 2;
+
   function creamRectForZone(zone) {
     return zone === 'ready' ? READY_CREAM : PREP_CREAM;
   }
 
-  /**
-   * @param {'prep' | 'ready'} zone
-   * @param {number} gridIndex 0..9
-   * @returns {{ cx: number, cy: number }}
-   */
-  function cellCenterBoard(zone, gridIndex) {
-    const list = zone === 'ready' ? READY_CELL_CENTERS : PREP_CELL_CENTERS;
-    const c = list[gridIndex];
-    if (!c) {
-      return { cx: 0, cy: 0 };
-    }
-    return { cx: c.cx, cy: c.cy };
+  function colCentersForZone(zone) {
+    return zone === 'ready' ? READY_COL_CX : PREP_COL_CX;
   }
 
   /**
-   * @param {number} zoneLeft board zone origin x
-   * @param {{ cx: number, cy: number }} center
-   * @returns {{ left: number, top: number }}
+   * @param {'prep' | 'ready'} zone
+   * @param {number} gridIndex 0..9 (0–4 left col, 5–9 right col)
+   * @returns {{ cx: number, cy: number }}
    */
+  function cellCenterBoard(zone, gridIndex) {
+    const cols = colCentersForZone(zone);
+    const col = gridIndex < 5 ? 0 : 1;
+    const row = gridIndex < 5 ? gridIndex : gridIndex - 5;
+    return { cx: cols[col], cy: ROW_CY[row] };
+  }
+
   function cellPositionInZone(zoneLeft, center) {
     return { left: center.cx - zoneLeft, top: center.cy };
   }
@@ -83,10 +62,17 @@
     READY_CREAM: READY_CREAM,
     NUM_FONT_PX: NUM_FONT_PX,
     TITLE_GUARD_MAX_Y: TITLE_GUARD_MAX_Y,
-    PREP_CELL_CENTERS: PREP_CELL_CENTERS,
-    READY_CELL_CENTERS: READY_CELL_CENTERS,
-    REF_TEXT_HEIGHT_PX: REF_TEXT_HEIGHT_PX,
+    PREP_COL_CX: PREP_COL_CX,
+    READY_COL_CX: READY_COL_CX,
+    ROW_CY: ROW_CY,
+    REF_INK_CAP_HEIGHT_PX: REF_INK_CAP_HEIGHT_PX,
+    REF_INK_WIDTH_1907_PX: REF_INK_WIDTH_1907_PX,
+    REF_INK_SAMPLE_TEXT: REF_INK_SAMPLE_TEXT,
+    INK_METRIC_TOL_RATIO: INK_METRIC_TOL_RATIO,
+    COL_X_TOL_PX: COL_X_TOL_PX,
+    ROW_PITCH_TOL_PX: ROW_PITCH_TOL_PX,
     creamRectForZone: creamRectForZone,
+    colCentersForZone: colCentersForZone,
     cellCenterBoard: cellCenterBoard,
     cellPositionInZone: cellPositionInZone,
   };
