@@ -9,7 +9,7 @@
   const BoardSeq = QMS.Transport.BoardSeq;
   const TodayBoard = QMS.Board.TodayBoard;
 
-  const VERSION = 'receiver-demo-2026-10-02';
+  const VERSION = 'receiver-demo-2026-10-08-boardseq';
 
   function isDemoMode() {
     try {
@@ -494,6 +494,12 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
+        noteSeqForensics('tryApplyTodayBoard', {
+          accept: false,
+          reason: 'stale',
+          incomingSeq: seq,
+          localSeq,
+        });
         return { ignored: true, reason: Validate.MSG.stale };
       }
       if (simulateOffline) {
@@ -506,6 +512,12 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      noteSeqForensics('tryApplyTodayBoard', {
+        accept: true,
+        incomingSeq: seq,
+        localSeq,
+        ticketCount: numberContent.length,
+      });
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
@@ -815,20 +827,71 @@
       }
     }
 
-    function resolveCommandBoardSeq(cmd, deviceData) {
-      if (cmd && Object.prototype.hasOwnProperty.call(cmd, 'boardSeq')) {
-        const fromCmd = Number(cmd.boardSeq);
-        if (Number.isFinite(fromCmd) && fromCmd > 0) {
-          return fromCmd;
-        }
+    function positiveSeq(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n <= 0) {
+        return 0;
       }
-      if (deviceData && Object.prototype.hasOwnProperty.call(deviceData, 'boardSeq')) {
-        const fromDev = Number(deviceData.boardSeq);
-        if (Number.isFinite(fromDev) && fromDev > 0) {
+      return n;
+    }
+
+    function noteSeqForensics(kind, detail) {
+      if (!root.__RCV_SEQ_FORENSICS) {
+        return;
+      }
+      root.__RCV_SEQ_FORENSICS.push({
+        at: Date.now(),
+        kind: kind,
+        detail: detail,
+      });
+    }
+
+    async function resolveCommandBoardSeq(cmd, deviceData) {
+      const fromCmd = cmd && Object.prototype.hasOwnProperty.call(cmd, 'boardSeq')
+        ? positiveSeq(cmd.boardSeq)
+        : 0;
+      if (fromCmd > 0) {
+        noteSeqForensics('resolveCommandBoardSeq', { pick: 'cmd.boardSeq', seq: fromCmd });
+        return fromCmd;
+      }
+      const fromDev =
+        deviceData && Object.prototype.hasOwnProperty.call(deviceData, 'boardSeq')
+          ? positiveSeq(deviceData.boardSeq)
+          : 0;
+      let cloudSeq = 0;
+      try {
+        const snap = await transport.readBoard();
+        cloudSeq = snap && snap.data ? positiveSeq(snap.data.seq) : 0;
+      } catch (e) {
+        /* ignore */
+      }
+      const bumped = localSeq > 0 ? localSeq + 1 : 1;
+      if (cloudSeq > 0) {
+        if (fromDev > 0 && fromDev >= cloudSeq && fromDev >= localSeq) {
+          noteSeqForensics('resolveCommandBoardSeq', {
+            pick: 'device.boardSeq',
+            seq: fromDev,
+            cloudSeq,
+            localSeq,
+          });
           return fromDev;
         }
+        const picked = Math.max(cloudSeq, bumped);
+        noteSeqForensics('resolveCommandBoardSeq', {
+          pick: fromDev > 0 && fromDev < cloudSeq ? 'cloudSeq(stale device.boardSeq)' : 'cloudSeq',
+          seq: picked,
+          cloudSeq,
+          deviceBoardSeq: fromDev,
+          localSeq,
+        });
+        return picked;
       }
-      return localSeq > 0 ? localSeq + 1 : 1;
+      if (fromDev > 0 && fromDev >= localSeq) {
+        noteSeqForensics('resolveCommandBoardSeq', { pick: 'device.boardSeq', seq: fromDev });
+        return fromDev;
+      }
+      noteSeqForensics('resolveCommandBoardSeq', { pick: 'localSeq+1', seq: bumped });
+      return bumped;
     }
 
     async function handleCommand(cmd, deviceData) {
@@ -900,7 +963,7 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
-        const seq = resolveCommandBoardSeq(cmd, deviceData);
+        const seq = await resolveCommandBoardSeq(cmd, deviceData);
         applyNumberContent([], seq, { silent: true });
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
@@ -912,7 +975,7 @@
         preparing.forEach(function (no) {
           nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
         });
-        const seq = resolveCommandBoardSeq(cmd, deviceData);
+        const seq = await resolveCommandBoardSeq(cmd, deviceData);
         applyNumberContent(nc, seq, { silent: false });
       }
     }
@@ -1024,6 +1087,13 @@
     }
 
     function start() {
+      try {
+        if (new URLSearchParams(root.location.search).get('forensics') === '1') {
+          root.__RCV_SEQ_FORENSICS = root.__RCV_SEQ_FORENSICS || [];
+        }
+      } catch (e) {
+        /* ignore */
+      }
       restorePersistedCommandGuards();
       setSimulatedOfflineFlag(false);
       TodayBoard.clearSessionBusinessDate();
@@ -1143,6 +1213,9 @@
       },
       getLocalSeq: function () {
         return localSeq;
+      },
+      getRuntimeVersion: function () {
+        return VERSION;
       },
       isSimulatedOffline: function () {
         return simulateOffline;

@@ -220,6 +220,22 @@ test('fresh board poll with empty cloud shows empty', async function () {
   assert.equal(runtime.cloud.getLocalSeq(), 2);
 });
 
+test('stale device.boardSeq below cloud seq does not regress local apply', async function () {
+  const boardReads = [boardDoc(20, [])];
+  const runtime = makeRuntime(boardReads);
+  runtime.setPending(
+    {
+      id: 'cmd-stale-dev',
+      type: 'push_numbers',
+      params: { ready: ['55'], preparing: [] },
+    },
+    5,
+  );
+  await runtime.cloud.pollDeviceForTests();
+  assert.equal(runtime.getReadyCount(), 1);
+  assert.ok(runtime.cloud.getLocalSeq() >= 20);
+});
+
 test('device boardSeq used when pendingCommand omits boardSeq', async function () {
   const runtime = makeRuntime([]);
   runtime.setPending(

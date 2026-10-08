@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-10-08T04:49:14.474Z",
+  "mode": "pages-patch",
+  "base": "https://ultronservice.github.io/milksha-demo",
+  "boardUrl": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-store-a&forensics=1",
+  "runtimeSha256_16": "2f2716d4168dbb61",
+  "injectedRuntimeVersion": "receiver-demo-2026-10-08-boardseq",
+  "httpEvents": [
+    {
+      "at": 1791434951512,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": true,
+        "deviceBoardSeq": null,
+        "len": 1055
+      }
+    },
+    {
+      "at": 1791434951522,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 807
+      }
+    },
+    {
+      "at": 1791434952011,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 807
+      }
+    },
+    {
+      "at": 1791434952509,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 807
+      }
+    },
+    {
+      "at": 1791434953010,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 807
+      }
+    },
+    {
+      "at": 1791434953510,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 807
+      }
+    },
+    {
+      "at": 1791434953554,
+      "source": "ctrlA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+      "extra": {
+        "boardSeq": 500,
+        "bodyHead": "{\"commandId\":\"e56e26f3-03ca-426a-80f5-68d9116418d4\",\"boardSeq\":500}"
+      }
+    },
+    {
+      "at": 1791434953771,
+      "source": "ctrlA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/devCommand",
+      "extra": {
+        "boardSeq": 501,
+        "bodyHead": "{\"commandId\":\"fc3e226c-88ba-4ee0-860c-da07bdc87c3e\",\"boardSeq\":501}"
+      }
+    },
+    {
+      "at": 1791434954031,
+      "source": "tabA",
+      "kind": "http",
+      "status": 200,
+      "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board",
+      "extra": {
+        "firestoreSeq": null,
+        "hasPending": false,
+        "deviceBoardSeq": null,
+        "len": 1343
+      }
+    }
+  ],
+  "domTimeline": [
+    {
+      "at": 1791434953467,
+      "ready": 0,
+      "localSeq": 499,
+      "version": "receiver-demo-2026-10-08-boardseq",
+      "forensics": [
+        {
+          "at": 1791434951520,
+          "kind": "tryApplyTodayBoard",
+          "detail": {
+            "accept": true,
+            "incomingSeq": 499,
+            "localSeq": 0,
+            "ticketCount": 0
+          }
+        }
+      ]
+    },
+    {
+      "at": 1791434953971,
+      "ready": 0,
+      "localSeq": 499,
+      "version": "receiver-demo-2026-10-08-boardseq",
+      "forensics": [
+        {
+          "at": 1791434951520,
+          "kind": "tryApplyTodayBoard",
+          "detail": {
+            "accept": true,
+            "incomingSeq": 499,
+            "localSeq": 0,
+            "ticketCount": 0
+          }
+        }
+      ]
+    },
+    {
+      "at": 1791434954474,
+      "ready": 1,
+      "localSeq": 501,
+      "version": "receiver-demo-2026-10-08-boardseq",
+      "forensics": [
+        {
+          "at": 1791434951520,
+          "kind": "tryApplyTodayBoard",
+          "detail": {
+            "accept": true,
+            "incomingSeq": 499,
+            "localSeq": 0,
+            "ticketCount": 0
+          }
+        },
+        {
+          "at": 1791434954010,
+          "kind": "tryApplyTodayBoard",
+          "detail": {
+            "accept": true,
+            "incomingSeq": 501,
+            "localSeq": 499,
+            "ticketCount": 1
+          }
+        }
+      ]
+    }
+  ],
+  "verdict": "patch_active"
+}
