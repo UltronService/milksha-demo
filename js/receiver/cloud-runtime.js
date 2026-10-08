@@ -9,7 +9,7 @@
   const BoardSeq = QMS.Transport.BoardSeq;
   const TodayBoard = QMS.Board.TodayBoard;
 
-  const VERSION = 'receiver-demo-2026-10-02';
+  const VERSION = 'receiver-demo-2026-10-08-stale-clear';
 
   function isDemoMode() {
     try {
@@ -70,6 +70,8 @@
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
+    /** Last applied today_board.updatedAt (epoch ms) from cloud, not browser clock. */
+    let lastAppliedCloudBoardUpdatedAtMs = 0;
     let tickTimer = null;
     let tickMs = 0;
     let fastBoardPollTimer = null;
@@ -403,6 +405,27 @@
       lastResolvedSource = nextSource;
     }
 
+    function boardUpdatedAtToMs(value) {
+      if (QMS.Receiver.parseCommandTimeValue) {
+        const parsed = QMS.Receiver.parseCommandTimeValue(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      if (typeof value === 'string' && value.trim()) {
+        const ms = Date.parse(value);
+        return Number.isFinite(ms) ? ms : 0;
+      }
+      return 0;
+    }
+
+    function noteAppliedCloudBoardUpdatedAt(updatedAt) {
+      const ms = boardUpdatedAtToMs(updatedAt);
+      if (ms > 0) {
+        lastAppliedCloudBoardUpdatedAtMs = Math.max(lastAppliedCloudBoardUpdatedAtMs, ms);
+      }
+    }
+
     function clearGuestBoard(opts) {
       const o = opts || {};
       applyNumberContent([], localSeq, {
@@ -465,6 +488,9 @@
       if (!(opts && opts.skipCacheWrite) && TodayBoard.hasSessionBusinessDate()) {
         saveCache(localSeq, list, opts && opts.boardUpdatedAt);
       }
+      if (opts && opts.boardUpdatedAt) {
+        noteAppliedCloudBoardUpdatedAt(opts.boardUpdatedAt);
+      }
       onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
     }
@@ -494,6 +520,12 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
+        noteSeqForensics('tryApplyTodayBoard', {
+          accept: false,
+          reason: 'stale',
+          incomingSeq: seq,
+          localSeq,
+        });
         return { ignored: true, reason: Validate.MSG.stale };
       }
       if (simulateOffline) {
@@ -506,6 +538,12 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      noteSeqForensics('tryApplyTodayBoard', {
+        accept: true,
+        incomingSeq: seq,
+        localSeq,
+        ticketCount: numberContent.length,
+      });
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
@@ -635,12 +673,8 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       clearReceiverCache();
-      const nextSeq = localSeq > 0 ? localSeq + 1 : 1;
-      await applyNumberContent([], nextSeq, {
-        silent: true,
-        preserveFirstBatchFlag: true,
-        boardUpdatedAt: new Date().toISOString(),
-      });
+      // Cloud has no today_board yet: never bump localSeq or push empty apply (would
+      // block the first real board when seq is small).
     }
 
     function markCloudReachable() {
@@ -815,7 +849,74 @@
       }
     }
 
-    async function handleCommand(cmd) {
+    function positiveSeq(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n <= 0) {
+        return 0;
+      }
+      return n;
+    }
+
+    function noteSeqForensics(kind, detail) {
+      if (!root.__RCV_SEQ_FORENSICS) {
+        return;
+      }
+      root.__RCV_SEQ_FORENSICS.push({
+        at: Date.now(),
+        kind: kind,
+        detail: detail,
+      });
+    }
+
+    async function resolveCommandBoardSeq(cmd, deviceData) {
+      const fromCmd = cmd && Object.prototype.hasOwnProperty.call(cmd, 'boardSeq')
+        ? positiveSeq(cmd.boardSeq)
+        : 0;
+      if (fromCmd > 0) {
+        noteSeqForensics('resolveCommandBoardSeq', { pick: 'cmd.boardSeq', seq: fromCmd });
+        return fromCmd;
+      }
+      const fromDev =
+        deviceData && Object.prototype.hasOwnProperty.call(deviceData, 'boardSeq')
+          ? positiveSeq(deviceData.boardSeq)
+          : 0;
+      let cloudSeq = 0;
+      try {
+        const snap = await transport.readBoard();
+        cloudSeq = snap && snap.data ? positiveSeq(snap.data.seq) : 0;
+      } catch (e) {
+        /* ignore */
+      }
+      const bumped = localSeq > 0 ? localSeq + 1 : 1;
+      if (cloudSeq > 0) {
+        if (fromDev > 0 && fromDev >= cloudSeq && fromDev >= localSeq) {
+          noteSeqForensics('resolveCommandBoardSeq', {
+            pick: 'device.boardSeq',
+            seq: fromDev,
+            cloudSeq,
+            localSeq,
+          });
+          return fromDev;
+        }
+        const picked = Math.max(cloudSeq, bumped);
+        noteSeqForensics('resolveCommandBoardSeq', {
+          pick: fromDev > 0 && fromDev < cloudSeq ? 'cloudSeq(stale device.boardSeq)' : 'cloudSeq',
+          seq: picked,
+          cloudSeq,
+          deviceBoardSeq: fromDev,
+          localSeq,
+        });
+        return picked;
+      }
+      if (fromDev > 0 && fromDev >= localSeq) {
+        noteSeqForensics('resolveCommandBoardSeq', { pick: 'device.boardSeq', seq: fromDev });
+        return fromDev;
+      }
+      noteSeqForensics('resolveCommandBoardSeq', { pick: 'localSeq+1', seq: bumped });
+      return bumped;
+    }
+
+    async function handleCommand(cmd, deviceData) {
       const type = cmd.type;
       const params = cmd.params || {};
       if (type === 'reload' || type === 'reboot') {
@@ -884,7 +985,63 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
-        applyNumberContent([], localSeq, { silent: true });
+        const cmdMs = QMS.Receiver.commandServerTimeMs
+          ? QMS.Receiver.commandServerTimeMs(cmd)
+          : null;
+        const fromCmd = Number(cmd.boardSeq);
+        const fromDev =
+          deviceData && deviceData.boardSeq != null ? Number(deviceData.boardSeq) : 0;
+        let boardUpdatedAt = '';
+        let snap = null;
+        try {
+          snap = await transport.readBoard();
+        } catch (e) {
+          /* ignore */
+        }
+        const tickets =
+          snap && snap.data && Array.isArray(snap.data.tickets) ? snap.data.tickets : [];
+        if (tickets.length > 0) {
+          const cloudMs = boardUpdatedAtToMs(snap.data.updatedAt);
+          if (cmdMs != null && cloudMs > 0 && cmdMs < cloudMs) {
+            await acknowledgeSkippedPendingCommand(cmd);
+            return;
+          }
+          const cloudSeq = Number(snap.data.seq);
+          const intentSeq = Math.max(
+            Number.isFinite(fromCmd) && fromCmd > 0 ? fromCmd : 0,
+            Number.isFinite(fromDev) && fromDev > 0 ? fromDev : 0,
+          );
+          if (Number.isFinite(cloudSeq) && intentSeq > 0 && cloudSeq > intentSeq) {
+            await acknowledgeSkippedPendingCommand(cmd);
+            return;
+          }
+        } else if (
+          cmdMs != null &&
+          lastAppliedCloudBoardUpdatedAtMs > 0 &&
+          cmdMs < lastAppliedCloudBoardUpdatedAtMs
+        ) {
+          await acknowledgeSkippedPendingCommand(cmd);
+          return;
+        }
+        let applySeq = 0;
+        if (Number.isFinite(fromCmd) && fromCmd > 0) {
+          applySeq = fromCmd;
+        }
+        if (Number.isFinite(fromDev) && fromDev > applySeq) {
+          applySeq = fromDev;
+        }
+        if (snap && snap.data && tickets.length === 0) {
+          const cloudSeq = Number(snap.data.seq);
+          if (Number.isFinite(cloudSeq) && cloudSeq > applySeq) {
+            applySeq = cloudSeq;
+          }
+          boardUpdatedAt = snap.data.updatedAt || '';
+        }
+        if (!(applySeq > 0)) {
+          applySeq = await resolveCommandBoardSeq(cmd, deviceData);
+        }
+        applyNumberContent([], applySeq, { silent: true, boardUpdatedAt });
+        noteAppliedCloudBoardUpdatedAt(boardUpdatedAt);
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
         const preparing = Array.isArray(params.preparing) ? params.preparing : [];
@@ -895,7 +1052,16 @@
         preparing.forEach(function (no) {
           nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
         });
-        applyNumberContent(nc, localSeq, { silent: false });
+        const seq = await resolveCommandBoardSeq(cmd, deviceData);
+        applyNumberContent(nc, seq, { silent: false });
+        try {
+          const snap = await transport.readBoard();
+          if (snap && snap.data && snap.data.updatedAt) {
+            noteAppliedCloudBoardUpdatedAt(snap.data.updatedAt);
+          }
+        } catch (e) {
+          /* ignore */
+        }
       }
     }
 
@@ -940,7 +1106,7 @@
           await acknowledgeSkippedPendingCommand(pending);
           return;
         }
-        await handleCommand(pending);
+        await handleCommand(pending, dev.data);
       } catch (e) {
         if (isFirestoreAbortError(e)) {
           return;
@@ -1006,6 +1172,13 @@
     }
 
     function start() {
+      try {
+        if (new URLSearchParams(root.location.search).get('forensics') === '1') {
+          root.__RCV_SEQ_FORENSICS = root.__RCV_SEQ_FORENSICS || [];
+        }
+      } catch (e) {
+        /* ignore */
+      }
       restorePersistedCommandGuards();
       setSimulatedOfflineFlag(false);
       TodayBoard.clearSessionBusinessDate();
@@ -1125,6 +1298,9 @@
       },
       getLocalSeq: function () {
         return localSeq;
+      },
+      getRuntimeVersion: function () {
+        return VERSION;
       },
       isSimulatedOffline: function () {
         return simulateOffline;

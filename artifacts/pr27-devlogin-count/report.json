@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-10-08T01:56:17.635Z",
+  "publicBase": "https://ultronservice.github.io/milksha-demo",
+  "paused5m": {
+    "scenario": "fresh_paused_s999999",
+    "durationMs": 303011,
+    "idleWindowMs": 300000,
+    "devLoginTotalFromNavigation": 1,
+    "devLoginDuring5mIdle": 0,
+    "devLoginDuring5mByStore": {},
+    "pass": true,
+    "diag": {
+      "pausedVisible": true,
+      "pausedText": "連線暫停",
+      "authKeys": [
+        "milksha:auth:devlogin-peer:lioeD80Q"
+      ]
+    },
+    "sampleReferers": [
+      "https://ultronservice.github.io/",
+      "https://ultronservice.github.io/"
+    ]
+  },
+  "healthy10m": {
+    "scenario": "healthy_board_controller_zz-qa-store-a",
+    "durationMs": 603704,
+    "idleWindowMs": 600000,
+    "devLoginUntilReady": 2,
+    "devLoginDuring10mIdle": 0,
+    "devLoginDuring10mByStore": {},
+    "pass": true,
+    "readyMs": 3681
+  },
+  "conclusionLine": "10/3–10/8 devLogin 約 3,500 次偏高主因是 Cursor 雲端 QA／代理人大量重跑（多 IP、短爆發），與產品在「連線暫停」或正常連線 idle 下的 devLogin 迴圈無關。",
+  "pass": true
+}

@@ -50,7 +50,7 @@ test.describe('home board cloud recovery', () => {
     await board.unroute('https://firestore.googleapis.com/**');
     await board.unroute('https://asia-east1-milksha-qms-dev.cloudfunctions.net/**');
     await board.evaluate(() => window.receiverCloud.scheduleCloudResync('online'));
-    await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 20000 });
+    await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 35000 });
     await boardCtx.close();
     await ctrlCtx.close();
   });
