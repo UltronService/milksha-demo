@@ -2,19 +2,21 @@
 
 ## PR / CI
 
-- PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft)
-- HEAD: `53b296174ecd2e65e8a27aa48e28e560616ceb67`
-- CI: https://github.com/UltronService/milksha-demo/actions/runs/37738108281 — **success**
+- PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft, mergeable)
+- **Base (main):** `021ca6c4db6defc5748a8b885b8aad6460d215e2` (#28 + #30 merged)
+- **HEAD (branch tip):** `fc693122ccc461a6b3a1a6a97b5b004ab41d4b59`
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37772038242 — **success**
 
-## 1. Full e2e (GitHub CI)
+## 1. Tests (CI on HEAD)
 
-| passed | failed | skipped |
-|--------|--------|---------|
-| 134 | 0 | 1 |
+| suite | passed | failed | skipped |
+|-------|--------|--------|---------|
+| unit (`npm test`) | 147 | 0 | 0 |
+| e2e (`npm run test:e2e`) | 137 | 0 | 1 |
 
-Log: `gh run view 37726698287 --log` → `134 passed`, `1 skipped` (28.3m).
+Log: `gh run view 37772038242 --log` → `# tests 147`; `137 passed`, `1 skipped` (~27.3m).
 
-Local rerun: `artifacts/store-picker-self-qa/e2e-full-summary.json` → 129 passed / 1 failed / 4 skipped (`guest-clock` font on this VM).
+Local e2e (this VM, no FONTCONFIG): 133 passed / 1 failed / 4 skipped — see `artifacts/store-picker-self-qa/e2e-full.log`.
 
 ## 2. Requirement evidence
 
@@ -22,7 +24,6 @@ Local rerun: `artifacts/store-picker-self-qa/e2e-full-summary.json` → 129 pass
 
 - Test: `controller-store-picker-evidence.spec.mjs` › `3a listStores pauses in background tab and refreshes on foreground`
 - JSON: `artifacts/store-picker-self-qa/evidence/3a-background-foreground-listStores.json`
-- Production interval: `StoreList.STORE_LIST_POLL_MS` = 30000 in `controller/store-list.js` (e2e uses `testStoreListPollMs=2000` on localhost only)
 
 ### 3b — zz-qa-* hidden; `?store=zz-qa-store-a` pinned
 
@@ -33,26 +34,23 @@ Local rerun: `artifacts/store-picker-self-qa/e2e-full-summary.json` → 129 pass
 
 - Test: `controller-store-picker-evidence.spec.mjs` › `3c two minutes: devLogin and listStores counts with store switch`
 - JSON: `artifacts/store-picker-self-qa/evidence/3c-devlogin-liststores-2min.json`
-- `devLoginDeltaAfterBoot`: **0**; `listStoresAfterBoot`: 1; `listStoresAfter`: 5 (30s poll)
 
 ### 3d — online/offline text + color, sorted by storeId
 
 - Test: `controller-store-picker-evidence.spec.mjs` › `3d options sorted by storeId with online/offline text and color class`
 - JSON: `artifacts/store-picker-self-qa/evidence/3d-sort-online-offline.json`
-- Unit: `tests/store-list.test.js`
 
 ## 3. Live cloud (read-only)
 
 - Screenshot: `artifacts/store-picker-self-qa/screenshots/live-cloud-store-picker.png`
-- Public controller URL (after deploy): `https://ultronservice.github.io/milksha-demo/controller/?mode=cloud&store=c030020`
 - `listStores` snapshot: `artifacts/store-picker-self-qa/live-listStores.json` (c030020 login only; no send/clear)
 
 ## 4. zz-qa-picker-new
 
-- E2E store id used only with fake-cloud harness: `tests/e2e/controller-store-picker.spec.mjs` (`installBundledCloudRouteShim`)
-- Live registry check: `artifacts/store-picker-self-qa/live-zz-qa-picker-new-check.json` → **`found`: false**
+- Fake-cloud only: `tests/e2e/controller-store-picker.spec.mjs`
+- Live: `artifacts/store-picker-self-qa/live-zz-qa-picker-new-check.json` → **`found`: false**
 
 ## 5. Branch / scope
 
-- Merge-base with `origin/main`: `a82cb9b` (latest main at fetch time)
-- Diff vs `main` limited to `controller/`, `tools/fake-cloud/`, `tests/`, `scripts/` — no `js/board` / home board source changes (board PNG drift reverted)
+- Merged latest `main` at `021ca6c` (includes #28, #30); `js/receiver/cloud-runtime.js` matches main.
+- Product diff vs `main`: controller store picker + fake-cloud/tests/scripts only (no board home logic changes).
