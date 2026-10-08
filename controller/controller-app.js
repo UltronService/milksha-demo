@@ -1178,14 +1178,72 @@
 
   function cloudConnectFingerprint(transportMode, config) {
     const cfg = config || {};
-    return [
-      transportMode,
-      storeId(),
+    const modeEl = document.getElementById('fld-mode');
+    const mode = modeEl ? modeEl.value : 'local';
+    const parts = [transportMode];
+    if (mode !== 'cloud') {
+      parts.push(storeId());
+    }
+    parts.push(
       cfg.functionsBaseUrl || '',
       cfg.projectId || '',
       cfg.apiKey || '',
       cfg.gateway || '',
-    ].join('\0');
+    );
+    return parts.join('\0');
+  }
+
+  async function reconnectCloudForStoreChange() {
+    if (!isCloudPickerMode()) {
+      await connect();
+      return;
+    }
+    if (storeAccessBlocked) {
+      syncActionButtonStates();
+      return;
+    }
+    if (!validateCurrentStoreFormatOrBlock()) {
+      setConnectedState(false, '');
+      stopStoreListPolling();
+      syncActionButtonStates();
+      return;
+    }
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    const mode = document.getElementById('fld-mode').value;
+    const transportMode = mode === 'firestore' ? 'firestore' : mode;
+    const config = buildConfig(mode);
+    const existingSession = transport && transport.session ? transport.session : null;
+    connected = false;
+    setConnectedState(false, '');
+    syncActionButtonStates();
+    if (!existingSession) {
+      await connect();
+      return;
+    }
+    disposeTransport();
+    transport = window.QMS.Transport.Firestore.createFirestoreTransport({
+      storeId: storeId(),
+      config: config,
+      session: existingSession,
+    });
+    try {
+      connected = true;
+      await refreshBoardLists();
+      await pollDevice();
+      pushLog({ summary: '換店 ' + storeId() });
+      startPolling();
+      await refreshStoreListFromCloud();
+      startStoreListPolling();
+      setConnectedState(true, mode);
+    } catch (e) {
+      connected = false;
+      setConnectedState(false, '');
+      presentConnectError(e);
+    }
+    syncActionButtonStates();
   }
 
   function disposeTransport() {
@@ -1644,20 +1702,7 @@
     deviceOnline = false;
     lastHeartbeatAt = '';
     boardLinkHint = '';
-    if (!validateCurrentStoreFormatOrBlock()) {
-      setConnectedState(false, '');
-      stopStoreListPolling();
-      syncActionButtonStates();
-      return;
-    }
-    if (pollTimer) {
-      clearInterval(pollTimer);
-      pollTimer = null;
-    }
-    connected = false;
-    setConnectedState(false, '');
-    syncActionButtonStates();
-    connect().catch(function () {});
+    reconnectCloudForStoreChange().catch(function () {});
   });
   document.addEventListener('visibilitychange', onStorePickerVisibilityChange);
   document.getElementById('fld-pos-sign-key').addEventListener('input', function () {

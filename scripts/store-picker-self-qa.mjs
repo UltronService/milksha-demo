@@ -159,6 +159,59 @@ async function main() {
   }
   report.items.push({ name: 'live unregistered store devLogin 403 (no board)', ...liveUnregistered });
 
+  let zzQaPickerNewOnLive = { found: false, note: 'skipped' };
+  try {
+    const liveListPath = join(ART, 'live-listStores.json');
+    const liveListRaw = readFileSync(liveListPath, 'utf8');
+    const liveListJson = JSON.parse(liveListRaw);
+    const stores = liveListJson.stores || [];
+    zzQaPickerNewOnLive = {
+      found: stores.some((s) => s && s.storeId === 'zz-qa-picker-new'),
+      storeIds: stores.map((s) => s.storeId),
+    };
+    writeFileSync(join(ART, 'live-zz-qa-picker-new-check.json'), JSON.stringify(zzQaPickerNewOnLive, null, 2));
+  } catch (e) {
+    zzQaPickerNewOnLive = { found: false, error: String(e && e.message ? e.message : e) };
+  }
+  report.items.push({ name: 'live registry contains zz-qa-picker-new (must be false)', ...zzQaPickerNewOnLive });
+
+  if (live.apiKey && !live.apiKey.includes('fake-api')) {
+    const livePage = await browser.newPage();
+    await livePage.addInitScript((cfg) => {
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: cfg.projectId,
+          apiKey: cfg.apiKey,
+          region: 'asia-east1',
+          useEmulator: false,
+          gateway: '',
+          emulatorPrefix: '',
+        }),
+      );
+      window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
+        apiKey: cfg.apiKey,
+        projectId: cfg.projectId,
+        functionsBaseUrl: cfg.functionsBaseUrl,
+      });
+    }, live);
+    await livePage.goto(`${BASE}/controller/?mode=cloud&store=c030020`, { waitUntil: 'domcontentloaded' });
+    await livePage.waitForSelector('#online-state[data-connected="1"]', { timeout: 60000 });
+    await expandControllerZone(livePage, 'sec-connect');
+    await livePage.evaluate(() => window.__controller.refreshStoreListFromCloud());
+    await livePage.waitForTimeout(1500);
+    await livePage.locator('#fld-store').click();
+    const liveShot = join(SHOTS, 'live-cloud-store-picker.png');
+    await livePage.screenshot({ path: liveShot, fullPage: false });
+    report.items.push({
+      name: 'live cloud store picker screenshot (read-only c030020)',
+      ok: true,
+      path: liveShot,
+      url: `${BASE}/controller/?mode=cloud&store=c030020`,
+    });
+    await livePage.close();
+  }
+
   writeFileSync(join(ART, 'report.json'), JSON.stringify(report, null, 2));
   await ctx.close();
   await browser.close();

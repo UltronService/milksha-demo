@@ -85,6 +85,7 @@ function isAllowedDevLoginStore(storeId) {
   return isStoreRegistered(storeId);
 }
 let devLoginRequestCount = 0;
+let listStoresRequestCount = 0;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -363,6 +364,7 @@ const server = http.createServer(async (req, res) => {
       posReceiverEntryAEnabled = true;
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
+      listStoresRequestCount = 0;
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -380,6 +382,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
+      return json(res, 200, { count: listStoresRequestCount });
     }
     if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
       const body = await readBody(req);
@@ -519,6 +524,7 @@ const server = http.createServer(async (req, res) => {
       if (!auth.ok) return json(res, auth.status, auth.body);
 
       if (name === 'listStores') {
+        listStoresRequestCount += 1;
         const now = Date.now();
         const onlineWindowMs = 180 * 1000;
         const stores = [];
