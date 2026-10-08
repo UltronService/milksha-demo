@@ -7,8 +7,12 @@
 
 症狀與 QA 一致：`waitForFunction` 已看到 `.milksha-ready`（~500ms），結尾 `aCount === 0`；`#milksha-cloud-paused` 仍 hidden，**不是 403 暫停**。
 
-修復：`js/receiver/cloud-runtime.js` — `clear_now` / `push_numbers` 前先 `localSeq += 1`。  
-單元：`tests/cloud-runtime-push-seq-race.test.js`。
+修復（PR #28 `js/receiver/cloud-runtime.js`）：
+- `resolveSeqForDeviceCommand()`：`localSeq+1` 與 `readBoard().seq+1` 取大，避免 poll 較新空板覆蓋。
+- `push_numbers` 後 250ms `pollBoard({ force: true })` 與雲端名單對齊。
+- QA：`waitBoardMinReady` 含 400ms 穩定 + 30s recovery。
+
+**分類： (b) 看板程式** — 非 (a) 腳本讀錯店（`storeId` 正確）、非 (c) devCommand 常態 5xx（多為 200 後 poll 空名單覆蓋）。
 
 ---
 

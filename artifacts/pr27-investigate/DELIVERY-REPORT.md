@@ -1,54 +1,64 @@
-# PR #27 公開 QA 失敗 — 交件報告（2026-10-08）
+# PR #27 公開 QA — 交件報告（2026-10-08 12:30 台北）
 
-## 判定
+## 判定摘要
 
 | 項目 | 結論 |
 |------|------|
-| **產品 vs 腳本** | **QA 腳本問題**（非 s999999 403 跨店污染） |
-| **一句原因** | Playwright `waitForFunction` 把 `{ timeout }` 當成 predicate 參數 + `STORE_MAIN` 未注入，造成 120s 假逾時；清空看板未等 DOM 同步加劇 c 失敗。 |
+| **120s 卡測** | **(a) QA 腳本**（`waitForFunction` 參數／清空同步） |
+| **c 收不到號** | **(b) 看板 seq 競態**（`cloud-runtime` 修復見 PR #28） |
+| **跨店 403 污染** | **否**（halt 僅分頁記憶體） |
 
-## PR / HEAD / CI
+PR：https://github.com/UltronService/milksha-demo/pull/28
 
-- PR：https://github.com/UltronService/milksha-demo/pull/28
-- HEAD：`4f27cb7`（分支 `cursor/public-pages-qa-script-fix-49e5`）
-- CI：見 PR #28 Actions（本地 unit + 新 e2e `forbidden-store-then-qa-isolation` 已過）
+---
 
-## 重現（公開網址，無 8877、無 disable-web-security）
+## 檢查 d — `zz-deny-test`（後端 **9940daf**）
 
-| 測試 | 結果 |
+**禁止**再用 `s999999` 或其他未列入白名單的假店開看板（會被 device 自動登記）。  
+「不在名單」統一用 **`zz-deny-test`**：`devLogin` / `devCommand` / `listStores` 皆 **403 `store_not_allowed`**，且不登記。
+
+### 主驗證（公開網址實測）
+
+| 項目 | 結果 |
 |------|------|
-| 全新瀏覽器 c×3（修正腳本 `public-pages-pr27-live-qa.mjs`） | **PASS** 3/3 |
-| d→c 同 context 污染探針（`public-pages-pr27-investigate.mjs`） | 2/3 pass；失敗時 **paused=false**、無 403 halt 殘留 |
-| legacy-key a–e（修正腳本） | fresh **全過**；old-settings **c** 1 輪雲端偶發 a 板無號 |
+| URL | `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test` |
+| UI | **連線暫停** |
+| devLogin HTTP | **403**，body.code = **`store_not_allowed`** |
+| 進頁 devLogin 次數 | **1** |
+| 暫停後 idle **15s**（探針）／**60s**（主腳本 d） | **0** 次重試 |
 
-403 僅存在各分頁 `auth-session` 記憶體；`localStorage` 無全域 halt key。`s999999` 後開 zz-qa **2s 內可連**。
+證據：`artifacts/pr27-zz-deny-d/report.json`（2026-10-08T03:46:37Z）
 
-## 通過矩陣（修正腳本單次主流程）
+主流程腳本：`scripts/public-pages-pr27-live-qa.mjs` 檢查 **d** 使用 **live_cloud + zz-deny-test**（獨立 browser context，無 route）。
 
-| 檢查 | fresh | old-settings |
-|------|-------|----------------|
-| a | PASS | PASS |
-| b | PASS | PASS |
-| c | PASS | FAIL（r1 雲端 flake） |
-| d | PASS | PASS |
-| e | PASS | PASS |
+### 補充（route 模擬）
 
-## devLogin 量與「卡住」關係（補充）
+仍保留 **c030020** 看板 URL + Playwright route 模擬 devLogin 403，結果寫在每筆 **d** 的 `routeSupplement` 欄位（不取代主驗證）。
 
-後端 10/3–10/8 POST 約 3,481（120 IP、HeadlessChrome、8877+公開 referer）；10/8 00–01 台北短爆發非 3s 長串。
+---
 
-| 實測（公開 Pages） | idle 期間 devLogin |
-|--------------------|-------------------|
-| 全新瀏覽器 `s999999`「連線暫停」開 **5 分鐘** | **0**（進頁 1 次 403） |
-| `zz-qa-store-a` 看板+控制端連線後 **10 分鐘** | **0**（就緒前 2 次） |
+## 403 其他 code（看板，route 探針）
 
-**一句結論：** 登入次數偏高是 **自動測試重跑** 造成，與 QA 卡 120s／「連線暫停」**不是同一根因**（產品 idle 無 devLogin 迴圈）。
+`store_id_invalid`、`dev_store_registry_full` 在 **devLogin 403** 時亦顯示「連線暫停」、idle 無迴圈（見 `artifacts/pr27-403-codes-probe/report.json`）。  
+`markUploadHaltedFrom403` 白名單未含後兩者；**devLogin** 路徑仍經 `noteDevLoginFailure(403)` → 暫停（未改產品，待總監）。
 
-## 報告路徑
+---
 
-- `artifacts/pr27-investigate/VERDICT.md`
-- `artifacts/pr27-investigate/DELIVERY-REPORT.md`（本檔）
-- `artifacts/pr27-investigate/report.json`
-- `artifacts/pr27-devlogin-count/report.json`
-- `artifacts/pr27live/results.json`
-- 腳本：`scripts/public-pages-pr27-live-qa.mjs`、`scripts/public-pages-pr27-investigate.mjs`、`scripts/public-pages-devlogin-count.mjs`
+## devLogin 量（補充）
+
+**一句結論：** 10/3–10/8 約 3.5k 次為 **QA 重跑**；與 idle 卡頁 **非同一根因**（暫停探針用 **zz-deny-test** 實測 5 分鐘 idle = 0）。
+
+---
+
+## c 根因與修復
+
+見 `artifacts/pr27-investigate/FAILURE-ROOT-CAUSE.md`（分類 **(b)**）。  
+Pages 未部署修復前，可用 `MILKSHA_QA_PATCH_RUNTIME=1` 注入 `cloud-runtime.js` 跑矩陣。
+
+---
+
+## 手動驗收（d）
+
+1. 開無痕：`…/milksha-demo/?mode=cloud&store=zz-deny-test`
+2. 應顯示 **連線暫停**（非離線）
+3. 開著 1 分鐘，Network 僅約 **1** 次 devLogin → 403

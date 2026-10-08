@@ -236,7 +236,7 @@ async function runFullFlow(browser, contextName, seedOld) {
         devLoginCalls += 1;
       }
     });
-    await deny.goto(`${BOARD_HOME}?mode=cloud&store=s999999`, { waitUntil: 'domcontentloaded' });
+    await deny.goto(`${BOARD_HOME}?mode=cloud&store=zz-deny-test`, { waitUntil: 'domcontentloaded' });
     await deny.waitForSelector('#milksha-cloud-paused:not([hidden])', { timeout: 90000 });
     const denyDiag = await pageDiag(deny);
     out.checks.d = { pass: denyDiag.pausedVisible, devLoginCalls, denyDiag };
@@ -247,13 +247,13 @@ async function runFullFlow(browser, contextName, seedOld) {
   return out;
 }
 
-/** Same context: open s999999 first, then zz-qa boards — probe cross-store pause bleed. */
+/** Same context: open zz-deny-test first, then zz-qa boards — probe cross-store pause bleed. */
 async function runDThenCProbe(browser, runIndex) {
   const ctx = await browser.newContext();
   const report = { runIndex, pass: false };
   try {
     const deny = await ctx.newPage();
-    await deny.goto(`${BOARD_HOME}?mode=cloud&store=s999999`, { waitUntil: 'domcontentloaded' });
+    await deny.goto(`${BOARD_HOME}?mode=cloud&store=zz-deny-test`, { waitUntil: 'domcontentloaded' });
     await deny.waitForSelector('#milksha-cloud-paused:not([hidden])', { timeout: 90000 });
     report.afterDeny = await pageDiag(deny);
     await deny.close();

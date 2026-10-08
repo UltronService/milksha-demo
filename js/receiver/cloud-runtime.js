@@ -506,6 +506,10 @@
         return { ignored: true, reason: Validate.MSG.offline };
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
+      if (numberContent.length === 0 && prevReadySet.size > 0 && seq > localSeq) {
+        localSeq = seq;
+        return { ignored: true, reason: 'stale_empty_cloud' };
+      }
       const applyOpts = Object.assign({}, opts || {}, { boardUpdatedAt: board.updatedAt });
       const run = function () {
         return applyNumberContent(numberContent, seq, applyOpts);
@@ -815,6 +819,20 @@
       }
     }
 
+    async function resolveSeqForDeviceCommand() {
+      const bumped = localSeq > 0 ? localSeq + 1 : 1;
+      try {
+        const snap = await transport.readBoard();
+        const cloudSeq = snap && snap.data ? Number(snap.data.seq) : NaN;
+        if (Number.isFinite(cloudSeq) && cloudSeq >= 0) {
+          return Math.max(bumped, cloudSeq + 1);
+        }
+      } catch (e) {
+        /* ignore read errors; fall back to bumped */
+      }
+      return bumped;
+    }
+
     async function handleCommand(cmd) {
       const type = cmd.type;
       const params = cmd.params || {};
@@ -884,7 +902,7 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
-        localSeq = localSeq > 0 ? localSeq + 1 : 1;
+        localSeq = await resolveSeqForDeviceCommand();
         applyNumberContent([], localSeq, { silent: true });
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
@@ -896,8 +914,11 @@
         preparing.forEach(function (no) {
           nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
         });
-        localSeq = localSeq > 0 ? localSeq + 1 : 1;
+        localSeq = await resolveSeqForDeviceCommand();
         applyNumberContent(nc, localSeq, { silent: false });
+        root.setTimeout(function () {
+          pollBoard({ force: true });
+        }, 250);
       }
     }
 

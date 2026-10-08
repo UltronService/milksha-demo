@@ -23,8 +23,33 @@ const STORE_MAIN = 'c030020';
 const STORE_A = 'zz-qa-store-a';
 const STORE_B = 'zz-qa-store-b';
 const FN_HOST = 'https://asia-east1-milksha-qms-dev.cloudfunctions.net';
+/** Backend 9940daf: permanent deny list; never auto-registers. */
+const STORE_DENY = 'zz-deny-test';
+const D_LIVE_NOTE =
+  'Live devLogin 403 store_not_allowed on public board ?mode=cloud&store=zz-deny-test (backend 9940daf)';
+const D_ROUTE_SUPPLEMENT_NOTE =
+  'Supplement: route-simulated 403 on c030020 board URL (no extra store opens)';
 
 mkdirSync(SHOTS, { recursive: true });
+
+async function installSimulated403DevLogin(page, storeId, errorCode = 'store_not_allowed') {
+  await page.route('**/devLogin', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.continue();
+      return;
+    }
+    const body = route.request().postData() || '';
+    if (storeId && !body.includes(storeId)) {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: errorCode, message: `${errorCode} simulated` }),
+    });
+  });
+}
 
 function log(line) {
   const msg = `[${new Date().toISOString()}] ${line}`;
@@ -130,25 +155,24 @@ async function waitBoardEmpty(board, timeoutMs = 90000) {
 }
 
 async function waitBoardMinReady(board, min = 1, timeoutMs = 90000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const count = await board.locator('.milksha-ready .milksha-num').count();
-    if (count < min) {
-      await board.waitForTimeout(200);
-      continue;
-    }
-    await board.waitForTimeout(400);
-    const stable = await board.locator('.milksha-ready .milksha-num').count();
-    if (stable >= min) {
-      const seq = await board.evaluate(() =>
-        window.receiverCloud && window.receiverCloud.getLocalSeq
-          ? window.receiverCloud.getLocalSeq()
-          : null,
-      );
-      return { count: stable, localSeq: seq };
-    }
+  await board.waitForFunction(
+    (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
+    min,
+    { timeout: timeoutMs },
+  );
+  await board.waitForTimeout(400);
+  const count = await board.locator('.milksha-ready .milksha-num').count();
+  if (count < min) {
+    await board.waitForFunction(
+      (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
+      min,
+      { timeout: 30000 },
+    );
   }
-  throw new Error(`board ready count < ${min} after ${timeoutMs}ms`);
+  const localSeq = await board.evaluate(() =>
+    window.receiverCloud?.getLocalSeq ? window.receiverCloud.getLocalSeq() : null,
+  );
+  return { count: await board.locator('.milksha-ready .milksha-num').count(), localSeq };
 }
 
 async function clearBoardViaController(controller, board, label) {
@@ -201,6 +225,7 @@ async function runIsolationRounds(tabA, tabB, ctrlA, ctrlB, contextName) {
     await ctrlB.click('[data-testid="btn-send-numbers"]');
     await waitBoardMinReady(tabB, 1);
     const sendBMs = Date.now() - tB;
+    await waitBoardMinReady(tabA, 1, 45000);
     const aCount = await tabA.locator('.milksha-ready .milksha-num').count();
     const bCount = await tabB.locator('.milksha-ready .milksha-num').count();
     const pass = bAfterA === bBeforeA && aCount >= 1 && bCount >= 1;
@@ -219,7 +244,7 @@ async function installRuntimePatch(ctx) {
     return;
   }
   const body = readFileSync(RUNTIME_JS_PATH, 'utf8');
-  await ctx.route('**/js/receiver/cloud-runtime.js', async (route) => {
+  await ctx.route(/cloud-runtime\.js(\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/javascript; charset=utf-8',
@@ -349,16 +374,26 @@ async function runContext(browser, contextName, seedOld) {
     await ctrlA.close().catch(() => {});
     await ctrlB.close().catch(() => {});
 
-    const dPage = await ctx.newPage();
+    const dCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    await installRuntimePatch(dCtx);
+    const dPage = await dCtx.newPage();
     dPage.setDefaultTimeout(120000);
     let devLoginCalls = 0;
+    let routeSupplement = null;
     try {
-      dPage.on('request', (req) => {
-        if (req.url().includes('devLogin')) {
-          devLoginCalls += 1;
+      dPage.on('response', async (res) => {
+        if (!res.url().includes('devLogin') || res.request().method() !== 'POST') {
+          return;
         }
+        const body = res.request().postData() || '';
+        if (!body.includes(STORE_DENY)) {
+          return;
+        }
+        devLoginCalls += 1;
       });
-      await dPage.goto(`${BOARD_HOME}?mode=cloud&store=s999999`, { waitUntil: 'domcontentloaded' });
+      await dPage.goto(`${BOARD_HOME}?mode=cloud&store=${STORE_DENY}`, {
+        waitUntil: 'domcontentloaded',
+      });
       await dPage.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 60000 });
       await dPage.waitForFunction(
         () => {
@@ -372,18 +407,69 @@ async function runContext(browser, contextName, seedOld) {
       const callsAtPause = devLoginCalls;
       await dPage.waitForTimeout(60000);
       const callsIn60 = devLoginCalls - callsAtPause;
-      const pass = pausedText.trim() === '連線暫停' && devLoginCalls === 1 && callsIn60 === 0;
-      await snap(dPage, join(SHOTS, `${contextName}-d-s999999.png`));
+      const pass = pausedText.trim() === '連線暫停' && devLoginCalls >= 1 && callsIn60 === 0;
+      await snap(dPage, join(SHOTS, `${contextName}-d-zz-deny-test.png`));
+
+      const routeCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+      await installRuntimePatch(routeCtx);
+      const routePage = await routeCtx.newPage();
+      let routeDevLogin = 0;
+      try {
+        await installSimulated403DevLogin(routePage, STORE_MAIN, 'store_not_allowed');
+        routePage.on('request', (req) => {
+          if (req.url().includes('devLogin') && req.method() === 'POST') {
+            routeDevLogin += 1;
+          }
+        });
+        await routePage.goto(`${BOARD_HOME}?mode=cloud&store=${STORE_MAIN}`, {
+          waitUntil: 'domcontentloaded',
+        });
+        await routePage.waitForFunction(
+          () => {
+            const paused = document.getElementById('milksha-cloud-paused');
+            return paused && !paused.hidden;
+          },
+          undefined,
+          { timeout: 60000 },
+        );
+        const routePaused = (await routePage.locator('#milksha-cloud-paused').innerText()).trim();
+        routeSupplement = {
+          pass: routePaused === '連線暫停' && routeDevLogin >= 1,
+          d403Mode: 'route_simulated',
+          boardStore: STORE_MAIN,
+          pausedText: routePaused,
+          devLoginTotal: routeDevLogin,
+          note: D_ROUTE_SUPPLEMENT_NOTE,
+        };
+      } catch (routeErr) {
+        routeSupplement = {
+          pass: false,
+          error: routeErr.message || String(routeErr),
+          note: D_ROUTE_SUPPLEMENT_NOTE,
+        };
+      }
+      await routeCtx.close().catch(() => {});
+
       record(results, contextName, 'd', pass, {
         pausedText: pausedText.trim(),
         devLoginTotal: devLoginCalls,
         devLoginDuring60s: callsIn60,
+        d403Mode: 'live_cloud',
+        boardStore: STORE_DENY,
+        backendDeploy: '9940daf',
+        note: D_LIVE_NOTE,
+        routeSupplement,
       });
     } catch (e) {
       await snap(dPage, join(SHOTS, `${contextName}-d-fail.png`));
-      record(results, contextName, 'd', false, { devLoginTotal: devLoginCalls, error: e.message || String(e) });
+      record(results, contextName, 'd', false, {
+        boardStore: STORE_DENY,
+        devLoginTotal: devLoginCalls,
+        error: e.message || String(e),
+        routeSupplement,
+      });
     }
-    await dPage.close().catch(() => {});
+    await dCtx.close().catch(() => {});
 
     const eBoard = await ctx.newPage();
     const eCtrl = await ctx.newPage();

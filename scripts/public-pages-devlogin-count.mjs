@@ -69,12 +69,14 @@ async function waitPausedVisible(page, timeoutMs = 120000) {
   );
 }
 
+const STORE_DENY = 'zz-deny-test';
+
 async function measurePausedFiveMinutes(browser) {
   const ctx = await browser.newContext();
   const board = await ctx.newPage();
   const events = attachDevLoginCounter([board]);
   const t0 = Date.now();
-  await board.goto(`${PUBLIC_BASE}/?mode=cloud&store=s999999`, { waitUntil: 'domcontentloaded' });
+  await board.goto(`${PUBLIC_BASE}/?mode=cloud&store=${STORE_DENY}`, { waitUntil: 'domcontentloaded' });
   await board.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 60000 }).catch(() => null);
   await waitPausedVisible(board);
   const pausedAt = Date.now();
@@ -91,7 +93,9 @@ async function measurePausedFiveMinutes(browser) {
   });
   await ctx.close();
   return {
-    scenario: 'fresh_paused_s999999',
+    scenario: 'fresh_paused_zz_deny_test_live403',
+    d403Mode: 'live_cloud',
+    boardStore: STORE_DENY,
     durationMs: Date.now() - t0,
     idleWindowMs: 5 * 60 * 1000,
     devLoginTotalFromNavigation: beforeIdle,

@@ -21,14 +21,14 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await resetCloudState({ seedDevice: true });
   });
 
-  test('s999999 連線暫停 does not block zz-qa-store-a/b sends', async ({ browser }) => {
+  test('zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends', async ({ browser }) => {
     test.setTimeout(180000);
     const ctx = await browser.newContext();
     const denied = await ctx.newPage();
     await installBundledCloudRouteShim(denied);
     await denied.route('**/devLogin', async (route) => {
       const body = route.request().postData() || '';
-      if (!body.includes('s999999')) {
+      if (!body.includes('zz-deny-test')) {
         await route.continue();
         return;
       }
@@ -38,7 +38,7 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
         body: JSON.stringify({ code: 'store_not_allowed', message: 'store not allowed' }),
       });
     });
-    await denied.goto(`${BASE}/?mode=cloud&store=s999999`);
+    await denied.goto(`${BASE}/?mode=cloud&store=zz-deny-test`);
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
     await denied.close();
 
