@@ -1,8 +1,8 @@
 # Board background self-QA (1007)
 
-- **HEAD:** `18505b67049eec3fc99e0e461671305662e17eae`
+- **HEAD:** `480921c11502b84d2a96801075de2d3e162e9564`
 - **Base:** `6ef1359cea99cccb5dda74afeed7003888518515` (main, #25 merged)
-- **CI:** **SUCCESS** https://github.com/UltronService/milksha-demo/actions/runs/37821353022
+- **CI:** **SUCCESS** https://github.com/UltronService/milksha-demo/actions/runs/37824699878
 - **mergeable_state:** `MERGEABLE` / `CLEAN`（CI 綠後）
 - **Measured grid:** `js/board/landscape-art-layout.js` + `reference/measured-layout.json`
 - **Reference numbers (both zones):** 1907, 1906, 1905, 1904, 1903, 1902, 1901, 1900, 1899, 1898（準備用 `milksha_point`、取餐用 `store`，避免同號去重）
