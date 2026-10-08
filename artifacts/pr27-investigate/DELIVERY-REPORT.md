@@ -29,7 +29,7 @@ node scripts/local-branch-pr27-matrix-suite.mjs
 | `artifacts/pr27-pages-route-matrix/product-a1372a0.json` | 預期 3× fresh + legacy 全 a–e |
 | `artifacts/pr27-pages-route-matrix/summary.json` | 總表 |
 
-環境：`MILKSHA_PAGES_SITE_ROUTE=1`、`MILKSHA_SITE_ROOT` = `wt-main` 或 `wt-product`；**不**攔截 cloudfunctions / securetoken / firestore。
+環境：`MILKSHA_PAGES_SITE_ROUTE=1`、`MILKSHA_SITE_ROOT` = `wt-main` 或 `wt-product`；執行前以 `inject-firebase-config.mjs` 寫入 worktree 的 `config/firebase.js`（等同 Pages 部署注入）；**不**攔截 cloudfunctions / securetoken / firestore。
 
 ---
 
