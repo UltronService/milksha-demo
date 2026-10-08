@@ -17,7 +17,7 @@ function runOnce(label) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', [join(ROOT, 'scripts/public-pages-pr27-live-qa.mjs')], {
       cwd: ROOT,
-      env: process.env,
+      env: { ...process.env, MILKSHA_QA_PATCH_RUNTIME: process.env.MILKSHA_QA_PATCH_RUNTIME || '1' },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let out = '';

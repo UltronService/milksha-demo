@@ -9,6 +9,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const PATCH_RUNTIME = process.env.MILKSHA_QA_PATCH_RUNTIME === '1';
+const RUNTIME_JS_PATH = join(ROOT, 'js/receiver/cloud-runtime.js');
 const ART = join(ROOT, 'artifacts', 'pr27live');
 const SHOTS = join(ART, 'screenshots');
 const LOG = join(ART, 'run.log');
@@ -212,9 +214,24 @@ async function runIsolationRounds(tabA, tabB, ctrlA, ctrlB, contextName) {
   return { pass: true, rounds };
 }
 
+async function installRuntimePatch(ctx) {
+  if (!PATCH_RUNTIME) {
+    return;
+  }
+  const body = readFileSync(RUNTIME_JS_PATH, 'utf8');
+  await ctx.route('**/js/receiver/cloud-runtime.js', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/javascript; charset=utf-8',
+      body,
+    });
+  });
+}
+
 async function runContext(browser, contextName, seedOld) {
   const results = { context: contextName, lines: [] };
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  await installRuntimePatch(ctx);
   if (seedOld) {
     await ctx.addInitScript(oldSettingsSeedSource());
   }
@@ -434,6 +451,7 @@ async function runContext(browser, contextName, seedOld) {
 
 async function verifyC030020Empty(browser) {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  await installRuntimePatch(ctx);
   const page = await ctx.newPage();
   await page.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
   try {
@@ -477,6 +495,7 @@ async function main() {
     at: new Date().toISOString(),
     publicBase: PUBLIC_BASE,
     mergeCommit: 'a82cb9b',
+    runtimePatch: PATCH_RUNTIME,
     script: 'scripts/public-pages-pr27-live-qa.mjs',
     contexts: [],
     c030020Final: null,
