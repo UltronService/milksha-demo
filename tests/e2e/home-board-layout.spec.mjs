@@ -79,20 +79,40 @@ test('home board matches Milksha two-column layout', async ({ browser }) => {
     ...readyRows(7200, 9),
     { source_type: 'From_Store_OK', number: '8888' },
   ]);
-  await expect(board.locator('.milksha-cream-grid .milksha-num')).toHaveCount(20);
+  await expect(board.locator('.milksha-num')).toHaveCount(20);
   await expect(board.locator('.milksha-pg-indicator')).toHaveCount(0);
 
   const overflow1920 = await board.evaluate(() => {
-    const nums = Array.from(document.querySelectorAll('.milksha-cream-grid .milksha-num'));
-    for (let i = 0; i < nums.length; i += 1) {
-      const cream = nums[i].closest('.milksha-cream');
-      if (!cream) {
-        return { ok: false };
-      }
-      const r = nums[i].getBoundingClientRect();
-      const cr = cream.getBoundingClientRect();
-      if (r.right > cr.right + 1 || r.left < cr.left - 1 || r.bottom > cr.bottom + 1 || r.top < cr.top - 1) {
-        return { ok: false, text: nums[i].textContent };
+    const art = window.QMS?.Board?.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    if (!art || !canvas) {
+      return { ok: false };
+    }
+    const cRect = canvas.getBoundingClientRect();
+    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+    const scale = m ? Number(m[1]) : 1;
+    function inCream(r, cream) {
+      const left = (r.left - cRect.left) / scale;
+      const right = (r.right - cRect.left) / scale;
+      const top = (r.top - cRect.top) / scale;
+      const bottom = (r.bottom - cRect.top) / scale;
+      return (
+        left >= cream.left - 1 &&
+        right <= cream.left + cream.width + 1 &&
+        top >= cream.top - 1 &&
+        bottom <= cream.top + cream.height + 1
+      );
+    }
+    const zones = [
+      { sel: '.milksha-zone.prep', cream: art.PREP_CREAM },
+      { sel: '.milksha-zone.ready', cream: art.READY_CREAM },
+    ];
+    for (let z = 0; z < zones.length; z += 1) {
+      const nums = Array.from(document.querySelectorAll(zones[z].sel + ' .milksha-num'));
+      for (let i = 0; i < nums.length; i += 1) {
+        if (!inCream(nums[i].getBoundingClientRect(), zones[z].cream)) {
+          return { ok: false, text: nums[i].textContent };
+        }
       }
     }
     return { ok: true };
@@ -102,16 +122,28 @@ test('home board matches Milksha two-column layout', async ({ browser }) => {
   await board.setViewportSize({ width: 1280, height: 720 });
   await board.waitForTimeout(300);
   const eightFit = await board.evaluate(() => {
+    const art = window.QMS?.Board?.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
     const num = Array.from(document.querySelectorAll('.milksha-ready .milksha-num')).find(
       (el) => el.textContent === '8888',
     );
-    const cream = document.querySelector('.milksha-ready .milksha-cream');
-    if (!num || !cream) {
+    if (!num || !art || !canvas) {
       return { ok: false };
     }
+    const cRect = canvas.getBoundingClientRect();
+    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+    const scale = m ? Number(m[1]) : 1;
     const r = num.getBoundingClientRect();
-    const cr = cream.getBoundingClientRect();
-    return { ok: r.right <= cr.right + 1 && r.left >= cr.left - 1 && r.bottom <= cr.bottom + 1 };
+    const cream = art.READY_CREAM;
+    const right = (r.right - cRect.left) / scale;
+    const left = (r.left - cRect.left) / scale;
+    const bottom = (r.bottom - cRect.top) / scale;
+    return {
+      ok:
+        right <= cream.left + cream.width + 1 &&
+        left >= cream.left - 1 &&
+        bottom <= cream.top + cream.height + 1,
+    };
   });
   expect(eightFit.ok).toBe(true);
 

@@ -24,12 +24,12 @@
     W: 1920,
     H: 1080,
     split: 'row',
-    titleTop: 65,
-    titleH: 112,
+    titleTop: 72,
+    titleH: 108,
     titleZh: 72,
     titleEn: 28,
     numFont: 88,
-    creamPad: 44,
+    creamPad: 40,
   };
 
   const LAYOUT_PORTRAIT = {
@@ -44,7 +44,7 @@
     creamPad: 36,
   };
 
-  const PREP_WAVES_SRC = 'assets/milksha-prep-waves.svg';
+  const BOARD_BG_SRC = 'assets/milksha-board-bg-1007.jpg';
 
   const DESIGN_LANDSCAPE_W = LAYOUT_LANDSCAPE.W;
   const DESIGN_LANDSCAPE_H = LAYOUT_LANDSCAPE.H;
@@ -328,6 +328,15 @@
       return orientation === 'portrait' ? LAYOUT_PORTRAIT : LAYOUT_LANDSCAPE;
     }
 
+    function landscapeArtLayout() {
+      return QMS.Board && QMS.Board.LandscapeArtLayout ? QMS.Board.LandscapeArtLayout : null;
+    }
+
+    function useLandscapeArtGrid() {
+      const cfg = layoutConfig();
+      return orientation === 'landscape' && cfg.split === 'row' && Boolean(landscapeArtLayout());
+    }
+
     function logSound(itemId) {
       if (!win.__milkshaSoundLog) {
         win.__milkshaSoundLog = [];
@@ -364,7 +373,12 @@
       boardEl.style.width = cfg.W + 'px';
       boardEl.style.height = cfg.H + 'px';
       boardEl.style.transform = 'none';
-      rootEl.style.setProperty('--milksha-num-font', cfg.numFont + 'px');
+      boardEl.classList.toggle('milksha-board--landscape-art', orientation === 'landscape');
+      boardEl.style.backgroundImage =
+        orientation === 'landscape' ? 'url("' + BOARD_BG_SRC + '")' : 'none';
+      const art = landscapeArtLayout();
+      const numFont = useLandscapeArtGrid() && art ? art.NUM_FONT_PX : cfg.numFont;
+      rootEl.style.setProperty('--milksha-num-font', numFont + 'px');
     }
 
     function clampPage(page, count) {
@@ -401,16 +415,14 @@
           el.innerHTML = '';
         }
       }
-      const cream = zone.querySelector('.milksha-cream');
-      if (!cream) {
-        return;
-      }
-      let ind = cream.querySelector('.milksha-pg-indicator');
+      let ind = zone.querySelector('.milksha-pg-indicator');
       if (totalPages > 1) {
         if (!ind) {
           ind = doc.createElement('div');
-          ind.className = 'milksha-pg-indicator';
-          cream.appendChild(ind);
+          ind.className = useLandscapeArtGrid()
+            ? 'milksha-pg-indicator milksha-pg-indicator--art'
+            : 'milksha-pg-indicator';
+          zone.appendChild(ind);
         }
         ind.textContent = String(page + 1) + '/' + String(totalPages);
       } else if (ind) {
@@ -445,7 +457,82 @@
       }, PAGE_INTERVAL_MS);
     }
 
+    function renderZoneHtmlArt(cls, x, y, w, h, titleZh, titleEn, page, totalPages, items, pageStartedAt) {
+      const cfg = layoutConfig();
+      const art = landscapeArtLayout();
+      if (!art) {
+        return '';
+      }
+      const zoneKey = cls.indexOf('prep') >= 0 ? 'prep' : 'ready';
+      const cream = art.creamRectForZone(zoneKey);
+      const cells = layoutPageGrid(items, page, PAGE_SIZE);
+      let z =
+        '<div class="milksha-zone ' +
+        cls +
+        '" style="left:' +
+        x +
+        'px;top:' +
+        y +
+        'px;width:' +
+        w +
+        'px;height:' +
+        h +
+        'px">';
+      z += '<div class="milksha-ztitle" style="margin-top:' + cfg.titleTop + 'px;height:' + cfg.titleH + 'px">';
+      z +=
+        '<span class="milksha-ztitle-zh" style="font-size:' +
+        cfg.titleZh +
+        'px">' +
+        titleZh +
+        '</span>';
+      z +=
+        '<span class="milksha-ztitle-en" style="font-size:' +
+        cfg.titleEn +
+        'px">' +
+        titleEn +
+        '</span>';
+      z += '</div>';
+      z += '<div class="milksha-art-numbers">';
+      for (let i = 0; i < PAGE_SIZE; i += 1) {
+        const center = art.cellCenterBoard(zoneKey, i);
+        const pos = art.cellPositionInZone(x, center);
+        const cell = cells[i];
+        z +=
+          '<div class="milksha-num-cell" style="left:' +
+          pos.left +
+          'px;top:' +
+          pos.top +
+          'px">';
+        if (cell && cell.number) {
+          z += '<span class="milksha-num">' + cell.number + '</span>';
+        }
+        z += '</div>';
+      }
+      z += '</div>';
+      if (totalPages > 1) {
+        const indLeft = cream.left - x + cream.width - 52;
+        const indTop = cream.top + cream.height - 34;
+        z +=
+          '<div class="milksha-pg-indicator milksha-pg-indicator--art" style="left:' +
+          indLeft +
+          'px;top:' +
+          indTop +
+          'px" data-started-at="' +
+          pageStartedAt +
+          '">' +
+          (page + 1) +
+          '/' +
+          totalPages +
+          '</div>';
+      }
+      z += '</div>';
+      return z;
+    }
+
     function renderZoneHtml(cls, x, y, w, h, titleZh, titleEn, page, totalPages, items, pageStartedAt) {
+      if (useLandscapeArtGrid()) {
+        return renderZoneHtmlArt(cls, x, y, w, h, titleZh, titleEn, page, totalPages, items, pageStartedAt);
+      }
       const cfg = layoutConfig();
       const cells = layoutPageGrid(items, page, PAGE_SIZE);
       let z =
@@ -460,12 +547,6 @@
         'px;height:' +
         h +
         'px">';
-      if (cls.indexOf('prep') >= 0) {
-        z +=
-          '<img class="milksha-prep-waves" src="' +
-          PREP_WAVES_SRC +
-          '" alt="" decoding="async" />';
-      }
       z += '<div class="milksha-ztitle" style="margin-top:' + cfg.titleTop + 'px;height:' + cfg.titleH + 'px">';
       z +=
         '<span class="milksha-ztitle-zh" style="font-size:' +
@@ -664,7 +745,7 @@
         });
       }
       nextPrep.sort(function (a, b) {
-        return a.firstSeenAt - b.firstSeenAt;
+        return b.firstSeenAt - a.firstSeenAt;
       });
 
       Object.keys(metaById).forEach(function (k) {
@@ -799,6 +880,9 @@
     computeViewportScale: computeViewportScale,
     DESIGN_LANDSCAPE_W: DESIGN_LANDSCAPE_W,
     DESIGN_LANDSCAPE_H: DESIGN_LANDSCAPE_H,
+    landscapeArtLayout: function () {
+      return QMS.Board && QMS.Board.LandscapeArtLayout ? QMS.Board.LandscapeArtLayout : null;
+    },
     bootMilkshaBoard: bootMilkshaBoard,
   };
   QMS.bootMilkshaBoard = bootMilkshaBoard;

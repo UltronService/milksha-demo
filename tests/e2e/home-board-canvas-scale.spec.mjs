@@ -77,6 +77,11 @@ test('home board canvas scales uniformly at 4K and letterboxes non-16:9', async 
   });
   expect(letterbox1440.height).toBe(810);
   expect(letterbox1440.top).toBeCloseTo(135, 1);
+  const stageBg1440 = await board.evaluate(() => {
+    const stage = document.querySelector('.milksha-stage');
+    return stage ? getComputedStyle(stage).backgroundColor : null;
+  });
+  expect(stageBg1440).toBe('rgb(0, 0, 0)');
 
   await board.setViewportSize({ width: 1920, height: 800 });
   await board.waitForTimeout(200);
@@ -90,6 +95,11 @@ test('home board canvas scales uniformly at 4K and letterboxes non-16:9', async 
   });
   expect(letterbox1920x800.width).toBeCloseTo(1422, 0);
   expect(letterbox1920x800.left).toBeCloseTo((1920 - letterbox1920x800.width) / 2, 1);
+  const stageBg1920x800 = await board.evaluate(() => {
+    const stage = document.querySelector('.milksha-stage');
+    return stage ? getComputedStyle(stage).backgroundColor : null;
+  });
+  expect(stageBg1920x800).toBe('rgb(0, 0, 0)');
 
   await board.setViewportSize({ width: 1920, height: 1080 });
   await board.evaluate(() => window.QMS.runtime.setCloudOfflineVisible(true));
