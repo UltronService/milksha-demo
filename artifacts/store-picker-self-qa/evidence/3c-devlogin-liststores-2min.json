@@ -1,0 +1,15 @@
+{
+  "test": "controller-store-picker-evidence.spec.mjs › 3c two minutes: devLogin and listStores counts with store switch",
+  "windowSeconds": 120,
+  "pollIntervalMs": 30000,
+  "devLoginBefore": 2,
+  "devLoginAfterBoot": 3,
+  "devLoginAfter": 3,
+  "devLoginDeltaAfterBoot": 0,
+  "listStoresBefore": 0,
+  "listStoresAfterBoot": 1,
+  "listStoresAfter": 5,
+  "listStoresDeltaAfterBoot": 4,
+  "storeSwitchTarget": "c030020",
+  "evidenceEndpoint": "artifacts/store-picker-self-qa/evidence/3c-devlogin-liststores-2min.json"
+}
