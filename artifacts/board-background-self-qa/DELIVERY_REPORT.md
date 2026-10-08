@@ -1,6 +1,6 @@
 # Board background self-QA (1007)
 
-- **HEAD:** `eca3fe1`（含留邊黑色；push 後以 `git rev-parse HEAD` 為準）
+- **HEAD:** `5c9f62c`（含留邊黑色）
 - **Base (`origin/main`):** `6ef1359`（#25 已合併）
 - **PR:** #33，`base=main`，diff 僅底圖／留邊／自測（不含 #25 commits）
 - **對齊:** `git rebase --onto origin/main 5d9e6ac`
