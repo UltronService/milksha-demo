@@ -1,0 +1,19 @@
+# main @ 7fb4f9c — local offline reconnect 5501（baseline）
+
+Date: 2026-10-08
+
+Command:
+```
+CI=true MILKSHA_SITE_ROOT=/tmp/milksha-main-test MILKSHA_E2E_PORT=8896 FAKE_CLOUD_PORT=8795 \
+  npx playwright test tests/e2e/main-5501-local-baseline.spec.mjs
+```
+
+Site tree: `git checkout 7fb4f9c`（含 #25 畫布、#33 底圖排版；**未**含 #32 local shim 修復）。
+
+Result（本 run）: **1 passed**（~12s）。
+
+產品根因（main 仍如此，與 #32 realtime 無關）:
+- `js/transport/local-cloud-shim.js`：`storeHasOnlineBox()` 為 false 時 **不寫** `today_board`（main L257–275）。
+- `tools/fake-cloud/server.mjs`：`posReceiver` 同樣不寫板（見單元測 `tests/fake-cloud-pos.test.js` › `posReceiver does not write board when no box is online`）。
+
+#32 修復（分支）: 簽章合法仍寫板；`isSuccess: true` + `boxOnline: false`；receiver `restore` 強制套用雲板。

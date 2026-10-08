@@ -13,8 +13,8 @@ export function siteRoot() {
 }
 /** @deprecated use siteRoot() at request time; import-time ROOT ignores late env. */
 export const ROOT = siteRoot();
-export const PORT_SITE = 8877;
-export const PORT_CLOUD = 8787;
+export const PORT_SITE = Number(process.env.MILKSHA_E2E_PORT || 8877);
+export const PORT_CLOUD = Number(process.env.FAKE_CLOUD_PORT || 8787);
 
 let cloudProc;
 let siteServer;
@@ -32,7 +32,12 @@ export function startCloud() {
   }
   stopOwnedCloud();
   cloudProc = spawn(execPath, [join(siteRoot(), 'tools', 'fake-cloud', 'server.mjs')], {
-    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT_CLOUD) },
+    env: {
+      ...process.env,
+      FAKE_CLOUD_PORT: String(PORT_CLOUD),
+      FAKE_CLOUD_HTTP_DATE:
+        process.env.FAKE_CLOUD_HTTP_DATE || 'Sat, 03 Oct 2026 12:00:00 GMT',
+    },
     stdio: 'ignore',
   });
   cloudProc.on('exit', () => {

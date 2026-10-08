@@ -1,2 +1,4 @@
 node_modules/
 test-results/
+firestore-debug.log
+artifacts/realtime-board-self-qa/.main-tree/

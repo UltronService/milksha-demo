@@ -17,6 +17,10 @@
     );
   }
 
+  function devicePendingControlPath(storeId, deviceId) {
+    return deviceDocPath(storeId, deviceId) + '/control/pending';
+  }
+
   function devicesCollectionPath(storeId) {
     return 'stores/' + encodeURIComponent(storeId) + '/devices';
   }
@@ -40,6 +44,7 @@
   QMS.Transport.Paths = {
     todayBoardPath: todayBoardPath,
     deviceDocPath: deviceDocPath,
+    devicePendingControlPath: devicePendingControlPath,
     devicesCollectionPath: devicesCollectionPath,
     receiveLogsPath: receiveLogsPath,
     commandsPath: commandsPath,

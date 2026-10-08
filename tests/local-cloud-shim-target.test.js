@@ -156,4 +156,5 @@ test('controller device stub does not count as online box for posReceiver', asyn
   const res = await shim.api.posReceiver(signed);
   assert.equal(res.isSuccess, false);
   assert.match(res.information, /尚未連線/);
+  assert.equal(res.boxOnline, false);
 });

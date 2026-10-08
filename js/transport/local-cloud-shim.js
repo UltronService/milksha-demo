@@ -33,6 +33,19 @@
     return Boolean(data.online);
   }
 
+  function isBoardStbRecord(data) {
+    if (!data || !data.lastSeen) {
+      return false;
+    }
+    if (data.controllerDeviceStub === true) {
+      return false;
+    }
+    if (data.appVersion === CONTROLLER_DEVICE_STUB_APP_VERSION) {
+      return false;
+    }
+    return true;
+  }
+
   function receiveLogsKey(storeId) {
     return 'milksha:local:receive_logs:' + storeId;
   }
@@ -114,6 +127,33 @@
           if (now - Date.parse(data.lastSeen) < LOCAL_DEVICE_STALE_MS) {
             return true;
           }
+        }
+      }
+      return false;
+    }
+
+    function storeAllowsPosBoardWrite(storeId) {
+      const sid = storeId || activeStoreId();
+      const prefix = 'milksha:local:device:' + sid + ':';
+      const now = Date.now();
+      for (let i = 0; i < storage.length; i += 1) {
+        const k = storage.key(i);
+        if (!k || k.indexOf(prefix) !== 0) {
+          continue;
+        }
+        const data = readJson(storage, k);
+        if (!isBoardStbRecord(data)) {
+          continue;
+        }
+        const age = now - Date.parse(data.lastSeen);
+        if (age >= LOCAL_DEVICE_STALE_MS) {
+          continue;
+        }
+        if (data.online === true) {
+          return true;
+        }
+        if (data.simulatedOffline === true) {
+          return true;
         }
       }
       return false;
@@ -254,25 +294,31 @@
             return reject('簽章錯誤');
           }
         }
+        const sid = activeStoreId();
         const online = storeHasOnlineBox();
+        const allowWrite = storeAllowsPosBoardWrite(sid);
         const information = online ? '資料顯示成功' : '目標叫號機尚未連線';
         let seq = null;
-        if (online) {
+        if (allowWrite) {
           const nc = parsed.serviceSpecialData_Json.data && parsed.serviceSpecialData_Json.data.number_content;
           const tickets = TodayBoard.numberContentToTickets(nc || []);
           seq = nextSeq();
-          const sid = activeStoreId();
           const board = TodayBoard.buildTodayBoard(sid, seq, tickets, 'A');
           writeJson(storage, boardKey(sid), board);
           channel({ type: 'board', storeId: sid });
         }
         appendReceiveLog({
           kind: 'posReceiver',
-          isSuccess: online,
+          isSuccess: allowWrite,
           information: information,
           seq: seq,
         });
-        return { isSuccess: online, information: information, seq: seq };
+        return {
+          isSuccess: allowWrite,
+          information: information,
+          seq: seq,
+          boxOnline: online,
+        };
       },
     };
 

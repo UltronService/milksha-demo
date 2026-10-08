@@ -377,6 +377,14 @@
       devLoginAttempts = 0;
       authStopped = false;
       accessDenied403 = false;
+      const bridge = QMS.Transport.FirebaseSdkBridge;
+      if (bridge && bridge.syncCustomToken) {
+        try {
+          await bridge.syncCustomToken(customToken, config);
+        } catch (syncErr) {
+          /* ignore — REST session still valid; realtime may fall back to polling */
+        }
+      }
       if (onAuthSuccess) {
         onAuthSuccess();
       }

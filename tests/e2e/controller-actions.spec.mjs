@@ -228,8 +228,8 @@ test('controller | require connect inline reason', async ({ browser }) => {
   await ctx.close();
 });
 
-test('board | no chime for ready while offline on reconnect', async ({ browser }) => {
-  const { ctx, receiver, controller } = await openSession(browser, 'local');
+async function runOfflineReconnect5501(browser, mode) {
+  const { ctx, receiver, controller } = await openSession(browser, mode);
   await receiver.evaluate(() => {
     window.__rcvTelemetry.ringCount = 0;
   });
@@ -246,14 +246,31 @@ test('board | no chime for ready while offline on reconnect', async ({ browser }
   );
   const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   await controller.click('#btn-one-ready');
-  await controller.waitForTimeout(2000);
+  if (mode === 'firestore') {
+    await expect(controller.locator('#btn-one-ready')).toBeEnabled({ timeout: 20000 });
+  } else {
+    await expect(controller.locator('#log-list li').first()).toContainText(/seq=\d+/, {
+      timeout: 20000,
+    });
+  }
   await controller.click('#btn-restore');
+  if (mode === 'firestore') {
+    await expect(controller.locator('#btn-restore')).toBeEnabled({ timeout: 15000 });
+  }
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });
   const ringsAfter = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   expect(ringsAfter).toBe(ringsBefore);
   await ctx.close();
+}
+
+test('board | no chime for ready while offline on reconnect (local)', async ({ browser }) => {
+  await runOfflineReconnect5501(browser, 'local');
+});
+
+test('board | no chime for ready while offline on reconnect (firestore)', async ({ browser }) => {
+  await runOfflineReconnect5501(browser, 'firestore');
 });
 
 test('board | cache after reload and no rechime on reconnect', async ({ browser }) => {

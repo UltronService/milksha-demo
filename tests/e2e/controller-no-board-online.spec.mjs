@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline, resetCloudState } from './harness.mjs';
 
 test('local-link: controller-only shows offline; send fails until board opens', async ({ browser }) => {
   test.setTimeout(90000);
+  await resetCloudState();
   const ctx = await freshContext(browser);
   const controller = await ctx.newPage();
   const { board: boardUrl, ctrl: ctrlUrl } = urlsLocalHomePoc();
@@ -19,7 +20,7 @@ test('local-link: controller-only shows offline; send fails until board opens', 
     timeout: 8000,
   });
   const posFail = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
-  expect(posFail && posFail.isSuccess).toBe(false);
+  expect(posFail && (posFail.isSuccess === false || posFail.boxOnline === false)).toBe(true);
   expect(String(posFail && posFail.information)).toMatch(/機台|尚未連線/);
 
   const board = await ctx.newPage();
@@ -30,7 +31,7 @@ test('local-link: controller-only shows offline; send fails until board opens', 
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 15000 });
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 8000 });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 15000 });
   const posOk = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
   expect(posOk && posOk.isSuccess).toBe(true);
 

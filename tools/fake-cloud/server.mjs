@@ -151,6 +151,10 @@ function deviceKey(storeId, deviceId) {
   return `stores/${storeId}/devices/${deviceId}`;
 }
 
+function devicePendingControlKey(storeId, deviceId) {
+  return `${deviceKey(storeId, deviceId)}/control/pending`;
+}
+
 function seedE2eDevice() {
   const emptyDevice = {
     online: false,
@@ -258,6 +262,20 @@ function storeHasOnlineBox(storeId) {
   return false;
 }
 
+function storeAllowsPosBoardWrite(storeId) {
+  const prefix = `stores/${storeId}/devices/`;
+  const now = Date.now();
+  for (const [k, v] of docs.entries()) {
+    if (!k.startsWith(prefix)) continue;
+    if (!v.lastSeen) continue;
+    const age = now - Date.parse(v.lastSeen);
+    if (age >= 120000) continue;
+    if (v.online === true) return true;
+    if (v.simulatedOffline === true) return true;
+  }
+  return false;
+}
+
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -267,10 +285,18 @@ function corsHeaders() {
   };
 }
 
+function httpDateHeader() {
+  const fixed = process.env.FAKE_CLOUD_HTTP_DATE;
+  if (fixed && String(fixed).trim()) {
+    return String(fixed).trim();
+  }
+  return new Date().toUTCString();
+}
+
 function json(res, status, body) {
   res.writeHead(status, {
     'Content-Type': 'application/json',
-    Date: new Date().toUTCString(),
+    Date: httpDateHeader(),
     ...corsHeaders(),
   });
   res.end(JSON.stringify(body));
@@ -458,12 +484,44 @@ const server = http.createServer(async (req, res) => {
       if (role === 'controller' && !isAllowedDevLoginStore(sid)) {
         return json(res, 403, apiError('store_not_allowed', 'store not allowed for controller dev login'));
       }
+      if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+        try {
+          const { mintCustomToken } = await import('../emulator-qa/admin.mjs');
+          const token = await mintCustomToken({
+            storeId: sid,
+            role: role || 'device',
+            deviceId: body.deviceId || 'stb-01',
+          });
+          return json(res, 200, { customToken: token });
+        } catch (e) {
+          return json(res, 500, { code: 'dev_login_mint_failed', message: String(e.message || e) });
+        }
+      }
       return json(res, 200, { customToken: `fake-${sid}-${role || 'device'}` });
     }
 
     if (req.method === 'POST' && url.pathname === '/identity/v1/accounts:signInWithCustomToken') {
       const body = await readBody(req);
       const customToken = String(body.token || '').trim();
+      const authEmu = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+      if (authEmu && customToken && !customToken.startsWith('fake-')) {
+        try {
+          const target =
+            'http://' +
+            authEmu.replace(/\/$/, '') +
+            '/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken' +
+            (url.search || '?key=fake-api-key-for-emulator');
+          const proxyRes = await fetch(target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const proxyJson = await proxyRes.json();
+          return json(res, proxyRes.status, proxyJson);
+        } catch (e) {
+          return json(res, 502, { code: 'auth_emulator_proxy_failed', message: String(e.message || e) });
+        }
+      }
       const idToken =
         customToken && customToken.startsWith('fake-') ? customToken : 'fake-id-token';
       return json(res, 200, {
@@ -493,13 +551,14 @@ const server = http.createServer(async (req, res) => {
           return json(res, 200, { isSuccess: false, information: '簽章錯誤' });
         }
         const online = storeHasOnlineBox(storeId);
+        const allowWrite = storeAllowsPosBoardWrite(storeId);
         const info = online ? '資料顯示成功' : '找不到機台';
         let seq = null;
-        if (online) {
+        if (allowWrite) {
           const nc = body.serviceSpecialData_Json?.data?.number_content || [];
           const tickets = numberToTickets(nc);
           seq = nextSeq(storeId);
-          const board = {
+          docs.set(boardKey(storeId), {
             storeId,
             businessDate: taipeiBusinessDate(),
             seq: seq,
@@ -507,17 +566,21 @@ const server = http.createServer(async (req, res) => {
             source: 'A',
             tickets,
             clearedAt: tickets.length ? null : new Date().toISOString(),
-          };
-          docs.set(boardKey(storeId), board);
+          });
         }
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
-          isSuccess: online,
+          isSuccess: allowWrite,
           information: info,
           seq: seq,
         });
-        return json(res, 200, { isSuccess: online, information: info, seq: seq });
+        return json(res, 200, {
+          isSuccess: allowWrite,
+          information: info,
+          seq: seq,
+          boxOnline: online,
+        });
       }
 
       const auth = requireAuth(req);
@@ -598,6 +661,7 @@ const server = http.createServer(async (req, res) => {
           nextPending.id === hb.ackCommandId
         ) {
           nextPending = null;
+          docs.delete(devicePendingControlKey(hb.storeId, hb.deviceId));
         }
         docs.set(dk, {
           ...prev,
@@ -676,7 +740,9 @@ const server = http.createServer(async (req, res) => {
             clearedAt: tickets.length ? null : new Date().toISOString(),
           });
         }
-        docs.set(dk, { ...prev, pendingCommand: cmd, boardSeq });
+        const pendingWithSeq = { ...cmd, boardSeq };
+        docs.set(dk, { ...prev, pendingCommand: pendingWithSeq, boardSeq });
+        docs.set(devicePendingControlKey(cmdBody.storeId, cmdBody.deviceId), pendingWithSeq);
         docs.set(commandLogKey(cmdBody.storeId, cmd.id), {
           at: new Date().toISOString(),
           type: cmdBody.type,

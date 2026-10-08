@@ -862,6 +862,9 @@
 
   function formatPosUserMessage(res) {
     const info = res && res.information ? String(res.information) : '';
+    if (res && res.boxOnline === false) {
+      return '請先打開看板';
+    }
     if (info.indexOf('入口 A 未啟用') >= 0) {
       return '雲端的入口 A 沒開，請找後端開啟';
     }
@@ -1039,7 +1042,8 @@
           (res.seq ? ' seq=' + res.seq : ''),
         response: res,
       });
-      if (res && res.isSuccess === false) {
+      const boxOffline = res && res.boxOnline === false;
+      if (res && (res.isSuccess === false || boxOffline)) {
         showUserBanner(userMsg || '叫號未成功，請查看原因');
       } else {
         showUserBanner('');

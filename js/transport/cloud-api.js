@@ -67,7 +67,13 @@
         throw err;
       }
       if (session.noteBootServerTimeFromResponse) {
-        session.noteBootServerTimeFromResponse(res);
+        const bootTimeSource =
+          name === 'devLogin' ||
+          name === 'devLogin/' ||
+          String(name).indexOf('signInWithCustomToken') >= 0;
+        if (bootTimeSource) {
+          session.noteBootServerTimeFromResponse(res);
+        }
       }
       return json;
     }

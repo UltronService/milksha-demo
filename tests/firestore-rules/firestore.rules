@@ -1,0 +1,99 @@
+// Source: milksha-cloud PR #18 @ commit 9ed72a1 (firestore.rules — do not edit; re-copy from cloud repo)
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function claimStoreId() {
+      return isAuthed() ? request.auth.token.storeId : null;
+    }
+
+    function claimDeviceId() {
+      return isAuthed() ? request.auth.token.deviceId : null;
+    }
+
+    function claimRole() {
+      return isAuthed() ? request.auth.token.role : null;
+    }
+
+    function isOwnStore(storeId) {
+      return isAuthed() && claimStoreId() == storeId;
+    }
+
+    function isController() {
+      return claimRole() == "controller";
+    }
+
+    function isDevice() {
+      return claimRole() == "device";
+    }
+
+    match /stores/{storeId} {
+      allow read, write: if false;
+
+      match /board/{boardId} {
+        allow read: if boardId == "today_board"
+          && isOwnStore(storeId)
+          && (isDevice() || isController());
+        allow write: if false;
+      }
+
+      match /devices/{deviceId} {
+        allow read: if isOwnStore(storeId) && (
+          isController() || (isDevice() && claimDeviceId() == deviceId)
+        );
+        allow write: if false;
+
+        match /control/{controlDocId} {
+          allow read: if controlDocId == "pending"
+            && isOwnStore(storeId)
+            && isDevice()
+            && claimDeviceId() == deviceId;
+          allow write: if false;
+        }
+      }
+
+      match /receive_logs/{logId} {
+        allow read: if isOwnStore(storeId) && isController();
+        allow write: if false;
+      }
+
+      match /commands/{commandId} {
+        allow read: if isOwnStore(storeId) && isController();
+        allow write: if false;
+      }
+
+      match /ingest_events/{eventId} {
+        allow read, write: if false;
+      }
+
+      match /idempotency/{docId} {
+        allow read, write: if false;
+      }
+
+      match /settings/{docId} {
+        allow read: if isOwnStore(storeId) && isController();
+        allow write: if false;
+      }
+    }
+
+    match /devStores/{storeId} {
+      allow read, write: if false;
+    }
+
+    match /config/{docId} {
+      allow read, write: if false;
+    }
+
+    match /receive_logs/{logId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

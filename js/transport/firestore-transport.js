@@ -22,12 +22,6 @@
       getAuthHeaders: function () {
         return session.authHeaders();
       },
-      onHttpResponse:
-        session && session.noteBootServerTimeFromResponse
-          ? function (res) {
-              session.noteBootServerTimeFromResponse(res);
-            }
-          : undefined,
     });
     const cloudApi = QMS.Transport.createCloudApi(config, session);
 

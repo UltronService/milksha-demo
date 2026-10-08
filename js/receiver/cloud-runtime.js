@@ -9,11 +9,21 @@
   const BoardSeq = QMS.Transport.BoardSeq;
   const TodayBoard = QMS.Board.TodayBoard;
 
-  const VERSION = 'receiver-demo-2026-10-08-stale-clear';
+  const VERSION = 'receiver-demo-2026-10-08-realtime-board';
+  const FALLBACK_BOARD_POLL_MS = 60000;
 
   function isDemoMode() {
     try {
       return new URLSearchParams(root.location.search).get('demo') === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isRealtimeQueryDisabled() {
+    try {
+      const v = new URLSearchParams(root.location.search).get('realtime');
+      return v === '0' || v === 'false';
     } catch (e) {
       return false;
     }
@@ -67,6 +77,7 @@
     const skipBootReceiverCache = options.skipBootReceiverCache === true;
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
     const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
+    const skipInitialCloudKick = options.skipInitialCloudKick === true;
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
@@ -100,6 +111,11 @@
     let reconnectHandlers = [];
     /** @type {object|null} */
     let deferredReloadCommand = null;
+    /** @type {object|null} */
+    let firestoreRealtime = null;
+    let boardListenActive = false;
+    /** @type {'control'|'device'|'poll'} */
+    let commandListenMode = 'poll';
 
     const cacheKey = 'milksha:receiver-cache:' + storeId;
     const cloudApi = transport.cloudApi;
@@ -520,13 +536,16 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       if (!BoardSeq.shouldAcceptBoard(seq, localSeq)) {
-        noteSeqForensics('tryApplyTodayBoard', {
-          accept: false,
-          reason: 'stale',
-          incomingSeq: seq,
-          localSeq,
-        });
-        return { ignored: true, reason: Validate.MSG.stale };
+        const allowEqualSeqCatchUp = suppressRingOnNextApply && seq === localSeq;
+        if (!allowEqualSeqCatchUp) {
+          noteSeqForensics('tryApplyTodayBoard', {
+            accept: false,
+            reason: 'stale',
+            incomingSeq: seq,
+            localSeq,
+          });
+          return { ignored: true, reason: Validate.MSG.stale };
+        }
       }
       if (simulateOffline) {
         const numberContentOffline = TodayBoard.ticketsToNumberContent(board.tickets);
@@ -741,9 +760,20 @@
       lastBoardUpdateTime = '';
       const kick = function () {
         sendHeartbeat();
-        return pollBoard({ force: true }).then(function () {
-          return pollDevice();
-        });
+        const refetch =
+          firestoreRealtime && firestoreRealtime.forceRefetch
+            ? firestoreRealtime.forceRefetch()
+            : Promise.resolve();
+        return refetch
+          .then(function () {
+            return pollBoard({ force: true });
+          })
+          .then(function () {
+            if (commandListenMode === 'poll') {
+              return pollDevice();
+            }
+            return undefined;
+          });
       };
       if (onCloudResync) {
         resyncInFlight = Promise.resolve()
@@ -781,6 +811,39 @@
       await handleCommand(cmd);
     }
 
+    async function applyBoardDocument(board, pollOpts) {
+      const forcePoll = Boolean(pollOpts && pollOpts.force);
+      if (!board) {
+        onStatusLine('board: 無名單');
+        return;
+      }
+      if (board.missing) {
+        onStatusLine('board: 無名單');
+        if (milkshaRuntime || showCloudOfflineUi) {
+          await applyMissingCloudBoard(board);
+          lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
+        } else {
+          revealGuestClockFromCloudBoard(board);
+        }
+        markCloudReachable();
+        return;
+      }
+      const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
+      if (!forcePoll && marker && marker === lastBoardUpdateTime) {
+        markCloudReachable();
+        return;
+      }
+      lastBoardUpdateTime = marker;
+      revealGuestClockFromCloudBoard(board);
+      const tickets = board.data.tickets;
+      const ticketList = Array.isArray(tickets) ? tickets : [];
+      if (ticketList.length === 0) {
+        clearReceiverCache();
+      }
+      await tryApplyTodayBoard(board);
+      markCloudReachable();
+    }
+
     async function pollBoard(pollOpts) {
       const forcePoll = Boolean(pollOpts && pollOpts.force);
       if (authBlocksBoardSync()) {
@@ -808,35 +871,7 @@
       }
       try {
         const board = await transport.readBoard();
-        if (!board) {
-          onStatusLine('board: 無名單');
-          return;
-        }
-        if (board.missing) {
-          onStatusLine('board: 無名單');
-          if (milkshaRuntime || showCloudOfflineUi) {
-            await applyMissingCloudBoard(board);
-            lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
-          } else {
-            revealGuestClockFromCloudBoard(board);
-          }
-          markCloudReachable();
-          return;
-        }
-        const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
-        if (!forcePoll && marker && marker === lastBoardUpdateTime) {
-          markCloudReachable();
-          return;
-        }
-        lastBoardUpdateTime = marker;
-        revealGuestClockFromCloudBoard(board);
-        const tickets = board.data.tickets;
-        const ticketList = Array.isArray(tickets) ? tickets : [];
-        if (ticketList.length === 0) {
-          clearReceiverCache();
-        }
-        await tryApplyTodayBoard(board);
-        markCloudReachable();
+        await applyBoardDocument(board, { force: forcePoll });
       } catch (e) {
         if (!isFirestoreAbortError(e)) {
           if (isAuthHttpError(e)) {
@@ -846,6 +881,115 @@
           markCloudUnreachable(e);
         }
         onStatusLine('board 錯誤: ' + (e && e.message ? e.message : 'unknown'));
+      }
+    }
+
+    function enterPollFallback() {
+      boardListenActive = false;
+      commandListenMode = 'poll';
+      if (firestoreRealtime) {
+        firestoreRealtime.stop();
+        firestoreRealtime = null;
+      }
+    }
+
+    function enterCommandPollFallback() {
+      commandListenMode = 'poll';
+      if (firestoreRealtime && firestoreRealtime.stopCommandListener) {
+        firestoreRealtime.stopCommandListener();
+      }
+    }
+
+    async function handleRealtimeCommand(cmd, deviceData) {
+      if (!cmd || !cmd.id) {
+        return;
+      }
+      if (shouldSkipDeviceCommand(cmd)) {
+        await acknowledgeSkippedPendingCommand(cmd);
+        return;
+      }
+      try {
+        await handleCommand(cmd, deviceData);
+        await sendHeartbeat();
+      } catch (e) {
+        onStatusLine('command 錯誤: ' + (e && e.message ? e.message : 'unknown'));
+      }
+    }
+
+    async function startFirestoreRealtimeIfPossible() {
+      if (isRealtimeQueryDisabled()) {
+        return;
+      }
+      if (boardListenActive) {
+        return;
+      }
+      if (firestoreRealtime) {
+        firestoreRealtime.stop();
+        firestoreRealtime = null;
+      }
+      const Realtime = QMS.Transport.FirestoreRealtime;
+      const Bridge = QMS.Transport.FirebaseSdkBridge;
+      if (!Realtime || !Realtime.createFirestoreRealtimeListener) {
+        return;
+      }
+      if (!Bridge || !Bridge.isSdkLoaded()) {
+        return;
+      }
+      if (!transport.session || !transport.session.ensureIdToken) {
+        return;
+      }
+      try {
+        await transport.session.ensureIdToken();
+      } catch (e) {
+        return;
+      }
+      let firebaseConfig = options.firebaseConfig || null;
+      if (!firebaseConfig && root.MILKSHA_FIREBASE_CONFIG) {
+        firebaseConfig = root.MILKSHA_FIREBASE_CONFIG;
+      }
+      if (!firebaseConfig) {
+        return;
+      }
+      firestoreRealtime = Realtime.createFirestoreRealtimeListener({
+        config: firebaseConfig,
+        storeId: storeId,
+        deviceId: deviceId,
+        session: transport.session,
+        onBoardSnapshot: function (boardDoc) {
+          if (authBlocksBoardSync() || simulateOffline) {
+            return;
+          }
+          applyBoardDocument(boardDoc, { force: false }).catch(function () {
+            /* ignore */
+          });
+        },
+        onCommandSnapshot: function (cmd, deviceData) {
+          if (authBlocksBoardSync() || simulateOffline) {
+            return;
+          }
+          handleRealtimeCommand(cmd, deviceData).catch(function () {
+            /* ignore */
+          });
+        },
+        onBoardFallback: function () {
+          enterPollFallback();
+        },
+        onCommandPollFallback: function () {
+          enterCommandPollFallback();
+        },
+        onListenerError: function (err) {
+          if (isAuthHttpError(err)) {
+            notifyAuthFailure(err);
+          }
+        },
+      });
+      const mode = await firestoreRealtime.start();
+      boardListenActive = Boolean(mode.boardListen);
+      commandListenMode = mode.commandMode || 'poll';
+      if (!boardListenActive) {
+        enterPollFallback();
+      } else if (commandListenMode === 'poll') {
+        enterCommandPollFallback();
       }
     }
 
@@ -978,10 +1122,12 @@
               Validate.itemId,
             );
           }
+          if (boardSnap) {
+            await applyBoardDocument(boardSnap, { force: true });
+          }
         } catch (e) {
           /* ignore */
         }
-        pollBoard();
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
@@ -1107,6 +1253,7 @@
           return;
         }
         await handleCommand(pending, dev.data);
+        await sendHeartbeat();
       } catch (e) {
         if (isFirestoreAbortError(e)) {
           return;
@@ -1199,9 +1346,23 @@
         pollBoard();
         pollDevice();
       };
-      ensureAuth().then(kick).catch(kick);
+      if (!skipInitialCloudKick) {
+        ensureAuth()
+          .then(function () {
+            return startFirestoreRealtimeIfPossible();
+          })
+          .then(kick)
+          .catch(kick);
+      }
 
       fastBoardPollTimer = root.setInterval(function () {
+        if (boardListenActive) {
+          if (fastBoardPollTimer) {
+            root.clearInterval(fastBoardPollTimer);
+            fastBoardPollTimer = null;
+          }
+          return;
+        }
         if (Date.now() - bootWallMs > FAST_BOARD_POLL_WINDOW_MS) {
           if (fastBoardPollTimer) {
             root.clearInterval(fastBoardPollTimer);
@@ -1226,10 +1387,15 @@
         noteTickWallClock();
         onSyncAuthUi();
         syncCloudGuestStatusUi();
-        if (!pauseAutoDevicePoll && tickMs % devicePollMs === 0) {
+        if (
+          commandListenMode === 'poll' &&
+          !pauseAutoDevicePoll &&
+          tickMs % devicePollMs === 0
+        ) {
           pollDevice();
         }
-        if (tickMs % boardPollMs === 0) {
+        const boardPollEvery = boardListenActive ? FALLBACK_BOARD_POLL_MS : boardPollMs;
+        if (tickMs % boardPollEvery === 0) {
           pollBoard();
         }
       }, 1000);
@@ -1256,6 +1422,7 @@
       if (slowNetworkTimer) {
         clearTimeout(slowNetworkTimer);
       }
+      enterPollFallback();
       if (transport.destroy) {
         transport.destroy();
       }
@@ -1301,6 +1468,20 @@
       },
       getRuntimeVersion: function () {
         return VERSION;
+      },
+      getRealtimeStats: function () {
+        const base = {
+          boardListen: boardListenActive,
+          commandMode: commandListenMode,
+          realtimeDisabled: isRealtimeQueryDisabled(),
+          readCounts: { board: 0, command: 0 },
+        };
+        if (!firestoreRealtime || !firestoreRealtime.getStats) {
+          return base;
+        }
+        const stats = firestoreRealtime.getStats();
+        stats.realtimeDisabled = isRealtimeQueryDisabled();
+        return stats;
       },
       isSimulatedOffline: function () {
         return simulateOffline;

@@ -554,6 +554,7 @@
         storeId: creds.storeId,
         deviceId: creds.deviceId,
         transport: transport,
+        firebaseConfig: modeResolved.config,
         receiverDemo: milkshaRuntime ? null : root.receiverDemo,
         milkshaRuntime: milkshaRuntime || null,
         enableTestPollHook: enableTestPollHook,

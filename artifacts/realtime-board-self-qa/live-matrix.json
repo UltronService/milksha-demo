@@ -1,0 +1,478 @@
+{
+  "at": "2026-10-08T18:06:31.789Z",
+  "baseMainSha": "6ef1359cea99cccb5dda74afeed7003888518515",
+  "branchSha": "7ad0949",
+  "writeStore": "zz-qa-store-a",
+  "stores": [
+    "zz-qa-store-a",
+    "zz-qa-store-b",
+    "zz-qa-store-c",
+    "zz-qa-store-d",
+    "zz-qa-store-e"
+  ],
+  "apiKeySource": "public-pages-config",
+  "branchSiteRoot": "/workspace",
+  "mainSiteRoot": "/workspace/artifacts/realtime-board-self-qa/.main-tree",
+  "branch": {
+    "chromium": [
+      {
+        "label": "branch-chromium-1",
+        "ticketNo": "8800",
+        "boardReadyMs": 4252,
+        "sendToDisplayMs": 701,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791482797663,
+          "devCommandResponseAt": 1791482798341,
+          "devCommandMs": 678,
+          "boardSnapshotAt": 1791482798139,
+          "boardSnapshotMeta": {
+            "fromCache": false,
+            "hasPendingWrites": false,
+            "seq": 805,
+            "updatedAt": "Timestamp(seconds=1791482797, nanoseconds=998000000)"
+          },
+          "domVisibleAt": 1791482798364,
+          "domAfterButtonMs": 701,
+          "devCommandBody": {
+            "commandId": "5add4499-2329-496e-89f5-abd302b84e40",
+            "boardSeq": 805
+          }
+        },
+        "restGetsDuringRun": 15,
+        "displayedReadyNo": "8800",
+        "separateContexts": true
+      },
+      {
+        "label": "branch-chromium-2",
+        "ticketNo": "8817",
+        "boardReadyMs": 3028,
+        "sendToDisplayMs": 614,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791482926586,
+          "devCommandResponseAt": 1791482927182,
+          "devCommandMs": 596,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791482927200,
+          "domAfterButtonMs": 614,
+          "devCommandBody": {
+            "commandId": "971d6be2-4404-4686-9ece-924962d5aebd",
+            "boardSeq": 807
+          }
+        },
+        "restGetsDuringRun": 19,
+        "displayedReadyNo": "8817",
+        "separateContexts": true
+      },
+      {
+        "label": "branch-chromium-3",
+        "ticketNo": "8834",
+        "boardReadyMs": 3000,
+        "sendToDisplayMs": 375,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791483056172,
+          "devCommandResponseAt": 1791483056531,
+          "devCommandMs": 359,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791483056547,
+          "domAfterButtonMs": 375,
+          "devCommandBody": {
+            "commandId": "8194cec4-4fbd-427b-9ec5-dd690d685596",
+            "boardSeq": 809
+          }
+        },
+        "restGetsDuringRun": 19,
+        "displayedReadyNo": "8834",
+        "separateContexts": true
+      }
+    ],
+    "firefox": [
+      {
+        "label": "branch-firefox-1",
+        "ticketNo": "8803",
+        "boardReadyMs": 4558,
+        "sendToDisplayMs": 717,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791483839809,
+          "devCommandResponseAt": 1791483840501,
+          "devCommandMs": 692,
+          "boardSnapshotAt": 1791483840486,
+          "boardSnapshotMeta": {
+            "fromCache": false,
+            "hasPendingWrites": false,
+            "seq": 813,
+            "updatedAt": "Timestamp(seconds=1791483840, nanoseconds=347000000)"
+          },
+          "domVisibleAt": 1791483840526,
+          "domAfterButtonMs": 717,
+          "devCommandBody": {
+            "commandId": "03000064-e970-4aae-bc44-b558ae8a52fd",
+            "boardSeq": 813
+          }
+        },
+        "restGetsDuringRun": 14,
+        "displayedReadyNo": "8803",
+        "separateContexts": true
+      },
+      {
+        "label": "branch-firefox-2",
+        "ticketNo": "8820",
+        "boardReadyMs": 4180,
+        "sendToDisplayMs": 646,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791483971440,
+          "devCommandResponseAt": 1791483972063,
+          "devCommandMs": 623,
+          "boardSnapshotAt": 1791483972038,
+          "boardSnapshotMeta": {
+            "fromCache": false,
+            "hasPendingWrites": false,
+            "seq": 815,
+            "updatedAt": "Timestamp(seconds=1791483971, nanoseconds=903000000)"
+          },
+          "domVisibleAt": 1791483972086,
+          "domAfterButtonMs": 646,
+          "devCommandBody": {
+            "commandId": "0cc749c5-ea84-42fc-86f7-212234db476b",
+            "boardSeq": 815
+          }
+        },
+        "restGetsDuringRun": 12,
+        "displayedReadyNo": "8820",
+        "separateContexts": true
+      },
+      {
+        "label": "branch-firefox-3",
+        "ticketNo": "8837",
+        "boardReadyMs": 4363,
+        "sendToDisplayMs": 614,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": true,
+        "boardListenAfterReady": true,
+        "timeline": {
+          "buttonPressedAt": 1791484102974,
+          "devCommandResponseAt": 1791484103564,
+          "devCommandMs": 590,
+          "boardSnapshotAt": 1791484103552,
+          "boardSnapshotMeta": {
+            "fromCache": false,
+            "hasPendingWrites": false,
+            "seq": 817,
+            "updatedAt": "Timestamp(seconds=1791484103, nanoseconds=420000000)"
+          },
+          "domVisibleAt": 1791484103588,
+          "domAfterButtonMs": 614,
+          "devCommandBody": {
+            "commandId": "4d8ca867-1958-4c0e-88c1-40471bd91a81",
+            "boardSeq": 817
+          }
+        },
+        "restGetsDuringRun": 12,
+        "displayedReadyNo": "8837",
+        "separateContexts": true
+      }
+    ]
+  },
+  "main": {
+    "chromium": [
+      {
+        "label": "main-chromium-1",
+        "ticketNo": "8801",
+        "boardReadyMs": 120087,
+        "sendToDisplayMs": 472,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791484401104,
+          "devCommandResponseAt": 1791484401561,
+          "devCommandMs": 457,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791484401576,
+          "domAfterButtonMs": 472,
+          "devCommandBody": {
+            "commandId": "b1981327-7d61-46f2-9eac-47a31e2f9532",
+            "boardSeq": 819
+          }
+        },
+        "restGetsDuringRun": 185,
+        "displayedReadyNo": "8801",
+        "separateContexts": true
+      },
+      {
+        "label": "main-chromium-2",
+        "ticketNo": "8818",
+        "boardReadyMs": 120078,
+        "sendToDisplayMs": 664,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791484523587,
+          "devCommandResponseAt": 1791484524229,
+          "devCommandMs": 642,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791484524251,
+          "domAfterButtonMs": 664,
+          "devCommandBody": {
+            "commandId": "3aa749f3-cf1a-477c-8867-f00f9d4d97dd",
+            "boardSeq": 820
+          }
+        },
+        "restGetsDuringRun": 186,
+        "displayedReadyNo": "8818",
+        "separateContexts": true
+      },
+      {
+        "label": "main-chromium-3",
+        "ticketNo": "8835",
+        "boardReadyMs": 120077,
+        "sendToDisplayMs": 1693,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791484646260,
+          "devCommandResponseAt": 1791484646636,
+          "devCommandMs": 376,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791484647953,
+          "domAfterButtonMs": 1693,
+          "devCommandBody": {
+            "commandId": "db47c5c0-1d22-40a2-b870-9ee6329aab39",
+            "boardSeq": 823
+          }
+        },
+        "restGetsDuringRun": 188,
+        "displayedReadyNo": "8835",
+        "separateContexts": true
+      }
+    ],
+    "firefox": [
+      {
+        "label": "main-firefox-1",
+        "ticketNo": "8804",
+        "boardReadyMs": 120171,
+        "sendToDisplayMs": 734,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791484771859,
+          "devCommandResponseAt": 1791484772568,
+          "devCommandMs": 709,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791484772593,
+          "domAfterButtonMs": 734,
+          "devCommandBody": {
+            "commandId": "c38c44a1-d6d3-49ad-a7fb-ed4cf1e52472",
+            "boardSeq": 824
+          }
+        },
+        "restGetsDuringRun": 178,
+        "displayedReadyNo": "8804",
+        "separateContexts": true
+      },
+      {
+        "label": "main-firefox-2",
+        "ticketNo": "8821",
+        "boardReadyMs": 120110,
+        "sendToDisplayMs": 802,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791484896225,
+          "devCommandResponseAt": 1791484896820,
+          "devCommandMs": 595,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791484897027,
+          "domAfterButtonMs": 802,
+          "devCommandBody": {
+            "commandId": "e4391587-0409-43a3-8157-3d9a11e134f1",
+            "boardSeq": 827
+          }
+        },
+        "restGetsDuringRun": 175,
+        "displayedReadyNo": "8821",
+        "separateContexts": true
+      },
+      {
+        "label": "main-firefox-3",
+        "ticketNo": "8838",
+        "boardReadyMs": 120104,
+        "sendToDisplayMs": 636,
+        "sendToDisplayWithin3s": true,
+        "commandMode": "poll",
+        "boardListen": false,
+        "boardListenAfterReady": false,
+        "timeline": {
+          "buttonPressedAt": 1791485019839,
+          "devCommandResponseAt": 1791485020451,
+          "devCommandMs": 612,
+          "boardSnapshotAt": null,
+          "boardSnapshotMeta": null,
+          "domVisibleAt": 1791485020475,
+          "domAfterButtonMs": 636,
+          "devCommandBody": {
+            "commandId": "cbd5b8b6-b6ee-4cbb-9678-638d32253225",
+            "boardSeq": 828
+          }
+        },
+        "restGetsDuringRun": 168,
+        "displayedReadyNo": "8838",
+        "separateContexts": true
+      }
+    ]
+  },
+  "storeTiming": {
+    "zz-qa-store-b-chromium": {
+      "label": "chromium-zz-qa-store-b",
+      "storeId": "zz-qa-store-b",
+      "boardReadyMs": 157,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-c-chromium": {
+      "label": "chromium-zz-qa-store-c",
+      "storeId": "zz-qa-store-c",
+      "boardReadyMs": 178,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-d-chromium": {
+      "label": "chromium-zz-qa-store-d",
+      "storeId": "zz-qa-store-d",
+      "boardReadyMs": 189,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-e-chromium": {
+      "label": "chromium-zz-qa-store-e",
+      "storeId": "zz-qa-store-e",
+      "boardReadyMs": 146,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-b-firefox": {
+      "label": "firefox-zz-qa-store-b",
+      "storeId": "zz-qa-store-b",
+      "boardReadyMs": 209,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-c-firefox": {
+      "label": "firefox-zz-qa-store-c",
+      "storeId": "zz-qa-store-c",
+      "boardReadyMs": 195,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-d-firefox": {
+      "label": "firefox-zz-qa-store-d",
+      "storeId": "zz-qa-store-d",
+      "boardReadyMs": 264,
+      "boardListen": false,
+      "commandMode": "poll"
+    },
+    "zz-qa-store-e-firefox": {
+      "label": "firefox-zz-qa-store-e",
+      "storeId": "zz-qa-store-e",
+      "boardReadyMs": 193,
+      "boardListen": false,
+      "commandMode": "poll"
+    }
+  },
+  "offline30s": {
+    "method": "playwright_context_offline_30s",
+    "beforeReady": "8811",
+    "ok": true
+  },
+  "isolation": {
+    "markerFromStoreA": "8822",
+    "storeAVisibleOnStoreB": false,
+    "isolated": true
+  },
+  "legacyUaNote": "Playwright 只覆写 User-Agent 字串，仍使用当前 Chromium/Firefox 引擎；非真实 Chrome 78 二进制。",
+  "legacyChrome78": {
+    "sdkLoads": [
+      "10.14.1/firebase-app-compat.js",
+      "10.14.1/firebase-auth-compat.js",
+      "10.14.1/firebase-firestore-compat.js"
+    ],
+    "stats": {
+      "boardListen": false,
+      "commandMode": "poll",
+      "realtimeDisabled": false,
+      "readCounts": {
+        "board": 0,
+        "command": 0
+      }
+    },
+    "uaSimulatedOnly": true
+  },
+  "readCountsMeasured": {
+    "branch": {
+      "label": "branch-5m",
+      "method": "measured",
+      "durationSec": 300,
+      "restGet": 84,
+      "onSnapshotEvents": 1,
+      "boardListen": true,
+      "perHour": {
+        "restGet": 1008,
+        "onSnapshotEvents": 12
+      }
+    },
+    "main": {
+      "label": "main-5m",
+      "method": "measured",
+      "durationSec": 300,
+      "restGet": 400,
+      "onSnapshotEvents": 0,
+      "boardListen": false,
+      "perHour": {
+        "restGet": 4800,
+        "onSnapshotEvents": 0
+      }
+    }
+  },
+  "readCountsEstimated": {
+    "mainPollBaseline": "board REST poll interval from config (estimate only)",
+    "pr32WithBoardListen": "onSnapshot + 60s fallback REST (estimate only)",
+    "pr18AfterDeploy": "pending listener removes 5s device poll (estimate only)"
+  },
+  "completed": true
+}

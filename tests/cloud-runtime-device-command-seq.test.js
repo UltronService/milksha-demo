@@ -96,6 +96,7 @@ function makeRuntime(boardReads) {
     },
     enableTestPollHook: true,
     skipBootReceiverCache: true,
+    skipInitialCloudKick: true,
   });
   cloud.start();
   TodayBoard.setSessionBusinessDate(BD);
@@ -141,6 +142,7 @@ function makeRuntimeFixedBoard(initialBoardSnap) {
     },
     enableTestPollHook: true,
     skipBootReceiverCache: true,
+    skipInitialCloudKick: true,
   });
   cloud.start();
   TodayBoard.setSessionBusinessDate(BD);
