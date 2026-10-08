@@ -2,10 +2,10 @@
 
 ## PR / CI
 
-- PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft, mergeable)
-- **Base (main):** `021ca6c4db6defc5748a8b885b8aad6460d215e2` (#28 + #30 merged)
-- **HEAD (branch tip):** `78649989f3fb5fe2d2233ce2a7921ada22112dca`
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37788381513 — **success**
+- PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft)
+- **Base (main):** `b0980bc35d8104b61b7bc693d2c049ff975333ed` (#31 merged)
+- **HEAD (branch tip):** `6cf078f3592f578e92d9464ccb9d5a0abc7061cf`
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37796461856 — **success**
 
 ## 1. Tests (CI on HEAD)
 
@@ -14,43 +14,37 @@
 | unit (`npm test`) | 147 | 0 | 0 |
 | e2e (`npm run test:e2e`) | 137 | 0 | 1 |
 
-Log: `gh run view 37772038242 --log` → `# tests 147`; `137 passed`, `1 skipped` (~27.3m).
+Log: `gh run view 37796461856 --log` → `# tests 147`; `137 passed`, `1 skipped` (~27.2m).
 
-Local e2e (this VM, no FONTCONFIG): 133 passed / 1 failed / 4 skipped — see `artifacts/store-picker-self-qa/e2e-full.log`.
+Local e2e (this VM, no FONTCONFIG): 133 passed / 1 failed / 4 skipped — `artifacts/store-picker-self-qa/e2e-full.log`.
 
 ## 2. Requirement evidence
 
 ### 3a — 30s poll, background pause, foreground refresh
 
-- Test: `controller-store-picker-evidence.spec.mjs` › `3a listStores pauses in background tab and refreshes on foreground`
 - JSON: `artifacts/store-picker-self-qa/evidence/3a-background-foreground-listStores.json`
 
 ### 3b — zz-qa-* hidden; `?store=zz-qa-store-a` pinned
 
-- Test: `controller-store-picker-evidence.spec.mjs` › `3b zz-qa hidden by default but URL-pinned zz-qa-store-a is selectable`
 - JSON: `artifacts/store-picker-self-qa/evidence/3b-zz-qa-url-pin.json`
 
 ### 3c — no extra devLogin (2 min window + store switch)
 
-- Test: `controller-store-picker-evidence.spec.mjs` › `3c two minutes: devLogin and listStores counts with store switch`
 - JSON: `artifacts/store-picker-self-qa/evidence/3c-devlogin-liststores-2min.json`
 
 ### 3d — online/offline text + color, sorted by storeId
 
-- Test: `controller-store-picker-evidence.spec.mjs` › `3d options sorted by storeId with online/offline text and color class`
 - JSON: `artifacts/store-picker-self-qa/evidence/3d-sort-online-offline.json`
 
 ## 3. Live cloud (read-only)
 
 - Screenshot: `artifacts/store-picker-self-qa/screenshots/live-cloud-store-picker.png`
-- `listStores` snapshot: `artifacts/store-picker-self-qa/live-listStores.json` (c030020 login only; no send/clear)
+- `listStores`: `artifacts/store-picker-self-qa/live-listStores.json` (c030020 read-only)
 
 ## 4. zz-qa-picker-new
 
-- Fake-cloud only: `tests/e2e/controller-store-picker.spec.mjs`
-- Live: `artifacts/store-picker-self-qa/live-zz-qa-picker-new-check.json` → **`found`: false**
+- `artifacts/store-picker-self-qa/live-zz-qa-picker-new-check.json` → **`found`: false**
 
 ## 5. Branch / scope
 
-- Merged latest `main` at `021ca6c` (includes #28, #30); `js/receiver/cloud-runtime.js` matches main.
-- Product diff vs `main`: controller store picker + fake-cloud/tests/scripts only (no board home logic changes).
+- Merged `main` at `b0980bc`; controller store picker vs `main` only in `controller/`, `tools/fake-cloud/`, `tests/`, `scripts/`, `artifacts/store-picker-self-qa/`.

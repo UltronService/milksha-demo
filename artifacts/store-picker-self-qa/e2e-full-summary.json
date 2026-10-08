@@ -1,10 +1,9 @@
 {
-  "source": "GitHub Actions run 37772038242 (authoritative); local npm run test:e2e 133 passed / 1 failed / 4 skipped (guest-clock font)",
+  "source": "GitHub Actions run 37796461856",
   "expected": 137,
   "unexpected": 0,
   "skipped": 1,
   "flaky": 0,
   "passed": 137,
-  "failed": 0,
-  "durationMs": null
+  "failed": 0
 }
