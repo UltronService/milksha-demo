@@ -60,6 +60,7 @@ test('store id format validation', function () {
   const S = loadStoreList();
   assert.equal(S.isValidStoreIdFormat('c030020'), true);
   assert.equal(S.isValidStoreIdFormat('zz-qa-store-a'), true);
+  assert.equal(S.isValidStoreIdFormat('zz-deny-test'), true);
   assert.equal(S.isValidStoreIdFormat('a123456'), true);
   assert.equal(S.isValidStoreIdFormat('C030020'), false);
   assert.equal(S.isValidStoreIdFormat('zz-qa-UPPER'), false);

@@ -68,11 +68,18 @@
       <div class="controller-zone-stack" data-testid="controller-zone-stack">
       <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="0">
         <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-connect">1. 連線與狀態</button>
+          <p
+            id="store-not-allowed-banner"
+            class="store-not-allowed-banner"
+            hidden
+            role="alert"
+            data-testid="store-not-allowed-banner"
+          ></p>
+          <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
         <div class="zone-body" hidden>
           <label>選擇門市
             <select id="fld-store" data-testid="fld-store"></select>
           </label>
-          <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
           <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
             請先展開「進階設定」，在「雲端設定」填寫專案與金鑰後再按連線。
           </p>
@@ -131,13 +138,6 @@
             <button type="button" id="btn-gen-board-link" data-testid="btn-gen-board-link">產生看板連結</button>
           </div>
           <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
-          <p
-            id="store-not-allowed-banner"
-            class="store-not-allowed-banner"
-            hidden
-            role="alert"
-            data-testid="store-not-allowed-banner"
-          ></p>
           <dl class="status-dl">
             <dt>台北時間</dt>
             <dd id="status-taipei-time" data-testid="status-taipei-time">—</dd>

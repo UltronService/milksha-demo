@@ -141,7 +141,7 @@ async function main() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          storeId: 'a999999',
+          storeId: 'zz-deny-test',
           role: 'controller',
           deviceId: 'controller-web',
         }),

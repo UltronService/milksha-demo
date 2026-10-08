@@ -19,6 +19,7 @@ import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-dat
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020']);
 const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
+const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
 const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
 const STORE_REGISTRY_MAX = Number(process.env.FAKE_STORE_REGISTRY_MAX || 200);
 
@@ -31,6 +32,9 @@ function isValidStoreIdFormat(storeId) {
     return true;
   }
   if (STORE_ID_ZZ_QA_RE.test(id)) {
+    return true;
+  }
+  if (STORE_ID_ZZ_DENY_RE.test(id)) {
     return true;
   }
   if (STORE_ID_LETTER_SIX_DIGITS_RE.test(id)) {

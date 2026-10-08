@@ -29,7 +29,7 @@ body {
 }
 
 .store-not-allowed-banner {
-  margin: 12px 0 0;
+  margin: 8px 16px 0;
   padding: 10px 12px;
   background: #fff1f0;
   border: 1px solid #ffa39e;
@@ -45,7 +45,7 @@ body {
 }
 
 .store-list-fetch-hint {
-  margin: 4px 0 0;
+  margin: 4px 16px 0;
   font-size: 0.8rem;
   color: #8c4a00;
   line-height: 1.35;

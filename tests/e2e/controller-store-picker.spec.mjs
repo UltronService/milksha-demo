@@ -45,11 +45,11 @@ test.describe('controller cloud store picker', () => {
     await ctx.close();
   });
 
-  test('403: unregistered store shows board-first hint and blocks send', async ({ browser }) => {
+  test('403: zz-deny-test shows board-first hint and blocks send', async ({ browser }) => {
     const ctx = await isolatedCloudContext(browser);
     const page = await ctx.newPage();
     await installBundledCloudRouteShim(page);
-    await page.goto(`${BASE}/controller/?mode=cloud&store=q888888`);
+    await page.goto(`${BASE}/controller/?mode=cloud&store=zz-deny-test`);
     await expandControllerZone(page, 'sec-connect');
     const banner = page.locator('[data-testid="store-not-allowed-banner"]');
     await expect(banner).toBeVisible({ timeout: 20000 });
@@ -79,31 +79,29 @@ test.describe('controller cloud store picker', () => {
 
   test('new store appears within poll window after board heartbeat', async ({ browser }) => {
     test.setTimeout(120000);
-    const newStore = 'a777777';
+    const newStore = 'zz-qa-picker-new';
     const ctx = await isolatedCloudContext(browser);
     const board = await ctx.newPage();
     await installBundledCloudRouteShim(board);
+    await board.goto(`${BASE}/?mode=cloud&store=${newStore}`);
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     const controller = await ctx.newPage();
     await installBundledCloudRouteShim(controller);
     await controller.goto(
-      `${BASE}/controller/?mode=cloud&store=c030020&testStoreListPollMs=2000`,
+      `${BASE}/controller/?mode=cloud&store=${newStore}&testStoreListPollMs=2000`,
     );
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await board.goto(`${BASE}/?mode=cloud&store=${newStore}`);
-    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await expandControllerZone(controller, 'sec-connect');
     await expect
       .poll(
         async () => {
           await controller.evaluate(() => window.__controller.refreshStoreListFromCloud());
-          const values = await controller.locator('#fld-store option').evaluateAll((opts) =>
-            opts.map((o) => o.value),
-          );
-          return values.includes(newStore);
+          const selected = await controller.locator('#fld-store option:checked').textContent();
+          return selected && selected.includes('online');
         },
         { timeout: 35000 },
       )
-      .toBe(true);
+      .toBeTruthy();
     await ctx.close();
   });
 
@@ -112,21 +110,21 @@ test.describe('controller cloud store picker', () => {
     const ctx = await isolatedCloudContext(browser);
     const boardA = await ctx.newPage();
     await installBundledCloudRouteShim(boardA);
-    await boardA.goto(`${BASE}/?mode=cloud&store=c030020`);
+    await boardA.goto(`${BASE}/?mode=cloud&store=zz-qa-store-a`);
     await boardA.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     const controller = await ctx.newPage();
     await installBundledCloudRouteShim(controller);
-    await controller.goto(`${BASE}/controller/?mode=cloud&store=c030020`);
+    await controller.goto(`${BASE}/controller/?mode=cloud&store=zz-qa-store-a`);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
     await expandControllerZone(controller, 'sec-connect');
-    await controller.selectOption('#fld-store', 's120030');
+    await controller.selectOption('#fld-store', 'c030020');
     await controller.waitForTimeout(500);
     await expect(controller.locator('#online-state')).not.toContainText('在線');
     await expect(controller.locator('[data-testid="btn-send-numbers"]')).toBeDisabled();
     const boardB = await ctx.newPage();
     await installBundledCloudRouteShim(boardB);
-    await boardB.goto(`${BASE}/?mode=cloud&store=s120030`);
+    await boardB.goto(`${BASE}/?mode=cloud&store=c030020`);
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 30000 });
     await ctx.close();
