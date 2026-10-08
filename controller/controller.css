@@ -44,6 +44,26 @@ body {
   display: none !important;
 }
 
+.store-list-fetch-hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #8c4a00;
+  line-height: 1.35;
+}
+
+.store-list-fetch-hint[hidden] {
+  display: none !important;
+}
+
+#fld-store option.store-online {
+  color: #0a7a48;
+  font-weight: 600;
+}
+
+#fld-store option.store-offline {
+  color: #666;
+}
+
 .local-notice {
   margin: 0;
   padding: 10px 16px;

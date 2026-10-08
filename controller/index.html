@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261006b" />
+    <link rel="stylesheet" href="controller.css?v=20261008a" />
     <script src="../js/board/today-board.js?v=20261006b"></script>
   </head>
   <body>
@@ -72,6 +72,7 @@
           <label>選擇門市
             <select id="fld-store" data-testid="fld-store"></select>
           </label>
+          <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
           <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
             請先展開「進階設定」，在「雲端設定」填寫專案與金鑰後再按連線。
           </p>
@@ -283,6 +284,7 @@
     <script src="../js/transport/firestore-transport.js?v=20261006b"></script>
     <script src="../js/transport/create-transport.js?v=20261006b"></script>
     <script src="../js/receiver/validate-request.js?v=20261006b"></script>
-    <script src="controller-app.js?v=20261006b"></script>
+    <script src="store-list.js?v=20261008a"></script>
+    <script src="controller-app.js?v=20261008a"></script>
   </body>
 </html>

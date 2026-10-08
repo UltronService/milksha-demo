@@ -126,7 +126,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
     await controller.click('#btn-connect');
     const banner = controller.locator('[data-testid="store-not-allowed-banner"]');
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText('s120030');
+    await expect(banner).toContainText('這家店還沒有看板連線過');
     await ctrlCtx.close();
   });
 
