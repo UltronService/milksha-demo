@@ -4,6 +4,7 @@
  * Fixes Playwright waitForFunction(arg vs options) and board-empty sync after clear_now.
  */
 import { chromium } from 'playwright';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +29,50 @@ const RESULTS = join(ART, 'results.json');
 const PUBLIC_BASE = process.env.MILKSHA_PAGES_BASE || GITHUB_PAGES_BASE;
 const BOARD_HOME = `${PUBLIC_BASE}/`;
 const CTRL = `${PUBLIC_BASE}/controller/`;
+
+function boardUrlForStore(storeId) {
+  const u = new URL(`${PUBLIC_BASE}/`);
+  u.searchParams.set('mode', 'cloud');
+  if (storeId) {
+    u.searchParams.set('store', storeId);
+  }
+  return u.toString();
+}
+
+function ctrlUrlForStore(storeId) {
+  const u = new URL(CTRL);
+  u.searchParams.set('mode', 'cloud');
+  u.searchParams.set('store', storeId);
+  return u.toString();
+}
+
+function injectFirebaseConfigIntoSiteRoot(siteRoot, apiKey) {
+  if (!apiKey || !siteRoot) {
+    return;
+  }
+  const target = join(siteRoot, 'config', 'firebase.js');
+  spawnSync('node', [join(ROOT, 'scripts', 'inject-firebase-config.mjs'), target], {
+    env: {
+      ...process.env,
+      MILKSHA_FIREBASE_API_KEY: apiKey,
+      MILKSHA_DEV_POS_SIGN_SECRET:
+        process.env.MILKSHA_DEV_POS_SIGN_SECRET || 'fake-milksha-pos-sign-key-for-tests',
+    },
+    stdio: 'pipe',
+  });
+}
+
+async function prepareContextRouting(ctx, apiKey) {
+  if (USE_PAGES_SITE_ROUTE) {
+    injectFirebaseConfigIntoSiteRoot(SITE_ROOT, apiKey);
+    await installGithubPagesSiteRoute(ctx, SITE_ROOT);
+    return;
+  }
+  if (PUBLIC_BASE.includes('127.0.0.1')) {
+    await installBundledCloudInit(ctx, apiKey);
+  }
+  await installPagesAssetRouting(ctx);
+}
 const STORE_MAIN = 'c030020';
 const STORE_A = 'zz-qa-store-a';
 const STORE_B = 'zz-qa-store-b';
@@ -312,10 +357,7 @@ function runtimeSha16() {
 async function runContext(browser, contextName, seedOld, apiKey) {
   const results = { context: contextName, lines: [] };
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  if (PUBLIC_BASE.includes('127.0.0.1')) {
-    await installBundledCloudInit(ctx, apiKey);
-  }
-  await installPagesAssetRouting(ctx);
+  await prepareContextRouting(ctx, apiKey);
   if (seedOld) {
     await ctx.addInitScript(oldSettingsSeedSource());
   }
@@ -323,7 +365,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
   try {
     const boardA = await ctx.newPage();
     boardA.setDefaultTimeout(120000);
-    await boardA.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
+    await boardA.goto(boardUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
     try {
       await waitBoardCloudReady(boardA);
       const boardMeta = await boardA.evaluate(() => {
@@ -358,7 +400,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
     let sendToDisplayMs = null;
     let pageOpenToFirstNumberMs = null;
     try {
-      await ctrlMain.goto(`${CTRL}?store=${STORE_MAIN}`, { waitUntil: 'domcontentloaded' });
+      await ctrlMain.goto(ctrlUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
       await ctrlMain.waitForFunction(
         (id) => document.getElementById('fld-store')?.value === id,
         STORE_MAIN,
@@ -369,7 +411,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       const preDisabledOk = pre.disabled && preReasonOk;
       await snap(ctrlMain, join(SHOTS, `${contextName}-b-send-disabled.png`));
       const boardNavStart = Date.now();
-      await boardB.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
+      await boardB.goto(boardUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
       await waitBoardCloudReady(boardB);
       await waitSendEnabled(ctrlMain);
       const pressAt = Date.now();
@@ -413,12 +455,12 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       p.setDefaultTimeout(120000);
     }
     try {
-      await tabA.goto(`${BOARD_HOME}?store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
-      await tabB.goto(`${BOARD_HOME}?store=${STORE_B}`, { waitUntil: 'domcontentloaded' });
+      await tabA.goto(boardUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
+      await tabB.goto(boardUrlForStore(STORE_B), { waitUntil: 'domcontentloaded' });
       await waitBoardCloudReady(tabA, STORE_A);
       await waitBoardCloudReady(tabB, STORE_B);
-      await ctrlA.goto(`${CTRL}?store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
-      await ctrlB.goto(`${CTRL}?store=${STORE_B}`, { waitUntil: 'domcontentloaded' });
+      await ctrlA.goto(ctrlUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
+      await ctrlB.goto(ctrlUrlForStore(STORE_B), { waitUntil: 'domcontentloaded' });
       await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
       await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
       const iso = await runIsolationRounds(tabA, tabB, ctrlA, ctrlB, contextName);
@@ -434,7 +476,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
     await ctrlB.close().catch(() => {});
 
     const dCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-    await installPagesAssetRouting(dCtx);
+    await prepareContextRouting(dCtx, apiKey);
     const dPage = await dCtx.newPage();
     dPage.setDefaultTimeout(120000);
     let devLoginCalls = 0;
@@ -470,7 +512,7 @@ async function runContext(browser, contextName, seedOld, apiKey) {
       await snap(dPage, join(SHOTS, `${contextName}-d-zz-deny-test.png`));
 
       const routeCtx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-      await installPagesAssetRouting(routeCtx);
+      await prepareContextRouting(routeCtx, apiKey);
       const routePage = await routeCtx.newPage();
       let routeDevLogin = 0;
       try {
@@ -535,9 +577,9 @@ async function runContext(browser, contextName, seedOld, apiKey) {
     eBoard.setDefaultTimeout(120000);
     eCtrl.setDefaultTimeout(120000);
     try {
-      await eBoard.goto(`${BOARD_HOME}?store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
+      await eBoard.goto(boardUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
       await waitBoardCloudReady(eBoard, STORE_A);
-      await eCtrl.goto(`${CTRL}?store=${STORE_A}`, { waitUntil: 'domcontentloaded' });
+      await eCtrl.goto(ctrlUrlForStore(STORE_A), { waitUntil: 'domcontentloaded' });
       await eCtrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
       await ctx.setOffline(true);
       await eBoard.waitForFunction(
@@ -596,12 +638,9 @@ async function runContext(browser, contextName, seedOld, apiKey) {
 
 async function verifyC030020Empty(browser, apiKey) {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  if (PUBLIC_BASE.includes('127.0.0.1')) {
-    await installBundledCloudInit(ctx, apiKey);
-  }
-  await installPagesAssetRouting(ctx);
+  await prepareContextRouting(ctx, apiKey);
   const page = await ctx.newPage();
-  await page.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
+  await page.goto(boardUrlForStore(STORE_MAIN), { waitUntil: 'domcontentloaded' });
   try {
     await waitBoardCloudReady(page);
     await waitBoardEmpty(page);

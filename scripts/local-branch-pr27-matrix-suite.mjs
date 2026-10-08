@@ -17,7 +17,19 @@ const PRODUCT_ROOT = process.env.MILKSHA_PRODUCT_SITE_ROOT || join(ROOT, 'wt-pro
 
 mkdirSync(ART, { recursive: true });
 
+function injectSiteFirebase(siteRoot) {
+  const apiKey = String(process.env.MILKSHA_FIREBASE_API_KEY || '').trim();
+  if (!apiKey) {
+    return;
+  }
+  spawnSync('node', [join(ROOT, 'scripts', 'inject-firebase-config.mjs'), join(siteRoot, 'config', 'firebase.js')], {
+    env: { ...process.env },
+    stdio: 'pipe',
+  });
+}
+
 function runSuite(label, siteRoot) {
+  injectSiteFirebase(siteRoot);
   const items = [];
   const childEnv = {
     ...process.env,
