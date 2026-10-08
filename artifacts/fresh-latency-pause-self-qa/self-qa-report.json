@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-10-07T21:15:00.000Z",
+  "storeWrites": "zz-qa-store-a only (never s120030/c030020 writes)",
+  "timing": {
+    "method": "Playwright Chromium fresh context; click send only after #online-state connected",
+    "livePagesBeforeFix": {
+      "url": "https://ultronservice.github.io/milksha-demo/",
+      "phasesMs": {
+        "boardReceiverCloud": 216,
+        "controllerConnected": 3547,
+        "firstSendClickToNumberVisible": 45,
+        "endToEndPageOpenToFirstNumber": 3592
+      },
+      "fiveSendsClickToVisibleMs": [45, 2360, 1527, 1517, 1515],
+      "notes": "QA 4472ms likely measured before controller finished connecting or included boot; devCommand itself ~45ms once connected. Sends 2–5 dominated by boardPollIntervalMs=2000 on deployed main."
+    },
+    "afterFixBranchLocal8877": {
+      "method": "PR branch static server + fake-cloud shim; fresh context zz-qa-store-a",
+      "phasesMs": {
+        "boardReceiverCloud": 168,
+        "controllerConnectedAndBoardOnline": 197,
+        "devLoginCallsBoardPlusController": 2
+      },
+      "fiveSendsClickToVisibleMs": [4928, 80, 94, 92, 88],
+      "earlyClickPageOpenMs": 83,
+      "earlyClickToFirstNumberMs": 520,
+      "notes": "Send 1 includes first Firestore doc create + poll; sends 2–5 ~90ms. Controller pre-warm overlaps devLogin with board boot."
+    },
+    "afterFixFrontend": {
+      "changes": [
+        "boardPollIntervalMs 2000→1000",
+        "20s fast board poll every 500ms after boot",
+        "403 on boxHeartbeat/devCommand/Firestore marks upload halt + refreshes 連線暫停 UI",
+        "controller startCloudAuthWarm at page load; auto-connect reuses warm transport"
+      ],
+      "expectedSends2to5Ms": "≤1000 typical (poll + fast window); measured ~90ms local fake-cloud",
+      "firstSendClickTargetMs": 3000,
+      "firstSendClickExpectedMs": "≤500 once controller connected (same as before); controller cold devLogin ~3.5s is parallel with board load"
+    }
+  },
+  "pause": {
+    "rootCause": "Test-method: intercepting only devLogin after a valid session never re-runs devLogin (count 0). Code gap: 403 on boxHeartbeat/Firestore with existing token did not set session upload-halt → 連線暫停 hidden.",
+    "codeFix": "markUploadHaltedFrom403 on authed cloud-api 403; handleAuthFailure + syncCloudGuestStatusUi on board/heartbeat errors",
+    "qaReproFreshBrowser": [
+      "New browser profile / InPrivate",
+      "Open https://ultronservice.github.io/milksha-demo/?mode=cloud&store=s999999 (not on allow list)",
+      "Expect 連線暫停 within ~15s without sending numbers"
+    ],
+    "qaReproExistingSession": [
+      "Fresh profile: open ?store=s999999 only (do not visit zz-qa first)",
+      "OR: with zz-qa session, intercept boxHeartbeat (not devLogin) with 403 store_not_allowed",
+      "Expect 連線暫停; numbers on board preserved"
+    ],
+    "e2e": "tests/e2e/fresh-browser-pause-heartbeat.spec.mjs PASS (heartbeat 403, devLogin count 0)",
+    "liveFreshForbiddenStore": { "pass": true, "devLoginCalls": 1, "pausedText": "連線暫停" }
+  },
+  "devLoginBurst0513Taipei": {
+    "verdict": "live_agent_qa_not_app_loop",
+    "detail": "Production board auth recheck is 5–10min; controller does not auto-reconnect on failure. ~3s spacing matches devLogin backoff (2s base) only when something repeatedly calls ensureIdToken after errors—not a steady-state loop. The 05:13–05:14 Taipei burst aligns with Cloud Agent live QA (fresh Playwright contexts, pause/timing scripts, board+controller pair ≈2 devLogin per load). Session devLoginCallsDuringSession=2 on zz-qa local run.",
+    "appGuards": "auth-session single-flight devLogin, 403 backoff without per-poll devLogin, controller one warm+connect per page load"
+  },
+  "backendRecommendation": {
+    "neededForControllerBoot": true,
+    "detail": "Fresh browser controller ensureIdToken ~3.5s (devLogin + signIn cold). Consider Cloud Functions min instances / reduced cold start for devLogin in milksha-qms-dev; frontend cannot remove network RTT.",
+    "evidenceMs": { "controllerConnected": 3547, "boardReady": 216 }
+  },
+  "tests": {
+    "unit": { "pass": 129, "fail": 0 },
+    "e2eNote": "CI full suite on push; includes pr23-login-count + fresh-browser-pause-heartbeat"
+  }
+}

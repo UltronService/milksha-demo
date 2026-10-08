@@ -10,7 +10,7 @@
     apiKey: 'fake-api-key-for-emulator',
     region: 'asia-east1',
     defaultCloudMode: true,
-    boardPollIntervalMs: 2000,
+    boardPollIntervalMs: 1000,
     devicePollIntervalMs: 5000,
     heartbeatIntervalMs: 15000,
     firestoreEmulatorHost: '',

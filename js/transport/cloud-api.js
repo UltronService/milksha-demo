@@ -44,6 +44,12 @@
         return json || { isSuccess: false, information: '空回應' };
       }
       if (!res.ok) {
+        if (withAuth && res.status === 403 && session.markUploadHaltedFrom403) {
+          const err403 = new Error((name || 'fn') + ' failed ' + res.status);
+          err403.status = 403;
+          err403.response = json;
+          session.markUploadHaltedFrom403(err403);
+        }
         if (withAuth && res.status === 401 && session.refreshIdToken && !authRetried) {
           try {
             await session.refreshIdToken();

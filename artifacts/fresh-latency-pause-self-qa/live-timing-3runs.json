@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-10-07T23:20:03.847Z",
+  "method": "Branch static server :8877, real milksha-qms-dev, bundled apiKey, --disable-web-security, board devLogin+heartbeat before controller, 3 fresh contexts",
+  "store": "zz-qa-store-a",
+  "device": "stb-01",
+  "apiKeyFingerprint": "AIzaSy…D80Q",
+  "runs": [
+    {
+      "backendWarm": null,
+      "runIndex": 1,
+      "pageOpenT0": "2026-10-07T23:20:03.889Z",
+      "boardNavDoneMs": 25,
+      "boardOnlineMs": 79,
+      "controllerNavDoneMs": 126,
+      "controllerReadyMs": 2963,
+      "controllerReadyAfterNavMs": 2894,
+      "buttonEnabledMs": 2964,
+      "sendsClickToVisibleMs": [
+        385,
+        796,
+        793,
+        794,
+        794
+      ],
+      "earlyClickToVisibleMs": 385,
+      "pageOpenToFirstNumberMs": 3348,
+      "passFirstSendUnder3s": true,
+      "passPageOpenToFirstNumberUnder3s": false
+    },
+    {
+      "backendWarm": null,
+      "runIndex": 2,
+      "pageOpenT0": "2026-10-07T23:20:20.912Z",
+      "boardNavDoneMs": 23,
+      "boardOnlineMs": 71,
+      "controllerNavDoneMs": 119,
+      "controllerReadyMs": 3955,
+      "controllerReadyAfterNavMs": 3891,
+      "buttonEnabledMs": 3957,
+      "sendsClickToVisibleMs": [
+        498,
+        795,
+        794,
+        793,
+        961
+      ],
+      "earlyClickToVisibleMs": 498,
+      "pageOpenToFirstNumberMs": 4453,
+      "passFirstSendUnder3s": true,
+      "passPageOpenToFirstNumberUnder3s": false
+    },
+    {
+      "backendWarm": null,
+      "runIndex": 3,
+      "pageOpenT0": "2026-10-07T23:20:38.605Z",
+      "boardNavDoneMs": 25,
+      "boardOnlineMs": 77,
+      "controllerNavDoneMs": 129,
+      "controllerReadyMs": 3143,
+      "controllerReadyAfterNavMs": 3075,
+      "buttonEnabledMs": 3144,
+      "sendsClickToVisibleMs": [
+        417,
+        295,
+        783,
+        394,
+        729
+      ],
+      "earlyClickToVisibleMs": 417,
+      "pageOpenToFirstNumberMs": 3560,
+      "passFirstSendUnder3s": true,
+      "passPageOpenToFirstNumberUnder3s": false
+    }
+  ],
+  "summary": {
+    "controllerReadyMs": [
+      2963,
+      3955,
+      3143
+    ],
+    "pageOpenToFirstNumberMs": [
+      3348,
+      4453,
+      3560
+    ],
+    "send1Ms": [
+      385,
+      498,
+      417
+    ],
+    "sends2to5MsAvg": [
+      794,
+      836,
+      550
+    ],
+    "allPassFirstSendUnder3s": true,
+    "allPassPageOpenToFirstNumberUnder3s": false
+  }
+}

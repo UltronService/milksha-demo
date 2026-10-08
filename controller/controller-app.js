@@ -89,6 +89,23 @@
     return '本機連動';
   }
 
+  function syncBundledApiKeyFromStorage() {
+    const saved = CloudSettings.effective ? CloudSettings.effective(CloudSettings.load()) : CloudSettings.load();
+    const apiKeyEl = document.getElementById('fld-cloud-apikey');
+    const fromField = apiKeyEl ? apiKeyEl.value.trim() : '';
+    const apiKey = fromField || (saved && saved.apiKey) || '';
+    if (!apiKey || apiKey.indexOf('fake-api') >= 0) {
+      return;
+    }
+    const base = window.MILKSHA_FIREBASE_CONFIG || {};
+    window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, base, {
+      apiKey: apiKey,
+      projectId: (saved && saved.projectId) || base.projectId || 'milksha-qms-dev',
+      functionsBaseUrl:
+        base.functionsBaseUrl || 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/',
+    });
+  }
+
   function readCloudForm() {
     const saved = CloudSettings.load();
     const prefixEl = document.getElementById('fld-emulator-prefix');
@@ -309,7 +326,19 @@
       return '連線中…';
     }
     if (btn.hasAttribute('data-requires-connect') && !connected) {
+      if (connectInFlight || autoConnectPending) {
+        return '連線中…';
+      }
       return '請先按連線';
+    }
+    if (btn.hasAttribute('data-requires-connect') && connected && !boardReadyForOutboundSend()) {
+      if (connectInFlight || autoConnectPending) {
+        return '連線中…';
+      }
+      if (boardLinkHint) {
+        return boardLinkHint;
+      }
+      return '等待看板連線…';
     }
     if (commandInFlight && btn.getAttribute('data-dev-command') === '1') {
       return '指令送出中…';
@@ -423,13 +452,29 @@
     pushLog({ summary: '指令失敗 · ' + userMessage, kind: 'command' });
   }
 
-  function requireConnect() {
-    if (connected) {
-      showUserBanner('');
+  function boardReadyForOutboundSend() {
+    const modeEl = document.getElementById('fld-mode');
+    const mode = modeEl ? modeEl.value : 'local';
+    if (mode === 'local') {
       return true;
     }
-    showUserBanner('請先按連線');
-    return false;
+    if (mode === 'cloud' || mode === 'firestore') {
+      return connected && deviceOnline && !boardLinkHint;
+    }
+    return connected;
+  }
+
+  function requireConnect() {
+    if (!connected) {
+      showUserBanner('請先按連線');
+      return false;
+    }
+    if (!boardReadyForOutboundSend()) {
+      showUserBanner(boardLinkHint || '請先打開看板並等待連線');
+      return false;
+    }
+    showUserBanner('');
+    return true;
   }
 
   function setConnectedState(isOn, mode) {
@@ -1069,6 +1114,66 @@
 
   let connectInFlight = false;
   let posInFlight = false;
+  let autoConnectPending = false;
+  let allowWarmTransportReuse = false;
+  let cloudAuthWarmKey = '';
+  /** @type {Promise<void>|null} */
+  let cloudAuthWarmPromise = null;
+
+  function cloudConnectFingerprint(transportMode, config) {
+    const cfg = config || {};
+    return [
+      transportMode,
+      storeId(),
+      cfg.functionsBaseUrl || '',
+      cfg.projectId || '',
+      cfg.apiKey || '',
+      cfg.gateway || '',
+    ].join('\0');
+  }
+
+  function disposeTransport() {
+    if (transport && transport.destroy) {
+      transport.destroy();
+    }
+    transport = null;
+  }
+
+  function startCloudAuthWarm() {
+    syncBundledApiKeyFromStorage();
+    const modeEl = document.getElementById('fld-mode');
+    if (!modeEl) {
+      return;
+    }
+    const mode = modeEl.value;
+    if (mode !== 'cloud' && mode !== 'firestore') {
+      return;
+    }
+    if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
+      return;
+    }
+    const transportMode = mode === 'firestore' ? 'firestore' : mode;
+    const config = buildConfig(mode);
+    if ((mode === 'cloud' || mode === 'firestore') && !config.functionsBaseUrl) {
+      return;
+    }
+    const fingerprint = cloudConnectFingerprint(transportMode, config);
+    if (transport && cloudAuthWarmKey === fingerprint && cloudAuthWarmPromise) {
+      return;
+    }
+    disposeTransport();
+    cloudAuthWarmKey = fingerprint;
+    cloudAuthWarmPromise = null;
+    transport = window.QMS.Transport.createTransport(transportMode, {
+      storeId: storeId(),
+      config: config,
+      role: 'controller',
+      deviceId: 'controller-web',
+    });
+    if (transport.session && transport.session.ensureIdToken) {
+      cloudAuthWarmPromise = transport.session.ensureIdToken();
+    }
+  }
 
   function setConnectButtonDisabled(disabled) {
     void disabled;
@@ -1084,6 +1189,7 @@
     if (connectInFlight) {
       return;
     }
+    syncBundledApiKeyFromStorage();
     connectInFlight = true;
     setConnectButtonDisabled(true);
     pinLocalPocTargets();
@@ -1092,10 +1198,6 @@
       clearInterval(pollTimer);
       pollTimer = null;
     }
-    if (transport && transport.destroy) {
-      transport.destroy();
-    }
-    transport = null;
     connected = false;
     setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
@@ -1116,14 +1218,26 @@
       setConnectButtonDisabled(false);
       return;
     }
-    transport = window.QMS.Transport.createTransport(transportMode, {
-      storeId: storeId(),
-      config: config,
-      role: 'controller',
-      deviceId: 'controller-web',
-    });
+    const fingerprint = cloudConnectFingerprint(transportMode, config);
+    const reuseWarmTransport =
+      allowWarmTransportReuse && transport && cloudAuthWarmKey === fingerprint;
+    if (!reuseWarmTransport) {
+      disposeTransport();
+      cloudAuthWarmKey = '';
+      cloudAuthWarmPromise = null;
+      transport = window.QMS.Transport.createTransport(transportMode, {
+        storeId: storeId(),
+        config: config,
+        role: 'controller',
+        deviceId: 'controller-web',
+      });
+      cloudAuthWarmKey = fingerprint;
+    }
     try {
-      if (transport.session && transport.session.ensureIdToken) {
+      if (cloudAuthWarmPromise && cloudAuthWarmKey === fingerprint) {
+        await cloudAuthWarmPromise;
+        cloudAuthWarmPromise = null;
+      } else if (transport.session && transport.session.ensureIdToken) {
         await transport.session.ensureIdToken();
       }
       connected = true;
@@ -1587,6 +1701,7 @@
     CloudSettings.reconcileLegacyStorageOnBoot();
   }
   fillCloudForm(CloudSettings.load());
+  syncBundledApiKeyFromStorage();
   const params = new URLSearchParams(window.location.search);
   const modeParam = params.get('mode');
   if (modeParam === 'firestore') {
@@ -1642,10 +1757,23 @@
     pinCloudDeviceDefaults();
   }
   if (bootMode === 'local' || bootMode === 'cloud') {
-    connect().catch(function (e) {
-      setConnectedState(false, '');
-      pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
-    });
+    autoConnectPending = true;
+    syncActionButtonStates();
+    if (bootMode === 'cloud' && params.get('noCloudWarm') !== '1') {
+      startCloudAuthWarm();
+      syncActionButtonStates();
+    }
+    allowWarmTransportReuse = true;
+    connect()
+      .catch(function (e) {
+        setConnectedState(false, '');
+        pushLog({ summary: '自動連線失敗 ' + (e && e.message ? e.message : String(e)) });
+      })
+      .finally(function () {
+        allowWarmTransportReuse = false;
+        autoConnectPending = false;
+        syncActionButtonStates();
+      });
   }
   syncTransportRoute();
 })();

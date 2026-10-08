@@ -72,6 +72,10 @@
     let lastBoardUpdateTime = '';
     let tickTimer = null;
     let tickMs = 0;
+    let fastBoardPollTimer = null;
+    const bootWallMs = Date.now();
+    const FAST_BOARD_POLL_MS = 500;
+    const FAST_BOARD_POLL_WINDOW_MS = 20000;
     let heartbeatTimer = null;
     let visibilityHandler = null;
     let simulateOffline = false;
@@ -803,6 +807,7 @@
         if (!isFirestoreAbortError(e)) {
           if (isAuthHttpError(e)) {
             notifyAuthFailure(e);
+            syncCloudGuestStatusUi(false);
           }
           markCloudUnreachable(e);
         }
@@ -977,6 +982,7 @@
         lastHeartbeatSucceeded = false;
         if (isAuthHttpError(e)) {
           notifyAuthFailure(e);
+          syncCloudGuestStatusUi(false);
         }
         markCloudUnreachable(e);
         onStatusLine('heartbeat 失敗');
@@ -1022,6 +1028,17 @@
       };
       ensureAuth().then(kick).catch(kick);
 
+      fastBoardPollTimer = root.setInterval(function () {
+        if (Date.now() - bootWallMs > FAST_BOARD_POLL_WINDOW_MS) {
+          if (fastBoardPollTimer) {
+            root.clearInterval(fastBoardPollTimer);
+            fastBoardPollTimer = null;
+          }
+          return;
+        }
+        pollBoard({ force: false });
+      }, FAST_BOARD_POLL_MS);
+
       scheduleHeartbeatLoop();
       if (root.document && root.document.addEventListener) {
         visibilityHandler = onVisibilityForHeartbeat;
@@ -1058,6 +1075,10 @@
       if (tickTimer) {
         clearInterval(tickTimer);
         tickTimer = null;
+      }
+      if (fastBoardPollTimer) {
+        root.clearInterval(fastBoardPollTimer);
+        fastBoardPollTimer = null;
       }
       if (slowNetworkTimer) {
         clearTimeout(slowNetworkTimer);

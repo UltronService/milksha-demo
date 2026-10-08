@@ -33,8 +33,8 @@ function loadApiKey() {
   throw new Error('MILKSHA_FIREBASE_API_KEY not found');
 }
 
-function bundledInitScript(apiKey) {
-  return ({ key }) => {
+function installBundledCloudInit(ctx, apiKey) {
+  return ctx.addInitScript((key) => {
     const cfg = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
       projectId: 'milksha-qms-dev',
       apiKey: key,
@@ -57,10 +57,11 @@ function bundledInitScript(apiKey) {
           emulatorPrefix: '',
         }),
       );
+      localStorage.setItem('milksha:controller-pos-sign-key', 'fake-milksha-pos-sign-key-for-tests');
     } catch {
       /* ignore */
     }
-  };
+  }, apiKey);
 }
 
 const LEGACY_SEED = () => {
@@ -193,7 +194,7 @@ async function clearStore(controller, board) {
 
 async function runLegacyScenarioA(browser, apiKey) {
   const ctx = await browser.newContext();
-  await ctx.addInitScript(bundledInitScript(apiKey), { key: apiKey });
+  await installBundledCloudInit(ctx, apiKey);
   await ctx.addInitScript(LEGACY_SEED);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
@@ -241,7 +242,7 @@ async function runLegacyScenarioA(browser, apiKey) {
 
 async function runLegacyScenarioB(browser, apiKey) {
   const ctx = await browser.newContext();
-  await ctx.addInitScript(bundledInitScript(apiKey), { key: apiKey });
+  await installBundledCloudInit(ctx, apiKey);
   await ctx.addInitScript(LEGACY_SEED);
   const home = await ctx.newPage();
   await home.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
@@ -349,7 +350,7 @@ async function runLegacyScenarioB(browser, apiKey) {
 
 async function runFreshScenarioC(browser, apiKey) {
   const ctx = await browser.newContext();
-  await ctx.addInitScript(bundledInitScript(apiKey), { key: apiKey });
+  await installBundledCloudInit(ctx, apiKey);
   const boardA = await ctx.newPage();
   const boardB = await ctx.newPage();
   const ctrlA = await ctx.newPage();

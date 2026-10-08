@@ -258,6 +258,24 @@
       return Math.min(cap, base * Math.pow(2, Math.min(attempt - 1, 8)));
     }
 
+    function markUploadHaltedFrom403(err) {
+      const status = err && err.status ? Number(err.status) : 0;
+      if (status !== 403) {
+        return;
+      }
+      const response = err && err.response ? err.response : null;
+      const code = response && response.code != null ? String(response.code) : '';
+      if (
+        code === 'store_not_allowed' ||
+        code === 'forbidden' ||
+        code === 'upload_halted' ||
+        !code
+      ) {
+        accessDenied403 = true;
+        devLoginBlockedUntilMs = Date.now() + devLoginBackoffMs();
+      }
+    }
+
     function noteDevLoginFailure(status) {
       if (status === 403) {
         accessDenied403 = true;
@@ -490,6 +508,7 @@
       clearUploadHalt: function () {
         accessDenied403 = false;
       },
+      markUploadHaltedFrom403: markUploadHaltedFrom403,
     };
   }
 
