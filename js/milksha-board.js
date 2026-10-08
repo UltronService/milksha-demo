@@ -103,6 +103,24 @@
   }
 
   /**
+   * Primary time DESC; when equal, later payload index wins (stable newest-first for batch/reconnect).
+   * @param {{ readyAt?: number, firstSeenAt?: number, payloadIndex?: number }} a
+   * @param {{ readyAt?: number, firstSeenAt?: number, payloadIndex?: number }} b
+   * @param {'readyAt' | 'firstSeenAt'} primaryKey
+   * @returns {number}
+   */
+  function compareNewestFirst(a, b, primaryKey) {
+    const ta = Number(a[primaryKey]) || 0;
+    const tb = Number(b[primaryKey]) || 0;
+    if (ta !== tb) {
+      return tb - ta;
+    }
+    const ia = Number.isFinite(a.payloadIndex) ? a.payloadIndex : 0;
+    const ib = Number.isFinite(b.payloadIndex) ? b.payloadIndex : 0;
+    return ib - ia;
+  }
+
+  /**
    * @param {Array<{ source_type: string, number: string }>} numberContent
    * @returns {{ ready: Array<{ id: string, sourceKey: string, number: string }>, preparing: Array<{ id: string, sourceKey: string, number: string }> }}
    */
@@ -126,6 +144,7 @@
         id: makeItemId(parsed.sourceKey, row.number),
         sourceKey: parsed.sourceKey,
         number: row.number,
+        payloadIndex: i,
       };
       if (parsed.zone === 'ready') {
         if (!readyIds[entry.id]) {
@@ -714,38 +733,54 @@
         const e = parts.ready[i];
         const prev = metaById[e.id];
         const readyAt = prev && prev.readyAt ? prev.readyAt : now;
+        const payloadIndex =
+          prev && Number.isFinite(prev.payloadIndex)
+            ? prev.payloadIndex
+            : Number.isFinite(e.payloadIndex)
+              ? e.payloadIndex
+              : 0;
         nextMeta[e.id] = {
           firstSeenAt: prev && prev.firstSeenAt ? prev.firstSeenAt : now,
           readyAt: newReadyIds.indexOf(e.id) >= 0 ? now : readyAt,
+          payloadIndex: payloadIndex,
         };
         nextReady.push({
           id: e.id,
           sourceKey: e.sourceKey,
           number: e.number,
           readyAt: nextMeta[e.id].readyAt,
+          payloadIndex: payloadIndex,
         });
       }
       nextReady.sort(function (a, b) {
-        return b.readyAt - a.readyAt;
+        return compareNewestFirst(a, b, 'readyAt');
       });
 
       const nextPrep = [];
       for (let j = 0; j < parts.preparing.length; j += 1) {
         const p = parts.preparing[j];
         const prev = metaById[p.id];
+        const prepPayloadIndex =
+          prev && Number.isFinite(prev.payloadIndex)
+            ? prev.payloadIndex
+            : Number.isFinite(p.payloadIndex)
+              ? p.payloadIndex
+              : 0;
         nextMeta[p.id] = {
           firstSeenAt: prev && prev.firstSeenAt ? prev.firstSeenAt : now,
           readyAt: prev && prev.readyAt ? prev.readyAt : null,
+          payloadIndex: prepPayloadIndex,
         };
         nextPrep.push({
           id: p.id,
           sourceKey: p.sourceKey,
           number: p.number,
           firstSeenAt: nextMeta[p.id].firstSeenAt,
+          payloadIndex: prepPayloadIndex,
         });
       }
       nextPrep.sort(function (a, b) {
-        return b.firstSeenAt - a.firstSeenAt;
+        return compareNewestFirst(a, b, 'firstSeenAt');
       });
 
       Object.keys(metaById).forEach(function (k) {
@@ -869,6 +904,7 @@
     detectNewlyReady: detectNewlyReady,
     splitPopQueue: splitPopQueue,
     makeItemId: makeItemId,
+    compareNewestFirst: compareNewestFirst,
     MAX_POP_PER_PUSH: MAX_POP_PER_PUSH,
     PAGE_SIZE: PAGE_SIZE,
     GRID_COLS: GRID_COLS,

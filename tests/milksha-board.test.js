@@ -117,6 +117,179 @@ test('partition and newly-ready detection follow demo script rings', function ()
   );
 });
 
+test('same firstSeenAt tie-break: newest payload index first in preparing', function () {
+  const MB = loadMilkshaBoard();
+  const fixedNow = 1_700_000_000_000;
+  const origNow = Date.now;
+  Date.now = function () {
+    return fixedNow;
+  };
+  try {
+    const sandbox = bootMilkshaBoardMinimal();
+    const runtime = sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
+      document: sandbox.document,
+      window: sandbox,
+    });
+    const content = ['2003', '2005', '2011', '2012'].map(function (no) {
+      return { source_type: 'From_Store_Preparing', number: no };
+    });
+    runtime.applyPayload(content, { silent: true });
+    const snap = runtime.getSnapshot();
+    assert.equal(
+      JSON.stringify(snap.preparing.map((p) => String(p.number))),
+      JSON.stringify(['2012', '2011', '2005', '2003']),
+    );
+    runtime.destroy();
+  } finally {
+    Date.now = origNow;
+  }
+});
+
+test('same readyAt tie-break: newest payload index first in ready', function () {
+  const MB = loadMilkshaBoard();
+  const fixedNow = 1_700_000_000_000;
+  const origNow = Date.now;
+  Date.now = function () {
+    return fixedNow;
+  };
+  try {
+    const sandbox = bootMilkshaBoardMinimal();
+    const runtime = sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
+      document: sandbox.document,
+      window: sandbox,
+    });
+    const content = ['3001', '3002', '3003'].map(function (no) {
+      return { source_type: 'From_Store_OK', number: no };
+    });
+    runtime.applyPayload(content, { silent: true });
+    const snap = runtime.getSnapshot();
+    assert.equal(
+      JSON.stringify(snap.ready.map((r) => String(r.number))),
+      JSON.stringify(['3003', '3002', '3001']),
+    );
+    runtime.destroy();
+  } finally {
+    Date.now = origNow;
+  }
+});
+
+test('silent reconnect preserves tie-break order', function () {
+  const origNow = Date.now;
+  let t = 1_700_000_000_000;
+  Date.now = function () {
+    return t;
+  };
+  try {
+    const sandbox = bootMilkshaBoardMinimal();
+    const runtime = sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
+      document: sandbox.document,
+      window: sandbox,
+    });
+    const content = [
+      { source_type: 'From_Store_Preparing', number: '2003' },
+      { source_type: 'From_Store_Preparing', number: '2012' },
+      { source_type: 'From_Store_OK', number: '8801' },
+      { source_type: 'From_Store_OK', number: '8802' },
+    ];
+    runtime.applyPayload(content, { silent: true });
+    t += 60_000;
+    runtime.applyPayload(content, { silent: true });
+    const snap = runtime.getSnapshot();
+    assert.equal(
+      JSON.stringify(snap.preparing.map((p) => String(p.number))),
+      JSON.stringify(['2012', '2003']),
+    );
+    assert.equal(
+      JSON.stringify(snap.ready.map((r) => String(r.number))),
+      JSON.stringify(['8802', '8801']),
+    );
+    runtime.destroy();
+  } finally {
+    Date.now = origNow;
+  }
+});
+
+function minimalBrand() {
+  return {
+    version: 1,
+    brandId: 'milksha',
+    displayName: '迷客夏',
+    layout: 'milksha-callboard',
+    theme: { primary: '#161616', accent: '#1565FF' },
+    copy: { pickupHint: '請取餐', standbyFallback: 'logo-on-primary' },
+    queue: { historyOrientation: 'horizontal', historyPageIntervalSec: 6 },
+    audio: { tts: false, dingDong: true, mutedDefault: true },
+    assets: { logo: 'assets/logo.svg' },
+  };
+}
+
+function bootMilkshaBoardMinimal() {
+  const dom = {};
+  const root = { className: '', innerHTML: '', style: { setProperty: function () {} } };
+  dom['board-root'] = root;
+  const sandbox = {
+    console: console,
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    clearInterval: clearInterval,
+    setInterval: function () {
+      return 1;
+    },
+    Date: Date,
+    JSON: JSON,
+    Object: Object,
+    Array: Array,
+    Math: Math,
+    Promise: Promise,
+    Set: Set,
+    URLSearchParams: URLSearchParams,
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+    addEventListener: function () {},
+    innerWidth: 1920,
+    innerHeight: 1080,
+    __milkshaSoundLog: [],
+  };
+  sandbox.document = {
+    getElementById: function (id) {
+      if (id === 'board-root') {
+        return root;
+      }
+      if (id === 'milksha-board-viewport' || id === 'milksha-board') {
+        if (!dom[id]) {
+          dom[id] = {
+            innerHTML: '',
+            style: {},
+            classList: { toggle: function () {} },
+          };
+        }
+        return dom[id];
+      }
+      return dom[id] || null;
+    },
+    addEventListener: function () {},
+  };
+  sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'transport', 'board-seq.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
+  sandbox.QMS.createAudioManager = function () {
+    return {
+      setBrandAudio: function () {},
+      setMuted: function () {},
+      unlock: function () {},
+      playDingDong: function () {
+        return Promise.resolve();
+      },
+    };
+  };
+  return sandbox;
+}
+
 test('splitPopQueue caps at three', function () {
   const MB = loadMilkshaBoard();
   const ids = ['a:1', 'a:2', 'a:3', 'a:4', 'a:5'];

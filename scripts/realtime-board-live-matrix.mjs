@@ -12,6 +12,7 @@ import {
   installGithubPagesSiteRoute,
   resolveSiteRoot,
 } from './lib/github-pages-site-route.mjs';
+import { CONTROLLER_BOARD_ONLINE_WAIT_JS } from './lib/controller-board-online.mjs';
 async function expandControllerZone(page, zoneId) {
   await page.evaluate((id) => {
     const section = document.getElementById(id);
@@ -175,10 +176,7 @@ async function runInstrumentedSend(browser, label, siteRoot, ticketNo, opts) {
   await ctrlNav;
   await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
   const controllerBoardOnlineMs = await ctrl
-    .waitForFunction(
-      () => document.getElementById('transport-route')?.getAttribute('data-board-online') === '1',
-      { timeout: 90000 },
-    )
+    .waitForFunction(CONTROLLER_BOARD_ONLINE_WAIT_JS, { timeout: 90000 })
     .then(() => Date.now() - tOpen)
     .catch(() => null);
   await expandControllerZone(ctrl, 'sec-pos');
