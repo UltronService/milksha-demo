@@ -24,12 +24,12 @@
     W: 1920,
     H: 1080,
     split: 'row',
-    titleTop: 65,
-    titleH: 112,
+    titleTop: 72,
+    titleH: 108,
     titleZh: 72,
     titleEn: 28,
     numFont: 88,
-    creamPad: 44,
+    creamPad: 40,
   };
 
   const LAYOUT_PORTRAIT = {
@@ -44,7 +44,7 @@
     creamPad: 36,
   };
 
-  const PREP_WAVES_SRC = 'assets/milksha-prep-waves.svg';
+  const BOARD_BG_SRC = 'assets/milksha-board-bg-1007.jpg';
 
   const DESIGN_LANDSCAPE_W = LAYOUT_LANDSCAPE.W;
   const DESIGN_LANDSCAPE_H = LAYOUT_LANDSCAPE.H;
@@ -364,6 +364,9 @@
       boardEl.style.width = cfg.W + 'px';
       boardEl.style.height = cfg.H + 'px';
       boardEl.style.transform = 'none';
+      boardEl.classList.toggle('milksha-board--landscape-art', orientation === 'landscape');
+      boardEl.style.backgroundImage =
+        orientation === 'landscape' ? 'url("' + BOARD_BG_SRC + '")' : 'none';
       rootEl.style.setProperty('--milksha-num-font', cfg.numFont + 'px');
     }
 
@@ -460,12 +463,6 @@
         'px;height:' +
         h +
         'px">';
-      if (cls.indexOf('prep') >= 0) {
-        z +=
-          '<img class="milksha-prep-waves" src="' +
-          PREP_WAVES_SRC +
-          '" alt="" decoding="async" />';
-      }
       z += '<div class="milksha-ztitle" style="margin-top:' + cfg.titleTop + 'px;height:' + cfg.titleH + 'px">';
       z +=
         '<span class="milksha-ztitle-zh" style="font-size:' +

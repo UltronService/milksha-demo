@@ -199,7 +199,11 @@ test('boot rings on new ready without overlay markup', async function () {
       }
       if (id === 'milksha-board-viewport' || id === 'milksha-board') {
         if (!dom[id]) {
-          dom[id] = { innerHTML: '', style: {} };
+          dom[id] = {
+            innerHTML: '',
+            style: {},
+            classList: { toggle: function () {} },
+          };
         }
         return dom[id];
       }
