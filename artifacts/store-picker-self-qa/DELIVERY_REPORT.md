@@ -4,17 +4,17 @@
 
 - PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft)
 - **Base (main):** `b0980bc35d8104b61b7bc693d2c049ff975333ed` (#31 merged)
-- **HEAD (branch tip):** `da40454b335fb7613e4e4cf58bfc67e52f4f2d76`
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37812304093 — **success**
+- **HEAD (branch tip):** `884c0ee53d1126b70baeaed99026a20852a135e8`
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37816088370 — **success**
 
 ## 1. Tests (CI on HEAD)
 
 | suite | passed | failed | skipped |
 |-------|--------|--------|---------|
 | unit (`npm test`) | 147 | 0 | 0 |
-| e2e (`npm run test:e2e`) | 137 | 0 | 1 |
+| e2e (`npm run test:e2e`) | 138 | 0 | 1 |
 
-Log: `gh run view 37796461856 --log` → `# tests 147`; `137 passed`, `1 skipped` (~27.2m).
+Log: `gh run view 37816088370 --log` → `# tests 147`; `138 passed`, `1 skipped` (~27.5m).
 
 Local e2e (this VM, no FONTCONFIG): 133 passed / 1 failed / 4 skipped — `artifacts/store-picker-self-qa/e2e-full.log`.
 
