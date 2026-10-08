@@ -1,0 +1,9 @@
+{
+  "test": "controller-store-picker-evidence.spec.mjs › 3a listStores pauses in background tab and refreshes on foreground",
+  "pollIntervalMs": 2000,
+  "listStoresAfterBoot": 1,
+  "listStoresWhileHidden5s": 1,
+  "listStoresAfterForeground": 2,
+  "pausedWhileHidden": true,
+  "refreshedOnForeground": true
+}

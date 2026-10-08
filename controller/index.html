@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261006b" />
+    <link rel="stylesheet" href="controller.css?v=20261008a" />
     <script src="../js/board/today-board.js?v=20261006b"></script>
   </head>
   <body>
@@ -68,6 +68,14 @@
       <div class="controller-zone-stack" data-testid="controller-zone-stack">
       <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="0">
         <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-connect">1. 連線與狀態</button>
+          <p
+            id="store-not-allowed-banner"
+            class="store-not-allowed-banner"
+            hidden
+            role="alert"
+            data-testid="store-not-allowed-banner"
+          ></p>
+          <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
         <div class="zone-body" hidden>
           <label>選擇門市
             <select id="fld-store" data-testid="fld-store"></select>
@@ -130,13 +138,6 @@
             <button type="button" id="btn-gen-board-link" data-testid="btn-gen-board-link">產生看板連結</button>
           </div>
           <button type="button" id="btn-connect" class="primary" data-testid="btn-connect">連線</button>
-          <p
-            id="store-not-allowed-banner"
-            class="store-not-allowed-banner"
-            hidden
-            role="alert"
-            data-testid="store-not-allowed-banner"
-          ></p>
           <dl class="status-dl">
             <dt>台北時間</dt>
             <dd id="status-taipei-time" data-testid="status-taipei-time">—</dd>
@@ -283,6 +284,7 @@
     <script src="../js/transport/firestore-transport.js?v=20261006b"></script>
     <script src="../js/transport/create-transport.js?v=20261006b"></script>
     <script src="../js/receiver/validate-request.js?v=20261006b"></script>
-    <script src="controller-app.js?v=20261006b"></script>
+    <script src="store-list.js?v=20261008a"></script>
+    <script src="controller-app.js?v=20261008a"></script>
   </body>
 </html>

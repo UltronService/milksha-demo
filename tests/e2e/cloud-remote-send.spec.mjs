@@ -110,23 +110,10 @@ test.describe('cloud remote send (isolated contexts)', () => {
     const ctrlCtx = await isolatedCloudContext(browser);
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(controller);
-    await controller.goto(`${BASE}/controller/`);
-    await expandControllerZone(controller, 'sec-connect');
-    await controller.selectOption('#fld-store', { label: /s999999/ }).catch(async () => {
-      await controller.evaluate(() => {
-        const sel = document.getElementById('fld-store');
-        if (!sel) return;
-        const opt = document.createElement('option');
-        opt.value = 's999999';
-        opt.textContent = '測試拒絕店 s999999';
-        sel.appendChild(opt);
-        sel.value = 's999999';
-      });
-    });
-    await controller.click('#btn-connect');
+    await controller.goto(`${BASE}/controller/?mode=cloud&store=zz-deny-test`);
     const banner = controller.locator('[data-testid="store-not-allowed-banner"]');
-    await expect(banner).toBeVisible();
-    await expect(banner).toContainText('s120030');
+    await expect(banner).toBeVisible({ timeout: 20000 });
+    await expect(banner).toContainText('這家店還沒有看板連線過');
     await ctrlCtx.close();
   });
 

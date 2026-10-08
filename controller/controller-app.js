@@ -36,6 +36,8 @@
     lastBoardSeq: 0,
     pauseCloud: false,
     lastPosResponse: null,
+    storeAccessBlocked: null,
+    storeListFetchError: '',
     isCommandInFlight: function () {
       return commandInFlight;
     },
@@ -78,6 +80,7 @@
 
   const CloudSettings = window.QMS.Transport.CloudSettings;
   const ControllerSecrets = window.QMS.Transport.ControllerSecrets;
+  const StoreList = window.QMS.Controller.StoreList;
 
   function modeDisplayName(mode) {
     if (mode === 'cloud') {
@@ -321,6 +324,11 @@
     if (!btn || !btn.id) {
       return '';
     }
+    if (storeAccessBlocked && storeAccessBlocked.message) {
+      if (btn.hasAttribute('data-requires-connect') || POS_SEND_BUTTON_IDS.has(btn.id)) {
+        return storeAccessBlocked.message;
+      }
+    }
     const id = btn.id;
     if (id === 'btn-connect' && connectInFlight) {
       return '連線中…';
@@ -418,11 +426,50 @@
     box.hidden = false;
   }
 
+  function setStoreAccessBlockedFromErr(err) {
+    if (!StoreList) {
+      return false;
+    }
+    const accessMsg = StoreList.resolveStoreAccessUserMessage(err);
+    if (!accessMsg) {
+      storeAccessBlocked = null;
+      return false;
+    }
+    const code = StoreList.resolveErrorCodeFromErr(err);
+    storeAccessBlocked = { code: code || 'blocked', message: accessMsg };
+    return true;
+  }
+
+  function clearStoreAccessBlocked() {
+    storeAccessBlocked = null;
+  }
+
+  function validateCurrentStoreFormatOrBlock() {
+    if (!StoreList) {
+      return true;
+    }
+    const sid = storeId();
+    if (!StoreList.isValidStoreIdFormat(sid)) {
+      storeAccessBlocked = { code: 'store_id_invalid', message: StoreList.MSG_STORE_ID_INVALID };
+      hideCommandErrorAlert();
+      showStoreNotAllowedBanner(StoreList.MSG_STORE_ID_INVALID);
+      return false;
+    }
+    return true;
+  }
+
   function presentConnectError(err) {
     const status = err && err.status ? Number(err.status) : 0;
     const response = err && err.response ? err.response : null;
     const code =
       CmdErrors && CmdErrors.resolveErrorCode ? CmdErrors.resolveErrorCode(err, {}) : '';
+    if (setStoreAccessBlockedFromErr(err)) {
+      hideCommandErrorAlert();
+      showStoreNotAllowedBanner(storeAccessBlocked.message);
+      syncActionButtonStates();
+      pushLog({ summary: '連線失敗 · ' + storeAccessBlocked.message });
+      return;
+    }
     const userMessage =
       CmdErrors && CmdErrors.connectUserMessage
         ? CmdErrors.connectUserMessage(err)
@@ -1119,17 +1166,84 @@
   let cloudAuthWarmKey = '';
   /** @type {Promise<void>|null} */
   let cloudAuthWarmPromise = null;
+  let storeListPollTimer = null;
+  let storeListFetchInFlight = false;
+  let storeListFetchError = '';
+  /** @type {null | { code: string, message: string }} */
+  let storeAccessBlocked = null;
+  /** @type {Array<object>} */
+  let cloudStoreRows = [];
+
+  const STORE_LIST_POLL_MS = StoreList ? StoreList.STORE_LIST_POLL_MS : 30000;
 
   function cloudConnectFingerprint(transportMode, config) {
     const cfg = config || {};
-    return [
-      transportMode,
-      storeId(),
+    const modeEl = document.getElementById('fld-mode');
+    const mode = modeEl ? modeEl.value : 'local';
+    const parts = [transportMode];
+    if (mode !== 'cloud') {
+      parts.push(storeId());
+    }
+    parts.push(
       cfg.functionsBaseUrl || '',
       cfg.projectId || '',
       cfg.apiKey || '',
       cfg.gateway || '',
-    ].join('\0');
+    );
+    return parts.join('\0');
+  }
+
+  async function reconnectCloudForStoreChange() {
+    if (!isCloudPickerMode()) {
+      await connect();
+      return;
+    }
+    if (storeAccessBlocked) {
+      syncActionButtonStates();
+      return;
+    }
+    if (!validateCurrentStoreFormatOrBlock()) {
+      setConnectedState(false, '');
+      stopStoreListPolling();
+      syncActionButtonStates();
+      return;
+    }
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    const mode = document.getElementById('fld-mode').value;
+    const transportMode = mode === 'firestore' ? 'firestore' : mode;
+    const config = buildConfig(mode);
+    const existingSession = transport && transport.session ? transport.session : null;
+    connected = false;
+    setConnectedState(false, '');
+    syncActionButtonStates();
+    if (!existingSession) {
+      await connect();
+      return;
+    }
+    disposeTransport();
+    transport = window.QMS.Transport.Firestore.createFirestoreTransport({
+      storeId: storeId(),
+      config: config,
+      session: existingSession,
+    });
+    try {
+      connected = true;
+      await refreshBoardLists();
+      await pollDevice();
+      pushLog({ summary: '換店 ' + storeId() });
+      startPolling();
+      await refreshStoreListFromCloud();
+      startStoreListPolling();
+      setConnectedState(true, mode);
+    } catch (e) {
+      connected = false;
+      setConnectedState(false, '');
+      presentConnectError(e);
+    }
+    syncActionButtonStates();
   }
 
   function disposeTransport() {
@@ -1189,9 +1303,22 @@
     if (connectInFlight) {
       return;
     }
+    if (storeAccessBlocked) {
+      syncActionButtonStates();
+      return;
+    }
     syncBundledApiKeyFromStorage();
     connectInFlight = true;
     setConnectButtonDisabled(true);
+    clearStoreAccessBlocked();
+    hideStoreNotAllowedBanner();
+    if (isCloudPickerMode() && !validateCurrentStoreFormatOrBlock()) {
+      connectInFlight = false;
+      setConnectButtonDisabled(false);
+      setConnectedState(false, '');
+      syncActionButtonStates();
+      return;
+    }
     pinLocalPocTargets();
     pinCloudDeviceDefaults();
     if (pollTimer) {
@@ -1201,7 +1328,6 @@
     connected = false;
     setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
-    hideStoreNotAllowedBanner();
     if (mode === 'cloud' && !CloudSettings.isComplete(readCloudForm())) {
       showUserBanner('請先在進階設定填寫雲端設定');
       syncCloudUi();
@@ -1247,10 +1373,17 @@
       await pollDevice();
       pushLog({ summary: '連線 ' + mode + ' store=' + storeId() + ' device=' + deviceId });
       startPolling();
+      if (mode === 'cloud') {
+        await refreshStoreListFromCloud();
+        startStoreListPolling();
+      }
       await mergeCloudLogs();
     } catch (e) {
       setConnectedState(false, '');
       presentConnectError(e);
+      if (storeAccessBlocked) {
+        stopStoreListPolling();
+      }
       throw e;
     } finally {
       connectInFlight = false;
@@ -1333,7 +1466,86 @@
     document.getElementById('fld-no').value = kind === 'peak' ? '3018' : '1004';
   }
 
+  function urlStoreParam() {
+    return new URLSearchParams(window.location.search).get('store') || '';
+  }
+
+  function isCloudPickerMode() {
+    const modeEl = document.getElementById('fld-mode');
+    return modeEl && modeEl.value === 'cloud';
+  }
+
+  function setStoreListFetchError(line) {
+    storeListFetchError = line || '';
+    const el = document.getElementById('store-list-fetch-hint');
+    if (!el) {
+      return;
+    }
+    if (!storeListFetchError) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.textContent = storeListFetchError;
+    el.hidden = false;
+  }
+
+  function renderCloudStoreSelect(stores, selectedId) {
+    const sel = document.getElementById('fld-store');
+    if (!sel || !StoreList) {
+      return;
+    }
+    const pinned = urlStoreParam();
+    const current = String(selectedId || sel.value || '').trim() || storeId();
+    let rows = StoreList.mergePinnedStore(stores || [], current);
+    rows = StoreList.filterStoresForPicker(rows, pinned);
+    rows = StoreList.sortStoresByStoreId(rows);
+    cloudStoreRows = rows;
+    const prev = current;
+    sel.innerHTML = '';
+    rows.forEach(function (store) {
+      const meta = StoreList.formatStoreOptionMeta(store);
+      const opt = document.createElement('option');
+      opt.value = store.storeId;
+      opt.textContent = meta.text;
+      opt.className = meta.onlineClass;
+      sel.appendChild(opt);
+    });
+    if (prev && rows.some(function (s) { return s.storeId === prev; })) {
+      sel.value = prev;
+    } else if (rows.length) {
+      const def = Validate.DEFAULT_HOME_BOARD_STORE_ID || 'c030020';
+      const hasDef = rows.some(function (s) { return s.storeId === def; });
+      sel.value = hasDef ? def : rows[0].storeId;
+    }
+  }
+
+  function ensureMinimalCloudStoreSelect() {
+    const sel = document.getElementById('fld-store');
+    if (!sel) {
+      return;
+    }
+    const def = Validate.DEFAULT_HOME_BOARD_STORE_ID || 'c030020';
+    const fromUrl = urlStoreParam();
+    const initial = fromUrl || def;
+    sel.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = initial;
+    opt.textContent = initial + ' (' + initial + ') · offline';
+    opt.className = 'store-offline';
+    sel.appendChild(opt);
+    sel.value = initial;
+  }
+
   function initStoreSelect() {
+    if (isCloudPickerMode()) {
+      ensureMinimalCloudStoreSelect();
+      const fromUrl = urlStoreParam();
+      if (fromUrl) {
+        document.getElementById('fld-store').value = fromUrl;
+      }
+      return;
+    }
     const sel = document.getElementById('fld-store');
     Validate.STORES.forEach(function (s) {
       const opt = document.createElement('option');
@@ -1344,8 +1556,81 @@
       }
       sel.appendChild(opt);
     });
-    const fromUrl = new URLSearchParams(window.location.search).get('store');
-    if (fromUrl) sel.value = fromUrl;
+    const fromUrl = urlStoreParam();
+    if (fromUrl) {
+      sel.value = fromUrl;
+    }
+  }
+
+  function stopStoreListPolling() {
+    if (storeListPollTimer) {
+      clearInterval(storeListPollTimer);
+      storeListPollTimer = null;
+    }
+  }
+
+  async function refreshStoreListFromCloud() {
+    if (!isCloudPickerMode() || !transport || !transport.session) {
+      return;
+    }
+    if (storeListFetchInFlight) {
+      return;
+    }
+    storeListFetchInFlight = true;
+    const sel = document.getElementById('fld-store');
+    const keepValue = sel ? sel.value : storeId();
+    try {
+      const config = buildConfig('cloud');
+      const payload = await StoreList.fetchListStores(config, transport.session);
+      const stores = payload && Array.isArray(payload.stores) ? payload.stores : [];
+      renderCloudStoreSelect(stores, keepValue);
+      setStoreListFetchError('');
+    } catch (e) {
+      if (StoreList) {
+        setStoreListFetchError(StoreList.listStoresErrorLine(e));
+      }
+    } finally {
+      storeListFetchInFlight = false;
+    }
+  }
+
+  function storeListPollIntervalMs() {
+    try {
+      const host = window.location && window.location.hostname;
+      const local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+      if (local) {
+        const testMs = Number(new URLSearchParams(window.location.search).get('testStoreListPollMs'));
+        if (Number.isFinite(testMs) && testMs >= 500) {
+          return testMs;
+        }
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return STORE_LIST_POLL_MS;
+  }
+
+  function startStoreListPolling() {
+    stopStoreListPolling();
+    if (!isCloudPickerMode()) {
+      return;
+    }
+    const intervalMs = storeListPollIntervalMs();
+    storeListPollTimer = setInterval(function () {
+      if (document.hidden) {
+        return;
+      }
+      refreshStoreListFromCloud().catch(function () {});
+    }, intervalMs);
+  }
+
+  function onStorePickerVisibilityChange() {
+    if (!isCloudPickerMode()) {
+      return;
+    }
+    if (!document.hidden) {
+      refreshStoreListFromCloud().catch(function () {});
+    }
   }
 
   function initSourceSelect() {
@@ -1401,10 +1686,25 @@
   }
 
   document.getElementById('fld-mode').addEventListener('change', function () {
+    stopStoreListPolling();
+    initStoreSelect();
     syncCloudUi();
     updateBoardLinks();
     syncActionButtonStates();
   });
+  document.getElementById('fld-store').addEventListener('change', function () {
+    updateBoardLinks();
+    if (!isCloudPickerMode()) {
+      return;
+    }
+    clearStoreAccessBlocked();
+    hideStoreNotAllowedBanner();
+    deviceOnline = false;
+    lastHeartbeatAt = '';
+    boardLinkHint = '';
+    reconnectCloudForStoreChange().catch(function () {});
+  });
+  document.addEventListener('visibilitychange', onStorePickerVisibilityChange);
   document.getElementById('fld-pos-sign-key').addEventListener('input', function () {
     if (ControllerSecrets) {
       ControllerSecrets.savePosSignSecret(document.getElementById('fld-pos-sign-key').value);
@@ -1722,6 +2022,9 @@
   document.getElementById('fld-tammy').value = JSON.stringify(Validate.TAMMY_SAMPLE_REQUEST, null, 2);
 
   initStoreSelect();
+  if (isCloudPickerMode() && !validateCurrentStoreFormatOrBlock()) {
+    syncActionButtonStates();
+  }
   initSourceSelect();
   initActionBlockReasons();
   initMobileZones();
@@ -1739,6 +2042,9 @@
     },
     getTransport: function () {
       return transport;
+    },
+    refreshStoreListFromCloud: function () {
+      return refreshStoreListFromCloud();
     },
     setDevCommandHandler: function (fn) {
       if (!transport || !transport.cloudApi) {
@@ -1759,11 +2065,15 @@
   if (bootMode === 'local' || bootMode === 'cloud') {
     autoConnectPending = true;
     syncActionButtonStates();
-    if (bootMode === 'cloud' && params.get('noCloudWarm') !== '1') {
+    if (bootMode === 'cloud' && params.get('noCloudWarm') !== '1' && !storeAccessBlocked) {
       startCloudAuthWarm();
       syncActionButtonStates();
     }
     allowWarmTransportReuse = true;
+    if (storeAccessBlocked) {
+      autoConnectPending = false;
+      syncActionButtonStates();
+    } else {
     connect()
       .catch(function (e) {
         setConnectedState(false, '');
@@ -1774,6 +2084,12 @@
         autoConnectPending = false;
         syncActionButtonStates();
       });
+    }
   }
   syncTransportRoute();
+
+  setInterval(function () {
+    window.__controllerTelemetry.storeAccessBlocked = storeAccessBlocked;
+    window.__controllerTelemetry.storeListFetchError = storeListFetchError;
+  }, 500);
 })();
