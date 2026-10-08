@@ -9,7 +9,7 @@
   const BoardSeq = QMS.Transport.BoardSeq;
   const TodayBoard = QMS.Board.TodayBoard;
 
-  const VERSION = 'receiver-demo-2026-10-08-boardseq';
+  const VERSION = 'receiver-demo-2026-10-08-stale-clear';
 
   function isDemoMode() {
     try {
@@ -70,6 +70,8 @@
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
+    /** Last applied today_board.updatedAt (epoch ms) from cloud, not browser clock. */
+    let lastAppliedCloudBoardUpdatedAtMs = 0;
     let tickTimer = null;
     let tickMs = 0;
     let fastBoardPollTimer = null;
@@ -403,6 +405,27 @@
       lastResolvedSource = nextSource;
     }
 
+    function boardUpdatedAtToMs(value) {
+      if (QMS.Receiver.parseCommandTimeValue) {
+        const parsed = QMS.Receiver.parseCommandTimeValue(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      if (typeof value === 'string' && value.trim()) {
+        const ms = Date.parse(value);
+        return Number.isFinite(ms) ? ms : 0;
+      }
+      return 0;
+    }
+
+    function noteAppliedCloudBoardUpdatedAt(updatedAt) {
+      const ms = boardUpdatedAtToMs(updatedAt);
+      if (ms > 0) {
+        lastAppliedCloudBoardUpdatedAtMs = Math.max(lastAppliedCloudBoardUpdatedAtMs, ms);
+      }
+    }
+
     function clearGuestBoard(opts) {
       const o = opts || {};
       applyNumberContent([], localSeq, {
@@ -464,6 +487,9 @@
       }
       if (!(opts && opts.skipCacheWrite) && TodayBoard.hasSessionBusinessDate()) {
         saveCache(localSeq, list, opts && opts.boardUpdatedAt);
+      }
+      if (opts && opts.boardUpdatedAt) {
+        noteAppliedCloudBoardUpdatedAt(opts.boardUpdatedAt);
       }
       onBoardAck({ seq: localSeq, response: res, newlyReady: ringIds });
       return res;
@@ -959,8 +985,63 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
-        const seq = await resolveCommandBoardSeq(cmd, deviceData);
-        applyNumberContent([], seq, { silent: true });
+        const cmdMs = QMS.Receiver.commandServerTimeMs
+          ? QMS.Receiver.commandServerTimeMs(cmd)
+          : null;
+        const fromCmd = Number(cmd.boardSeq);
+        const fromDev =
+          deviceData && deviceData.boardSeq != null ? Number(deviceData.boardSeq) : 0;
+        let boardUpdatedAt = '';
+        let snap = null;
+        try {
+          snap = await transport.readBoard();
+        } catch (e) {
+          /* ignore */
+        }
+        const tickets =
+          snap && snap.data && Array.isArray(snap.data.tickets) ? snap.data.tickets : [];
+        if (tickets.length > 0) {
+          const cloudMs = boardUpdatedAtToMs(snap.data.updatedAt);
+          if (cmdMs != null && cloudMs > 0 && cmdMs < cloudMs) {
+            await acknowledgeSkippedPendingCommand(cmd);
+            return;
+          }
+          const cloudSeq = Number(snap.data.seq);
+          const intentSeq = Math.max(
+            Number.isFinite(fromCmd) && fromCmd > 0 ? fromCmd : 0,
+            Number.isFinite(fromDev) && fromDev > 0 ? fromDev : 0,
+          );
+          if (Number.isFinite(cloudSeq) && intentSeq > 0 && cloudSeq > intentSeq) {
+            await acknowledgeSkippedPendingCommand(cmd);
+            return;
+          }
+        } else if (
+          cmdMs != null &&
+          lastAppliedCloudBoardUpdatedAtMs > 0 &&
+          cmdMs < lastAppliedCloudBoardUpdatedAtMs
+        ) {
+          await acknowledgeSkippedPendingCommand(cmd);
+          return;
+        }
+        let applySeq = 0;
+        if (Number.isFinite(fromCmd) && fromCmd > 0) {
+          applySeq = fromCmd;
+        }
+        if (Number.isFinite(fromDev) && fromDev > applySeq) {
+          applySeq = fromDev;
+        }
+        if (snap && snap.data && tickets.length === 0) {
+          const cloudSeq = Number(snap.data.seq);
+          if (Number.isFinite(cloudSeq) && cloudSeq > applySeq) {
+            applySeq = cloudSeq;
+          }
+          boardUpdatedAt = snap.data.updatedAt || '';
+        }
+        if (!(applySeq > 0)) {
+          applySeq = await resolveCommandBoardSeq(cmd, deviceData);
+        }
+        applyNumberContent([], applySeq, { silent: true, boardUpdatedAt });
+        noteAppliedCloudBoardUpdatedAt(boardUpdatedAt);
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
         const preparing = Array.isArray(params.preparing) ? params.preparing : [];
@@ -973,6 +1054,14 @@
         });
         const seq = await resolveCommandBoardSeq(cmd, deviceData);
         applyNumberContent(nc, seq, { silent: false });
+        try {
+          const snap = await transport.readBoard();
+          if (snap && snap.data && snap.data.updatedAt) {
+            noteAppliedCloudBoardUpdatedAt(snap.data.updatedAt);
+          }
+        } catch (e) {
+          /* ignore */
+        }
       }
     }
 
