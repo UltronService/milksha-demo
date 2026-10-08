@@ -50,6 +50,7 @@ test.describe('home board cloud recovery', () => {
     await board.unroute('https://firestore.googleapis.com/**');
     await board.unroute('https://asia-east1-milksha-qms-dev.cloudfunctions.net/**');
     await board.evaluate(() => window.receiverCloud.scheduleCloudResync('online'));
+    // 35s: guest board may wait for auth recheck interval before Firestore recovers (was 20s flake on CI).
     await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 35000 });
     await boardCtx.close();
     await ctrlCtx.close();
