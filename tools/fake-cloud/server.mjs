@@ -262,6 +262,20 @@ function storeHasOnlineBox(storeId) {
   return false;
 }
 
+function storeAllowsPosBoardWrite(storeId) {
+  const prefix = `stores/${storeId}/devices/`;
+  const now = Date.now();
+  for (const [k, v] of docs.entries()) {
+    if (!k.startsWith(prefix)) continue;
+    if (!v.lastSeen) continue;
+    const age = now - Date.parse(v.lastSeen);
+    if (age >= 120000) continue;
+    if (v.online === true) return true;
+    if (v.simulatedOffline === true) return true;
+  }
+  return false;
+}
+
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -537,29 +551,32 @@ const server = http.createServer(async (req, res) => {
           return json(res, 200, { isSuccess: false, information: '簽章錯誤' });
         }
         const online = storeHasOnlineBox(storeId);
+        const allowWrite = storeAllowsPosBoardWrite(storeId);
         const info = online ? '資料顯示成功' : '找不到機台';
         let seq = null;
-        const nc = body.serviceSpecialData_Json?.data?.number_content || [];
-        const tickets = numberToTickets(nc);
-        seq = nextSeq(storeId);
-        docs.set(boardKey(storeId), {
-          storeId,
-          businessDate: taipeiBusinessDate(),
-          seq: seq,
-          updatedAt: new Date().toISOString(),
-          source: 'A',
-          tickets,
-          clearedAt: tickets.length ? null : new Date().toISOString(),
-        });
+        if (allowWrite) {
+          const nc = body.serviceSpecialData_Json?.data?.number_content || [];
+          const tickets = numberToTickets(nc);
+          seq = nextSeq(storeId);
+          docs.set(boardKey(storeId), {
+            storeId,
+            businessDate: taipeiBusinessDate(),
+            seq: seq,
+            updatedAt: new Date().toISOString(),
+            source: 'A',
+            tickets,
+            clearedAt: tickets.length ? null : new Date().toISOString(),
+          });
+        }
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
-          isSuccess: online,
+          isSuccess: allowWrite,
           information: info,
           seq: seq,
         });
         return json(res, 200, {
-          isSuccess: true,
+          isSuccess: allowWrite,
           information: info,
           seq: seq,
           boxOnline: online,

@@ -54,7 +54,8 @@
 |------|------|------|
 | `qa-pr16-auth-board` reload／stale | **#32**：boot 時間被 heartbeat／Firestore 先搶占；`testDevicePollMs` 停自動 poll + gateway 寫死 8877 | boot 僅 devLogin／signIn；`FAKE_CLOUD_HTTP_DATE`；gateway 用 `location.port`；`kickDevicePoll` 單次 evaluate |
 | `screenshots` cloud `receiverCloud` | **main／測試**：receiver-demo cloud 未寫入 cloud-settings | board 頁 init `milksha:cloud-settings` + `device=stb-01` |
-| 其餘（全量 e2e） | 見 CI／本輪 `npm run test:e2e` 終端數字 | 合併 #33 後重跑 |
+| `controller-no-board-online` | **#32**：`posReceiver` 離線仍 `isSuccess:true` 時控制台未顯示「請先打開看板」 | `formatPosUserMessage`／`posSend` 辨識 `boxOnline:false` |
+| 其餘（全量 e2e） | 見 CI run | 合併 #33 後重跑 |
 
 ## 7. Legacy / SDK
 
