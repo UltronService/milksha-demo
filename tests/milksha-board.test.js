@@ -199,7 +199,11 @@ test('boot rings on new ready without overlay markup', async function () {
       }
       if (id === 'milksha-board-viewport' || id === 'milksha-board') {
         if (!dom[id]) {
-          dom[id] = { innerHTML: '', style: {} };
+          dom[id] = {
+            innerHTML: '',
+            style: {},
+            classList: { toggle: function () {} },
+          };
         }
         return dom[id];
       }
@@ -210,6 +214,7 @@ test('boot rings on new ready without overlay markup', async function () {
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
 
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
@@ -240,7 +245,7 @@ test('boot rings on new ready without overlay markup', async function () {
   ]);
   assert.equal(played.length, 0);
   assert.equal(sandbox.__milkshaSoundLog.length, 0);
-  assert.match(dom['milksha-board'].innerHTML, /milksha-cream/);
+  assert.match(dom['milksha-board'].innerHTML, /milksha-art-numbers|milksha-cream/);
   assert.doesNotMatch(dom['milksha-board'].innerHTML, /milksha-ov/);
 
   runtime.applyPayload([
