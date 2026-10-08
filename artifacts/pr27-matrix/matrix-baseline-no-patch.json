@@ -1,0 +1,429 @@
+{
+  "runs": 3,
+  "items": [
+    {
+      "label": "matrix-1",
+      "code": 1,
+      "results": {
+        "at": "2026-10-08T04:01:34.670Z",
+        "publicBase": "https://ultronservice.github.io/milksha-demo",
+        "mergeCommit": "a82cb9b",
+        "runtimePatch": false,
+        "script": "scripts/public-pages-pr27-live-qa.mjs",
+        "contexts": [
+          {
+            "context": "fresh",
+            "lines": [
+              {
+                "context": "fresh",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "fresh",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1486,
+                "pageOpenToFirstNumberMs": 2851,
+                "cleared": true
+              },
+              {
+                "context": "fresh",
+                "check": "c",
+                "pass": true,
+                "rounds": [
+                  {
+                    "round": 1,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 766,
+                    "sendBMs": 1158,
+                    "pass": true
+                  },
+                  {
+                    "round": 2,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 934,
+                    "sendBMs": 1033,
+                    "pass": true
+                  },
+                  {
+                    "round": 3,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 765,
+                    "sendBMs": 1131,
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "context": "fresh",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "fresh",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          },
+          {
+            "context": "old-settings",
+            "lines": [
+              {
+                "context": "old-settings",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "old-settings",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1381,
+                "pageOpenToFirstNumberMs": 7869,
+                "cleared": true
+              },
+              {
+                "context": "old-settings",
+                "check": "c",
+                "pass": false,
+                "error": "page.waitForFunction: Timeout 45000ms exceeded."
+              },
+              {
+                "context": "old-settings",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "old-settings",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          }
+        ],
+        "c030020Final": {
+          "empty": true,
+          "readyCount": 0
+        }
+      },
+      "outTail": "[2026-10-08T04:01:33.339Z] PR #27 public Pages QA\n[2026-10-08T04:01:34.670Z] context fresh\n[2026-10-08T04:01:47.040Z] b: clear_now synced\n[2026-10-08T04:01:53.165Z] fresh-c1-preclear-a: clear_now synced\n[2026-10-08T04:01:53.922Z] fresh-c1-preclear-b: clear_now synced\n[2026-10-08T04:01:57.722Z] fresh-c2-preclear-a: clear_now synced\n[2026-10-08T04:01:57.756Z] fresh-c2-preclear-b: clear_now synced\n[2026-10-08T04:02:01.456Z] fresh-c3-preclear-a: clear_now synced\n[2026-10-08T04:02:01.923Z] fresh-c3-preclear-b: clear_now synced\n[2026-10-08T04:02:05.389Z] fresh-c-final-a: clear_now synced\n[2026-10-08T04:02:06.106Z] fresh-c-final-b: clear_now synced\n[2026-10-08T04:02:39.721Z] e: clear_now synced\n[2026-10-08T04:02:39.730Z] context old-settings\n[2026-10-08T04:02:59.820Z] b: clear_now synced\n[2026-10-08T04:03:03.378Z] old-settings-c1-preclear-a: clear_now synced\n[2026-10-08T04:03:03.410Z] old-settings-c1-preclear-b: clear_now synced\n[2026-10-08T04:04:27.217Z] e: clear_now synced\n[2026-10-08T04:04:28.706Z] wrote /workspace/artifacts/pr27live/results.json\n"
+    },
+    {
+      "label": "matrix-2",
+      "code": 1,
+      "results": {
+        "at": "2026-10-08T04:01:34.670Z",
+        "publicBase": "https://ultronservice.github.io/milksha-demo",
+        "mergeCommit": "a82cb9b",
+        "runtimePatch": false,
+        "script": "scripts/public-pages-pr27-live-qa.mjs",
+        "contexts": [
+          {
+            "context": "fresh",
+            "lines": [
+              {
+                "context": "fresh",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "fresh",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1486,
+                "pageOpenToFirstNumberMs": 2851,
+                "cleared": true
+              },
+              {
+                "context": "fresh",
+                "check": "c",
+                "pass": true,
+                "rounds": [
+                  {
+                    "round": 1,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 766,
+                    "sendBMs": 1158,
+                    "pass": true
+                  },
+                  {
+                    "round": 2,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 934,
+                    "sendBMs": 1033,
+                    "pass": true
+                  },
+                  {
+                    "round": 3,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 765,
+                    "sendBMs": 1131,
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "context": "fresh",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "fresh",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          },
+          {
+            "context": "old-settings",
+            "lines": [
+              {
+                "context": "old-settings",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "old-settings",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1381,
+                "pageOpenToFirstNumberMs": 7869,
+                "cleared": true
+              },
+              {
+                "context": "old-settings",
+                "check": "c",
+                "pass": false,
+                "error": "page.waitForFunction: Timeout 45000ms exceeded."
+              },
+              {
+                "context": "old-settings",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "old-settings",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          }
+        ],
+        "c030020Final": {
+          "empty": true,
+          "readyCount": 0
+        }
+      },
+      "outTail": "[2026-10-08T04:04:28.891Z] PR #27 public Pages QA\n[2026-10-08T04:04:38.933Z] FATAL fetch failed\n"
+    },
+    {
+      "label": "matrix-3",
+      "code": 1,
+      "results": {
+        "at": "2026-10-08T04:01:34.670Z",
+        "publicBase": "https://ultronservice.github.io/milksha-demo",
+        "mergeCommit": "a82cb9b",
+        "runtimePatch": false,
+        "script": "scripts/public-pages-pr27-live-qa.mjs",
+        "contexts": [
+          {
+            "context": "fresh",
+            "lines": [
+              {
+                "context": "fresh",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "fresh",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1486,
+                "pageOpenToFirstNumberMs": 2851,
+                "cleared": true
+              },
+              {
+                "context": "fresh",
+                "check": "c",
+                "pass": true,
+                "rounds": [
+                  {
+                    "round": 1,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 766,
+                    "sendBMs": 1158,
+                    "pass": true
+                  },
+                  {
+                    "round": 2,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 934,
+                    "sendBMs": 1033,
+                    "pass": true
+                  },
+                  {
+                    "round": 3,
+                    "bBeforeA": 0,
+                    "bAfterA": 0,
+                    "aCount": 1,
+                    "bCount": 1,
+                    "sendAMs": 765,
+                    "sendBMs": 1131,
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "context": "fresh",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "fresh",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          },
+          {
+            "context": "old-settings",
+            "lines": [
+              {
+                "context": "old-settings",
+                "check": "a",
+                "pass": true,
+                "projectId": "milksha-qms-dev",
+                "hasS120Auth": false,
+                "storeFromAuth": "c030020",
+                "shows9999": false
+              },
+              {
+                "context": "old-settings",
+                "check": "b",
+                "pass": true,
+                "preDisabled": true,
+                "preBlockReason": "連線中…",
+                "sendToDisplayMs": 1381,
+                "pageOpenToFirstNumberMs": 7869,
+                "cleared": true
+              },
+              {
+                "context": "old-settings",
+                "check": "c",
+                "pass": false,
+                "error": "page.waitForFunction: Timeout 45000ms exceeded."
+              },
+              {
+                "context": "old-settings",
+                "check": "d",
+                "pass": false,
+                "boardStore": "zz-deny-test",
+                "devLoginTotal": 0,
+                "error": "page.goto: net::ERR_TIMED_OUT at https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\nCall log:\n  - navigating to \"https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test\", waiting until \"domcontentloaded\"\n",
+                "routeSupplement": null
+              },
+              {
+                "context": "old-settings",
+                "check": "e",
+                "pass": true,
+                "offlineText": "離線",
+                "recoveredSend": true
+              }
+            ]
+          }
+        ],
+        "c030020Final": {
+          "empty": true,
+          "readyCount": 0
+        }
+      },
+      "outTail": "[2026-10-08T04:04:39.103Z] PR #27 public Pages QA\n[2026-10-08T04:04:49.148Z] FATAL fetch failed\n"
+    }
+  ],
+  "pass": false
+}

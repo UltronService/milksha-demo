@@ -9,4 +9,4 @@ export PR27_MATRIX_RUNS="${PR27_MATRIX_RUNS:-3}"
 mkdir -p artifacts/pr27-matrix
 node scripts/public-pages-pr27-matrix.mjs 2>&1 | tee artifacts/pr27-matrix/matrix-with-patch.log
 cp artifacts/pr27-matrix/matrix.json artifacts/pr27-matrix/matrix-with-patch.json
-git checkout origin/main -- js/receiver/cloud-runtime.js
+git checkout HEAD -- js/receiver/cloud-runtime.js 2>/dev/null || git checkout origin/main -- js/receiver/cloud-runtime.js
