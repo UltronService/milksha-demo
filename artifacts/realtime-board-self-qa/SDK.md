@@ -12,3 +12,4 @@
 
 - e2e：`home-board-realtime-emulator.spec.mjs` 阻斷 `firebase-firestore-compat.js` → `boardListen=false`，頁面仍可 `pollDevice`。
 - 生產：SDK 未載入或監聽 attach 失敗 → `enterPollFallback` / `enterCommandPollFallback`。
+- **真雲端實測（Chrome 78 UA）**：`live-matrix.json` › `legacyChrome78.sdkLoads` 記錄 `10.14.1/firebase-*-compat.js`；手動 abort Firestore compat 後 `pollFallback=true`。

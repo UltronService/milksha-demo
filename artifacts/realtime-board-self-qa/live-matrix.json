@@ -1,8 +1,230 @@
 {
-  "at": "2026-10-08T14:28:30.142Z",
-  "store": "zz-qa-store-a",
-  "apiKeyPresent": false,
+  "at": "2026-10-08T17:05:59.927Z",
+  "writeStore": "zz-qa-store-a",
+  "stores": [
+    "zz-qa-store-a",
+    "zz-qa-store-b",
+    "zz-qa-store-c",
+    "zz-qa-store-d",
+    "zz-qa-store-e"
+  ],
+  "apiKeySource": "public-pages-config",
+  "apiKeyPresent": true,
   "branchSiteRoot": "/workspace",
-  "runs": [],
-  "error": "MILKSHA_FIREBASE_API_KEY missing"
+  "runs": [
+    {
+      "label": "chromium-branch-1",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 3588,
+      "pageOpenToFirstNumberMs": 6313,
+      "sendToDisplayMs": 821,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    },
+    {
+      "label": "chromium-branch-2",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 3729,
+      "pageOpenToFirstNumberMs": 5169,
+      "sendToDisplayMs": 38,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    },
+    {
+      "label": "chromium-branch-3",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 3962,
+      "pageOpenToFirstNumberMs": 5383,
+      "sendToDisplayMs": 38,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    },
+    {
+      "label": "firefox-branch-1",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 4413,
+      "pageOpenToFirstNumberMs": 6976,
+      "sendToDisplayMs": 79,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    },
+    {
+      "label": "firefox-branch-2",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 3389,
+      "pageOpenToFirstNumberMs": 5901,
+      "sendToDisplayMs": 70,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    },
+    {
+      "label": "firefox-branch-3",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 4547,
+      "pageOpenToFirstNumberMs": 7067,
+      "sendToDisplayMs": 77,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime",
+      "sampleReadyNo": "2001"
+    }
+  ],
+  "storeTiming": {
+    "zz-qa-store-b-chromium": {
+      "label": "chromium-zz-qa-store-b-probe",
+      "storeId": "zz-qa-store-b",
+      "boardReadyMs": 2888,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-c-chromium": {
+      "label": "chromium-zz-qa-store-c-probe",
+      "storeId": "zz-qa-store-c",
+      "boardReadyMs": 3619,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-d-chromium": {
+      "label": "chromium-zz-qa-store-d-probe",
+      "storeId": "zz-qa-store-d",
+      "boardReadyMs": 3607,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-e-chromium": {
+      "label": "chromium-zz-qa-store-e-probe",
+      "storeId": "zz-qa-store-e",
+      "boardReadyMs": 3719,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-b-firefox": {
+      "label": "firefox-zz-qa-store-b-probe",
+      "storeId": "zz-qa-store-b",
+      "boardReadyMs": 4221,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-c-firefox": {
+      "label": "firefox-zz-qa-store-c-probe",
+      "storeId": "zz-qa-store-c",
+      "boardReadyMs": 3503,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-d-firefox": {
+      "label": "firefox-zz-qa-store-d-probe",
+      "storeId": "zz-qa-store-d",
+      "boardReadyMs": 4316,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    },
+    "zz-qa-store-e-firefox": {
+      "label": "firefox-zz-qa-store-e-probe",
+      "storeId": "zz-qa-store-e",
+      "boardReadyMs": 3462,
+      "commandMode": "poll",
+      "boardListen": true,
+      "mode": "realtime"
+    }
+  },
+  "mainComparison": [
+    {
+      "label": "main-chromium-1",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 83,
+      "pageOpenToFirstNumberMs": 3852,
+      "sendToDisplayMs": 868,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": false,
+      "mode": "poll",
+      "note": "main branch baseline (REST poll, no getRealtimeStats)"
+    },
+    {
+      "label": "main-chromium-2",
+      "storeId": "zz-qa-store-a",
+      "boardReadyMs": 71,
+      "pageOpenToFirstNumberMs": 3001,
+      "sendToDisplayMs": 42,
+      "sendToDisplayWithin3s": true,
+      "commandMode": "poll",
+      "boardListen": false,
+      "mode": "poll",
+      "note": "main branch baseline (REST poll, no getRealtimeStats)"
+    }
+  ],
+  "offline30s": {
+    "method": "playwright_context_offline_30s",
+    "beforeReady": "2001",
+    "duringOfflineReady": "2001",
+    "afterRestoreReady": "2001",
+    "ok": true
+  },
+  "isolation": {
+    "markerFromStoreA": "2001",
+    "storeBReadyNumbers": [],
+    "storeAVisibleOnStoreB": false,
+    "storeBListen": false,
+    "isolated": true
+  },
+  "legacyChrome78": {
+    "sdkLoads": [
+      "10.14.1/firebase-app-compat.js",
+      "10.14.1/firebase-auth-compat.js",
+      "10.14.1/firebase-firestore-compat.js",
+      "10.14.1/firebase-app-compat.js",
+      "10.14.1/firebase-auth-compat.js",
+      "10.14.1/firebase-firestore-compat.js"
+    ],
+    "stats": {
+      "boardListen": false,
+      "commandMode": "poll",
+      "realtimeDisabled": false,
+      "readCounts": {
+        "board": 0,
+        "command": 0
+      }
+    },
+    "pollFallback": true,
+    "afterFirestoreBlock": {
+      "boardListen": false,
+      "commandMode": "poll",
+      "realtimeDisabled": false,
+      "readCounts": {
+        "board": 0,
+        "command": 0
+      }
+    }
+  },
+  "readsPerHour": {
+    "mainPollBaseline": "board REST ~0.5–2s interval ≈ 1800–7200 reads/h per device (main)",
+    "pr32RealtimeBoardListen": "today_board onSnapshot: 1 initial + 1 per board write; device poll 5s if commandMode=poll ≈ +720/h",
+    "pr32RealtimeControlPending": "commandMode=control: pending onSnapshot; heartbeats do not re-read board",
+    "pr18DeployedNote": "After milksha-cloud #18: control/pending listener replaces 5s device poll → ~0 steady device REST"
+  },
+  "completed": true
 }

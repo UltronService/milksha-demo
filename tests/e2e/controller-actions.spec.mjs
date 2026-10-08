@@ -229,8 +229,9 @@ test('controller | require connect inline reason', async ({ browser }) => {
 });
 
 test('board | no chime for ready while offline on reconnect', async ({ browser }) => {
-  test.skip(true, '917cea5 regression: offline one-ready same-seq; see artifacts/realtime-board-self-qa/REPORT.md');
-  const { ctx, receiver, controller } = await openSession(browser, 'local');
+  // firestore/cloud path uses push_numbers (board updates while STB sim-offline).
+  // local POS posReceiver is rejected when box heartbeat marks offline (fake-cloud parity).
+  const { ctx, receiver, controller } = await openSession(browser, 'firestore');
   await receiver.evaluate(() => {
     window.__rcvTelemetry.ringCount = 0;
   });
@@ -247,8 +248,9 @@ test('board | no chime for ready while offline on reconnect', async ({ browser }
   );
   const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   await controller.click('#btn-one-ready');
-  await controller.waitForTimeout(4000);
+  await expect(controller.locator('#btn-one-ready')).toBeEnabled({ timeout: 20000 });
   await controller.click('#btn-restore');
+  await expect(controller.locator('#btn-restore')).toBeEnabled({ timeout: 15000 });
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });
