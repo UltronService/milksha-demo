@@ -33,3 +33,21 @@ Investigation runs (`artifacts/pr27-investigate/report.json`): fresh **c-only** 
 ## QA agent log reference
 
 Uploaded jsonl documents PR #27 run: fresh **c** FAIL 120s on authoritative rerun; fresh **d/e** PASS; legacy **c** PASS.
+
+## Backend devLogin volume (10/3–10/8, ~3,500 POST)
+
+- Cloud Run 紀錄 5,058 筆（含 1,432 OPTIONS 204）；POST 3,481、120 個 IP（AWS，Cursor 雲端 QA VM），UA HeadlessChrome/131。
+- referer：`127.0.0.1:8877` 約 2,500、公開 Pages 約 2,200（同一批代理人腳本）。
+- 10/8 00:00–01:00 台北約 1,500 筆：少數 IP 長時間存在、**短爆發**非每 3 秒長串。
+- 真人 Mac（118.150.195.4）僅 10/7 06:10–06:14 約 100 次（PR #23 舊 bug），之後每開頁 1–4 次。
+
+### Live count on public URL (`scripts/public-pages-devlogin-count.mjs`)
+
+| 情境 | 觀察窗 | devLogin（idle 期間） | 備註 |
+|------|--------|----------------------|------|
+| 全新瀏覽器 `s999999` →「連線暫停」 | 暫停後 **5 分鐘** | **0**（進頁僅 1 次 POST→403） | 無重試迴圈 |
+| 正常 `zz-qa-store-a` 看板＋控制端 | 連線就緒後 **10 分鐘** | **0**（就緒前 2 次） | token 存活內不重登 |
+
+**一句結論（登入量 vs 卡住）：** 10/3–10/8 devLogin 偏高是 **Cursor 自動測試大量重跑**（多 IP、短爆發、8877+公開雙 referer），與產品在「連線暫停」或正常 idle 下的 devLogin **不是同一原因**；QA 卡 120s 主因是 **腳本 waitForFunction 參數錯誤**＋雲端偶發收號，非 devLogin 迴圈。
+
+產物：`artifacts/pr27-devlogin-count/report.json`
