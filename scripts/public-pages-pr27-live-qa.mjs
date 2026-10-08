@@ -16,7 +16,11 @@ const SHOTS = join(ART, 'screenshots');
 const LOG = join(ART, 'run.log');
 const RESULTS = join(ART, 'results.json');
 
-const PUBLIC_BASE = process.env.MILKSHA_PAGES_BASE || 'https://ultronservice.github.io/milksha-demo';
+const PUBLIC_BASE =
+  process.env.MILKSHA_PAGES_BASE ||
+  (process.env.MILKSHA_USE_LOCAL_SITE === '1'
+    ? 'http://127.0.0.1:8877'
+    : 'https://ultronservice.github.io/milksha-demo');
 const BOARD_HOME = `${PUBLIC_BASE}/`;
 const CTRL = `${PUBLIC_BASE}/controller/`;
 const STORE_MAIN = 'c030020';
@@ -55,6 +59,40 @@ function log(line) {
   const msg = `[${new Date().toISOString()}] ${line}`;
   console.log(msg);
   appendFileSync(LOG, msg + '\n');
+}
+
+async function installBundledCloudInit(ctx, apiKey) {
+  await ctx.addInitScript((key) => {
+    const cfg = Object.assign({}, window.MILKSHA_FIREBASE_CONFIG || {}, {
+      projectId: 'milksha-qms-dev',
+      apiKey: key,
+      region: 'asia-east1',
+      defaultCloudMode: true,
+      useEmulator: false,
+      gateway: '',
+      functionsBaseUrl: 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/',
+    });
+    window.MILKSHA_FIREBASE_CONFIG = cfg;
+    try {
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: 'milksha-qms-dev',
+          apiKey: key,
+          region: 'asia-east1',
+          useEmulator: false,
+          gateway: '',
+          emulatorPrefix: '',
+        }),
+      );
+      const pos =
+        (window.MILKSHA_FIREBASE_CONFIG && window.MILKSHA_FIREBASE_CONFIG.posSignSecret) ||
+        'fake-milksha-pos-sign-key-for-tests';
+      localStorage.setItem('milksha:controller-pos-sign-key', pos);
+    } catch {
+      /* ignore */
+    }
+  }, apiKey);
 }
 
 function loadApiKey() {
@@ -253,9 +291,12 @@ async function installRuntimePatch(ctx) {
   });
 }
 
-async function runContext(browser, contextName, seedOld) {
+async function runContext(browser, contextName, seedOld, apiKey) {
   const results = { context: contextName, lines: [] };
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  if (PUBLIC_BASE.includes('127.0.0.1')) {
+    await installBundledCloudInit(ctx, apiKey);
+  }
   await installRuntimePatch(ctx);
   if (seedOld) {
     await ctx.addInitScript(oldSettingsSeedSource());
@@ -535,8 +576,11 @@ async function runContext(browser, contextName, seedOld) {
   return results;
 }
 
-async function verifyC030020Empty(browser) {
+async function verifyC030020Empty(browser, apiKey) {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  if (PUBLIC_BASE.includes('127.0.0.1')) {
+    await installBundledCloudInit(ctx, apiKey);
+  }
   await installRuntimePatch(ctx);
   const page = await ctx.newPage();
   await page.goto(BOARD_HOME, { waitUntil: 'domcontentloaded' });
@@ -568,8 +612,9 @@ async function smokeCloudFromNode() {
 
 async function main() {
   writeFileSync(LOG, '');
-  loadApiKey();
+  const apiKey = loadApiKey();
   log('PR #27 public Pages QA');
+  log(`base=${PUBLIC_BASE} patch=${PATCH_RUNTIME}`);
   await smokeCloudFromNode();
 
   const browser = await chromium.launch({
@@ -592,7 +637,7 @@ async function main() {
     ['old-settings', true],
   ]) {
     log(`context ${name}`);
-    report.contexts.push(await runContext(browser, name, seed));
+    report.contexts.push(await runContext(browser, name, seed, apiKey));
     writeFileSync(RESULTS, JSON.stringify(report, null, 2));
   }
 

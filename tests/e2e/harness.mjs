@@ -6,7 +6,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execPath } from 'node:process';
 
-export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const HARNESS_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+export const ROOT = process.env.MILKSHA_SITE_ROOT
+  ? join(process.env.MILKSHA_SITE_ROOT)
+  : HARNESS_ROOT;
 export const PORT_SITE = 8877;
 export const PORT_CLOUD = 8787;
 
@@ -87,6 +90,13 @@ export async function waitCloudReady() {
     await new Promise((r) => setTimeout(r, 150));
   }
   throw new Error('fake-cloud not ready');
+}
+
+export function stopSite() {
+  if (siteServer) {
+    siteServer.close();
+    siteServer = null;
+  }
 }
 
 export async function startSite() {
