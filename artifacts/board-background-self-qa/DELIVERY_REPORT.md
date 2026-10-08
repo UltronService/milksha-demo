@@ -1,6 +1,6 @@
 # Board background self-QA (1007)
 
-- **HEAD:** `be42b97`（報告提交後若有新 commit 以 PR 為準）
+- **HEAD:** `429b28985e266f1a62654628417c098f45c9854d`
 - **Base (`origin/main`):** `6ef1359cea99cccb5dda74afeed7003888518515`
 - **PR:** [#33](https://github.com/UltronService/milksha-demo/pull/33)，`base=main`
 - **mergeable_state:** `MERGEABLE` / `mergeStateStatus: CLEAN`（2026-10-08 推送後查詢）
