@@ -4,8 +4,8 @@
 
 - PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft, mergeable)
 - **Base (main):** `021ca6c4db6defc5748a8b885b8aad6460d215e2` (#28 + #30 merged)
-- **HEAD (branch tip):** `fc693122ccc461a6b3a1a6a97b5b004ab41d4b59`
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37772038242 — **success**
+- **HEAD (branch tip):** `d7fff809073a2bd61d0b5edb67a5a764d036ea23`
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/37772038242 — **success** (merge `fc69312`; doc-only `d7fff80` re-run if needed)
 
 ## 1. Tests (CI on HEAD)
 
