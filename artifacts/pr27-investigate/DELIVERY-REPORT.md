@@ -1,41 +1,83 @@
-# PR #27 公開 QA — 交件報告
+# PR #27 公開 QA — 交件報告（2026-10-08）
 
-## 根因一句（注入後 c 90s）
+## 狀態（台北 16:00+）
 
-**分類 (a) + (b)：** 舊驗收用 **只換 `cloud-runtime.js`**，其餘仍為 Pages 已部署版 → **來源與模組版本不一致**；#30 初版又在 `pendingCommand` 無 `boardSeq` 時採 **過低的 `device.boardSeq`**，大 seq 空雲端板會蓋掉剛送的號。**已修 seq：** `a1372a0`。**驗收改：** Playwright 將 **`https://ultronservice.github.io/milksha-demo/*` 整站** 由本機分支檔回應（瀏覽器來源仍是 github.io，CORS 可過）；**不可用 `127.0.0.1:8877` 直連真雲端**（預檢無 `access-control-allow-origin`）。
-
----
-
-## PR
-
-| PR | HEAD | 說明 |
-|----|------|------|
-| [#30 產品](https://github.com/UltronService/milksha-demo/pull/30) | `a1372a0` | device command boardSeq |
-| [#28 QA](https://github.com/UltronService/milksha-demo/pull/28) | 本分支 | `github-pages-site-route` + 矩陣腳本 |
-
-合併順序：**#30 → #28**。
-
----
-
-## 矩陣（Pages route，真雲端）
-
-```bash
-node scripts/local-branch-pr27-matrix-suite.mjs
-```
-
-| 輸出 | 說明 |
+| 項目 | 狀態 |
 |------|------|
-| `artifacts/pr27-pages-route-matrix/main-a82cb9b.json` | 對照；c 可偶發失敗 |
-| `artifacts/pr27-pages-route-matrix/product-a1372a0.json` | 預期 3× fresh + legacy 全 a–e |
-| `artifacts/pr27-pages-route-matrix/summary.json` | 總表 |
-
-環境：`MILKSHA_PAGES_SITE_ROUTE=1`、`MILKSHA_SITE_ROOT` = `wt-main` 或 `wt-product`；執行前以 `inject-firebase-config.mjs` 寫入 worktree 的 `config/firebase.js`（等同 Pages 部署注入）；**不**攔截 cloudfunctions / securetoken / firestore。
+| **#30** `edb63ed` | 兩項 seq 修復 + 單元／fake-cloud e2e 已 push；PR 說明已分問題 1／2 |
+| **#28** `34eb8ac` | github.io 整站 route + 矩陣腳本已 push |
+| **矩陣 product 3×3** | **未達標**（見下表）；**卡點：真雲端 c 隔離 90s** |
+| **矩陣 main 對照** | 已跑完 3 次；**c 多輪逾時**（符合「main 可偶發失敗」） |
+| **CI** | 見 GitHub Actions（#28、#30 需綠） |
 
 ---
 
-## 本機 e2e（與 #30 無關）
+## 驗收方式
 
-`guest-clock` ring-fit（Roboto 字型斷言）在 **main 與 #30 worktree 皆失敗**（Linux 無 Roboto，實際 `DejaVu Sans`）。`home-board-background-6min` 未列入上述失敗。
+- 瀏覽器 URL 維持 `https://ultronservice.github.io/milksha-demo`（CORS）。
+- Playwright 將該路徑下**所有靜態資源**改由本機 worktree 回檔（`scripts/lib/github-pages-site-route.mjs`）。
+- `config/firebase.js` 以 `inject-firebase-config.mjs` 注入（等同 Pages 部署）。
+- **不**攔截 cloudfunctions / securetoken / firestore。
+
+腳本：`node scripts/local-branch-pr27-matrix-suite.mjs`  
+產物目錄：`artifacts/pr27-pages-route-matrix/`（已 push 至 #28 分支）。
+
+---
+
+## 矩陣結果（已寫入 JSON）
+
+### main 對照 `main-a82cb9b.json`
+
+| Run | fresh c | old-settings c | 備註 |
+|-----|---------|----------------|------|
+| 1 | fail 90s | fail 45s | fresh b 亦 fail（送號後清空） |
+| 2 | fail 45s | fail 45s | |
+| 3 | fail 90s | fail 90s | |
+
+**失敗原因（c）：** `waitBoardMinReady` / 隔離輪 `waitForFunction` 逾時（號碼未在時限內出現在 `.milksha-ready`）。
+
+### product `#30` `product-edb63ed.json`
+
+| Run | fresh c | old-settings c | a–b,d,e |
+|-----|---------|----------------|---------|
+| 1 | fail 90s | fail 90s | 其餘 pass |
+| 2 | fail 90s | fail 90s | 其餘 pass |
+| 3 | fail 90s | fail 90s | 其餘 pass |
+
+**失敗原因（c）：** 同上；單次手動重跑 `public-pages-pr27-live-qa.mjs`（`siteRoot=wt-product`）亦 **fresh/old-settings c 皆 fail**。
+
+**未達「兩瀏覽器各連續 3 次 a–e 全過」；不得用重跑抵銷。**
+
+---
+
+## #30 兩項修復（PR 說明已對齊）
+
+### 問題 1：先清空再送號被舊空名單清掉
+
+- **修法：** `resolveCommandBoardSeq`（`cmd.boardSeq` → 雲端 `today_board.seq`）。
+- **單元：** `tests/cloud-runtime-device-command-seq.test.js`（含 `stale device.boardSeq below cloud seq` 等）。
+- **矩陣：** 預期 `product-edb63ed.json` 全過（**目前 c 未過**）。
+
+### 問題 2：新店看板 404 抬高 localSeq
+
+- **修法：** `applyMissingCloudBoard` **不再遞增 seq／不再空 apply**。
+- **單元：** `missing board polls do not inflate localSeq; first small-seq board applies`
+- **e2e：** `home-board-first-number-after-open.spec.mjs` → `fake-cloud: board open then first send shows number within 3s`（**通過**）
+
+---
+
+## 其他測試
+
+- **home-board-background-6min（main）：** `npx playwright test tests/e2e/home-board-background-6min.spec.mjs` on `wt-main` **exit 0**（約 116s）。
+- **guest-clock ring-fit（main）：** 仍 fail（Roboto 字型；與 #30 無關）。
+
+---
+
+## 注入 c 90s（歷史根因，已寫入）
+
+**(a)** 僅注入單檔 `cloud-runtime.js` → 與 Pages 其他 JS **版本不一致**。  
+**(b)** 問題 1 seq 邏輯（#30 已修）。  
+現行驗收：**整站 github.io route**，不再單檔注入。
 
 ---
 
