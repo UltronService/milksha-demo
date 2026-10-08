@@ -128,11 +128,25 @@ async function waitBoardEmpty(board, timeoutMs = 90000) {
 }
 
 async function waitBoardMinReady(board, min = 1, timeoutMs = 90000) {
-  await board.waitForFunction(
-    (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
-    min,
-    { timeout: timeoutMs },
-  );
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const count = await board.locator('.milksha-ready .milksha-num').count();
+    if (count < min) {
+      await board.waitForTimeout(200);
+      continue;
+    }
+    await board.waitForTimeout(400);
+    const stable = await board.locator('.milksha-ready .milksha-num').count();
+    if (stable >= min) {
+      const seq = await board.evaluate(() =>
+        window.receiverCloud && window.receiverCloud.getLocalSeq
+          ? window.receiverCloud.getLocalSeq()
+          : null,
+      );
+      return { count: stable, localSeq: seq };
+    }
+  }
+  throw new Error(`board ready count < ${min} after ${timeoutMs}ms`);
 }
 
 async function clearBoardViaController(controller, board, label) {
@@ -173,6 +187,8 @@ async function runIsolationRounds(tabA, tabB, ctrlA, ctrlB, contextName) {
   for (let r = 1; r <= 3; r += 1) {
     await clearBoardViaController(ctrlA, tabA, `${contextName}-c${r}-preclear-a`);
     await clearBoardViaController(ctrlB, tabB, `${contextName}-c${r}-preclear-b`);
+    await tabA.waitForTimeout(300);
+    await tabB.waitForTimeout(300);
     const bBeforeA = await tabB.locator('.milksha-ready .milksha-num').count();
     const tA = Date.now();
     await ctrlA.click('[data-testid="btn-send-numbers"]');

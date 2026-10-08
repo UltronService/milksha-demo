@@ -884,6 +884,7 @@
       } else if (type === 'slow') {
         networkDelayMs = Number(params.delayMs) || 3000;
       } else if (type === 'clear_now') {
+        localSeq = localSeq > 0 ? localSeq + 1 : 1;
         applyNumberContent([], localSeq, { silent: true });
       } else if (type === 'push_numbers') {
         const ready = Array.isArray(params.ready) ? params.ready : [];
@@ -895,6 +896,7 @@
         preparing.forEach(function (no) {
           nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
         });
+        localSeq = localSeq > 0 ? localSeq + 1 : 1;
         applyNumberContent(nc, localSeq, { silent: false });
       }
     }
