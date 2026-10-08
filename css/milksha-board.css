@@ -48,6 +48,7 @@
   justify-content: center;
   overflow: hidden;
   background: #88a040;
+  /* Letterbox bars (non-16:9) use the same green as the prep zone. */
   font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
   font-variant-numeric: tabular-nums;
   --milksha-num-font: 88px;
@@ -63,6 +64,14 @@
   position: relative;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.milksha-board-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  -webkit-transform-origin: top left;
 }
 
 .milksha-board {

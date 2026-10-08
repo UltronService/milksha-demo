@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-08T15:48:09.294Z",
+  "head": "bd921ed7c2d9481197e313b25e2cae8ca92322ff",
+  "pixelDiff3840DownscaledVs1920": {
+    "diffPixels": 10919,
+    "totalPixels": 2073600,
+    "percent": 0.5265721450617284
+  },
+  "screenshots": {
+    "board-numbers-1920x1080-dpr1.png": "/workspace/artifacts/board-canvas-self-qa/screenshots/board-numbers-1920x1080-dpr1.png",
+    "board-numbers-3840x2160-dpr1.png": "/workspace/artifacts/board-canvas-self-qa/screenshots/board-numbers-3840x2160-dpr1.png",
+    "board-letterbox-1440x1080.png": "/workspace/artifacts/board-canvas-self-qa/screenshots/board-letterbox-1440x1080.png",
+    "board-letterbox-1920x800.png": "/workspace/artifacts/board-canvas-self-qa/screenshots/board-letterbox-1920x800.png",
+    "board-numbers-1920x1080-dpr2.png": "/workspace/artifacts/board-canvas-self-qa/screenshots/board-numbers-1920x1080-dpr2.png"
+  },
+  "modernCssUsed": [
+    "CSS transform: scale() on .milksha-board-canvas (supported Chromium 80+)",
+    "flexbox on .milksha-stage (legacy)",
+    "CSS custom properties --milksha-* (legacy)",
+    "No aspect-ratio or container queries"
+  ],
+  "resizeWithoutReload": "manual: e2e home-board-canvas-scale.spec.mjs",
+  "overlayPosition": "overlays inside #milksha-board-canvas; e2e asserts bounds"
+}
