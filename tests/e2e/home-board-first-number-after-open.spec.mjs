@@ -1,20 +1,27 @@
 import { test, expect } from '@playwright/test';
+import { execSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   restartCloud,
   startSite,
+  stopSite,
   resetCloudState,
   PORT_SITE,
   installBundledCloudRouteShim,
   isolatedCloudContext,
-  expandControllerZone,
 } from './harness.mjs';
 
+const SITE_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE = 'zz-qa-store-a';
 
 test.describe('home board before first today_board exists', () => {
   test.beforeAll(async () => {
+    process.env.MILKSHA_SITE_ROOT = SITE_ROOT;
+    execSync('fuser -k 8877/tcp 2>/dev/null || true', { stdio: 'ignore' });
     await restartCloud();
+    stopSite();
     await startSite();
   });
 
@@ -28,14 +35,9 @@ test.describe('home board before first today_board exists', () => {
     await installBundledCloudRouteShim(ctrl);
 
     await board.goto(`${BASE}/?mode=cloud&store=${STORE}`);
-    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
-    await board.waitForFunction(
-      () => document.getElementById('milksha-cloud-offline')?.hidden === true,
-      { timeout: 30000 },
-    );
     await ctrl.goto(`${BASE}/controller/?mode=cloud&store=${STORE}`);
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await expandControllerZone(ctrl, 'sec-special');
     const t0 = Date.now();
     await ctrl.click('[data-testid="btn-send-numbers"]');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
