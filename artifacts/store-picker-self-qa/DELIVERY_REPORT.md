@@ -3,8 +3,8 @@
 ## PR / CI
 
 - PR: https://github.com/UltronService/milksha-demo/pull/29 (non-draft)
-- HEAD: `83f30e55601fa18efc1136830b333343b742ce0f`
-- CI: _(see Actions run for HEAD below)_
+- HEAD: `80f55b9114b08d88e8553e522514bc95737632ca`
+- CI: _(pending — Actions run for this commit)_
 
 ## 1. Full e2e (GitHub CI)
 
