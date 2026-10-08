@@ -90,6 +90,10 @@ function deviceKey(storeId, deviceId) {
   return `stores/${storeId}/devices/${deviceId}`;
 }
 
+function devicePendingControlKey(storeId, deviceId) {
+  return `${deviceKey(storeId, deviceId)}/control/pending`;
+}
+
 function seedE2eDevice() {
   const emptyDevice = {
     online: false,
@@ -464,6 +468,7 @@ const server = http.createServer(async (req, res) => {
           nextPending.id === hb.ackCommandId
         ) {
           nextPending = null;
+          docs.delete(devicePendingControlKey(hb.storeId, hb.deviceId));
         }
         docs.set(dk, {
           ...prev,
@@ -536,7 +541,9 @@ const server = http.createServer(async (req, res) => {
             clearedAt: tickets.length ? null : new Date().toISOString(),
           });
         }
-        docs.set(dk, { ...prev, pendingCommand: cmd, boardSeq });
+        const pendingWithSeq = { ...cmd, boardSeq };
+        docs.set(dk, { ...prev, pendingCommand: pendingWithSeq, boardSeq });
+        docs.set(devicePendingControlKey(cmdBody.storeId, cmdBody.deviceId), pendingWithSeq);
         docs.set(commandLogKey(cmdBody.storeId, cmd.id), {
           at: new Date().toISOString(),
           type: cmdBody.type,

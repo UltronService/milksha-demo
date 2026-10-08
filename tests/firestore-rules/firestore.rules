@@ -1,0 +1,40 @@
+// Vendored from milksha-cloud PR #18 — replace via:
+// MILKSHA_CLOUD_ROOT=... node scripts/copy-milksha-cloud-firestore-rules.mjs
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function claimStore() {
+      return request.auth.token.storeId;
+    }
+    function claimDevice() {
+      return request.auth.token.deviceId;
+    }
+    function claimRole() {
+      return request.auth.token.role;
+    }
+    function isOwnDevice(storeId, deviceId) {
+      return signedIn()
+        && claimRole() == 'device'
+        && claimStore() == storeId
+        && claimDevice() == deviceId;
+    }
+    match /stores/{storeId}/board/today_board {
+      allow read: if signedIn() && claimStore() == storeId;
+      allow write: if false;
+    }
+    match /stores/{storeId}/devices/{deviceId}/control/pending {
+      allow read: if isOwnDevice(storeId, deviceId);
+      allow write: if false;
+    }
+    match /stores/{storeId}/devices/{deviceId} {
+      allow read: if isOwnDevice(storeId, deviceId);
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

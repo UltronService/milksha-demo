@@ -4,11 +4,14 @@
   "description": "迷客夏取餐叫號看板 GitHub Pages 展示站",
   "scripts": {
     "test": "node scripts/run-unit-tests.mjs",
+    "test:rules": "node --test tests/firestore-rules/realtime-board.rules.test.mjs",
     "fake-cloud": "node tools/fake-cloud/server.mjs",
     "test:e2e": "playwright test tests/e2e"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "3.0.4",
     "@playwright/test": "1.49.0",
+    "firebase": "10.14.1",
     "playwright": "1.49.0"
   }
 }
