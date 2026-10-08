@@ -641,7 +641,7 @@ async function main() {
     writeFileSync(RESULTS, JSON.stringify(report, null, 2));
   }
 
-  report.c030020Final = await verifyC030020Empty(browser);
+  report.c030020Final = await verifyC030020Empty(browser, apiKey);
   await browser.close();
   writeFileSync(RESULTS, JSON.stringify(report, null, 2));
   log(`wrote ${RESULTS}`);
