@@ -6,6 +6,8 @@
 | **base main** | `7fb4f9c`（#25 畫布 + #33 1007 底圖／準備中最新號左上） |
 | **合併** | `merge(origin/main)` @ `7fb4f9c`；衝突 PNG 採 main（#33） |
 
+> **歷史紀錄**：下方 §2 矩陣 SHA（`7ad0949`／`6ef1359`）與部分 PNG 對照為 PR #32 自測當下快照；與現行 main 可能不一致。
+
 ## 1. Merge / 衝突
 
 - 已合入 `origin/main`（`7fb4f9c`），保留 #33「準備中」排序：`nextPrep.sort((a,b) => b.firstSeenAt - a.firstSeenAt)`（最新號左上）。
@@ -13,8 +15,8 @@
 
 ## 2. offline reconnect 5501（local + firestore）
 
-- **main @ 7fb4f9c**：見 `main-5501-local-test.log`；產品層 main 仍為 offline 不寫板（shim + fake-cloud）；單元測 `fake-cloud-pos.test.js` 為證。
-- **#32**：`local-cloud-shim` + `fake-cloud` 仍寫板；e2e `controller-actions` local + firestore 5501；`main-5501-local-baseline.spec.mjs` 驗收修復後行為。
+- **main @ 7fb4f9c**：見 `main-5501-local-test.log`；產品層依 `storeAllowsPosBoardWrite`：**local／fake-cloud 看板模擬離線時不寫板**（非「仍寫板」）；單元測 `fake-cloud-pos.test.js` 為證。
+- **#32（歷史）**：當時 shim 行為與 main 不同；現行以 `storeAllowsPosBoardWrite` 為準。e2e：`controller-actions` local + firestore 5501；`main-5501-local-baseline.spec.mjs`。
 
 ## 3. 真雲端延遲
 

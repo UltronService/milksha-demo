@@ -20,6 +20,7 @@ test('local-link: controller-only shows offline; send fails until board opens', 
     timeout: 8000,
   });
   const posFail = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
+  // fake-cloud shim：看板未開時仍可能回 isSuccess:true，但 boxOnline 必為 false；兩者其一即代表送號未成功。
   expect(posFail && (posFail.isSuccess === false || posFail.boxOnline === false)).toBe(true);
   expect(String(posFail && posFail.information)).toMatch(/機台|尚未連線/);
 
@@ -31,7 +32,7 @@ test('local-link: controller-only shows offline; send fails until board opens', 
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 15000 });
 
   await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 15000 });
+  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 8000 });
   const posOk = await controller.evaluate(() => window.__controllerTelemetry.lastPosResponse);
   expect(posOk && posOk.isSuccess).toBe(true);
 

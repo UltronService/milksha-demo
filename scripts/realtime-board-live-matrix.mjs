@@ -108,6 +108,46 @@ function uniqueTicketNo(runIndex, browserIndex) {
   return String(8800 + runIndex * 17 + browserIndex * 3);
 }
 
+async function measureBoardBootMs(board, tOpen) {
+  await board
+    .waitForFunction(() => typeof window.receiverCloud?.getRealtimeStats === 'function', {
+      timeout: 60000,
+    })
+    .catch(() => undefined);
+  const paintWait = board
+    .waitForFunction(
+      () => {
+        if (document.querySelectorAll('.milksha-ready .milksha-num').length > 0) {
+          return true;
+        }
+        const clock = document.getElementById('milksha-guest-clock');
+        if (clock && !clock.hidden) {
+          return true;
+        }
+        const seq = window.receiverCloud?.getLocalSeq?.();
+        return typeof seq === 'number' && seq > 0;
+      },
+      { timeout: 45000 },
+    )
+    .then(() => Date.now() - tOpen)
+    .catch(() => null);
+  const realtimeWait = board
+    .waitForFunction(() => {
+      const s = window.receiverCloud?.getRealtimeStats?.();
+      return Boolean(s && s.boardListen);
+    }, { timeout: 45000 })
+    .then(() => Date.now() - tOpen)
+    .catch(() => null);
+  const boardFirstPaintMs = await paintWait;
+  const realtimeAttachedMs = await realtimeWait;
+  const stats0 = await board.evaluate(() =>
+    window.receiverCloud.getRealtimeStats
+      ? window.receiverCloud.getRealtimeStats()
+      : { boardListen: false, commandMode: 'poll' },
+  );
+  return { boardFirstPaintMs, realtimeAttachedMs, stats0 };
+}
+
 async function runInstrumentedSend(browser, label, siteRoot, ticketNo, opts) {
   const expectRealtime = !(opts && opts.mainBaseline);
   const ctx = await browser.newContext();
@@ -127,27 +167,20 @@ async function runInstrumentedSend(browser, label, siteRoot, ticketNo, opts) {
   const tOpen = Date.now();
   await board.goto(boardUrl(STORE_A));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 120000 });
-  await board
-    .waitForFunction(() => typeof window.receiverCloud.getRealtimeStats === 'function', {
-      timeout: 60000,
-    })
-    .catch(() => undefined);
-  if (expectRealtime) {
-    await board
-      .waitForFunction(() => {
-        const s = window.receiverCloud?.getRealtimeStats?.();
-        return Boolean(s && s.boardListen);
-      }, { timeout: 45000 })
-      .catch(() => undefined);
-  }
-  const boardReadyMs = Date.now() - tOpen;
-  const stats0 = await board.evaluate(() =>
-    window.receiverCloud.getRealtimeStats
-      ? window.receiverCloud.getRealtimeStats()
-      : { boardListen: false, commandMode: 'poll' },
-  );
-  await ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${STORE_A}`);
+  const ctrlNav = ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${STORE_A}`);
+  const boot = await measureBoardBootMs(board, tOpen);
+  const boardFirstPaintMs = boot.boardFirstPaintMs;
+  const realtimeAttachedMs = expectRealtime ? boot.realtimeAttachedMs : null;
+  const stats0 = boot.stats0;
+  await ctrlNav;
   await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
+  const controllerBoardOnlineMs = await ctrl
+    .waitForFunction(
+      () => document.getElementById('transport-route')?.getAttribute('data-board-online') === '1',
+      { timeout: 90000 },
+    )
+    .then(() => Date.now() - tOpen)
+    .catch(() => null);
   await expandControllerZone(ctrl, 'sec-pos');
   const buttonPressedAt = Date.now();
   const devRes = await Promise.all([
@@ -188,7 +221,9 @@ async function runInstrumentedSend(browser, label, siteRoot, ticketNo, opts) {
   return {
     label,
     ticketNo,
-    boardReadyMs,
+    boardFirstPaintMs,
+    realtimeAttachedMs,
+    controllerBoardOnlineMs,
     sendToDisplayMs,
     sendToDisplayWithin3s: sendToDisplayMs <= 3000,
     commandMode: stats1.commandMode,
@@ -227,9 +262,17 @@ async function runStoreProbe(browser, label, siteRoot, storeId) {
   const tOpen = Date.now();
   await board.goto(boardUrl(storeId));
   await board.waitForFunction(() => window.receiverCloud?.getRealtimeStats, { timeout: 90000 });
-  const stats = await board.evaluate(() => window.receiverCloud.getRealtimeStats());
+  const boot = await measureBoardBootMs(board, tOpen);
+  const stats = boot.stats0;
   await ctx.close();
-  return { label, storeId, boardReadyMs: Date.now() - tOpen, boardListen: stats.boardListen, commandMode: stats.commandMode };
+  return {
+    label,
+    storeId,
+    boardFirstPaintMs: boot.boardFirstPaintMs,
+    realtimeAttachedMs: boot.realtimeAttachedMs,
+    boardListen: stats.boardListen,
+    commandMode: stats.commandMode,
+  };
 }
 
 async function measureReadTraffic(browser, label, siteRoot) {

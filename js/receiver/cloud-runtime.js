@@ -811,6 +811,22 @@
       await handleCommand(cmd);
     }
 
+    function boardDocumentMarker(board) {
+      if (!board) {
+        return '';
+      }
+      if (board.missing) {
+        return 'missing:' + (board.httpDate || Date.now());
+      }
+      const data = board.data || {};
+      const seqPart = data.seq != null ? String(data.seq) : '';
+      const timePart = board.updateTime || data.updatedAt || '';
+      if (seqPart && timePart) {
+        return seqPart + '|' + timePart;
+      }
+      return timePart || seqPart || '';
+    }
+
     async function applyBoardDocument(board, pollOpts) {
       const forcePoll = Boolean(pollOpts && pollOpts.force);
       if (!board) {
@@ -821,14 +837,14 @@
         onStatusLine('board: 無名單');
         if (milkshaRuntime || showCloudOfflineUi) {
           await applyMissingCloudBoard(board);
-          lastBoardUpdateTime = 'missing:' + (board.httpDate || Date.now());
+          lastBoardUpdateTime = boardDocumentMarker(board);
         } else {
           revealGuestClockFromCloudBoard(board);
         }
         markCloudReachable();
         return;
       }
-      const marker = board.updateTime || board.data.updatedAt || String(board.data.seq || '');
+      const marker = boardDocumentMarker(board);
       if (!forcePoll && marker && marker === lastBoardUpdateTime) {
         markCloudReachable();
         return;
@@ -900,6 +916,44 @@
       }
     }
 
+    async function enrichRealtimeCommandFromDevicePoll(cmd) {
+      const Realtime = QMS.Transport.FirestoreRealtime;
+      if (
+        !Realtime ||
+        !Realtime.realtimeCommandNeedsDevicePoll ||
+        !Realtime.realtimeCommandNeedsDevicePoll(cmd)
+      ) {
+        return { cmd: cmd, deviceData: null };
+      }
+      try {
+        const dev = await transport.readDevice(deviceId);
+        if (!dev || !dev.data) {
+          return { cmd: cmd, deviceData: null };
+        }
+        const pending = dev.data.pendingCommand;
+        if (!pending || !pending.id || String(pending.id) !== String(cmd.id)) {
+          return { cmd: cmd, deviceData: dev.data };
+        }
+        const merged = Object.assign({}, cmd);
+        if (pending.params && typeof pending.params === 'object') {
+          merged.params = pending.params;
+        }
+        return { cmd: merged, deviceData: dev.data };
+      } catch (e) {
+        return { cmd: cmd, deviceData: null };
+      }
+    }
+
+    async function sendHeartbeatForCommandAck(cmdId) {
+      if (!cmdId) {
+        return;
+      }
+      const id = String(cmdId);
+      if (pendingAckCommandId && String(pendingAckCommandId) === id) {
+        await sendHeartbeat();
+      }
+    }
+
     async function handleRealtimeCommand(cmd, deviceData) {
       if (!cmd || !cmd.id) {
         return;
@@ -908,11 +962,14 @@
         await acknowledgeSkippedPendingCommand(cmd);
         return;
       }
+      const cmdId = String(cmd.id);
       try {
-        await handleCommand(cmd, deviceData);
-        await sendHeartbeat();
+        const enriched = await enrichRealtimeCommandFromDevicePoll(cmd);
+        await handleCommand(enriched.cmd, enriched.deviceData || deviceData);
       } catch (e) {
         onStatusLine('command 錯誤: ' + (e && e.message ? e.message : 'unknown'));
+      } finally {
+        await sendHeartbeatForCommandAck(cmdId);
       }
     }
 
@@ -982,10 +1039,20 @@
             notifyAuthFailure(err);
           }
         },
+        onBoardListenAttached: function () {
+          boardListenActive = true;
+        },
+        onCommandListenAttached: function () {
+          commandListenMode = 'control';
+        },
       });
       const mode = await firestoreRealtime.start();
       boardListenActive = Boolean(mode.boardListen);
-      commandListenMode = mode.commandMode || 'poll';
+      if (mode.commandMode === 'control') {
+        commandListenMode = 'control';
+      } else if (!boardListenActive) {
+        commandListenMode = 'poll';
+      }
       if (!boardListenActive) {
         enterPollFallback();
       } else if (commandListenMode === 'poll') {
@@ -1252,8 +1319,12 @@
           await acknowledgeSkippedPendingCommand(pending);
           return;
         }
-        await handleCommand(pending, dev.data);
-        await sendHeartbeat();
+        const cmdId = String(pending.id);
+        try {
+          await handleCommand(pending, dev.data);
+        } finally {
+          await sendHeartbeatForCommandAck(cmdId);
+        }
       } catch (e) {
         if (isFirestoreAbortError(e)) {
           return;
@@ -1349,10 +1420,12 @@
       if (!skipInitialCloudKick) {
         ensureAuth()
           .then(function () {
+            kick();
             return startFirestoreRealtimeIfPossible();
           })
-          .then(kick)
-          .catch(kick);
+          .catch(function () {
+            kick();
+          });
       }
 
       fastBoardPollTimer = root.setInterval(function () {
@@ -1470,17 +1543,22 @@
         return VERSION;
       },
       getRealtimeStats: function () {
+        const Bridge = QMS.Transport.FirebaseSdkBridge;
+        const authSyncFailed =
+          Bridge && Bridge.getLastAuthSyncError ? Bridge.getLastAuthSyncError() : null;
         const base = {
           boardListen: boardListenActive,
           commandMode: commandListenMode,
           realtimeDisabled: isRealtimeQueryDisabled(),
           readCounts: { board: 0, command: 0 },
+          firebaseAuthSyncFailed: authSyncFailed,
         };
         if (!firestoreRealtime || !firestoreRealtime.getStats) {
           return base;
         }
         const stats = firestoreRealtime.getStats();
         stats.realtimeDisabled = isRealtimeQueryDisabled();
+        stats.firebaseAuthSyncFailed = authSyncFailed;
         return stats;
       },
       isSimulatedOffline: function () {

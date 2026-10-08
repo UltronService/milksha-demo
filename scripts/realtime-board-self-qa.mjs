@@ -62,16 +62,27 @@ async function runBoardTiming(browser, label) {
   const page = await browser.newPage();
   await injectApiKey(page);
   const base = `http://127.0.0.1:${PORT}/`;
+  const tOpen = Date.now();
   await page.goto(`${base}?mode=cloud&store=${STORE}&device=${DEVICE}`);
   await page.waitForFunction(() => window.receiverCloud && window.receiverCloud.getRealtimeStats, {
     timeout: 45000,
   });
-  const boardReadyMs = Date.now();
+  const boardFirstPaintMs = await page
+    .waitForFunction(
+      () => document.querySelectorAll('.milksha-ready .milksha-num').length > 0,
+      { timeout: 45000 },
+    )
+    .then(() => Date.now() - tOpen)
+    .catch(() => Date.now() - tOpen);
+  const realtimeAttachedMs = await page
+    .waitForFunction(() => window.receiverCloud.getRealtimeStats().boardListen, { timeout: 45000 })
+    .then(() => Date.now() - tOpen)
+    .catch(() => null);
   const stats0 = await page.evaluate(() => window.receiverCloud.getRealtimeStats());
   await page.waitForTimeout(25000);
   const statsAfter = await page.evaluate(() => window.receiverCloud.getRealtimeStats());
   await page.close();
-  return { label, boardReadyMs, stats0, statsAfter };
+  return { label, boardFirstPaintMs, realtimeAttachedMs, stats0, statsAfter };
 }
 
 async function main() {

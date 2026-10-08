@@ -1,0 +1,174 @@
+{
+  "at": "2026-10-08T22:28:05.312Z",
+  "headSha": "5765abf08b426899d608851eac8f1644feafb23b",
+  "baselineSha": "5765abf",
+  "writeStore": "zz-qa-store-a",
+  "branch": {
+    "chromium": [
+      {
+        "label": "branch-chromium-1",
+        "boardFirstPaintMs": 2583,
+        "realtimeAttachedMs": 3715,
+        "controllerBoardOnlineMs": 3907,
+        "sendToDisplayMs": 60,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 3702,
+        "controlListenAttachedMs": 3702,
+        "controlAfterBoardMs": 0
+      },
+      {
+        "label": "branch-chromium-2",
+        "boardFirstPaintMs": 2411,
+        "realtimeAttachedMs": 3643,
+        "controllerBoardOnlineMs": 3667,
+        "sendToDisplayMs": 58,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 3634,
+        "controlListenAttachedMs": 3634,
+        "controlAfterBoardMs": 0
+      },
+      {
+        "label": "branch-chromium-3",
+        "boardFirstPaintMs": 2580,
+        "realtimeAttachedMs": 3729,
+        "controllerBoardOnlineMs": 3896,
+        "sendToDisplayMs": 48,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 3724,
+        "controlListenAttachedMs": 3725,
+        "controlAfterBoardMs": 1
+      }
+    ],
+    "firefox": [
+      {
+        "label": "branch-firefox-1",
+        "boardFirstPaintMs": 3683,
+        "realtimeAttachedMs": 4208,
+        "controllerBoardOnlineMs": 4249,
+        "sendToDisplayMs": 101,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 4201,
+        "controlListenAttachedMs": 4202,
+        "controlAfterBoardMs": 1
+      },
+      {
+        "label": "branch-firefox-2",
+        "boardFirstPaintMs": 4107,
+        "realtimeAttachedMs": 4873,
+        "controllerBoardOnlineMs": 4913,
+        "sendToDisplayMs": 83,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 4872,
+        "controlListenAttachedMs": 4872,
+        "controlAfterBoardMs": 0
+      },
+      {
+        "label": "branch-firefox-3",
+        "boardFirstPaintMs": 3126,
+        "realtimeAttachedMs": 4032,
+        "controllerBoardOnlineMs": 4081,
+        "sendToDisplayMs": 94,
+        "boardListen": true,
+        "commandMode": "control",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": 4021,
+        "controlListenAttachedMs": 4021,
+        "controlAfterBoardMs": 0
+      }
+    ]
+  },
+  "baseline5765abf": {
+    "chromium": [
+      {
+        "label": "baseline-chromium-1",
+        "boardFirstPaintMs": 2819,
+        "realtimeAttachedMs": 3667,
+        "controllerBoardOnlineMs": 3735,
+        "sendToDisplayMs": 67,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      },
+      {
+        "label": "baseline-chromium-2",
+        "boardFirstPaintMs": 2826,
+        "realtimeAttachedMs": 3727,
+        "controllerBoardOnlineMs": 3772,
+        "sendToDisplayMs": 52,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      },
+      {
+        "label": "baseline-chromium-3",
+        "boardFirstPaintMs": 2816,
+        "realtimeAttachedMs": 3613,
+        "controllerBoardOnlineMs": 3661,
+        "sendToDisplayMs": 49,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      }
+    ],
+    "firefox": [
+      {
+        "label": "baseline-firefox-1",
+        "boardFirstPaintMs": 3578,
+        "realtimeAttachedMs": 4095,
+        "controllerBoardOnlineMs": 4133,
+        "sendToDisplayMs": 85,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      },
+      {
+        "label": "baseline-firefox-2",
+        "boardFirstPaintMs": 3597,
+        "realtimeAttachedMs": 4310,
+        "controllerBoardOnlineMs": 4356,
+        "sendToDisplayMs": 97,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      },
+      {
+        "label": "baseline-firefox-3",
+        "boardFirstPaintMs": 3589,
+        "realtimeAttachedMs": 4103,
+        "controllerBoardOnlineMs": 4141,
+        "sendToDisplayMs": 89,
+        "boardListen": true,
+        "commandMode": "poll",
+        "firebaseAuthSyncFailed": null,
+        "boardListenAttachedMs": null,
+        "controlListenAttachedMs": null,
+        "controlAfterBoardMs": null
+      }
+    ]
+  }
+}
