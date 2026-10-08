@@ -14,6 +14,8 @@ const ART = join(ROOT, 'artifacts', 'pr27-pages-route-matrix');
 const RUNS = Number(process.env.PR27_MATRIX_RUNS || '3');
 const MAIN_ROOT = process.env.MILKSHA_MAIN_SITE_ROOT || join(ROOT, 'wt-main');
 const PRODUCT_ROOT = process.env.MILKSHA_PRODUCT_SITE_ROOT || join(ROOT, 'wt-product');
+const SKIP_MAIN = process.env.PR27_MATRIX_SKIP_MAIN === '1';
+const MAIN_RESULT = join(ART, 'main-a82cb9b.json');
 
 mkdirSync(ART, { recursive: true });
 
@@ -76,14 +78,31 @@ function runSuite(label, siteRoot) {
   return out;
 }
 
+function loadExistingMain() {
+  try {
+    return JSON.parse(readFileSync(MAIN_RESULT, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 function main() {
   const summary = {
     generatedAt: new Date().toISOString(),
     method: 'playwright route github.io/milksha-demo/* from local tree; cloud APIs not intercepted',
     suites: [],
   };
-  summary.suites.push(runSuite('main-a82cb9b', MAIN_ROOT));
-  summary.suites.push(runSuite('product-a1372a0', PRODUCT_ROOT));
+  const keptMain = SKIP_MAIN ? loadExistingMain() : null;
+  if (keptMain) {
+    summary.suites.push(keptMain);
+  } else {
+    summary.suites.push(runSuite('main-a82cb9b', MAIN_ROOT));
+  }
+  const productHead = spawnSync('git', ['-C', PRODUCT_ROOT, 'rev-parse', '--short', 'HEAD'], {
+    encoding: 'utf8',
+  });
+  const productLabel = `product-${(productHead.stdout || 'head').trim()}`;
+  summary.suites.push(runSuite(productLabel, PRODUCT_ROOT));
   summary.pass = summary.suites.find((s) => s.label.startsWith('product'))?.pass === true;
   writeFileSync(join(ART, 'summary.json'), JSON.stringify(summary, null, 2));
   console.log(
