@@ -1,64 +1,39 @@
-# PR #27 公開 QA — 交件報告（2026-10-08 12:30 台北）
+# PR #27 公開 QA — 交件報告（拆 PR 版）
 
-## 判定摘要
+## 兩個 PR（合併順序：產品 → QA）
 
-| 項目 | 結論 |
-|------|------|
-| **120s 卡測** | **(a) QA 腳本**（`waitForFunction` 參數／清空同步） |
-| **c 收不到號** | **(b) 看板 seq 競態**（`cloud-runtime` 修復見 PR #28） |
-| **跨店 403 污染** | **否**（halt 僅分頁記憶體） |
+| PR | 分支 | 範圍 | HEAD（推送後見 GitHub） |
+|----|------|------|-------------------------|
+| **產品** | `cursor/board-device-command-seq-49e5` | 僅 `js/receiver/cloud-runtime.js` + `tests/cloud-runtime-device-command-seq.test.js` | `30e84f2` |
+| **QA** | `cursor/public-pages-qa-script-fix-49e5`（#28） | 公開 QA 腳本、`zz-deny-test` 檢查 d、報告；**不含** cloud-runtime | 見 #28 |
 
-PR：https://github.com/UltronService/milksha-demo/pull/28
+## 根因 (b) 與 seq 修法（產品 PR）
 
----
+- **來源：** device 文件 `pendingCommand` 可帶 `boardSeq`；fake-cloud／本機 shim 亦在 device 根欄位寫 `boardSeq`（與後端 devCommand 回傳一致）。
+- **作法：** `resolveCommandBoardSeq(cmd, deviceData)` 優先 `cmd.boardSeq` → `deviceData.boardSeq` → 僅在皆無時 `localSeq+1`。
+- **為何不會擋掉之後真名單：** 本地 seq 對齊後端該筆指令 seq；`tryApplyTodayBoard` 對「較新 seq、空 tickets、畫面上仍有 ready」僅 **抬高 localSeq、不清空**（`stale_empty_cloud`），之後 seq 更大的非空雲端板仍會通過 `shouldAcceptBoard`。
+- **未採用：** 送號後 250ms 強制 `pollBoard`（避免多餘 Firestore 讀取）。
 
-## 檢查 d — `zz-deny-test`（後端 **9940daf**）
+單元測試：`tests/cloud-runtime-device-command-seq.test.js`（三情境：clear→push 後舊空板不清號、雲端新名單可套用、重複 pending 不重複套用）。
 
-**禁止**再用 `s999999` 或其他未列入白名單的假店開看板（會被 device 自動登記）。  
-「不在名單」統一用 **`zz-deny-test`**：`devLogin` / `devCommand` / `listStores` 皆 **403 `store_not_allowed`**，且不登記。
+## 檢查 d — `zz-deny-test`（9940daf / deny 名單）
 
-### 主驗證（公開網址實測）
+公開實測：`artifacts/pr27-zz-deny-d/report.json` — **連線暫停**、devLogin **403** `store_not_allowed`、idle 無迴圈。  
+主腳本 d 為 **live** `zz-deny-test`；`c030020` route 僅 `routeSupplement`。
 
-| 項目 | 結果 |
-|------|------|
-| URL | `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-deny-test` |
-| UI | **連線暫停** |
-| devLogin HTTP | **403**，body.code = **`store_not_allowed`** |
-| 進頁 devLogin 次數 | **1** |
-| 暫停後 idle **15s**（探針）／**60s**（主腳本 d） | **0** 次重試 |
+## 公開矩陣（a–e × fresh / legacy × 3 輪）
 
-證據：`artifacts/pr27-zz-deny-d/report.json`（2026-10-08T03:46:37Z）
+| 跑法 | 結果檔 |
+|------|--------|
+| `MILKSHA_QA_PATCH_RUNTIME=0`（Pages 現況，對照） | `artifacts/pr27-matrix/matrix-baseline-no-patch.json` |
+| `MILKSHA_QA_PATCH_RUNTIME=1`（注入產品 PR 的 cloud-runtime） | `artifacts/pr27-matrix/matrix-with-patch.json` |
 
-主流程腳本：`scripts/public-pages-pr27-live-qa.mjs` 檢查 **d** 使用 **live_cloud + zz-deny-test**（獨立 browser context，無 route）。
+（執行紀錄：`artifacts/pr27-matrix/*.log`；若任一轮失敗，見 JSON 內 `items[].results` 與 `run.log`，**重跑不抵銷已記錄失敗**。）
 
-### 補充（route 模擬）
+## 測試規則
 
-仍保留 **c030020** 看板 URL + Playwright route 模擬 devLogin 403，結果寫在每筆 **d** 的 `routeSupplement` 欄位（不取代主驗證）。
-
----
-
-## 403 其他 code（看板，route 探針）
-
-`store_id_invalid`、`dev_store_registry_full` 在 **devLogin 403** 時亦顯示「連線暫停」、idle 無迴圈（見 `artifacts/pr27-403-codes-probe/report.json`）。  
-`markUploadHaltedFrom403` 白名單未含後兩者；**devLogin** 路徑仍經 `noteDevLoginFailure(403)` → 暫停（未改產品，待總監）。
-
----
+寫入僅 `zz-qa-*`；不在名單僅 `zz-deny-test`；不碰 `s120030`；`c030020` 只讀；不開新假店看板。
 
 ## devLogin 量（補充）
 
-**一句結論：** 10/3–10/8 約 3.5k 次為 **QA 重跑**；與 idle 卡頁 **非同一根因**（暫停探針用 **zz-deny-test** 實測 5 分鐘 idle = 0）。
-
----
-
-## c 根因與修復
-
-見 `artifacts/pr27-investigate/FAILURE-ROOT-CAUSE.md`（分類 **(b)**）。  
-Pages 未部署修復前，可用 `MILKSHA_QA_PATCH_RUNTIME=1` 注入 `cloud-runtime.js` 跑矩陣。
-
----
-
-## 手動驗收（d）
-
-1. 開無痕：`…/milksha-demo/?mode=cloud&store=zz-deny-test`
-2. 應顯示 **連線暫停**（非離線）
-3. 開著 1 分鐘，Network 僅約 **1** 次 devLogin → 403
+偏高為 QA 重跑；與卡 120s／`zz-deny-test` idle 0 次非同一根因。
