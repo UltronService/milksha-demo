@@ -220,6 +220,58 @@ test('fresh board poll with empty cloud shows empty', async function () {
   assert.equal(runtime.cloud.getLocalSeq(), 2);
 });
 
+test('missing board polls do not inflate localSeq; first small-seq board applies', async function () {
+  const missing = {
+    missing: true,
+    httpDate: 'Wed, 08 Oct 2026 03:00:00 GMT',
+    httpDateReadable: true,
+  };
+  let readCount = 0;
+  const { sandbox } = loadCloudRuntimeHarness();
+  const TodayBoard = sandbox.QMS.Board.TodayBoard;
+  let readyCount = 0;
+  const transport = {
+    session: { ensureIdToken: async function () {}, getBootServerTimeMs: function () { return Date.now(); } },
+    cloudApi: { boxHeartbeat: async function () { return { ok: true }; } },
+    readBoard: async function () {
+      readCount += 1;
+      if (readCount <= 10) {
+        return missing;
+      }
+      return boardDoc(1, [{ no: '88', status: 'ready' }]);
+    },
+    readDevice: async function () {
+      return { data: { boardSeq: 0, pendingCommand: null } };
+    },
+  };
+  const cloud = sandbox.QMS.Receiver.bootReceiverCloud({
+    storeId: STORE,
+    deviceId: 'stb-01',
+    transport,
+    milkshaRuntime: {
+      applyPayload: function (list) {
+        readyCount = list.filter(function (x) {
+          return x.source_type === 'From_Store_OK';
+        }).length;
+      },
+    },
+    enableTestPollHook: true,
+    skipBootReceiverCache: true,
+  });
+  cloud.start();
+  TodayBoard.setSessionBusinessDate(BD);
+  for (let i = 0; i < 20; i += 1) {
+    await cloud.triggerBoardPoll();
+    if (readyCount === 0) {
+      assert.equal(cloud.getLocalSeq(), 0, `while missing, poll ${i + 1} must not bump localSeq`);
+    } else {
+      break;
+    }
+  }
+  assert.equal(cloud.getLocalSeq(), 1);
+  assert.equal(readyCount, 1);
+});
+
 test('stale device.boardSeq below cloud seq does not regress local apply', async function () {
   const boardReads = [boardDoc(20, [])];
   const runtime = makeRuntime(boardReads);

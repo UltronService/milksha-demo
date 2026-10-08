@@ -647,12 +647,15 @@
       dropStaleCacheIfBusinessDayMismatch(resolved.businessDate);
       noteSessionBusinessDateRoll(resolved.businessDate);
       clearReceiverCache();
-      const nextSeq = localSeq > 0 ? localSeq + 1 : 1;
-      await applyNumberContent([], nextSeq, {
-        silent: true,
-        preserveFirstBatchFlag: true,
-        boardUpdatedAt: new Date().toISOString(),
-      });
+      // Cloud has no today_board yet: do not advance localSeq (poll would otherwise
+      // inflate seq and reject the first real board with a small seq).
+      if (milkshaRuntime || localSeq > 0) {
+        await applyNumberContent([], localSeq, {
+          silent: true,
+          preserveFirstBatchFlag: true,
+          boardUpdatedAt: new Date().toISOString(),
+        });
+      }
     }
 
     function markCloudReachable() {
