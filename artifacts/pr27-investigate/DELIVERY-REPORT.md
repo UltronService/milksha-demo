@@ -4,8 +4,8 @@
 
 | PR | 分支 | 範圍 | HEAD（推送後見 GitHub） |
 |----|------|------|-------------------------|
-| **產品** | `cursor/board-device-command-seq-49e5` | 僅 `js/receiver/cloud-runtime.js` + `tests/cloud-runtime-device-command-seq.test.js` | `30e84f2` |
-| **QA** | `cursor/public-pages-qa-script-fix-49e5`（#28） | 公開 QA 腳本、`zz-deny-test` 檢查 d、報告；**不含** cloud-runtime | 見 #28 |
+| **產品** | [#30](https://github.com/UltronService/milksha-demo/pull/30) `cursor/board-device-command-seq-49e5` | 僅 `js/receiver/cloud-runtime.js` + `tests/cloud-runtime-device-command-seq.test.js` | `30e84f2` |
+| **QA** | [#28](https://github.com/UltronService/milksha-demo/pull/28) `cursor/public-pages-qa-script-fix-49e5` | 公開 QA 腳本、`zz-deny-test` 檢查 d、報告；**不含** cloud-runtime | `70bc115` |
 
 ## 根因 (b) 與 seq 修法（產品 PR）
 
