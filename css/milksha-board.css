@@ -47,8 +47,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #88a040;
-  /* Letterbox bars (non-16:9) use the same green as the prep zone. */
+  background: #000000;
+  /* Letterbox bars (non-16:9): black outside the scaled canvas. */
   font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
   font-variant-numeric: tabular-nums;
   --milksha-num-font: 88px;

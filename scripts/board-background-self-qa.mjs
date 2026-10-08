@@ -100,6 +100,19 @@ async function main() {
   ];
 
   const captured = {};
+  await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), [
+    ...prepPayload(2, 1900),
+    ...readyPayload(2, 1900),
+  ]);
+  for (const lb of [
+    { w: 1440, h: 1080, name: 'letterbox-1440x1080.png' },
+    { w: 1920, h: 800, name: 'letterbox-1920x800.png' },
+  ]) {
+    await page.setViewportSize({ width: lb.w, height: lb.h });
+    await page.waitForTimeout(250);
+    captured[lb.name] = await captureBoard(page, lb.name);
+  }
+
   for (const vp of [
     { w: 1920, h: 1080, suffix: '1920' },
     { w: 3840, h: 2160, suffix: '3840' },
@@ -137,6 +150,11 @@ async function main() {
       ...Object.keys(captured)
         .sort()
         .map((k) => `- \`artifacts/board-background-self-qa/screenshots/${k}\``),
+      '',
+      '## Letterbox (black bars outside canvas)',
+      '- `screenshots/letterbox-1440x1080.png`',
+      '- `screenshots/letterbox-1920x800.png`',
+      '- `.milksha-stage` background `#000000` (1920×1080 / 3840×2160 全螢幕無留邊)',
       '',
       '## Reference compare (1920, 10 numbers)',
       '- Side-by-side: `screenshots/compare-full-10-vs-ref-1920.png`',
