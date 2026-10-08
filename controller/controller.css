@@ -29,7 +29,7 @@ body {
 }
 
 .store-not-allowed-banner {
-  margin: 12px 0 0;
+  margin: 8px 16px 0;
   padding: 10px 12px;
   background: #fff1f0;
   border: 1px solid #ffa39e;
@@ -42,6 +42,26 @@ body {
 
 .store-not-allowed-banner[hidden] {
   display: none !important;
+}
+
+.store-list-fetch-hint {
+  margin: 4px 16px 0;
+  font-size: 0.8rem;
+  color: #8c4a00;
+  line-height: 1.35;
+}
+
+.store-list-fetch-hint[hidden] {
+  display: none !important;
+}
+
+#fld-store option.store-online {
+  color: #0a7a48;
+  font-weight: 600;
+}
+
+#fld-store option.store-offline {
+  color: #666;
 }
 
 .local-notice {

@@ -1,0 +1,18 @@
+{
+  "test": "controller-store-picker-evidence.spec.mjs › 3d options sorted by storeId with online/offline text and color class",
+  "options": [
+    {
+      "value": "c030020",
+      "text": "c030020 (c030020) · online",
+      "className": "store-online"
+    },
+    {
+      "value": "s120030",
+      "text": "s120030 (s120030) · offline",
+      "className": "store-offline"
+    }
+  ],
+  "sortedMatches": true,
+  "hasOnlineOfflineWords": true,
+  "hasColorClass": true
+}

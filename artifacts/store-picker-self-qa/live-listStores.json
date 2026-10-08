@@ -1,0 +1,441 @@
+{
+  "serverTime": 1791435427722,
+  "onlineWindowSec": 180,
+  "stores": [
+    {
+      "storeId": "c030020",
+      "name": "c030020",
+      "online": true,
+      "lastSeenAt": 1791435420266,
+      "registeredAt": null,
+      "test": false,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": true,
+          "lastSeenAt": 1791435420266
+        }
+      ]
+    },
+    {
+      "storeId": "s120030",
+      "name": "s120030",
+      "online": false,
+      "lastSeenAt": 1791414800955,
+      "registeredAt": null,
+      "test": false,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791414800955
+        },
+        {
+          "deviceId": "stb-nosuch-99",
+          "online": false,
+          "lastSeenAt": null
+        },
+        {
+          "deviceId": "stb-pr23-a-fresh-muxhavis",
+          "online": false,
+          "lastSeenAt": 1791340155737
+        },
+        {
+          "deviceId": "stb-pr23-a-legacy-muxhphlt",
+          "online": false,
+          "lastSeenAt": 1791340822098
+        },
+        {
+          "deviceId": "stb-pr23-a2-fresh-muxicnbd",
+          "online": false,
+          "lastSeenAt": 1791341903065
+        },
+        {
+          "deviceId": "stb-pr23-a2-legacy-muxicnbf",
+          "online": false,
+          "lastSeenAt": 1791341903085
+        },
+        {
+          "deviceId": "stb-pr23-b-fresh-muxhofth",
+          "online": false,
+          "lastSeenAt": 1791340178374
+        },
+        {
+          "deviceId": "stb-pr23-b-legacy-muxi2ygz",
+          "online": false,
+          "lastSeenAt": 1791340850792
+        },
+        {
+          "deviceId": "stb-pr23-c-fresh-muxhovoy",
+          "online": false,
+          "lastSeenAt": 1791340193734
+        },
+        {
+          "deviceId": "stb-pr23-c-legacy-muxi3c3t",
+          "online": false,
+          "lastSeenAt": 1791340868191
+        },
+        {
+          "deviceId": "stb-qa-debug1791312566979",
+          "online": false,
+          "lastSeenAt": 1791312597492
+        },
+        {
+          "deviceId": "stb-qa-debug1791312614974",
+          "online": false,
+          "lastSeenAt": 1791312617468
+        },
+        {
+          "deviceId": "stb-qa-empty1791313068388",
+          "online": false,
+          "lastSeenAt": 1791313083847
+        },
+        {
+          "deviceId": "stb-qa-fast1791313676778",
+          "online": false,
+          "lastSeenAt": 1791313692313
+        },
+        {
+          "deviceId": "stb-qa-item41791313602655",
+          "online": false,
+          "lastSeenAt": 1791313663328
+        },
+        {
+          "deviceId": "stb-qa-mux0uohbghne",
+          "online": false,
+          "lastSeenAt": 1791312060879
+        },
+        {
+          "deviceId": "stb-qa-mux0w45s8515",
+          "online": false,
+          "lastSeenAt": 1791312067856
+        },
+        {
+          "deviceId": "stb-qa-mux0wu29n2b1",
+          "online": false,
+          "lastSeenAt": 1791312056363
+        },
+        {
+          "deviceId": "stb-qa-mux0xp08lj2s",
+          "online": false,
+          "lastSeenAt": 1791312066462
+        },
+        {
+          "deviceId": "stb-qa-mux0yxtv96dj",
+          "online": false,
+          "lastSeenAt": 1791312139639
+        },
+        {
+          "deviceId": "stb-qa-mux0z3ljbh4t",
+          "online": false,
+          "lastSeenAt": 1791312132038
+        },
+        {
+          "deviceId": "stb-qa-mux0z6bw5kt0",
+          "online": false,
+          "lastSeenAt": 1791312135628
+        },
+        {
+          "deviceId": "stb-qa-mux0zwbibdtu",
+          "online": false,
+          "lastSeenAt": 1791312141222
+        },
+        {
+          "deviceId": "stb-qa-mux10c0clkj5",
+          "online": false,
+          "lastSeenAt": 1791312169803
+        },
+        {
+          "deviceId": "stb-qa-mux14a655vno",
+          "online": false,
+          "lastSeenAt": 1791312354287
+        },
+        {
+          "deviceId": "stb-qa-mux14pb2takk",
+          "online": false,
+          "lastSeenAt": 1791312543445
+        },
+        {
+          "deviceId": "stb-qa-mux1b486bi2h",
+          "online": false,
+          "lastSeenAt": 1791312673399
+        },
+        {
+          "deviceId": "stb-qa-mux1bj9cq6qm",
+          "online": false,
+          "lastSeenAt": 1791312832219
+        },
+        {
+          "deviceId": "stb-qa-mux1ft89rblv",
+          "online": false,
+          "lastSeenAt": 1791312892243
+        },
+        {
+          "deviceId": "stb-qa-mux1g81klmwq",
+          "online": false,
+          "lastSeenAt": 1791313050951
+        },
+        {
+          "deviceId": "stb-qa-mux1kskvz9em",
+          "online": false,
+          "lastSeenAt": 1791313124281
+        },
+        {
+          "deviceId": "stb-qa-mux1l732eiro",
+          "online": false,
+          "lastSeenAt": 1791313282974
+        },
+        {
+          "deviceId": "stb-qa-mux1qhsid62k",
+          "online": false,
+          "lastSeenAt": 1791313391792
+        },
+        {
+          "deviceId": "stb-qa-mux1qz78d8vz",
+          "online": false,
+          "lastSeenAt": 1791313582681
+        }
+      ]
+    },
+    {
+      "storeId": "s999999",
+      "name": null,
+      "online": false,
+      "lastSeenAt": 1791428936454,
+      "registeredAt": 1791428701773,
+      "test": false,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791428936454
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-01",
+      "name": "zz-qa-01",
+      "online": false,
+      "lastSeenAt": 1790986583259,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-01",
+          "online": false,
+          "lastSeenAt": 1790986583259
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-02",
+      "name": "zz-qa-02",
+      "online": false,
+      "lastSeenAt": null,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-02",
+          "online": false,
+          "lastSeenAt": null
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-08",
+      "name": "zz-qa-08",
+      "online": false,
+      "lastSeenAt": 1790987936307,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-08",
+          "online": false,
+          "lastSeenAt": 1790987936307
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-09",
+      "name": "zz-qa-09",
+      "online": false,
+      "lastSeenAt": 1790988165412,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-09",
+          "online": false,
+          "lastSeenAt": 1790988165412
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-12",
+      "name": "zz-qa-12",
+      "online": false,
+      "lastSeenAt": 1790988176170,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-12",
+          "online": false,
+          "lastSeenAt": 1790988176170
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-13",
+      "name": "zz-qa-13",
+      "online": false,
+      "lastSeenAt": 1790988513860,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-13",
+          "online": false,
+          "lastSeenAt": 1790988513860
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-14",
+      "name": "zz-qa-14",
+      "online": false,
+      "lastSeenAt": 1790989515229,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-qa-14",
+          "online": false,
+          "lastSeenAt": 1790989515229
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-agent",
+      "name": "zz-qa-agent",
+      "online": false,
+      "lastSeenAt": 1791333625221,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791333625221
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-android",
+      "name": "zz-qa-android",
+      "online": false,
+      "lastSeenAt": 1791017774185,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "zz-android-01",
+          "online": false,
+          "lastSeenAt": 1791017774185
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-offline-spec13",
+      "name": null,
+      "online": false,
+      "lastSeenAt": 1791419149625,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791419149625
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-smoke",
+      "name": "zz-qa-smoke",
+      "online": false,
+      "lastSeenAt": 1791302538453,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "box-smoke-001",
+          "online": false,
+          "lastSeenAt": 1791302538453
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-spec13",
+      "name": "zz-qa-spec13",
+      "online": false,
+      "lastSeenAt": 1791422242333,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791422242333
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-store-a",
+      "name": "zz-qa-store-a",
+      "online": false,
+      "lastSeenAt": 1791434950653,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791434950653
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-store-b",
+      "name": "zz-qa-store-b",
+      "online": false,
+      "lastSeenAt": 1791434583719,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791434583719
+        }
+      ]
+    },
+    {
+      "storeId": "zz-qa-ttl-1011",
+      "name": "zz-qa-ttl-1011",
+      "online": false,
+      "lastSeenAt": 1791431080653,
+      "registeredAt": null,
+      "test": true,
+      "devices": [
+        {
+          "deviceId": "stb-01",
+          "online": false,
+          "lastSeenAt": 1791431080653
+        }
+      ]
+    }
+  ]
+}

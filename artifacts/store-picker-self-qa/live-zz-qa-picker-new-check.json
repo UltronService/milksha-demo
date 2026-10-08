@@ -1,0 +1,23 @@
+{
+  "found": false,
+  "storeIds": [
+    "c030020",
+    "s120030",
+    "s999999",
+    "zz-qa-01",
+    "zz-qa-02",
+    "zz-qa-08",
+    "zz-qa-09",
+    "zz-qa-12",
+    "zz-qa-13",
+    "zz-qa-14",
+    "zz-qa-agent",
+    "zz-qa-android",
+    "zz-qa-offline-spec13",
+    "zz-qa-smoke",
+    "zz-qa-spec13",
+    "zz-qa-store-a",
+    "zz-qa-store-b",
+    "zz-qa-ttl-1011"
+  ]
+}

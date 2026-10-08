@@ -1,0 +1,17 @@
+{
+  "test": "controller-store-picker-evidence.spec.mjs › 3b zz-qa hidden by default but URL-pinned zz-qa-store-a is selectable",
+  "defaultStoreUrl": "c030020",
+  "defaultListIncludesZzQa": false,
+  "defaultList": [
+    "c030020",
+    "s120030"
+  ],
+  "pinnedStoreUrl": "zz-qa-store-a",
+  "pinnedSelectedValue": "zz-qa-store-a",
+  "pinnedListIncludesZzQaStoreA": true,
+  "pinnedList": [
+    "c030020",
+    "s120030",
+    "zz-qa-store-a"
+  ]
+}

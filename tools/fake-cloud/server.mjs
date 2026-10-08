@@ -17,14 +17,75 @@ import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
-function isAllowedDevLoginStore(storeId) {
+const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020']);
+const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
+const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
+const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
+const STORE_REGISTRY_MAX = Number(process.env.FAKE_STORE_REGISTRY_MAX || 200);
+
+function isValidStoreIdFormat(storeId) {
   const id = String(storeId || '').trim();
-  if (id === 's120030' || id === 'c030020') {
+  if (!id) {
+    return false;
+  }
+  if (KNOWN_LITERAL_STORE_IDS.has(id)) {
     return true;
   }
-  return id.indexOf('zz-qa-') === 0;
+  if (STORE_ID_ZZ_QA_RE.test(id)) {
+    return true;
+  }
+  if (STORE_ID_ZZ_DENY_RE.test(id)) {
+    return true;
+  }
+  if (STORE_ID_LETTER_SIX_DIGITS_RE.test(id)) {
+    return true;
+  }
+  return false;
+}
+
+/** @type {Map<string, { storeId: string, name: string, registeredAt: number|null, test: boolean }>} */
+const storeRegistry = new Map();
+
+function isStoreRegistered(storeId) {
+  return storeRegistry.has(String(storeId || '').trim());
+}
+
+function registerStore(storeId, opts) {
+  const id = String(storeId || '').trim();
+  if (!isValidStoreIdFormat(id)) {
+    return { ok: false, code: 'store_id_invalid', message: 'invalid store id format' };
+  }
+  if (id.indexOf('zz-deny-') === 0) {
+    return { ok: false, code: 'store_not_allowed', message: 'store denied' };
+  }
+  if (storeRegistry.has(id)) {
+    return { ok: true, store: storeRegistry.get(id) };
+  }
+  if (storeRegistry.size >= STORE_REGISTRY_MAX) {
+    return { ok: false, code: 'dev_store_registry_full', message: 'registry full' };
+  }
+  const test = id.indexOf('zz-qa-') === 0;
+  const entry = {
+    storeId: id,
+    name: (opts && opts.name) || id,
+    registeredAt: Date.now(),
+    test,
+  };
+  storeRegistry.set(id, entry);
+  return { ok: true, store: entry };
+}
+
+function seedRegisteredStores() {
+  ['s120030', 'c030020', 'zz-qa-store-a', 'zz-qa-store-b'].forEach(function (id) {
+    registerStore(id, { name: id });
+  });
+}
+
+function isAllowedDevLoginStore(storeId) {
+  return isStoreRegistered(storeId);
 }
 let devLoginRequestCount = 0;
+let listStoresRequestCount = 0;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -303,13 +364,27 @@ const server = http.createServer(async (req, res) => {
       posReceiverEntryAEnabled = true;
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
+      listStoresRequestCount = 0;
+      storeRegistry.clear();
+      seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
         seedE2eDevice();
       }
       return json(res, 200, { ok: true });
     }
+    if (url.pathname === '/test/registerStore' && req.method === 'POST') {
+      const body = await readBody(req);
+      const reg = registerStore(body.storeId || '', { name: body.name });
+      if (!reg.ok) {
+        return json(res, 403, apiError(reg.code, reg.message));
+      }
+      return json(res, 200, { ok: true, store: reg.store });
+    }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
+      return json(res, 200, { count: listStoresRequestCount });
     }
     if (url.pathname === '/test/devicePendingCommand' && req.method === 'POST') {
       const body = await readBody(req);
@@ -369,13 +444,21 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       devLoginRequestCount += 1;
       const body = await readBody(req);
-      if (!isAllowedDevLoginStore(body.storeId)) {
-        return json(res, 403, {
-          code: 'store_not_allowed',
-          message: 'store not allowed for controller dev login',
-        });
+      const sid = String(body.storeId || '').trim();
+      if (!isValidStoreIdFormat(sid)) {
+        return json(res, 403, apiError('store_id_invalid', 'invalid store id format'));
       }
-      return json(res, 200, { customToken: `fake-${body.storeId}-${body.role}` });
+      if (sid.indexOf('zz-deny-') === 0) {
+        return json(res, 403, apiError('store_not_allowed', 'store denied'));
+      }
+      const role = String(body.role || '').trim();
+      if (role === 'controller' && !isStoreRegistered(sid)) {
+        return json(res, 403, apiError('store_not_allowed', 'store not registered'));
+      }
+      if (role === 'controller' && !isAllowedDevLoginStore(sid)) {
+        return json(res, 403, apiError('store_not_allowed', 'store not allowed for controller dev login'));
+      }
+      return json(res, 200, { customToken: `fake-${sid}-${role || 'device'}` });
     }
 
     if (req.method === 'POST' && url.pathname === '/identity/v1/accounts:signInWithCustomToken') {
@@ -440,12 +523,63 @@ const server = http.createServer(async (req, res) => {
       const auth = requireAuth(req);
       if (!auth.ok) return json(res, auth.status, auth.body);
 
+      if (name === 'listStores') {
+        listStoresRequestCount += 1;
+        const now = Date.now();
+        const onlineWindowMs = 180 * 1000;
+        const stores = [];
+        for (const entry of storeRegistry.values()) {
+          const devices = [];
+          let storeOnline = false;
+          let lastSeenAt = null;
+          const prefix = `stores/${entry.storeId}/devices/`;
+          for (const [k, v] of docs.entries()) {
+            if (!k.startsWith(prefix)) {
+              continue;
+            }
+            const deviceId = k.slice(prefix.length);
+            const seen = v.lastSeen ? Date.parse(v.lastSeen) : 0;
+            const online = Boolean(v.online) && seen && now - seen < onlineWindowMs;
+            if (online) {
+              storeOnline = true;
+            }
+            if (seen && (!lastSeenAt || seen > lastSeenAt)) {
+              lastSeenAt = seen;
+            }
+            devices.push({
+              deviceId,
+              online,
+              lastSeenAt: seen || null,
+            });
+          }
+          stores.push({
+            storeId: entry.storeId,
+            name: entry.name,
+            online: storeOnline,
+            lastSeenAt,
+            registeredAt: entry.registeredAt,
+            test: entry.test,
+            devices,
+          });
+        }
+        stores.sort((a, b) => String(a.storeId).localeCompare(String(b.storeId)));
+        return json(res, 200, {
+          serverTime: now,
+          onlineWindowSec: 180,
+          stores,
+        });
+      }
+
       if (name === 'boxHeartbeat') {
         const hv = validateBoxHeartbeatBody(body);
         if (!hv.ok) {
           return json(res, httpStatusForApiErrorCode(hv.code), apiError(hv.code, hv.message));
         }
         const hb = hv.body;
+        const reg = registerStore(hb.storeId);
+        if (!reg.ok) {
+          return json(res, 403, apiError(reg.code, reg.message));
+        }
         const dk = deviceKey(hb.storeId, hb.deviceId);
         const prev = docs.get(dk) || {
           online: false,
@@ -499,6 +633,12 @@ const server = http.createServer(async (req, res) => {
         const authStoreId = storeIdForAuthToken(bearer);
         if (authStoreId && cmdBody.storeId !== authStoreId) {
           return json(res, 403, apiError('forbidden', 'store id does not match token store'));
+        }
+        if (!isValidStoreIdFormat(cmdBody.storeId)) {
+          return json(res, 403, apiError('store_id_invalid', 'invalid store id format'));
+        }
+        if (!isStoreRegistered(cmdBody.storeId)) {
+          return json(res, 403, apiError('store_not_allowed', 'store not registered'));
         }
         const dk = deviceKey(cmdBody.storeId, cmdBody.deviceId);
         if (!docs.has(dk)) {
@@ -591,6 +731,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+seedRegisteredStores();
 seedE2eDevice();
 
 server.listen(PORT, '127.0.0.1', () => {
