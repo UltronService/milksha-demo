@@ -1,0 +1,193 @@
+{
+  "generatedAt": "2026-10-09T23:47:17.305Z",
+  "viewports": [
+    {
+      "viewport": "1920x1080",
+      "positions": [
+        {
+          "cellIndex": 0,
+          "number": "9999",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 1,
+          "number": "9998",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 2,
+          "number": "9997",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 3,
+          "number": "9996",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 4,
+          "number": "9995",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 5,
+          "number": "9994",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 6,
+          "number": "9993",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 7,
+          "number": "9992",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 8,
+          "number": "9991",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 9,
+          "number": "9990",
+          "scale": 1.3,
+          "minNeighborGapPx": 17.3,
+          "insideZone": true,
+          "overlaps": []
+        }
+      ],
+      "minNeighborGapPx": 17.3,
+      "worstCell": {
+        "cellIndex": 0,
+        "number": "9999",
+        "scale": 1.3,
+        "minNeighborGapPx": 17.3,
+        "insideZone": true,
+        "overlaps": []
+      }
+    },
+    {
+      "viewport": "3840x2160",
+      "positions": [
+        {
+          "cellIndex": 0,
+          "number": "9999",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 1,
+          "number": "9998",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 2,
+          "number": "9997",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 3,
+          "number": "9996",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 4,
+          "number": "9995",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 5,
+          "number": "9994",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 6,
+          "number": "9993",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 7,
+          "number": "9992",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 8,
+          "number": "9991",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        },
+        {
+          "cellIndex": 9,
+          "number": "9990",
+          "scale": 1.3,
+          "minNeighborGapPx": 87.2,
+          "insideZone": true,
+          "overlaps": []
+        }
+      ],
+      "minNeighborGapPx": 87.2,
+      "worstCell": {
+        "cellIndex": 0,
+        "number": "9999",
+        "scale": 1.3,
+        "minNeighborGapPx": 87.2,
+        "insideZone": true,
+        "overlaps": []
+      }
+    }
+  ]
+}

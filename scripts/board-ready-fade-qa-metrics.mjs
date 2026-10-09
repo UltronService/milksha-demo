@@ -20,10 +20,7 @@ async function measureSafeScale(page) {
     window.QMS.runtime.applyPayload(batch);
   });
   await page.waitForTimeout(200);
-  return page.evaluate(() => {
-    const layer = document.querySelector('.milksha-zone.ready .milksha-zone-numbers');
-    return window.QMS.MilkshaBoardAnimConfig.getEffectiveReadyScale(layer);
-  });
+  return page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getEffectiveReadyScale());
 }
 
 async function perfReadyPulse(viewport) {

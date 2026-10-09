@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-10-09T23:47:29.697Z",
+  "shots": [
+    {
+      "viewport": "1920x1080",
+      "cellIndex": 0,
+      "number": "9999",
+      "minNeighborGapPx": 17.3,
+      "scale": 1.3,
+      "fullboard": "1920x1080-fullboard-scale-1_3-worst-cell-0-gap-17_3.png",
+      "zoom2x": "1920x1080-fullboard-scale-1_3-worst-cell-0-gap-17_3-zoom2x.png"
+    },
+    {
+      "viewport": "3840x2160",
+      "cellIndex": 0,
+      "number": "9999",
+      "minNeighborGapPx": 87.2,
+      "scale": 1.3,
+      "fullboard": "3840x2160-fullboard-scale-1_3-worst-cell-0-gap-87_2.png",
+      "zoom2x": "3840x2160-fullboard-scale-1_3-worst-cell-0-gap-87_2-zoom2x.png"
+    }
+  ]
+}

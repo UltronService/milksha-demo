@@ -16,12 +16,12 @@
     return { opacityInMs: 300, pageDurationMs: 500, readyScale: 1.3, readyScaleInMs: 300, readyScaleHoldMs: 3000, readyScaleOutMs: 300 };
   }
 
-  function getEffectiveReadyScale(numbersLayer, chipEl) {
+  function getEffectiveReadyScale() {
     const cfgMod = QMS.MilkshaBoardAnimConfig;
     if (cfgMod && cfgMod.getEffectiveReadyScale) {
-      return cfgMod.getEffectiveReadyScale(numbersLayer, chipEl);
+      return cfgMod.getEffectiveReadyScale();
     }
-    return { requested: 1.3, safeMax: 1.3, effective: 1.3, unsafeBypass: false };
+    return { requested: 1.3, effective: 1.3 };
   }
   const BULK_SNAPSHOT_MAX_OVERLAP_RATIO = 0.35;
 
@@ -361,7 +361,7 @@
     function runReadyPulseAnim(el, numbersLayer, gen) {
       opacityAnimRuns += 1;
       const cfg = getAnimConfig();
-      const scaleInfo = getEffectiveReadyScale(numbersLayer, el);
+      const scaleInfo = getEffectiveReadyScale();
       const peak = scaleInfo.effective;
       if (el && el.getAttribute) {
         const id = el.getAttribute('data-item-id');
@@ -586,8 +586,8 @@
   QMS.MilkshaBoardAnim = {
     getAnimConfig: getAnimConfig,
     getEffectiveReadyScale: getEffectiveReadyScale,
-    computeSafeReadyScale: function (layer) {
-      return getEffectiveReadyScale(layer).safeMax;
+    computeSafeReadyScale: function () {
+      return getEffectiveReadyScale().effective;
     },
     animateReadyPulse: animateReadyPulse,
     visibleIdToSlot: visibleIdToSlot,
