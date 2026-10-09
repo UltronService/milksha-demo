@@ -1,8 +1,9 @@
 # 看板叫號動態自測報告（QA 交付）
 
-- **HEAD**: `0999e09c63bf8027a710009a22e665f73668287e`（功能交付 `389cf56`；報告見本檔最新 commit）
+- **HEAD**: （push 後以 `git rev-parse HEAD` 為準）
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
-- **CI（0999e09）**: https://github.com/UltronService/milksha-demo/actions/runs/37902356270 — **success**（約 30m，`npm test` + 全量 `test:e2e`）
+- **CI（0999e09 功能驗證）**: https://github.com/UltronService/milksha-demo/actions/runs/37902356270 — **success**
+- **CI（0989854 僅文件）**: https://github.com/UltronService/milksha-demo/actions/runs/37905584499 — **failure**（`board-animation` spec1 opacity 時序 flake；live-cloud 4097ms 標 flaky）
 - **指標檔**: `artifacts/board-animation-self-qa/metrics.json`
 - **連續幀 contact sheet**: `artifacts/board-animation-self-qa/contact-sheets/`（約 11.8 MB）
 
@@ -101,6 +102,10 @@ Received string:  "DejaVu Sans"
 ```
 
 本機未裝 CI workflow 的 Roboto 平台字型，與 main 同失；CI 安裝字型後全量 e2e 綠（37902356270）。**非本 PR 引入**。
+
+### CI 0989854 失敗後（僅 e2e 穩定化，無產品邏輯變更）
+
+`assertChipsOpaqueAndUnique` 改為先 `waitForChipsOpaque`（等 WAAPI opacity 結束），避免 CI 慢機在 350ms 固定等待未結束即斷言。
 
 ## 手動 UAT 速查
 

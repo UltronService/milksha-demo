@@ -36,7 +36,19 @@ export async function opacityAnimRunsSinceReset(page) {
   });
 }
 
+export async function waitForChipsOpaque(page, timeout = 8000) {
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll('.milksha-board-chip')].every((el) => {
+        const o = getComputedStyle(el).opacity;
+        return o === '1' || o === '';
+      }),
+    { timeout },
+  );
+}
+
 export async function assertChipsOpaqueAndUnique(page) {
+  await waitForChipsOpaque(page);
   const stats = await page.evaluate(() => {
     const chips = [...document.querySelectorAll('.milksha-board-chip')];
     const ids = chips.map((el) => el.getAttribute('data-item-id'));
