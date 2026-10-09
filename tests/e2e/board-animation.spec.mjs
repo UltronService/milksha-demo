@@ -115,6 +115,25 @@ test.describe('board call animation specs 1–7', () => {
     expect(await page.locator('.milksha-board-chip').count()).toBe(0);
   });
 
+  test('peak: three new prep and three ready in one apply still animates', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    await resetOpacityAnimCounter(page);
+    await page.evaluate(() => {
+      window.QMS.runtime.applyPayload([
+        { source_type: 'From_Store_Preparing', number: '5611' },
+        { source_type: 'From_Store_Preparing', number: '5612' },
+        { source_type: 'From_Store_Preparing', number: '5613' },
+        { source_type: 'From_Store_OK', number: '5621' },
+        { source_type: 'From_Store_OK', number: '5622' },
+        { source_type: 'From_Store_OK', number: '5623' },
+      ]);
+    });
+    expect(await page.evaluate(() => window.QMS.runtime.getAnimSkipReason())).toBe('animate');
+    expect(await opacityAnimRunsSinceReset(page)).toBeGreaterThan(0);
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
   test('6 full silent resend: no opacity animations', async ({ page }) => {
     await primeBoardForAnimation(page);
     const batch = [

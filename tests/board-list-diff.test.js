@@ -52,6 +52,7 @@ test('shouldSkipBoardAnimations on silent and first payload', function () {
   const base = {
     isFirstPayload: false,
     silentApply: false,
+    forceSnapshotSkip: false,
     reduceMotion: false,
     canUseWebAnimations: true,
     prevPrep: [{ id: 's:1', number: '1' }],
@@ -61,9 +62,40 @@ test('shouldSkipBoardAnimations on silent and first payload', function () {
   };
   assert.equal(MB.shouldSkipBoardAnimations({ ...base, isFirstPayload: true }).reason, 'first-payload');
   assert.equal(MB.shouldSkipBoardAnimations({ ...base, silentApply: true }).reason, 'silent-reconnect');
+  assert.equal(MB.shouldSkipBoardAnimations({ ...base, forceSnapshotSkip: true }).reason, 'snapshot-reload-flag');
 });
 
-test('bulk snapshot replace skips motion', function () {
+test('peak batch of three prep and three ready still animates on live onSnapshot', function () {
+  const MB = loadAnim();
+  const prevPrep = [{ id: 's:1', number: '1' }];
+  const nextPrep = [
+    { id: 's:1', number: '1' },
+    { id: 's:2', number: '2' },
+    { id: 's:3', number: '3' },
+    { id: 's:4', number: '4' },
+  ];
+  const prevReady = [];
+  const nextReady = [
+    { id: 's:10', number: '10' },
+    { id: 's:11', number: '11' },
+    { id: 's:12', number: '12' },
+  ];
+  const decision = MB.shouldSkipBoardAnimations({
+    isFirstPayload: false,
+    silentApply: false,
+    forceSnapshotSkip: false,
+    reduceMotion: false,
+    canUseWebAnimations: true,
+    prevPrep: prevPrep,
+    nextPrep: nextPrep,
+    prevReady: prevReady,
+    nextReady: nextReady,
+  });
+  assert.equal(decision.skip, false);
+  assert.equal(decision.reason, 'animate');
+});
+
+test('isBulkSnapshotReplace remains available for diagnostics only', function () {
   const MB = loadAnim();
   const prev = [];
   for (let i = 0; i < 8; i += 1) {

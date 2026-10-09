@@ -39,8 +39,9 @@ test.describe('zz-qa-store-a live cloud with branch site route', () => {
       times.push(Date.now() - t0);
       await board.waitForTimeout(150);
     }
-    expect(median(times)).toBeLessThan(3000);
-    expect(Math.max(...times)).toBeLessThan(5000);
+    for (let i = 0; i < times.length; i += 1) {
+      expect(times[i]).toBeLessThanOrEqual(3000);
+    }
     await board.waitForFunction(
       () =>
         [...document.querySelectorAll('.milksha-board-chip')].every((el) => {

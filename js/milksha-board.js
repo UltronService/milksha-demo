@@ -488,7 +488,7 @@
       );
     }
 
-    function shouldSkipMotion(silentApply, prevPrep, prevReady) {
+    function shouldSkipMotion(silentApply, prevPrep, prevReady, forceSnapshotSkip) {
       const animApi = QMS.MilkshaBoardAnim;
       if (!animApi || !animApi.shouldSkipBoardAnimations) {
         return { skip: true, reason: 'anim-module-missing' };
@@ -496,6 +496,7 @@
       return animApi.shouldSkipBoardAnimations({
         isFirstPayload: isFirstPayload,
         silentApply: silentApply,
+        forceSnapshotSkip: Boolean(forceSnapshotSkip),
         reduceMotion: prefersReducedMotion(),
         canUseWebAnimations: canUseWebAnimations(),
         prevPrep: prevPrep,
@@ -506,7 +507,7 @@
     }
 
     /**
-     * @param {{ silentApply: boolean, highlightReadyIds: string[], clearAll: boolean }} viewOpts
+     * @param {{ silentApply: boolean, highlightReadyIds: string[], clearAll: boolean, forceSnapshotSkip?: boolean }} viewOpts
      */
     function commitBoardView(viewOpts) {
       const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
@@ -518,7 +519,12 @@
       const prevReady = lastRenderedReady;
       const prevPrepPage = lastRenderedPrepPage;
       const prevReadyPage = lastRenderedReadyPage;
-      const motion = shouldSkipMotion(viewOpts.silentApply, prevPrep, prevReady);
+      const motion = shouldSkipMotion(
+        viewOpts.silentApply,
+        prevPrep,
+        prevReady,
+        viewOpts.forceSnapshotSkip,
+      );
       lastAnimSkipReason = motion.reason;
       const animator = ensureBoardAnimator();
 
@@ -994,6 +1000,7 @@
         silentApply: silentApply,
         highlightReadyIds: newReadyIds,
         clearAll: clearAll,
+        forceSnapshotSkip: Boolean(opts && opts.forceSnapshotSkip),
       });
       isFirstPayload = false;
     }
@@ -1112,6 +1119,12 @@
         if (animator && animator.resetOpacityAnimRuns) {
           animator.resetOpacityAnimRuns();
         }
+      },
+      clearPerfEvents: function () {
+        win.__milkshaBoardPerfEvents = [];
+      },
+      getPerfEvents: function () {
+        return (win.__milkshaBoardPerfEvents || []).slice();
       },
       advanceZonePageForTest: function (zoneKey) {
         if (zoneKey === 'prep') {

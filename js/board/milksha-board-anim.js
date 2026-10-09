@@ -111,6 +111,7 @@
    * @param {{
    *   isFirstPayload: boolean,
    *   silentApply: boolean,
+   *   forceSnapshotSkip?: boolean,
    *   reduceMotion: boolean,
    *   canUseWebAnimations: boolean,
    *   prevPrep: Array<{ id: string }>,
@@ -133,10 +134,8 @@
     if (input.silentApply) {
       return { skip: true, reason: 'silent-reconnect' };
     }
-    const prevAll = input.prevPrep.concat(input.prevReady);
-    const nextAll = input.nextPrep.concat(input.nextReady);
-    if (isBulkSnapshotReplace(prevAll, nextAll)) {
-      return { skip: true, reason: 'bulk-snapshot-combined' };
+    if (input.forceSnapshotSkip) {
+      return { skip: true, reason: 'snapshot-reload-flag' };
     }
     return { skip: false, reason: 'animate' };
   }
@@ -274,8 +273,24 @@
       return generation;
     }
 
+    function notePerf(event, detail) {
+      const win = deps.window;
+      if (!win || !win.__milkshaBoardPerfEvents) {
+        return;
+      }
+      const perf = win.performance;
+      const t = perf && typeof perf.now === 'function' ? perf.now() : Date.now();
+      win.__milkshaBoardPerfEvents.push({ t: t, event: event, detail: detail || {} });
+    }
+
     function runOpacityAnim(el, from, to, durationMs, gen) {
       opacityAnimRuns += 1;
+      if (el && el.getAttribute) {
+        const id = el.getAttribute('data-item-id');
+        if (id) {
+          notePerf('opacity-anim-start', { id: id, from: from, to: to });
+        }
+      }
       return animateOpacity(el, from, to, durationMs, gen, getGeneration);
     }
 
@@ -477,6 +492,7 @@
           chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
           snapOpacity(chip, 0);
           slot.appendChild(chip);
+          notePerf('chip-dom', { id: id });
           chipById[id] = chip;
           if (diff.added.indexOf(id) >= 0) {
             promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));

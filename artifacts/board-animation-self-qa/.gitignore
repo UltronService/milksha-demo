@@ -1,0 +1,5 @@
+burst/
+*.log
+qa-pack-run.log
+e2e-full.log
+self-qa-run.log
