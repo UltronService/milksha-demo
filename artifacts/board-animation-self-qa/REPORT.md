@@ -1,8 +1,8 @@
 # 看板叫號動態自測報告
 
-- **HEAD**: `2a67201`
+- **HEAD**: `d2139d0`（CI 綠後若有新 commit 請見 PR）
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
-- **CI**: https://github.com/UltronService/milksha-demo/actions/workflows（PR #35 checks）
+- **CI**: https://github.com/UltronService/milksha-demo/actions/runs/37895148471 （success）
 
 ## 規格 1–7 實作摘要
 
