@@ -80,18 +80,19 @@ test.describe('zz-qa-store-a live cloud continuous simulation', () => {
     const normalEnd = Date.now() + RUN_MS;
     await sampleUntil(ctrl, board, normalEnd, evidence.samples.normal);
     await ctrl.click('[data-testid="btn-sim-stop"]');
-    const afterStopNormal = {
-      sendCount: await ctrl.evaluate(() => window.__controller.getSimulationSendCount()),
-      board: await boardTicketCount(board),
-    };
+    await ctrl.waitForTimeout(5000);
+    const afterStopNormal = await ctrl.evaluate(() => ({
+      sendCount: window.__controller.getSimulationSendCount(),
+      tickets: window.__controller.getTickets().map((t) => t.no + ':' + t.status),
+    }));
     await ctrl.waitForTimeout(60000);
-    const afterQuietNormal = {
-      sendCount: await ctrl.evaluate(() => window.__controller.getSimulationSendCount()),
-      board: await boardTicketCount(board),
-    };
+    const afterQuietNormal = await ctrl.evaluate(() => ({
+      sendCount: window.__controller.getSimulationSendCount(),
+      tickets: window.__controller.getTickets().map((t) => t.no + ':' + t.status),
+    }));
     evidence.stopChecks.normal = { afterStop: afterStopNormal, afterQuiet: afterQuietNormal };
     expect(afterQuietNormal.sendCount).toBe(afterStopNormal.sendCount);
-    expect(afterQuietNormal.board.total).toBe(afterStopNormal.board.total);
+    expect(afterQuietNormal.tickets).toEqual(afterStopNormal.tickets);
 
     await ctrl.screenshot({ path: join(ART, 'cloud-normal-ctrl-1920.png') });
     await board.screenshot({ path: join(ART, 'cloud-normal-board-1920.png') });
@@ -101,18 +102,19 @@ test.describe('zz-qa-store-a live cloud continuous simulation', () => {
     const peakEnd = Date.now() + RUN_MS;
     await sampleUntil(ctrl, board, peakEnd, evidence.samples.peak);
     await ctrl.click('[data-testid="btn-sim-stop"]');
-    const afterStopPeak = {
-      sendCount: await ctrl.evaluate(() => window.__controller.getSimulationSendCount()),
-      board: await boardTicketCount(board),
-    };
+    await ctrl.waitForTimeout(5000);
+    const afterStopPeak = await ctrl.evaluate(() => ({
+      sendCount: window.__controller.getSimulationSendCount(),
+      tickets: window.__controller.getTickets().map((t) => t.no + ':' + t.status),
+    }));
     await ctrl.waitForTimeout(60000);
-    const afterQuietPeak = {
-      sendCount: await ctrl.evaluate(() => window.__controller.getSimulationSendCount()),
-      board: await boardTicketCount(board),
-    };
+    const afterQuietPeak = await ctrl.evaluate(() => ({
+      sendCount: window.__controller.getSimulationSendCount(),
+      tickets: window.__controller.getTickets().map((t) => t.no + ':' + t.status),
+    }));
     evidence.stopChecks.peak = { afterStop: afterStopPeak, afterQuiet: afterQuietPeak };
     expect(afterQuietPeak.sendCount).toBe(afterStopPeak.sendCount);
-    expect(afterQuietPeak.board.total).toBe(afterStopPeak.board.total);
+    expect(afterQuietPeak.tickets).toEqual(afterStopPeak.tickets);
 
     await ctrl.screenshot({ path: join(ART, 'cloud-peak-ctrl-1920.png') });
     await board.screenshot({ path: join(ART, 'cloud-peak-board-1920.png') });
