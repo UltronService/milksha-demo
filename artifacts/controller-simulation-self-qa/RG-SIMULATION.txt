@@ -1,0 +1,12 @@
+# rg audit (controller simulation) — 2026-10-09
+# Patterns: MAX_RUN, auto_max, FORBIDDEN_STORE, 禁止啟動, 30*60*1000, 1800000
+
+## controller/store-simulation.js
+(no matches)
+
+## controller/store-simulation-host.js
+(no matches)
+
+## controller/controller-app.js (simulation path only)
+- No simulationEligibility store block for c030020/s120030; uses QMS.Controller.StoreSimulation.simulationEligibility (project milksha-qms-dev only).
+- Default store fallbacks c030020 elsewhere are unrelated to simulation gating.

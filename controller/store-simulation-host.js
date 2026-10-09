@@ -104,6 +104,10 @@
         if (res && res.isSuccess === false) {
           throw new Error('send rejected');
         }
+        if (!state.running) {
+          dirty = false;
+          return true;
+        }
         state.sendCount += 1;
         lastTicketsJson = json;
         dirty = false;
@@ -112,10 +116,18 @@
         return true;
       } catch (e) {
         sendInFlight = false;
+        if (!state.running) {
+          dirty = false;
+          return false;
+        }
         if (retryIndex + 1 < SEND_RETRY_LIMIT) {
           await new Promise(function (resolve) {
             setTimeout(resolve, SEND_RETRY_DELAY_MS);
           });
+          if (!state.running) {
+            dirty = false;
+            return false;
+          }
           return attemptSend(retryIndex + 1);
         }
         pendingSendRetries += 1;
@@ -154,7 +166,11 @@
           /* attemptSend handles banner */
         })
         .finally(function () {
-          scheduleWake();
+          if (state.running) {
+            scheduleWake();
+          } else {
+            statusLine();
+          }
         });
     }
 
@@ -173,6 +189,7 @@
     function stop(reason) {
       Sim.stopSimulation(state, reason || 'user_stop', deps.now());
       clearTimer();
+      dirty = false;
       statusLine();
     }
 

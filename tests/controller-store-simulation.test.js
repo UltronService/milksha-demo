@@ -201,6 +201,45 @@ test('send host retries then recovers on next change', async function () {
 test('simulation eligibility allows any store on milksha-qms-dev', function () {
   const { Sim } = loadSimulation();
   assert.equal(Sim.simulationEligibility('c030020', 'milksha-qms-dev').allowed, true);
+  assert.equal(Sim.simulationEligibility('s120030', 'milksha-qms-dev').allowed, true);
   assert.equal(Sim.simulationEligibility('zz-qa-store-a', 'milksha-qms-dev').allowed, true);
   assert.equal(Sim.simulationEligibility('zz-qa-store-a', 'prod').allowed, false);
+});
+
+test('no 30-minute auto stop: still running after 2h fake clock', function () {
+  const { Sim } = loadSimulation();
+  const rng = mulberry32(8080);
+  const state = Sim.createSimulationState();
+  const t0 = 0;
+  const twoHours = 2 * 60 * 60 * 1000;
+  Sim.startOrSwitchSimulation(state, 'normal', t0, [], rng);
+  let now = t0;
+  while (now < twoHours) {
+    Sim.reconcileSimulation(state, now, rng);
+    const wake = Sim.nextWakeAtMs(state, now);
+    if (wake == null) {
+      break;
+    }
+    now = Math.min(twoHours, wake);
+  }
+  assert.equal(state.running, true);
+  assert.notEqual(state.stoppedReason, 'auto_max_duration');
+  assert.equal(Sim.MAX_RUN_MS, undefined);
+});
+
+test('store-simulation module has no store blocklist or max-run constants', function () {
+  const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
+  const host = fs.readFileSync(path.join(ROOT, 'controller/store-simulation-host.js'), 'utf8');
+  const patterns = [
+    'MAX_RUN_MS',
+    'auto_max_duration',
+    'FORBIDDEN_STORE',
+    '禁止啟動',
+    '30 * 60 * 1000',
+    '1800000',
+  ];
+  patterns.forEach(function (p) {
+    assert.equal(src.includes(p), false, 'store-simulation.js must not contain ' + p);
+    assert.equal(host.includes(p), false, 'store-simulation-host.js must not contain ' + p);
+  });
 });

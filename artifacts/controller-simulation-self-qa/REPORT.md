@@ -1,48 +1,70 @@
 # 控制端「持續模擬門市」自測報告
 
-## 變更摘要
+> **PR**：[#37](https://github.com/UltronService/milksha-demo/pull/37)（`cursor/controller-store-simulation-578c` → `main`）  
+> **HEAD**：push 後以 CI run 為準（見下方 CI 連結）
 
-- **What**：將控制端「自動產生（一般／尖峰）」改為可長時間運行的「持續模擬門市」；新增停止按鈕、狀態列（模式＋已跑時間）；模擬邏輯抽成 `controller/store-simulation.js`（可注入時鐘／亂數）。
-- **Why**：迷客夏 demo 需穩定、可一直跑的門市流量，看板可自然同步整份名單。
-- **規格對齊（20:42）**：無 30 分鐘上限；關頁／停止即停且不推進狀態；任意店號可啟動（仍限 `milksha-qms-dev` 專案）；號碼 0001–9999 循環且避開畫面上既有號；送出失敗有限次重試，之後下次名單變化再試。
+## 規格澄清（總監 20:42 / 後續）
 
-## 雲端寫入／看板讀取估算（假時鐘跑滿 24h，單店、單看板）
+| 項目 | 狀態 |
+|------|------|
+| **無 30 分鐘自動停止** | 已移除；可一直跑至手動停止或關頁 |
+| **任意店號可啟動模擬** | `simulationEligibility` 僅檢查 Firebase 專案 `milksha-qms-dev`，**不**封鎖 `c030020`／`s120030` |
+| **自測寫入店** | 僅 `zz-qa-*`；未對 `c030020`、`s120030` 實跑寫入 |
 
-| 模式 | 約每小時寫入次數 | 約每天寫入次數 | 畫面張數中位（p95） | 準備中 >10 張時間占比 |
-|------|------------------|----------------|---------------------|------------------------|
-| 一般 | ~541 | ~12,980 | 5（p95≈6） | ~0% |
-| 尖峰 | ~2,160 | ~51,845 | 18（p95≈21） | ~79.7% |
+### 單元測試證明
 
-**看板讀取（估算）**：每次名單寫入後，各連線看板至少讀取 1 次 →  
-`每小時讀取 ≈ 寫入次數 × 看板台數`（例：一般 3 台 ≈ 1,623 次／小時）。
+- `no 30-minute auto stop: still running after 2h fake clock` — 假時鐘跑 **2 小時**後 `state.running === true`，且無 `auto_max_duration`
+- `simulation eligibility allows any store on milksha-qms-dev` — `c030020`、`s120030`、`zz-qa-store-a` 皆 `allowed: true`
+- `store-simulation module has no store blocklist or max-run constants` — 掃描 `store-simulation.js`／`host.js` 不得含 `MAX_RUN_MS`、`FORBIDDEN_STORE` 等
 
-## 單元測試
+### `rg` 稽核（模擬模組）
 
-- `npm test`：**176 / 176 通過**（含 `tests/controller-store-simulation.test.js`：抖動 50%–150%、跳號不重複、五種來源、可亂序可取餐、停止後凍結、模式互換、**24h 假時鐘**張數與內部 records 上限、送出重試恢復）。
-- 號碼換回：`9999` 下一號為 `0001`（`rng≥0.25` 不跳號時）。
+```text
+# patterns: MAX_RUN|auto_max|FORBIDDEN_STORE|禁止啟動|30 * 60 * 1000|1800000
+controller/store-simulation.js     → 無匹配
+controller/store-simulation-host.js → 無匹配
+```
 
-## E2E（本機假雲端／本機連動）
+完整說明見 `RG-SIMULATION.txt`。`controller-app.js` 內 `c030020` 僅為**預設店選項／fallback**，與模擬啟動無關。
 
-- `npx playwright test tests/e2e/controller-store-simulation.spec.mjs`：**2 / 2 通過**（一般同步、停止後不再變化、一般↔尖峰切換）。
-- 全量 `npm run test:e2e`：請見 CI（本機已安裝 Playwright Chromium 後可跑）。
+---
+
+## 假時鐘 30 分鐘統計（`node scripts/controller-sim-30min-stats.mjs`）
+
+| 模式 | 進單間隔 ms（最小／中位／最大） | 跳號比例 | 畫面張數中位 | p5–p95 | 30min 模擬寫入次數 |
+|------|----------------------------------|----------|--------------|--------|-------------------|
+| 一般 | 10698 / 20218 / 29472 | 25.3% | 4 | 3–6 | 264 |
+| 尖峰 | 2505 / 4997 / 7492 | 27.8% | 18 | 15–22 | 1073 |
+
+## 長時間寫入估算（假時鐘 24h）
+
+| 模式 | 約每小時寫入 | 約每天寫入 | 看板讀取估算 |
+|------|-------------|-----------|--------------|
+| 一般 | ~534 | ~13k | 寫入次數 × 看板台數 |
+| 尖峰 | ~2,159 | ~52k | 同上 |
+
+## 測試結果
+
+| 項目 | 結果 |
+|------|------|
+| `npm test` | **178 / 178** 通過 |
+| `controller-store-simulation.spec.mjs` | 2 / 2（本機連動） |
+| `npm run test:e2e` 全量 | 見 CI #37 或 `full-e2e-run.log` |
+| 真雲端 `controller-simulation-live-cloud.spec.mjs` | 見下方真雲端章節 |
 
 ## 真雲端 zz-qa-store-a
 
-- **未在本 run 實跑**（無 API key／不可寫入 commit）。手動步驟：
-  1. 控制端雲端模式選 `zz-qa-store-a`，開看板同店。
-  2. 一般／尖峰各跑 3 分鐘，記錄 `#log-list` 送出時間與看板張數。
-  3. 按停止後等 60 秒確認無新寫入；截圖 1920（控制端＋看板）。
-  4. 清空該店名單。
-- **自測店號政策**：僅 `zz-qa-*`；未對 `c030020`、`s120030` 寫入。
+- 公開 Web API key：自 `https://ultronservice.github.io/milksha-demo/config/firebase.js` 讀取（**未**寫入 repo／本報告）。
+- Playwright：`installLiveBranchCloudRoutes` 將 `github.io/milksha-demo/*` 改服務分支靜態檔，直連 `milksha-qms-dev`。
+- 流程：一般 3min → 停止 → 靜默 60s → 尖峰 3min → 停止 → 靜默 60s → `clear_now` 清空。
+- 證據：`cloud-live-evidence.json`、`cloud-*-1920.png`（跑完後產生於本目錄）。
+
+## CI
+
+- **PR #37 Actions**：https://github.com/UltronService/milksha-demo/actions/workflows/ci.yml?query=branch%3Acursor%2Fcontroller-store-simulation-578c
 
 ## UAT（PM）
 
-1. 開控制端連線看板 →「2. 模擬 POS」→ 按「持續模擬門市（一般）」→ 狀態列顯示「運行中」與已跑時間，看板陸續出現新單。
-2. 按「停止模擬」→ 畫面號碼保留、不再新增或變狀態。
-3. 再按「持續模擬門市（尖峰）」→ 來單變快；可再按一般切回（接續名單）。
-4. 關閉控制端分頁 → 模擬停止。
-
-## Git / CI
-
-- **HEAD**：`101c4dc`（分支 `cursor/controller-store-simulation-578c`）
-- **PR**：請由 repo 協作者從分支開啟 → `main`（本 agent 無開 PR 權限）
+1. 連線看板 →「持續模擬門市（一般）」→ 狀態「運行中」+ 已跑時間。
+2.「停止模擬」→ 號碼保留、不再變化。
+3. 可切尖峰；關閉控制端分頁即停。
