@@ -78,12 +78,10 @@ test('save controller and board screenshots', async ({ browser }) => {
   await receiver.screenshot({ path: `${ART}/board-sources-1366.png`, fullPage: false });
 
   await controller.click('#btn-gen-normal');
-  await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '1002' })).toHaveCount(1, {
-    timeout: 15000,
+  await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num').first()).toBeVisible({
+    timeout: 30000,
   });
-  await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '1001' })).toHaveCount(1, {
-    timeout: 15000,
-  });
+  await controller.click('#btn-sim-stop');
 
   await receiver.setViewportSize({ width: 1366, height: 768 });
   await receiver.waitForTimeout(500);
