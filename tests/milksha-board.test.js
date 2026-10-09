@@ -31,6 +31,7 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   const code = fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8');
   vm.runInNewContext(code, sandbox, { filename: 'milksha-board.js' });
   return sandbox.QMS.MilkshaBoard;
@@ -268,6 +269,19 @@ function bootMilkshaBoardMinimal() {
   const dom = {};
   const root = { className: '', innerHTML: '', style: { setProperty: function () {} } };
   dom['board-root'] = root;
+  function makeBoardEl() {
+    return {
+      innerHTML: '',
+      style: {},
+      classList: { toggle: function () {} },
+      querySelector: function () {
+        return null;
+      },
+      querySelectorAll: function () {
+        return [];
+      },
+    };
+  }
   const sandbox = {
     console: console,
     setTimeout: setTimeout,
@@ -297,23 +311,21 @@ function bootMilkshaBoardMinimal() {
       if (id === 'board-root') {
         return root;
       }
-      if (id === 'milksha-board-viewport' || id === 'milksha-board') {
+      if (id === 'milksha-board-viewport' || id === 'milksha-board' || id === 'milksha-board-canvas') {
         if (!dom[id]) {
-          dom[id] = {
-            innerHTML: '',
-            style: {},
-            classList: { toggle: function () {} },
-          };
+          dom[id] = makeBoardEl();
         }
         return dom[id];
       }
       return dom[id] || null;
     },
     addEventListener: function () {},
+    visibilityState: 'visible',
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'transport', 'board-seq.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);
@@ -411,12 +423,18 @@ test('boot rings on new ready without overlay markup', async function () {
       if (id === 'board-root') {
         return root;
       }
-      if (id === 'milksha-board-viewport' || id === 'milksha-board') {
+      if (id === 'milksha-board-viewport' || id === 'milksha-board' || id === 'milksha-board-canvas') {
         if (!dom[id]) {
           dom[id] = {
             innerHTML: '',
             style: {},
             classList: { toggle: function () {} },
+            querySelector: function () {
+              return null;
+            },
+            querySelectorAll: function () {
+              return [];
+            },
           };
         }
         return dom[id];
@@ -424,11 +442,13 @@ test('boot rings on new ready without overlay markup', async function () {
       return dom[id] || null;
     },
     addEventListener: function () {},
+    visibilityState: 'visible',
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
 
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);

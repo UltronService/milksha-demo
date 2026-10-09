@@ -58,6 +58,7 @@
   --milksha-ready-bg: #f2f5a9;
   --milksha-prep-title: #3d4a1f;
   --milksha-ready-title: #2a2a2a;
+  --milksha-ready-highlight: var(--milksha-prep-bg);
 }
 
 .milksha-board-viewport {
@@ -239,6 +240,44 @@
   letter-spacing: 0.02em;
   color: var(--milksha-num-color);
   white-space: nowrap;
+}
+
+.milksha-board-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  vertical-align: middle;
+  color: var(--milksha-num-color);
+}
+
+.milksha-board-chip::before {
+  content: '';
+  position: absolute;
+  left: -0.25em;
+  right: -0.25em;
+  top: -0.1em;
+  bottom: -0.1em;
+  border-radius: 4px;
+  background: var(--milksha-ready-highlight);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: none;
+}
+
+.milksha-board-chip--highlight::before {
+  opacity: 1;
+}
+
+.milksha-board-chip--highlight.milksha-board-chip--unhighlighting::before {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.milksha-board.milksha-board--landscape-art .milksha-board-chip {
+  position: relative;
 }
 
 .milksha-pg-indicator {

@@ -1,0 +1,459 @@
+{
+  "head": "0999e09c63bf8027a710009a22e665f73668287e",
+  "ciRun0999e09": {
+    "url": "https://github.com/UltronService/milksha-demo/actions/runs/37902356270",
+    "conclusion": "success"
+  },
+  "mainC8d8174FlakyTriage": {
+    "homeBoardFirstNumber": { "main": "3/3 passed", "branch": "3/3 passed" },
+    "guestClockRingFit": {
+      "main": "0/3 passed",
+      "branch": "0/3 passed",
+      "error": "Expected /^Roboto/i, Received DejaVu Sans @ guest-clock.spec.mjs:314"
+    }
+  },
+  "generatedAt": "2026-10-09T07:25:59.719Z",
+  "perfCpu4x": {
+    "branch": {
+      "1920x1080": {
+        "1-new-prep": {
+          "name": "1-new-prep",
+          "avgFps": 60.6,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 663
+        },
+        "2-call-ready": {
+          "name": "2-call-ready",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 42,
+          "durationMs": 698
+        },
+        "3-pickup": {
+          "name": "3-pickup",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 661
+        },
+        "4-page-turn": {
+          "name": "4-page-turn",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 72,
+          "durationMs": 1197
+        },
+        "5-clear": {
+          "name": "5-clear",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 656
+        },
+        "6-rapid-5": {
+          "name": "6-rapid-5",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 56,
+          "durationMs": 939
+        }
+      },
+      "3840x2160": {
+        "1-new-prep": {
+          "name": "1-new-prep",
+          "avgFps": 61.3,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 664
+        },
+        "2-call-ready": {
+          "name": "2-call-ready",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 42,
+          "durationMs": 698
+        },
+        "3-pickup": {
+          "name": "3-pickup",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 659
+        },
+        "4-page-turn": {
+          "name": "4-page-turn",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 71,
+          "durationMs": 1187
+        },
+        "5-clear": {
+          "name": "5-clear",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 657
+        },
+        "6-rapid-5": {
+          "name": "6-rapid-5",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 57,
+          "durationMs": 946
+        }
+      }
+    },
+    "main": {
+      "1920x1080": {
+        "1-new-prep": {
+          "name": "1-new-prep",
+          "avgFps": 60.9,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 658
+        },
+        "2-call-ready": {
+          "name": "2-call-ready",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 42,
+          "durationMs": 696
+        },
+        "3-pickup": {
+          "name": "3-pickup",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 657
+        },
+        "4-page-turn": {
+          "name": "4-page-turn",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 73,
+          "durationMs": 1204
+        },
+        "5-clear": {
+          "name": "5-clear",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 657
+        },
+        "6-rapid-5": {
+          "name": "6-rapid-5",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 56,
+          "durationMs": 937
+        }
+      },
+      "3840x2160": {
+        "1-new-prep": {
+          "name": "1-new-prep",
+          "avgFps": 61,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 657
+        },
+        "2-call-ready": {
+          "name": "2-call-ready",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 42,
+          "durationMs": 695
+        },
+        "3-pickup": {
+          "name": "3-pickup",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 39,
+          "durationMs": 658
+        },
+        "4-page-turn": {
+          "name": "4-page-turn",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 71,
+          "durationMs": 1172
+        },
+        "5-clear": {
+          "name": "5-clear",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 40,
+          "durationMs": 657
+        },
+        "6-rapid-5": {
+          "name": "6-rapid-5",
+          "avgFps": 60,
+          "framesOver50ms": 0,
+          "longTaskCount": 0,
+          "longTaskMaxMs": 0,
+          "frameSamples": 56,
+          "durationMs": 939
+        }
+      }
+    },
+    "cpuThrottleRate": 4,
+    "note": "CDP Emulation.setCPUThrottlingRate=4; rAF frame deltas + PerformanceObserver longtask during ~650–900ms window per scenario."
+  },
+  "fakeCloudLatency": {
+    "branch": {
+      "label": "branch",
+      "methodology": {
+        "clickToReadyNumberVisibleMs": "控制端 click [data-testid=btn-send-numbers] → 看板 .milksha-ready .milksha-num 數量達標（含假雲端輪詢／推送路徑）",
+        "domToOpacityAnimStartMs": "同一送號：perf chip-dom → opacity-anim-start 時間差（證明動態不延後進 DOM，僅在 DOM 後啟動 opacity）",
+        "note": "中位 ~500ms 常見於假雲端 board 輪詢間隔（約 500ms）；與動畫無關。dom→opacity 應接近 0ms。"
+      },
+      "medianClickToVisibleMs": 498,
+      "maxClickToVisibleMs": 4929,
+      "samples": [
+        {
+          "index": 1,
+          "clickToReadyNumberVisibleMs": 4929,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 2,
+          "clickToReadyNumberVisibleMs": 489,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 3,
+          "clickToReadyNumberVisibleMs": 499,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 4,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 5,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 6,
+          "clickToReadyNumberVisibleMs": 497,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 7,
+          "clickToReadyNumberVisibleMs": 497,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 8,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 9,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 10,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        }
+      ]
+    },
+    "main": {
+      "label": "main",
+      "methodology": {
+        "clickToReadyNumberVisibleMs": "控制端 click [data-testid=btn-send-numbers] → 看板 .milksha-ready .milksha-num 數量達標（含假雲端輪詢／推送路徑）",
+        "domToOpacityAnimStartMs": "同一送號：perf chip-dom → opacity-anim-start 時間差（證明動態不延後進 DOM，僅在 DOM 後啟動 opacity）",
+        "note": "中位 ~500ms 常見於假雲端 board 輪詢間隔（約 500ms）；與動畫無關。dom→opacity 應接近 0ms。"
+      },
+      "medianClickToVisibleMs": 498,
+      "maxClickToVisibleMs": 498,
+      "samples": [
+        {
+          "index": 1,
+          "clickToReadyNumberVisibleMs": 435,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 2,
+          "clickToReadyNumberVisibleMs": 485,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 3,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 4,
+          "clickToReadyNumberVisibleMs": 497,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 5,
+          "clickToReadyNumberVisibleMs": 497,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 6,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 7,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 8,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        },
+        {
+          "index": 9,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0.1
+        },
+        {
+          "index": 10,
+          "clickToReadyNumberVisibleMs": 498,
+          "domToOpacityAnimStartMs": 0
+        }
+      ]
+    }
+  },
+  "liveCloud": {
+    "store": "zz-qa-store-a",
+    "route": "ultronservice.github.io/milksha-demo + installGithubPagesSiteRoute(branch)",
+    "samples": [
+      {
+        "index": 1,
+        "clickToReadyNumberVisibleMs": 495
+      },
+      {
+        "index": 2,
+        "clickToReadyNumberVisibleMs": 107
+      },
+      {
+        "index": 3,
+        "clickToReadyNumberVisibleMs": 911
+      },
+      {
+        "index": 4,
+        "clickToReadyNumberVisibleMs": 831
+      },
+      {
+        "index": 5,
+        "clickToReadyNumberVisibleMs": 828
+      }
+    ],
+    "maxMs": 911,
+    "medianMs": 828
+  },
+  "contactSheets": [
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-1-new-prep.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-2-call-ready.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-3-pickup.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-4-page-turn.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-5-clear.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/1920x1080-6-rapid-5.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-1-new-prep.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-2-call-ready.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-3-pickup.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-4-page-turn.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-5-clear.jpg",
+    "artifacts/board-animation-self-qa/contact-sheets/3840x2160-6-rapid-5.jpg"
+  ],
+  "contactSheetsTotalBytes": 12395985,
+  "e2eFull": {
+    "exitCode": 1,
+    "logPath": "artifacts/board-animation-self-qa/e2e-full-latest.log",
+    "passed": 154,
+    "failed": 2,
+    "skipped": 4,
+    "rawTail": "  Slow test file: pr23-login-count.spec.mjs (7.1m)\n  Slow test file: home-board-background-6min.spec.mjs (6.0m)\n  Slow test file: controller-store-picker-evidence.spec.mjs (2.1m)\n  Slow test file: home-board-cloud-recovery.spec.mjs (1.8m)\n  Slow test file: home-board-background-tab.spec.mjs (1.7m)\n  Consider splitting slow test files to speed up parallel execution\n  2 failed\n    guest-clock.spec.mjs:285:1 › ring overlay fit widest 4-digit per font at all viewports ─────────\n    home-board-first-number-after-open.spec.mjs:20:3 › home board before first today_board exists › fake-cloud: board open then first send shows number within 3s \n  4 skipped\n  154 passed (28.2m)\n"
+  },
+  "skipAnimationRules": {
+    "firstPayload": "boot 後第一次 applyPayload",
+    "silentReconnect": "applyPayload(..., { silent: true }) 重連整份 snapshot",
+    "snapshotReloadFlag": "applyPayload(..., { forceSnapshotSkip: true }) 明確整份重載（測試／未來擴充）",
+    "removedBulkRatioPrimary": "已移除以交集比例猜測 snapshot；正常 onSnapshot 尖峰（如一次 3 單）仍 animate。"
+  },
+  "liveCloudMain": {
+    "route": "ultronservice.github.io/milksha-demo (main Pages JS, 無 branch site route)",
+    "samples": [
+      {
+        "index": 1,
+        "clickToReadyNumberVisibleMs": 22
+      },
+      {
+        "index": 2,
+        "clickToReadyNumberVisibleMs": 843
+      },
+      {
+        "index": 3,
+        "clickToReadyNumberVisibleMs": 1031
+      },
+      {
+        "index": 4,
+        "clickToReadyNumberVisibleMs": 846
+      },
+      {
+        "index": 5,
+        "clickToReadyNumberVisibleMs": 862
+      }
+    ],
+    "maxMs": 1031,
+    "medianMs": 846,
+    "measuredAt": "2026-10-09T07:27:06.816Z"
+  }
+}
