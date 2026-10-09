@@ -1,0 +1,17 @@
+{
+  "store": "zz-qa-store-a",
+  "samples": [
+    {
+      "index": 1,
+      "clickToReadyNumberVisibleMs": 22
+    },
+    {
+      "index": 2,
+      "clickToReadyNumberVisibleMs": 841
+    },
+    {
+      "index": 3,
+      "clickToReadyNumberVisibleMs": 840
+    }
+  ]
+}
