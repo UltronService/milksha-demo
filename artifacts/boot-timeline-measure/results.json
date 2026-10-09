@@ -1,0 +1,2040 @@
+{
+  "at": "2026-10-09T04:43:21.685Z",
+  "measureTarget": "public-github-pages",
+  "mergedPr34Sha": "c8d8174ceb4f1909111cbd6d9e1bd3170b32cf9f",
+  "pagesUrl": "https://ultronservice.github.io/milksha-demo",
+  "store": "zz-qa-store-a",
+  "rounds": 3,
+  "scenarios": {
+    "chromium_fresh": {
+      "profile": "全新 profile",
+      "browser": "chromium",
+      "runs": [
+        {
+          "label": "chromium-fresh-1",
+          "tNav": 1791521001863,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 108,
+              "durMs": 108,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 108,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 156,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1358,
+              "durMs": 844,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2474,
+              "durMs": 2474,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2202,
+              "durMs": 844,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2202,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2202,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 3869,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 2962,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 2962,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 4838,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 4838,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 4950,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "chromium-fresh-2",
+          "tNav": 1791521006875,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 108,
+              "durMs": 108,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 108,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 154,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1476,
+              "durMs": 887,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2646,
+              "durMs": 2646,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2363,
+              "durMs": 887,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2363,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2363,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 4058,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 3121,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 3121,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 4985,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 4985,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 5137,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "chromium-fresh-3",
+          "tNav": 1791521012053,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 104,
+              "durMs": 104,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 104,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 146,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1469,
+              "durMs": 912,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2679,
+              "durMs": 2679,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2381,
+              "durMs": 912,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2381,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2381,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 4095,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 3135,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 3135,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 5045,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 5045,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 5179,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        }
+      ],
+      "summary": {
+        "a_domContentLoaded": {
+          "median": 108,
+          "max": 108,
+          "durMedian": 108,
+          "durMax": 108
+        },
+        "a_load": {
+          "median": 108,
+          "max": 108,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "b_storeAndReceiver": {
+          "median": 154,
+          "max": 156,
+          "durMedian": null,
+          "durMax": null
+        },
+        "d_auth": {
+          "median": 2646,
+          "max": 2679,
+          "durMedian": 2646,
+          "durMax": 2679
+        },
+        "d_devLogin_ttfb": {
+          "median": 2363,
+          "max": 2381,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "d_devLogin_cloudEst": {
+          "median": 2363,
+          "max": 2381,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "e_firstNumbers": {
+          "median": 4058,
+          "max": 4095,
+          "durMedian": null,
+          "durMax": null
+        },
+        "f_heartbeatOk": {
+          "median": 3121,
+          "max": 3135,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_boardListen": {
+          "median": 4985,
+          "max": 5045,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_controlListen": {
+          "median": 4985,
+          "max": 5045,
+          "durMedian": null,
+          "durMax": null
+        },
+        "h_controllerBoardOnline": {
+          "median": 5137,
+          "max": 5179,
+          "durMedian": null,
+          "durMax": null
+        }
+      },
+      "devLoginCounts": [
+        {
+          "label": "chromium-fresh-1",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "chromium-fresh-2",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "chromium-fresh-3",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        }
+      ]
+    },
+    "chromium_warm": {
+      "profile": "舊設定（同 context 重開）",
+      "browser": "chromium",
+      "runs": [
+        {
+          "label": "chromium-warm-1",
+          "tNav": 1791521017336,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 114,
+              "durMs": 114,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 114,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 157,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1238,
+              "durMs": 868,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2396,
+              "durMs": 2396,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2106,
+              "durMs": 868,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2106,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2106,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 3879,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 2892,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 2892,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 4798,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 4798,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 4960,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "chromium-warm-2",
+          "tNav": 1791521022335,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 56,
+              "durMs": 56,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 56,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 102,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "本輪未發 devLogin（沿用通行證）"
+            },
+            "d_auth": {
+              "cumMs": 96,
+              "durMs": 96,
+              "note": "沿用通行證（本導航無 devLogin HTTP）"
+            },
+            "d_devLogin_net": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "HTTP 計數=0"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "無 ResourceTiming 時用 wall 總時間"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 497,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 374,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 374,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 60600,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 0,
+            "signInCustomTokenCount": 0,
+            "authMode": "沿用通行證（本導航無 devLogin HTTP）",
+            "readBoardCount": 81,
+            "commandMode": "poll",
+            "boardListen": false,
+            "timelineKinds": [
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok"
+            ]
+          }
+        },
+        {
+          "label": "chromium-warm-3",
+          "tNav": 1791521082974,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 43,
+              "durMs": 43,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 43,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 90,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "本輪未發 devLogin（沿用通行證）"
+            },
+            "d_auth": {
+              "cumMs": 85,
+              "durMs": 85,
+              "note": "沿用通行證（本導航無 devLogin HTTP）"
+            },
+            "d_devLogin_net": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "HTTP 計數=0"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "無 ResourceTiming 時用 wall 總時間"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 522,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 352,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 352,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 60625,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 0,
+            "signInCustomTokenCount": 0,
+            "authMode": "沿用通行證（本導航無 devLogin HTTP）",
+            "readBoardCount": 81,
+            "commandMode": "poll",
+            "boardListen": false,
+            "timelineKinds": [
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok"
+            ]
+          }
+        }
+      ],
+      "summary": {
+        "a_domContentLoaded": {
+          "median": 56,
+          "max": 114,
+          "durMedian": 56,
+          "durMax": 114
+        },
+        "a_load": {
+          "median": 56,
+          "max": 114,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "b_storeAndReceiver": {
+          "median": 102,
+          "max": 157,
+          "durMedian": null,
+          "durMax": null
+        },
+        "d_auth": {
+          "median": 96,
+          "max": 2396,
+          "durMedian": 96,
+          "durMax": 2396
+        },
+        "d_devLogin_ttfb": {
+          "median": 2106,
+          "max": 2106,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "d_devLogin_cloudEst": {
+          "median": 2106,
+          "max": 2106,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "e_firstNumbers": {
+          "median": 522,
+          "max": 3879,
+          "durMedian": null,
+          "durMax": null
+        },
+        "f_heartbeatOk": {
+          "median": 374,
+          "max": 2892,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_boardListen": {
+          "median": 4798,
+          "max": 4798,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_controlListen": {
+          "median": 4798,
+          "max": 4798,
+          "durMedian": null,
+          "durMax": null
+        },
+        "h_controllerBoardOnline": {
+          "median": 60600,
+          "max": 60625,
+          "durMedian": null,
+          "durMax": null
+        }
+      },
+      "devLoginCounts": [
+        {
+          "label": "chromium-warm-1",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "chromium-warm-2",
+          "devLoginCount": 0,
+          "authMode": "沿用通行證（本導航無 devLogin HTTP）"
+        },
+        {
+          "label": "chromium-warm-3",
+          "devLoginCount": 0,
+          "authMode": "沿用通行證（本導航無 devLogin HTTP）"
+        }
+      ]
+    },
+    "firefox_fresh": {
+      "profile": "全新 profile",
+      "browser": "firefox",
+      "runs": [
+        {
+          "label": "firefox-fresh-1",
+          "tNav": 1791521144608,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 2257,
+              "durMs": 2257,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 2258,
+              "durMs": 1,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 2312,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 3154,
+              "durMs": 977,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 4567,
+              "durMs": 4567,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 4131,
+              "durMs": 977,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 4131,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 4131,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 5794,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 5151,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 5151,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 6999,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 6999,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 7219,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 4,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "firefox-fresh-2",
+          "tNav": 1791521152101,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 175,
+              "durMs": 175,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 175,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 219,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1545,
+              "durMs": 818,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2832,
+              "durMs": 2832,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2363,
+              "durMs": 818,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2363,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2363,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 4217,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 3290,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 3290,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 5181,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 5181,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 5326,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "firefox-fresh-3",
+          "tNav": 1791521157700,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 331,
+              "durMs": 331,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 331,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 373,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 373,
+              "durMs": 1238,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2055,
+              "durMs": 2055,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 1611,
+              "durMs": 1238,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 1611,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 1611,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 3802,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 2534,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 2534,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 4460,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 4460,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 4587,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 2,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        }
+      ],
+      "summary": {
+        "a_domContentLoaded": {
+          "median": 331,
+          "max": 2257,
+          "durMedian": 331,
+          "durMax": 2257
+        },
+        "a_load": {
+          "median": 331,
+          "max": 2258,
+          "durMedian": 0,
+          "durMax": 1
+        },
+        "b_storeAndReceiver": {
+          "median": 373,
+          "max": 2312,
+          "durMedian": null,
+          "durMax": null
+        },
+        "d_auth": {
+          "median": 2832,
+          "max": 4567,
+          "durMedian": 2832,
+          "durMax": 4567
+        },
+        "d_devLogin_ttfb": {
+          "median": 2363,
+          "max": 4131,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "d_devLogin_cloudEst": {
+          "median": 2363,
+          "max": 4131,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "e_firstNumbers": {
+          "median": 4217,
+          "max": 5794,
+          "durMedian": null,
+          "durMax": null
+        },
+        "f_heartbeatOk": {
+          "median": 3290,
+          "max": 5151,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_boardListen": {
+          "median": 5181,
+          "max": 6999,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_controlListen": {
+          "median": 5181,
+          "max": 6999,
+          "durMedian": null,
+          "durMax": null
+        },
+        "h_controllerBoardOnline": {
+          "median": 5326,
+          "max": 7219,
+          "durMedian": null,
+          "durMax": null
+        }
+      },
+      "devLoginCounts": [
+        {
+          "label": "firefox-fresh-1",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "firefox-fresh-2",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "firefox-fresh-3",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        }
+      ]
+    },
+    "firefox_warm": {
+      "profile": "舊設定（同 context 重開）",
+      "browser": "firefox",
+      "runs": [
+        {
+          "label": "firefox-warm-1",
+          "tNav": 1791521163642,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 197,
+              "durMs": 197,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 197,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 258,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": 1448,
+              "durMs": 846,
+              "note": "無獨立登記 API；等同 devLogin POST"
+            },
+            "d_auth": {
+              "cumMs": 2761,
+              "durMs": 2761,
+              "note": "新取（devLogin HTTP×1；signIn×2）"
+            },
+            "d_devLogin_net": {
+              "cumMs": 2294,
+              "durMs": 846,
+              "note": "HTTP 計數=1"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": 2294,
+              "durMs": 0,
+              "note": "ResourceTiming TTFB"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": 2294,
+              "durMs": 0,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 4159,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 3275,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 3275,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": 5164,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": 5164,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 5248,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 1,
+            "signInCustomTokenCount": 2,
+            "authMode": "新取（devLogin HTTP×1；signIn×2）",
+            "readBoardCount": 3,
+            "commandMode": "control",
+            "boardListen": true,
+            "timelineKinds": [
+              "heartbeat_send",
+              "devlogin_complete",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "board_snapshot",
+              "board_listen_attached",
+              "control_listen_attached"
+            ]
+          }
+        },
+        {
+          "label": "firefox-warm-2",
+          "tNav": 1791521169165,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 146,
+              "durMs": 146,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 146,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 188,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "本輪未發 devLogin（沿用通行證）"
+            },
+            "d_auth": {
+              "cumMs": 184,
+              "durMs": 184,
+              "note": "沿用通行證（本導航無 devLogin HTTP）"
+            },
+            "d_devLogin_net": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "HTTP 計數=0"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "無 ResourceTiming 時用 wall 總時間"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 1103,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 664,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 664,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 61178,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 0,
+            "signInCustomTokenCount": 0,
+            "authMode": "沿用通行證（本導航無 devLogin HTTP）",
+            "readBoardCount": 79,
+            "commandMode": "poll",
+            "boardListen": false,
+            "timelineKinds": [
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok"
+            ]
+          }
+        },
+        {
+          "label": "firefox-warm-3",
+          "tNav": 1791521230593,
+          "steps": {
+            "a_domContentLoaded": {
+              "cumMs": 153,
+              "durMs": 153,
+              "note": "PerformanceNavigationTiming"
+            },
+            "a_load": {
+              "cumMs": 153,
+              "durMs": 0,
+              "note": "load event"
+            },
+            "b_storeAndReceiver": {
+              "cumMs": 199,
+              "durMs": null,
+              "note": "URL store + receiverCloud"
+            },
+            "c_storeRegister": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "本輪未發 devLogin（沿用通行證）"
+            },
+            "d_auth": {
+              "cumMs": 193,
+              "durMs": 193,
+              "note": "沿用通行證（本導航無 devLogin HTTP）"
+            },
+            "d_devLogin_net": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "HTTP 計數=0"
+            },
+            "d_devLogin_ttfb": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "無 ResourceTiming 時用 wall 總時間"
+            },
+            "d_devLogin_cloudEst": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "TTFB−connect；無法分離時 cloudEst≈wall"
+            },
+            "e_firstNumbers": {
+              "cumMs": 1108,
+              "durMs": null,
+              "note": "號碼 DOM 或 localSeq>0"
+            },
+            "f_heartbeatSend": {
+              "cumMs": 689,
+              "durMs": null,
+              "note": "boxHeartbeat POST"
+            },
+            "f_heartbeatOk": {
+              "cumMs": 689,
+              "durMs": null,
+              "note": "boxHeartbeat 2xx"
+            },
+            "g_boardListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline board_listen_attached"
+            },
+            "g_controlListen": {
+              "cumMs": null,
+              "durMs": null,
+              "note": "timeline control_listen_attached"
+            },
+            "h_controllerBoardOnline": {
+              "cumMs": 61221,
+              "durMs": null,
+              "note": "#transport-route data-board-online"
+            }
+          },
+          "meta": {
+            "devLoginCount": 0,
+            "signInCustomTokenCount": 0,
+            "authMode": "沿用通行證（本導航無 devLogin HTTP）",
+            "readBoardCount": 74,
+            "commandMode": "poll",
+            "boardListen": false,
+            "timelineKinds": [
+              "heartbeat_send",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_send",
+              "auth_cached_token",
+              "auth_cached_token",
+              "heartbeat_ok"
+            ]
+          }
+        }
+      ],
+      "summary": {
+        "a_domContentLoaded": {
+          "median": 153,
+          "max": 197,
+          "durMedian": 153,
+          "durMax": 197
+        },
+        "a_load": {
+          "median": 153,
+          "max": 197,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "b_storeAndReceiver": {
+          "median": 199,
+          "max": 258,
+          "durMedian": null,
+          "durMax": null
+        },
+        "d_auth": {
+          "median": 193,
+          "max": 2761,
+          "durMedian": 193,
+          "durMax": 2761
+        },
+        "d_devLogin_ttfb": {
+          "median": 2294,
+          "max": 2294,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "d_devLogin_cloudEst": {
+          "median": 2294,
+          "max": 2294,
+          "durMedian": 0,
+          "durMax": 0
+        },
+        "e_firstNumbers": {
+          "median": 1108,
+          "max": 4159,
+          "durMedian": null,
+          "durMax": null
+        },
+        "f_heartbeatOk": {
+          "median": 689,
+          "max": 3275,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_boardListen": {
+          "median": 5164,
+          "max": 5164,
+          "durMedian": null,
+          "durMax": null
+        },
+        "g_controlListen": {
+          "median": 5164,
+          "max": 5164,
+          "durMedian": null,
+          "durMax": null
+        },
+        "h_controllerBoardOnline": {
+          "median": 61178,
+          "max": 61221,
+          "durMedian": null,
+          "durMax": null
+        }
+      },
+      "devLoginCounts": [
+        {
+          "label": "firefox-warm-1",
+          "devLoginCount": 1,
+          "authMode": "新取（devLogin HTTP×1；signIn×2）"
+        },
+        {
+          "label": "firefox-warm-2",
+          "devLoginCount": 0,
+          "authMode": "沿用通行證（本導航無 devLogin HTTP）"
+        },
+        {
+          "label": "firefox-warm-3",
+          "devLoginCount": 0,
+          "authMode": "沿用通行證（本導航無 devLogin HTTP）"
+        }
+      ]
+    }
+  }
+}
