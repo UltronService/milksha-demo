@@ -331,12 +331,32 @@
     let sends = 0;
     let lastSnapshot = '';
     let timerSteps = 0;
+    let skipCount = 0;
+    let orderCount = 0;
+    let prevIssued = 0;
 
     const endAt = t0 + durationMs;
     let now = t0;
     while (now < endAt && state.running) {
       timerSteps += 1;
+      const beforeOrders = state.records.length;
       const res = reconcileSimulation(state, now, rng);
+      if (state.records.length > beforeOrders) {
+        for (let ri = beforeOrders; ri < state.records.length; ri += 1) {
+          const n = parseOrderNo(state.records[ri].no);
+          orderCount += 1;
+          if (prevIssued > 0) {
+            let expected = prevIssued + 1;
+            if (expected > ORDER_NO_MAX) {
+              expected = ORDER_NO_MIN;
+            }
+            if (n !== expected) {
+              skipCount += 1;
+            }
+          }
+          prevIssued = n;
+        }
+      }
       recordLenSamples.push(state.records.length);
       const snap = JSON.stringify(
         res.tickets.map(function (t) {
@@ -416,6 +436,9 @@
             return a + b;
           }, 0) / prepGt10.length
         : 0,
+      skipRatio: orderCount > 1 ? skipCount / orderCount : 0,
+      skipCount: skipCount,
+      orderCount: orderCount,
     };
   }
 

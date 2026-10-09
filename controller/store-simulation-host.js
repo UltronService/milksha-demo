@@ -208,6 +208,9 @@
         return timer != null;
       },
       flushSend: flushSend,
+      getSendCount: function () {
+        return state.sendCount;
+      },
     };
   }
 

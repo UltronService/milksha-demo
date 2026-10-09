@@ -2153,6 +2153,9 @@
     stopStoreSimulation: function (reason) {
       stopStoreSimulation(reason);
     },
+    getSimulationSendCount: function () {
+      return storeSimulationHost ? storeSimulationHost.getSendCount() : 0;
+    },
     getTransport: function () {
       return transport;
     },
