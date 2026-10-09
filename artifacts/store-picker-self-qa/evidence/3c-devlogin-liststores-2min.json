@@ -2,7 +2,7 @@
   "test": "controller-store-picker-evidence.spec.mjs › 3c two minutes: devLogin and listStores counts with store switch",
   "windowSeconds": 120,
   "pollIntervalMs": 30000,
-  "devLoginBefore": 2,
+  "devLoginBefore": 1,
   "devLoginAfterBoot": 3,
   "devLoginAfter": 3,
   "devLoginDeltaAfterBoot": 0,

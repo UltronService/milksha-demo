@@ -165,7 +165,8 @@ async function liveCloudSends() {
     const t0 = Date.now();
     await ctrl.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
-      () => document.querySelectorAll('.milksha-ready .milksha-num').length >= i + 1,
+      (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
+      i + 1,
       { timeout: 3000 },
     );
     times.push(Date.now() - t0);

@@ -1,0 +1,57 @@
+{
+  "head": "e58b40a37994694a7e39ab4d4e8f1419af667ee7",
+  "branchLatency": {
+    "median": 500,
+    "max": 500,
+    "samples": [
+      432,
+      486,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ]
+  },
+  "mainLatency": {
+    "median": 500,
+    "max": 501,
+    "samples": [
+      452,
+      498,
+      500,
+      501,
+      499,
+      500,
+      500,
+      501,
+      499,
+      500
+    ]
+  },
+  "burst1080Count": 86,
+  "burst4kCount": 89,
+  "perf1080": {
+    "tracePath": "/workspace/artifacts/board-animation-self-qa/perf/trace-1920x1080-cpu4x.zip",
+    "longTasks": []
+  },
+  "perf4k": {
+    "tracePath": "/workspace/artifacts/board-animation-self-qa/perf/trace-3840x2160-cpu4x.zip",
+    "longTasks": []
+  },
+  "liveCloud": {
+    "samples": [
+      31,
+      915,
+      851,
+      849,
+      849
+    ],
+    "max": 915,
+    "median": 849
+  },
+  "generatedAt": "2026-10-09T06:18:37.264Z"
+}
