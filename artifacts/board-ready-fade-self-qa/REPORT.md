@@ -1,8 +1,8 @@
 # 請取餐放大淡入（scale pulse）自測報告
 
-- **HEAD**: `07a400ce7911f99a9b118da67e7a9b9a6dede8b6`
+- **HEAD**: `e6bca2793b47c2efc92dd54bcb6c0a804dd418ef`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/36
-- **CI**: https://github.com/UltronService/milksha-demo/actions/runs/37941553872（此 HEAD；前次 `a4edc48` run [37940995898](https://github.com/UltronService/milksha-demo/actions/runs/37940995898) success）
+- **CI（本 REPORT HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37945356360 — **success**（先前功能 commit `07a400c`：run [37941553872](https://github.com/UltronService/milksha-demo/actions/runs/37941553872)；`a4edc48`：run [37940995898](https://github.com/UltronService/milksha-demo/actions/runs/37940995898)）
 - **Base**: `c601df6`
 
 ## 規格摘要
@@ -72,9 +72,10 @@ CSS 格線（`milksha-board.css`）：`column-gap: 8px`、`row-gap: 4px`；請�
 |------|------|
 | `npm test` | **169 passed** |
 | `npx playwright test board-animation board-ready-scale` | **15 passed** |
-| `npm run test:e2e` 全量（本機 `07a400c` 前後） | **156 passed**, **2 failed**, **4 skipped** |
+| `npm run test:e2e` 全量（CI run 37945356360） | **161 passed**, **0 failed**, **1 skipped** |
+| `npm run test:e2e` 全量（本機，無 CI 字型步驟） | **156 passed**, **2 failed**, **4 skipped** |
 
-本機失敗（非看板 pulse）：`guest-clock`（Roboto 字型）、`home-board-first-number-after-open`（flake）。CI 含字型步驟，預期全綠。
+本機失敗（非看板 pulse）：`guest-clock`（Roboto 字型）、`home-board-first-number-after-open`（flake）。CI 全綠。
 
 ## 真雲端 zz-qa-store-a（3 次 ms）
 
