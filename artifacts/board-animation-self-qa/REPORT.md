@@ -1,8 +1,8 @@
 # 看板叫號動態自測報告（QA 交付）
 
-- **HEAD**: `3f908bbd74d0ce19cb80ac5b58dab849a7c3b8b7`
+- **HEAD**: `0999e09c63bf8027a710009a22e665f73668287e`（功能交付 `389cf56`；報告見本檔最新 commit）
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
-- **CI（此 HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37902013688
+- **CI（0999e09）**: https://github.com/UltronService/milksha-demo/actions/runs/37902356270 — **success**（約 30m，`npm test` + 全量 `test:e2e`）
 - **指標檔**: `artifacts/board-animation-self-qa/metrics.json`
 - **連續幀 contact sheet**: `artifacts/board-animation-self-qa/contact-sheets/`（約 11.8 MB）
 
@@ -66,9 +66,41 @@
 
 | 項目 | 結果 |
 |------|------|
-| `npm test` | 167 passed（本輪） |
+| `npm test` | 167 passed |
 | `npx playwright test board-animation` | 13 passed |
-| `npm run test:e2e` 全量 | （執行中或見 `e2e-full-latest.log`） |
+| `npm run test:e2e` 全量（本機 0999e09 前） | **154 passed**, **2 failed**, 4 skipped（28.2m；見 `e2e-full-latest.log`） |
+| `npm run test:e2e`（CI run 37902356270 @ 0999e09） | **success**（含 Roboto 字型步驟） |
+
+## 7. 全量 e2e 失敗項：main `c8d8174` 對照（各跑 3 次）
+
+環境：本機 worktree `git worktree add` @ `c8d8174ceb4f1909111cbd6d9e1bd3170b32cf9f`；分支同機連跑 3 次對照。
+
+### `home-board-first-number-after-open.spec.mjs` › fake-cloud: first send within 3s
+
+| 版本 | 3 次結果 |
+|------|----------|
+| **main c8d8174** | **3 passed**（1.5s / 1.9s / 1.4s） |
+| **分支 0999e09** | **3 passed**（1.6s / 1.4s / 1.4s） |
+
+全量 suite 曾出現 `Received: 5342` ms（`expect(elapsedMs).toBeLessThan(3000)`）為**高負載順序下的輪詢 flake**；單獨重跑 main／分支皆過，**非本 PR 看板動畫回歸**。
+
+### `guest-clock.spec.mjs` › ring overlay fit widest 4-digit per font at all viewports
+
+| 版本 | 3 次結果 |
+|------|----------|
+| **main c8d8174** | **0 passed, 3 failed**（每次相同） |
+| **分支 0999e09** | **0 passed, 3 failed**（每次相同） |
+
+錯誤訊息（main／分支一致）：
+
+```
+expect(received).toMatch(expected)
+Expected pattern: /^Roboto/i
+Received string:  "DejaVu Sans"
+  at guest-clock.spec.mjs:314:26
+```
+
+本機未裝 CI workflow 的 Roboto 平台字型，與 main 同失；CI 安裝字型後全量 e2e 綠（37902356270）。**非本 PR 引入**。
 
 ## 手動 UAT 速查
 
