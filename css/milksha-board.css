@@ -249,6 +249,7 @@
   max-width: 100%;
   vertical-align: middle;
   color: var(--milksha-num-color);
+  transform-origin: center center;
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-board-chip {

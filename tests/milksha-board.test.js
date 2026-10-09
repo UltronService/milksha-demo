@@ -31,6 +31,7 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   const code = fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8');
   vm.runInNewContext(code, sandbox, { filename: 'milksha-board.js' });
@@ -325,6 +326,7 @@ function bootMilkshaBoardMinimal() {
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'transport', 'board-seq.js'), 'utf8'), sandbox);
@@ -448,6 +450,7 @@ test('boot rings on new ready without overlay markup', async function () {
   sandbox.window = sandbox;
 
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'chime-policy.js'), 'utf8'), sandbox);

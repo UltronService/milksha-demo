@@ -35,7 +35,7 @@ test.describe('board call animation specs 1–7', () => {
     expect((await prepNumbers(page)).map((t) => t.trim())).toEqual(['5101']);
   });
 
-  test('2 prep→ready: leave prep, ready opacity fade-in only', async ({ page }) => {
+  test('2 prep→ready: leave prep, ready scale+opacity pulse', async ({ page }) => {
     await primeBoardForAnimation(page);
     await resetOpacityAnimCounter(page);
     await page.evaluate(() => {
@@ -53,8 +53,10 @@ test.describe('board call animation specs 1–7', () => {
     await expect(chip).toBeVisible();
     expect(await opacityAnimRunsSinceReset(page)).toBeGreaterThan(0);
     await expect(chip).not.toHaveClass(/milksha-board-chip--highlight/);
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(4000);
     await assertChipsOpaqueAndUnique(page);
+    const tf = await chip.evaluate((el) => getComputedStyle(el).transform);
+    expect(tf === 'none' || tf.includes('matrix(1')).toBe(true);
   });
 
   test('3 picked up: ready number fades out and others refill', async ({ page }) => {
