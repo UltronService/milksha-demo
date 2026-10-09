@@ -566,6 +566,9 @@
       lastRenderedReadyPage = readyPage;
     }
 
+    /**
+     * @returns {Promise<void>}
+     */
     function patchZonePage(zoneClass, items, page, totalPages) {
       const zoneKey = zoneClass.indexOf('prep') >= 0 ? 'prep' : 'ready';
       const zone = boardEl.querySelector('.milksha-zone.' + zoneClass);
@@ -577,20 +580,36 @@
         lastRenderedReadyPage = readyPage;
         return;
       }
-      const cellEls = zone.querySelectorAll('.milksha-num-cell');
+      const numbersLayer = zone.querySelector('.milksha-zone-numbers');
+      const cellEls = numbersLayer
+        ? numbersLayer.querySelectorAll('.milksha-num-cell')
+        : zone.querySelectorAll('.milksha-num-cell');
       if (cellEls.length !== PAGE_SIZE) {
         renderBoard();
+        if (zoneKey === 'prep') {
+          lastRenderedPrepPage = page;
+        } else {
+          lastRenderedReadyPage = page;
+        }
         return;
       }
       const prevItems = zoneKey === 'prep' ? lastRenderedPrep : lastRenderedReady;
       const prevPage = zoneKey === 'prep' ? lastRenderedPrepPage : lastRenderedReadyPage;
-      const motion = shouldSkipMotion(true, lastRenderedPrep, lastRenderedReady);
       const animator = ensureBoardAnimator();
-      if (!motion.skip && animator) {
-        animator.syncZone(zone, zoneKey, items, page, {
+      const pageMotionOk = !prefersReducedMotion() && canUseWebAnimations();
+      if (pageMotionOk && animator) {
+        const animDone = animator.syncZone(zone, zoneKey, items, page, {
           prevItems: prevItems,
           prevPage: prevPage,
           pageTurn: true,
+        });
+        if (zoneKey === 'prep') {
+          lastRenderedPrepPage = page;
+        } else {
+          lastRenderedReadyPage = page;
+        }
+        return Promise.resolve(animDone).then(function () {
+          return undefined;
         });
       } else {
         const cells = layoutPageGrid(items, page, PAGE_SIZE);
@@ -610,6 +629,7 @@
       } else {
         lastRenderedReadyPage = page;
       }
+      return Promise.resolve();
     }
 
     function scheduleZoneTimers() {
@@ -1079,6 +1099,42 @@
       },
       getAnimSkipReason: function () {
         return lastAnimSkipReason;
+      },
+      getBoardAnimProbe: function () {
+        const animator = ensureBoardAnimator();
+        return {
+          skipReason: lastAnimSkipReason,
+          opacityAnimRuns: animator && animator.getOpacityAnimRuns ? animator.getOpacityAnimRuns() : 0,
+        };
+      },
+      resetBoardAnimProbe: function () {
+        const animator = ensureBoardAnimator();
+        if (animator && animator.resetOpacityAnimRuns) {
+          animator.resetOpacityAnimRuns();
+        }
+      },
+      advanceZonePageForTest: function (zoneKey) {
+        if (zoneKey === 'prep') {
+          const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
+          if (pages <= 1) {
+            return Promise.resolve(false);
+          }
+          prepPage = (prepPage + 1) % pages;
+          return patchZonePage('prep', prepItems, prepPage, pages).then(function () {
+            return true;
+          });
+        }
+        if (zoneKey === 'ready') {
+          const pages = pageCountForItems(readyItems.length, PAGE_SIZE);
+          if (pages <= 1) {
+            return Promise.resolve(false);
+          }
+          readyPage = (readyPage + 1) % pages;
+          return patchZonePage('ready', readyItems, readyPage, pages).then(function () {
+            return true;
+          });
+        }
+        return Promise.resolve(false);
       },
     };
 

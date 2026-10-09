@@ -133,22 +133,10 @@
     if (input.silentApply) {
       return { skip: true, reason: 'silent-reconnect' };
     }
-    const prepBulk =
-      isBulkSnapshotReplace(input.prevPrep, input.nextPrep) &&
-      input.prevPrep.length > 0 &&
-      input.nextPrep.length > 0;
-    const readyBulk =
-      isBulkSnapshotReplace(input.prevReady, input.nextReady) &&
-      input.prevReady.length > 0 &&
-      input.nextReady.length > 0;
-    if (prepBulk && readyBulk) {
-      return { skip: true, reason: 'bulk-snapshot-both-zones' };
-    }
-    if (
-      (input.prevPrep.length === 0 && input.prevReady.length === 0) &&
-      (input.nextPrep.length > 0 || input.nextReady.length > 0)
-    ) {
-      return { skip: true, reason: 'first-visible-after-empty-boot' };
+    const prevAll = input.prevPrep.concat(input.prevReady);
+    const nextAll = input.nextPrep.concat(input.nextReady);
+    if (isBulkSnapshotReplace(prevAll, nextAll)) {
+      return { skip: true, reason: 'bulk-snapshot-combined' };
     }
     return { skip: false, reason: 'animate' };
   }
@@ -274,6 +262,7 @@
    */
   function createBoardAnimator(deps) {
     let generation = 0;
+    let opacityAnimRuns = 0;
     const highlightTimers = {};
 
     function bumpGeneration() {
@@ -283,6 +272,11 @@
 
     function getGeneration() {
       return generation;
+    }
+
+    function runOpacityAnim(el, from, to, durationMs, gen) {
+      opacityAnimRuns += 1;
+      return animateOpacity(el, from, to, durationMs, gen, getGeneration);
     }
 
     function clearChipHighlight(chip) {
@@ -416,7 +410,7 @@
         for (let c = 0; c < existing.length; c += 1) {
           const chip = existing[c];
           promises.push(
-            animateOpacity(chip, 1, 0, DURATION_MS, gen, getGeneration).then(function () {
+            runOpacityAnim(chip, 1, 0, DURATION_MS, gen).then(function () {
               if (chip.parentNode) {
                 chip.parentNode.removeChild(chip);
               }
@@ -427,8 +421,9 @@
       }
 
       if (pageTurn) {
+        numbersLayer.setAttribute('data-page-turn-anim', '1');
         promises.push(
-          animateOpacity(numbersLayer, 1, 0, PAGE_DURATION_MS / 2, gen, getGeneration).then(function () {
+          runOpacityAnim(numbersLayer, 1, 0, PAGE_DURATION_MS / 2, gen).then(function () {
             if (getGeneration() !== gen) {
               return;
             }
@@ -445,7 +440,7 @@
               }
             }
             snapOpacity(numbersLayer, 0);
-            return animateOpacity(numbersLayer, 0, 1, PAGE_DURATION_MS / 2, gen, getGeneration);
+            return runOpacityAnim(numbersLayer, 0, 1, PAGE_DURATION_MS / 2, gen);
           }),
         );
         return Promise.all(promises);
@@ -459,7 +454,7 @@
         }
         removedChips.push(chip);
         promises.push(
-          animateOpacity(chip, 1, 0, DURATION_MS, gen, getGeneration).then(function () {
+          runOpacityAnim(chip, 1, 0, DURATION_MS, gen).then(function () {
             if (chip.parentNode) {
               chip.parentNode.removeChild(chip);
             }
@@ -484,9 +479,9 @@
           slot.appendChild(chip);
           chipById[id] = chip;
           if (diff.added.indexOf(id) >= 0) {
-            promises.push(animateOpacity(chip, 0, 1, DURATION_MS, gen, getGeneration));
+            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
           } else {
-            promises.push(animateOpacity(chip, 0, 1, DURATION_MS, gen, getGeneration));
+            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
           }
           if (zoneKey === 'ready' && highlightSet[id]) {
             scheduleReadyHighlight(chip, zoneKey + ':' + id);
@@ -529,10 +524,7 @@
         if (cellAt && cellAt.number) {
           continue;
         }
-        const orphan = slotAt.querySelector('.milksha-board-chip');
-        if (orphan && diff.removed.indexOf(orphan.getAttribute('data-item-id') || '') < 0) {
-          slotAt.innerHTML = '';
-        }
+        slotAt.innerHTML = '';
       }
 
       return Promise.all(removedChips.length ? promises : []).then(function () {
@@ -550,6 +542,12 @@
       syncZone: syncZone,
       bumpGeneration: bumpGeneration,
       getGeneration: getGeneration,
+      getOpacityAnimRuns: function () {
+        return opacityAnimRuns;
+      },
+      resetOpacityAnimRuns: function () {
+        opacityAnimRuns = 0;
+      },
       DURATION_MS: DURATION_MS,
       PAGE_DURATION_MS: PAGE_DURATION_MS,
     };
