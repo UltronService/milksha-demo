@@ -44,5 +44,5 @@
 
 ## Git / CI
 
-- **HEAD**：`4dfa82b`（分支 `cursor/controller-store-simulation-578c`）
-- **PR**：`cursor/controller-store-simulation-578c` → `main`
+- **HEAD**：`101c4dc`（分支 `cursor/controller-store-simulation-578c`）
+- **PR**：請由 repo 協作者從分支開啟 → `main`（本 agent 無開 PR 權限）
