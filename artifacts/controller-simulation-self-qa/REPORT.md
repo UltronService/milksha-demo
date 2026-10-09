@@ -72,8 +72,8 @@ controller/store-simulation-host.js → 無匹配
 
 ## CI
 
-- **PR #37 最新 CI run**：https://github.com/UltronService/milksha-demo/actions/runs/37936727718
-- **分支 CI 列表**：https://github.com/UltronService/milksha-demo/actions/workflows/ci.yml?query=branch%3Acursor%2Fcontroller-store-simulation-578c
+- **PR #37 CI（綠）**：https://github.com/UltronService/milksha-demo/actions/runs/37943118280 — `conclusion: success`
+- **Mergeable**：`MERGEABLE`（`gh pr view 37`）
 
 ## UAT（PM）
 
