@@ -35,7 +35,8 @@ async function fillReadyGrid(page, prefix) {
 async function assertPulsingChipNoOverlap(page, pulseItemId) {
   const sample = await page.evaluate((id) => {
     const layer = document.querySelector('.milksha-zone.ready .milksha-zone-numbers');
-    const cfg = window.QMS.MilkshaBoardAnimConfig.getEffectiveReadyScale(layer);
+    const pulseEl = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="' + id + '"]');
+    const cfg = window.QMS.MilkshaBoardAnimConfig.getEffectiveReadyScale(layer, pulseEl);
     const pulse = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="' + id + '"]');
     const chips = [...document.querySelectorAll('.milksha-ready .milksha-board-chip')];
     const zone = document.querySelector('.milksha-zone.ready').getBoundingClientRect();

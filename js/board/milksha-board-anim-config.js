@@ -33,12 +33,6 @@
     animOut: 'readyScaleOutMs',
   };
 
-  /**
-   * @param {number} value
-   * @param {number} min
-   * @param {number} max
-   * @param {number} fallback
-   */
   function clampNum(value, min, max, fallback) {
     if (!Number.isFinite(value)) {
       return fallback;
@@ -49,10 +43,6 @@
     return value;
   }
 
-  /**
-   * @param {string | null | undefined} raw
-   * @param {number} fallback
-   */
   function parseUrlNumber(raw, fallback) {
     if (raw === null || raw === undefined || raw === '') {
       return fallback;
@@ -61,10 +51,6 @@
     return Number.isFinite(n) ? n : fallback;
   }
 
-  /**
-   * @param {string | null} raw
-   * @param {number} fallbackMs
-   */
   function parseUrlDurationMs(raw, fallbackMs) {
     const n = parseUrlNumber(raw, fallbackMs);
     if (!Number.isFinite(n)) {
@@ -76,16 +62,25 @@
     return n;
   }
 
-  /**
-   * @returns {typeof DEFAULTS}
-   */
+  function getSearchParams() {
+    const win = root.window;
+    if (!win || !win.location) {
+      return null;
+    }
+    return new URLSearchParams(win.location.search || '');
+  }
+
+  function isAnimScaleUnsafe() {
+    const params = getSearchParams();
+    return params ? params.get('animScaleUnsafe') === '1' : false;
+  }
+
   function getConfig() {
     const out = { ...DEFAULTS };
-    const win = root.window;
-    if (!win || !win.location || !win.location.search) {
+    const params = getSearchParams();
+    if (!params) {
       return out;
     }
-    const params = new URLSearchParams(win.location.search);
     Object.keys(URL_KEYS).forEach(function (param) {
       const key = URL_KEYS[param];
       const bounds = BOUNDS[key];
@@ -106,92 +101,131 @@
     return out;
   }
 
+  function gridNeighbors(idx, cellCount) {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const out = [];
+    if (col > 0) {
+      out.push(idx - 1);
+    }
+    if (col < 1) {
+      out.push(idx + 1);
+    }
+    if (row > 0) {
+      out.push(idx - 2);
+    }
+    if (row * 2 + 2 < cellCount) {
+      out.push(idx + 2);
+    }
+    return out;
+  }
+
   /**
-   * Max uniform scale so chip center-grow does not exceed cell or neighbor gap.
+   * Safe peak scale for one chip from cell edges + occupied neighbors only.
+   * @param {Element} chip
    * @param {Element} numbersLayer
    * @returns {number}
    */
-  function computeSafeReadyScale(numbersLayer) {
-    if (!numbersLayer || typeof numbersLayer.querySelectorAll !== 'function') {
+  function computeChipPulseScale(chip, numbersLayer) {
+    if (!chip || !numbersLayer) {
+      return DEFAULTS.readyScale;
+    }
+    const cell = chip.closest('.milksha-num-cell');
+    if (!cell) {
       return DEFAULTS.readyScale;
     }
     const cells = numbersLayer.querySelectorAll('.milksha-num-cell');
-    let safe = DEFAULTS.readyScale;
-    const chips = [];
+    let idx = -1;
     for (let i = 0; i < cells.length; i += 1) {
-      const cell = cells[i];
-      const chip = cell.querySelector('.milksha-board-chip');
-      if (!chip) {
+      if (cells[i] === cell) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx < 0) {
+      return DEFAULTS.readyScale;
+    }
+    const cellR = cell.getBoundingClientRect();
+    const chipR = chip.getBoundingClientRect();
+    if (chipR.width <= 0 || chipR.height <= 0) {
+      return 1;
+    }
+    const cx = chipR.left + chipR.width / 2;
+    const cy = chipR.top + chipR.height / 2;
+    const hw = chipR.width / 2;
+    const hh = chipR.height / 2;
+    let safe = DEFAULTS.readyScale;
+    const marginL = cx - cellR.left;
+    const marginR = cellR.right - cx;
+    const marginT = cy - cellR.top;
+    const marginB = cellR.bottom - cy;
+    safe = Math.min(safe, 1 + Math.min(marginL, marginR) / hw, 1 + Math.min(marginT, marginB) / hh);
+
+    const zone = numbersLayer.closest('.milksha-zone.ready');
+    if (zone) {
+      const zr = zone.getBoundingClientRect();
+      safe = Math.min(
+        safe,
+        1 + Math.min(cx - zr.left, zr.right - cx) / hw,
+        1 + Math.min(cy - zr.top, zr.bottom - cy) / hh,
+      );
+    }
+
+    const neighbors = gridNeighbors(idx, cells.length);
+    for (let ni = 0; ni < neighbors.length; ni += 1) {
+      const nIdx = neighbors[ni];
+      const nCell = cells[nIdx];
+      const nChip = nCell ? nCell.querySelector('.milksha-board-chip') : null;
+      if (!nChip) {
         continue;
       }
-      const cellR = cell.getBoundingClientRect();
-      const chipR = chip.getBoundingClientRect();
-      if (chipR.width <= 0 || chipR.height <= 0) {
-        continue;
-      }
-      const cx = chipR.left + chipR.width / 2;
-      const cy = chipR.top + chipR.height / 2;
-      const marginL = cx - cellR.left;
-      const marginR = cellR.right - cx;
-      const marginT = cy - cellR.top;
-      const marginB = cellR.bottom - cy;
-      const hw = chipR.width / 2;
-      const hh = chipR.height / 2;
-      const sX = 1 + Math.min(marginL, marginR) / hw;
-      const sY = 1 + Math.min(marginT, marginB) / hh;
-      safe = Math.min(safe, sX, sY);
-      chips.push({ idx: i, cx: cx, cy: cy, hw: hw, hh: hh });
-    }
-    function gridNeighbors(idx) {
-      const col = idx % 2;
-      const row = Math.floor(idx / 2);
-      const out = [];
-      if (col > 0) {
-        out.push(idx - 1);
-      }
-      if (col < 1) {
-        out.push(idx + 1);
-      }
-      if (row > 0) {
-        out.push(idx - 2);
-      }
-      if (row < 4) {
-        out.push(idx + 2);
-      }
-      return out;
-    }
-    for (let a = 0; a < chips.length; a += 1) {
-      const na = gridNeighbors(chips[a].idx);
-      for (let ni = 0; ni < na.length; ni += 1) {
-        const b = chips.find(function (c) {
-          return c.idx === na[ni];
-        });
-        if (!b) {
-          continue;
-        }
-        const dx = Math.abs(b.cx - chips[a].cx);
-        const dy = Math.abs(b.cy - chips[a].cy);
-        const sumW = chips[a].hw + b.hw;
-        const sumH = chips[a].hh + b.hh;
-        if (dx >= dy && sumW > 0) {
-          safe = Math.min(safe, dx / sumW);
-        } else if (sumH > 0) {
-          safe = Math.min(safe, dy / sumH);
-        }
+      const nR = nChip.getBoundingClientRect();
+      const ncx = nR.left + nR.width / 2;
+      const ncy = nR.top + nR.height / 2;
+      const nhw = nR.width / 2;
+      const nhh = nR.height / 2;
+      const dx = Math.abs(ncx - cx);
+      const dy = Math.abs(ncy - cy);
+      const sumW = hw + nhw;
+      const sumH = hh + nhh;
+      if (dx >= dy && sumW > 0) {
+        safe = Math.min(safe, dx / sumW);
+      } else if (sumH > 0) {
+        safe = Math.min(safe, dy / sumH);
       }
     }
     return Math.max(1, safe);
   }
 
+  /** Layer-wide minimum (legacy / diagnostics). */
+  function computeSafeReadyScale(numbersLayer) {
+    if (!numbersLayer) {
+      return DEFAULTS.readyScale;
+    }
+    const chips = numbersLayer.querySelectorAll('.milksha-board-chip');
+    if (!chips.length) {
+      return DEFAULTS.readyScale;
+    }
+    let min = DEFAULTS.readyScale;
+    for (let i = 0; i < chips.length; i += 1) {
+      min = Math.min(min, computeChipPulseScale(chips[i], numbersLayer));
+    }
+    return Math.max(1, min);
+  }
+
   /**
    * @param {Element} numbersLayer
-   * @returns {{ requested: number, safeMax: number, effective: number }}
+   * @param {Element | null | undefined} chipEl
+   * @returns {{ requested: number, safeMax: number, effective: number, unsafeBypass: boolean }}
    */
-  function getEffectiveReadyScale(numbersLayer) {
+  function getEffectiveReadyScale(numbersLayer, chipEl) {
     const cfg = getConfig();
-    const safeMax = computeSafeReadyScale(numbersLayer);
-    const effective = Math.min(cfg.readyScale, safeMax);
-    return { requested: cfg.readyScale, safeMax: safeMax, effective: effective };
+    const unsafeBypass = isAnimScaleUnsafe();
+    const safeMax = chipEl
+      ? computeChipPulseScale(chipEl, numbersLayer)
+      : computeSafeReadyScale(numbersLayer);
+    const effective = unsafeBypass ? cfg.readyScale : Math.min(cfg.readyScale, safeMax);
+    return { requested: cfg.readyScale, safeMax: safeMax, effective: effective, unsafeBypass: unsafeBypass };
   }
 
   QMS.MilkshaBoardAnimConfig = {
@@ -199,6 +233,8 @@
     BOUNDS: BOUNDS,
     URL_PARAM_NAMES: URL_KEYS,
     getConfig: getConfig,
+    isAnimScaleUnsafe: isAnimScaleUnsafe,
+    computeChipPulseScale: computeChipPulseScale,
     computeSafeReadyScale: computeSafeReadyScale,
     getEffectiveReadyScale: getEffectiveReadyScale,
   };

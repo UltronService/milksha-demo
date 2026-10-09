@@ -34,11 +34,16 @@
 
 ## 真雲端 zz-qa-store-a（3 次 ms）
 
-見 `live-cloud-samples.json`（最新一輪）。
+**25, 932, 833**（`live-cloud-samples.json`）。
 
 ## 效能（4× CPU，ready pulse 情境）
 
-見 `metrics.json` → `perfReadyPulseCpu4x`（`scripts/board-ready-fade-qa-metrics.mjs`）。
+| 解析度 | avg fps | >50ms 幀 | longtask | effective scale |
+|--------|---------|----------|----------|-----------------|
+| 1920×1080 | 60.2 | 0 | 0 | 1.048 |
+| 3840×2160 | 60.0 | 0 | 0 | 1.048 |
+
+來源：`metrics.json` → `perfReadyPulseCpu4x`。
 
 ## Contact sheet
 
