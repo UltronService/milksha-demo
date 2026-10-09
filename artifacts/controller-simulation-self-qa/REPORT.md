@@ -1,7 +1,7 @@
 # 控制端「持續模擬門市」自測報告
 
 > **PR**：[#37](https://github.com/UltronService/milksha-demo/pull/37)（`cursor/controller-store-simulation-578c` → `main`）  
-> **HEAD**：`8a71c94`（分支 `cursor/controller-store-simulation-578c`）
+> **HEAD**：`8e8d222`（分支 `cursor/controller-store-simulation-578c`）
 
 ### 開 PR 紀錄（Cursor ManagePullRequest）
 
@@ -72,7 +72,8 @@ controller/store-simulation-host.js → 無匹配
 
 ## CI
 
-- **PR #37 Actions**：https://github.com/UltronService/milksha-demo/actions/workflows/ci.yml?query=branch%3Acursor%2Fcontroller-store-simulation-578c
+- **PR #37 最新 CI run**：https://github.com/UltronService/milksha-demo/actions/runs/37936727718
+- **分支 CI 列表**：https://github.com/UltronService/milksha-demo/actions/workflows/ci.yml?query=branch%3Acursor%2Fcontroller-store-simulation-578c
 
 ## UAT（PM）
 
