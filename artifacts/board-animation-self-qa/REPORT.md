@@ -1,8 +1,8 @@
 # 看板叫號動態自測報告（QA 交付）
 
-- **HEAD**: `f13c8c9ae3cb1177fadfcde560a53af0ebc78763`
+- **HEAD**: `3f908bbd74d0ce19cb80ac5b58dab849a7c3b8b7`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
-- **CI（此 HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37901951940
+- **CI（此 HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37902013688
 - **指標檔**: `artifacts/board-animation-self-qa/metrics.json`
 - **連續幀 contact sheet**: `artifacts/board-animation-self-qa/contact-sheets/`（約 11.8 MB）
 
