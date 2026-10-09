@@ -44,5 +44,5 @@
 
 ## Git / CI
 
-- **HEAD**：（push 後由 CI 填入下方連結）
+- **HEAD**：`4dfa82b`（分支 `cursor/controller-store-simulation-578c`）
 - **PR**：`cursor/controller-store-simulation-578c` → `main`
