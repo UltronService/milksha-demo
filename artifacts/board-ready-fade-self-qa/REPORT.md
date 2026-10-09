@@ -1,8 +1,8 @@
 # 請取餐放大淡入（scale pulse）自測報告
 
-- **HEAD**: `e6bca2793b47c2efc92dd54bcb6c0a804dd418ef`
+- **HEAD**: `b3b56f521334deb5beeb6d855970a35ed65419fa`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/36
-- **CI（本 REPORT HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37945356360 — **success**（先前功能 commit `07a400c`：run [37941553872](https://github.com/UltronService/milksha-demo/actions/runs/37941553872)；`a4edc48`：run [37940995898](https://github.com/UltronService/milksha-demo/actions/runs/37940995898)）
+- **CI（本 REPORT HEAD）**: https://github.com/UltronService/milksha-demo/actions/runs/37949218518 — **success**（功能 `07a400c`：[37941553872](https://github.com/UltronService/milksha-demo/actions/runs/37941553872)；`a4edc48`：[37940995898](https://github.com/UltronService/milksha-demo/actions/runs/37940995898)）
 - **Base**: `c601df6`
 
 ## 規格摘要
