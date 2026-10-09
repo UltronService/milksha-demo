@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
+import { expandControllerZone } from './harness.mjs';
 
 const STORE = 'zz-qa-store-a';
 const DEVICE = 'stb-01';
@@ -43,7 +44,7 @@ async function sampleUntil(ctrl, board, endAt, samples) {
 }
 
 async function clearStore(ctrl) {
-  await ctrl.locator('[data-testid="zone-toggle-special"]').click();
+  await expandControllerZone(ctrl, 'sec-special');
   await ctrl.click('[data-testid="btn-clear-now"]');
   await ctrl.waitForTimeout(3000);
 }

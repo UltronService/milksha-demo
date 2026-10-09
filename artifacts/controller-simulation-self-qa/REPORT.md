@@ -1,7 +1,15 @@
 # 控制端「持續模擬門市」自測報告
 
 > **PR**：[#37](https://github.com/UltronService/milksha-demo/pull/37)（`cursor/controller-store-simulation-578c` → `main`）  
-> **HEAD**：push 後以 CI run 為準（見下方 CI 連結）
+> **HEAD**：`1766c86`（分支 `cursor/controller-store-simulation-578c`）
+
+### 開 PR 紀錄（Cursor ManagePullRequest）
+
+兩次皆失敗，完整錯誤：
+
+`Cannot create pull request: Validation Failed: {"resource":"Issue","code":"custom","message":"must be a collaborator"} - https://docs.github.com/rest/pulls/pulls#create-a-pull-request`
+
+已由總監代開 **#37**。
 
 ## 規格澄清（總監 20:42 / 後續）
 
@@ -49,7 +57,8 @@ controller/store-simulation-host.js → 無匹配
 |------|------|
 | `npm test` | **178 / 178** 通過 |
 | `controller-store-simulation.spec.mjs` | 2 / 2（本機連動） |
-| `npm run test:e2e` 全量 | 見 CI #37 或 `full-e2e-run.log` |
+| `npm run test:e2e` 全量（本機 `full-e2e-run-2.log`） | **155 通過 / 4 失敗 / 4 略過** |
+| 失敗說明 | `guest-clock` 字型（已知）；`home-board-background-tab`×2（環境）；`controller-simulation-live-cloud` 為舊版 clear 區塊問題，**單跑已 1 passed** |
 | 真雲端 `controller-simulation-live-cloud.spec.mjs` | 見下方真雲端章節 |
 
 ## 真雲端 zz-qa-store-a
@@ -57,7 +66,9 @@ controller/store-simulation-host.js → 無匹配
 - 公開 Web API key：自 `https://ultronservice.github.io/milksha-demo/config/firebase.js` 讀取（**未**寫入 repo／本報告）。
 - Playwright：`installLiveBranchCloudRoutes` 將 `github.io/milksha-demo/*` 改服務分支靜態檔，直連 `milksha-qms-dev`。
 - 流程：一般 3min → 停止 → 靜默 60s → 尖峰 3min → 停止 → 靜默 60s → `clear_now` 清空。
-- 證據：`cloud-live-evidence.json`、`cloud-*-1920.png`（跑完後產生於本目錄）。
+- **結果**：`controller-simulation-live-cloud.spec.mjs` **1 passed**（約 8.4min）。
+- 證據：`cloud-live-evidence.json`（每次 `sendCount`／`boardSeq` 變化時的台北時間與看板張數）、`cloud-normal-*-1920.png`、`cloud-peak-*-1920.png`。
+- 停止後 60s：`stopChecks.normal`／`peak` 的 `sendCount` 與凍結 `tickets` 陣列皆與停止當下相同（見 JSON）。
 
 ## CI
 

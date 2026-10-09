@@ -1,0 +1,855 @@
+{
+  "store": "zz-qa-store-a",
+  "samples": {
+    "normal": [
+      {
+        "at": "2026-10-09T13:49:22.021Z",
+        "sendCount": 0,
+        "boardSeq": 3063,
+        "boardPrep": 10,
+        "boardReady": 1,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:49:24.036Z",
+        "sendCount": 1,
+        "boardSeq": 3068,
+        "boardPrep": 1,
+        "boardReady": 0,
+        "boardTotal": 1
+      },
+      {
+        "at": "2026-10-09T13:49:28.060Z",
+        "sendCount": 1,
+        "boardSeq": 3071,
+        "boardPrep": 2,
+        "boardReady": 10,
+        "boardTotal": 12
+      },
+      {
+        "at": "2026-10-09T13:49:32.074Z",
+        "sendCount": 1,
+        "boardSeq": 3075,
+        "boardPrep": 10,
+        "boardReady": 10,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:49:40.106Z",
+        "sendCount": 1,
+        "boardSeq": 3077,
+        "boardPrep": 2,
+        "boardReady": 4,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:49:44.121Z",
+        "sendCount": 1,
+        "boardSeq": 3080,
+        "boardPrep": 10,
+        "boardReady": 4,
+        "boardTotal": 14
+      },
+      {
+        "at": "2026-10-09T13:49:46.127Z",
+        "sendCount": 2,
+        "boardSeq": 3082,
+        "boardPrep": 2,
+        "boardReady": 0,
+        "boardTotal": 2
+      },
+      {
+        "at": "2026-10-09T13:49:56.164Z",
+        "sendCount": 2,
+        "boardSeq": 3083,
+        "boardPrep": 1,
+        "boardReady": 6,
+        "boardTotal": 7
+      },
+      {
+        "at": "2026-10-09T13:49:58.172Z",
+        "sendCount": 3,
+        "boardSeq": 3086,
+        "boardPrep": 11,
+        "boardReady": 5,
+        "boardTotal": 16
+      },
+      {
+        "at": "2026-10-09T13:50:00.180Z",
+        "sendCount": 3,
+        "boardSeq": 3088,
+        "boardPrep": 9,
+        "boardReady": 8,
+        "boardTotal": 17
+      },
+      {
+        "at": "2026-10-09T13:50:08.211Z",
+        "sendCount": 3,
+        "boardSeq": 3089,
+        "boardPrep": 10,
+        "boardReady": 8,
+        "boardTotal": 18
+      },
+      {
+        "at": "2026-10-09T13:50:12.227Z",
+        "sendCount": 3,
+        "boardSeq": 3091,
+        "boardPrep": 10,
+        "boardReady": 9,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:50:16.242Z",
+        "sendCount": 3,
+        "boardSeq": 3094,
+        "boardPrep": 9,
+        "boardReady": 11,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:50:20.257Z",
+        "sendCount": 3,
+        "boardSeq": 3097,
+        "boardPrep": 10,
+        "boardReady": 9,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:50:22.264Z",
+        "sendCount": 4,
+        "boardSeq": 3099,
+        "boardPrep": 14,
+        "boardReady": 8,
+        "boardTotal": 22
+      },
+      {
+        "at": "2026-10-09T13:50:24.269Z",
+        "sendCount": 4,
+        "boardSeq": 3100,
+        "boardPrep": 11,
+        "boardReady": 7,
+        "boardTotal": 18
+      },
+      {
+        "at": "2026-10-09T13:50:28.283Z",
+        "sendCount": 4,
+        "boardSeq": 3103,
+        "boardPrep": 10,
+        "boardReady": 8,
+        "boardTotal": 18
+      },
+      {
+        "at": "2026-10-09T13:50:32.299Z",
+        "sendCount": 4,
+        "boardSeq": 3105,
+        "boardPrep": 10,
+        "boardReady": 8,
+        "boardTotal": 18
+      },
+      {
+        "at": "2026-10-09T13:50:36.315Z",
+        "sendCount": 4,
+        "boardSeq": 3107,
+        "boardPrep": 10,
+        "boardReady": 9,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:50:38.323Z",
+        "sendCount": 5,
+        "boardSeq": 3110,
+        "boardPrep": 10,
+        "boardReady": 6,
+        "boardTotal": 16
+      },
+      {
+        "at": "2026-10-09T13:50:40.330Z",
+        "sendCount": 6,
+        "boardSeq": 3113,
+        "boardPrep": 11,
+        "boardReady": 5,
+        "boardTotal": 16
+      },
+      {
+        "at": "2026-10-09T13:50:44.345Z",
+        "sendCount": 6,
+        "boardSeq": 3114,
+        "boardPrep": 11,
+        "boardReady": 5,
+        "boardTotal": 16
+      },
+      {
+        "at": "2026-10-09T13:50:48.360Z",
+        "sendCount": 6,
+        "boardSeq": 3115,
+        "boardPrep": 11,
+        "boardReady": 4,
+        "boardTotal": 15
+      },
+      {
+        "at": "2026-10-09T13:50:52.375Z",
+        "sendCount": 6,
+        "boardSeq": 3117,
+        "boardPrep": 2,
+        "boardReady": 3,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:50:56.391Z",
+        "sendCount": 7,
+        "boardSeq": 3121,
+        "boardPrep": 7,
+        "boardReady": 2,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:51:00.406Z",
+        "sendCount": 7,
+        "boardSeq": 3122,
+        "boardPrep": 11,
+        "boardReady": 3,
+        "boardTotal": 14
+      },
+      {
+        "at": "2026-10-09T13:51:02.412Z",
+        "sendCount": 9,
+        "boardSeq": 3126,
+        "boardPrep": 5,
+        "boardReady": 0,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:51:04.421Z",
+        "sendCount": 10,
+        "boardSeq": 3127,
+        "boardPrep": 4,
+        "boardReady": 1,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:51:14.456Z",
+        "sendCount": 11,
+        "boardSeq": 3128,
+        "boardPrep": 5,
+        "boardReady": 1,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:51:18.472Z",
+        "sendCount": 12,
+        "boardSeq": 3129,
+        "boardPrep": 4,
+        "boardReady": 2,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:51:20.479Z",
+        "sendCount": 13,
+        "boardSeq": 3130,
+        "boardPrep": 4,
+        "boardReady": 1,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:51:24.493Z",
+        "sendCount": 14,
+        "boardSeq": 3131,
+        "boardPrep": 3,
+        "boardReady": 2,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:51:36.535Z",
+        "sendCount": 15,
+        "boardSeq": 3132,
+        "boardPrep": 4,
+        "boardReady": 2,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:51:44.560Z",
+        "sendCount": 16,
+        "boardSeq": 3133,
+        "boardPrep": 4,
+        "boardReady": 1,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:51:46.567Z",
+        "sendCount": 17,
+        "boardSeq": 3134,
+        "boardPrep": 5,
+        "boardReady": 1,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:51:52.588Z",
+        "sendCount": 18,
+        "boardSeq": 3135,
+        "boardPrep": 5,
+        "boardReady": 0,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:52:04.632Z",
+        "sendCount": 19,
+        "boardSeq": 3136,
+        "boardPrep": 4,
+        "boardReady": 1,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:52:14.668Z",
+        "sendCount": 20,
+        "boardSeq": 3137,
+        "boardPrep": 5,
+        "boardReady": 1,
+        "boardTotal": 6
+      }
+    ],
+    "peak": [
+      {
+        "at": "2026-10-09T13:53:27.937Z",
+        "sendCount": 21,
+        "boardSeq": 3138,
+        "boardPrep": 4,
+        "boardReady": 2,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:53:29.942Z",
+        "sendCount": 22,
+        "boardSeq": 3139,
+        "boardPrep": 2,
+        "boardReady": 0,
+        "boardTotal": 2
+      },
+      {
+        "at": "2026-10-09T13:53:35.964Z",
+        "sendCount": 23,
+        "boardSeq": 3140,
+        "boardPrep": 3,
+        "boardReady": 0,
+        "boardTotal": 3
+      },
+      {
+        "at": "2026-10-09T13:53:39.980Z",
+        "sendCount": 24,
+        "boardSeq": 3141,
+        "boardPrep": 4,
+        "boardReady": 0,
+        "boardTotal": 4
+      },
+      {
+        "at": "2026-10-09T13:53:46.003Z",
+        "sendCount": 25,
+        "boardSeq": 3142,
+        "boardPrep": 5,
+        "boardReady": 0,
+        "boardTotal": 5
+      },
+      {
+        "at": "2026-10-09T13:53:52.023Z",
+        "sendCount": 26,
+        "boardSeq": 3143,
+        "boardPrep": 6,
+        "boardReady": 0,
+        "boardTotal": 6
+      },
+      {
+        "at": "2026-10-09T13:53:56.037Z",
+        "sendCount": 27,
+        "boardSeq": 3144,
+        "boardPrep": 7,
+        "boardReady": 0,
+        "boardTotal": 7
+      },
+      {
+        "at": "2026-10-09T13:54:00.052Z",
+        "sendCount": 28,
+        "boardSeq": 3145,
+        "boardPrep": 8,
+        "boardReady": 0,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:54:04.068Z",
+        "sendCount": 29,
+        "boardSeq": 3146,
+        "boardPrep": 9,
+        "boardReady": 0,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:54:10.091Z",
+        "sendCount": 30,
+        "boardSeq": 3147,
+        "boardPrep": 10,
+        "boardReady": 0,
+        "boardTotal": 10
+      },
+      {
+        "at": "2026-10-09T13:54:14.104Z",
+        "sendCount": 31,
+        "boardSeq": 3148,
+        "boardPrep": 11,
+        "boardReady": 0,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:54:16.111Z",
+        "sendCount": 32,
+        "boardSeq": 3149,
+        "boardPrep": 11,
+        "boardReady": 0,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:54:18.119Z",
+        "sendCount": 33,
+        "boardSeq": 3150,
+        "boardPrep": 11,
+        "boardReady": 1,
+        "boardTotal": 12
+      },
+      {
+        "at": "2026-10-09T13:54:22.134Z",
+        "sendCount": 34,
+        "boardSeq": 3151,
+        "boardPrep": 11,
+        "boardReady": 1,
+        "boardTotal": 12
+      },
+      {
+        "at": "2026-10-09T13:54:26.148Z",
+        "sendCount": 34,
+        "boardSeq": 3152,
+        "boardPrep": 1,
+        "boardReady": 1,
+        "boardTotal": 2
+      },
+      {
+        "at": "2026-10-09T13:54:28.154Z",
+        "sendCount": 35,
+        "boardSeq": 3152,
+        "boardPrep": 2,
+        "boardReady": 1,
+        "boardTotal": 3
+      },
+      {
+        "at": "2026-10-09T13:54:34.179Z",
+        "sendCount": 36,
+        "boardSeq": 3153,
+        "boardPrep": 10,
+        "boardReady": 1,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:54:38.195Z",
+        "sendCount": 38,
+        "boardSeq": 3155,
+        "boardPrep": 6,
+        "boardReady": 2,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:54:42.211Z",
+        "sendCount": 39,
+        "boardSeq": 3156,
+        "boardPrep": 4,
+        "boardReady": 3,
+        "boardTotal": 7
+      },
+      {
+        "at": "2026-10-09T13:54:44.218Z",
+        "sendCount": 40,
+        "boardSeq": 3158,
+        "boardPrep": 10,
+        "boardReady": 3,
+        "boardTotal": 13
+      },
+      {
+        "at": "2026-10-09T13:54:46.225Z",
+        "sendCount": 42,
+        "boardSeq": 3160,
+        "boardPrep": 10,
+        "boardReady": 3,
+        "boardTotal": 13
+      },
+      {
+        "at": "2026-10-09T13:54:48.232Z",
+        "sendCount": 43,
+        "boardSeq": 3162,
+        "boardPrep": 11,
+        "boardReady": 4,
+        "boardTotal": 15
+      },
+      {
+        "at": "2026-10-09T13:54:50.239Z",
+        "sendCount": 44,
+        "boardSeq": 3162,
+        "boardPrep": 3,
+        "boardReady": 4,
+        "boardTotal": 7
+      },
+      {
+        "at": "2026-10-09T13:54:54.255Z",
+        "sendCount": 47,
+        "boardSeq": 3165,
+        "boardPrep": 2,
+        "boardReady": 5,
+        "boardTotal": 7
+      },
+      {
+        "at": "2026-10-09T13:55:02.287Z",
+        "sendCount": 49,
+        "boardSeq": 3167,
+        "boardPrep": 3,
+        "boardReady": 6,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:04.295Z",
+        "sendCount": 50,
+        "boardSeq": 3168,
+        "boardPrep": 3,
+        "boardReady": 6,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:10.318Z",
+        "sendCount": 52,
+        "boardSeq": 3170,
+        "boardPrep": 10,
+        "boardReady": 3,
+        "boardTotal": 13
+      },
+      {
+        "at": "2026-10-09T13:55:14.332Z",
+        "sendCount": 53,
+        "boardSeq": 3171,
+        "boardPrep": 5,
+        "boardReady": 3,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:55:16.340Z",
+        "sendCount": 54,
+        "boardSeq": 3172,
+        "boardPrep": 4,
+        "boardReady": 4,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:55:20.356Z",
+        "sendCount": 56,
+        "boardSeq": 3174,
+        "boardPrep": 10,
+        "boardReady": 5,
+        "boardTotal": 15
+      },
+      {
+        "at": "2026-10-09T13:55:22.362Z",
+        "sendCount": 57,
+        "boardSeq": 3175,
+        "boardPrep": 10,
+        "boardReady": 4,
+        "boardTotal": 14
+      },
+      {
+        "at": "2026-10-09T13:55:24.368Z",
+        "sendCount": 57,
+        "boardSeq": 3176,
+        "boardPrep": 10,
+        "boardReady": 5,
+        "boardTotal": 15
+      },
+      {
+        "at": "2026-10-09T13:55:26.373Z",
+        "sendCount": 59,
+        "boardSeq": 3177,
+        "boardPrep": 5,
+        "boardReady": 4,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:28.380Z",
+        "sendCount": 60,
+        "boardSeq": 3178,
+        "boardPrep": 5,
+        "boardReady": 3,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:55:32.393Z",
+        "sendCount": 62,
+        "boardSeq": 3180,
+        "boardPrep": 10,
+        "boardReady": 3,
+        "boardTotal": 13
+      },
+      {
+        "at": "2026-10-09T13:55:34.400Z",
+        "sendCount": 63,
+        "boardSeq": 3181,
+        "boardPrep": 10,
+        "boardReady": 3,
+        "boardTotal": 13
+      },
+      {
+        "at": "2026-10-09T13:55:36.407Z",
+        "sendCount": 64,
+        "boardSeq": 3182,
+        "boardPrep": 10,
+        "boardReady": 4,
+        "boardTotal": 14
+      },
+      {
+        "at": "2026-10-09T13:55:38.414Z",
+        "sendCount": 66,
+        "boardSeq": 3184,
+        "boardPrep": 4,
+        "boardReady": 5,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:40.420Z",
+        "sendCount": 67,
+        "boardSeq": 3185,
+        "boardPrep": 2,
+        "boardReady": 7,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:44.436Z",
+        "sendCount": 68,
+        "boardSeq": 3186,
+        "boardPrep": 12,
+        "boardReady": 7,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:55:46.443Z",
+        "sendCount": 68,
+        "boardSeq": 3187,
+        "boardPrep": 13,
+        "boardReady": 9,
+        "boardTotal": 22
+      },
+      {
+        "at": "2026-10-09T13:55:48.450Z",
+        "sendCount": 69,
+        "boardSeq": 3188,
+        "boardPrep": 11,
+        "boardReady": 9,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:55:50.458Z",
+        "sendCount": 71,
+        "boardSeq": 3190,
+        "boardPrep": 2,
+        "boardReady": 7,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:52.464Z",
+        "sendCount": 72,
+        "boardSeq": 3191,
+        "boardPrep": 1,
+        "boardReady": 8,
+        "boardTotal": 9
+      },
+      {
+        "at": "2026-10-09T13:55:54.472Z",
+        "sendCount": 74,
+        "boardSeq": 3193,
+        "boardPrep": 10,
+        "boardReady": 9,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:55:56.479Z",
+        "sendCount": 74,
+        "boardSeq": 3194,
+        "boardPrep": 1,
+        "boardReady": 10,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:55:58.488Z",
+        "sendCount": 75,
+        "boardSeq": 3194,
+        "boardPrep": 1,
+        "boardReady": 10,
+        "boardTotal": 11
+      },
+      {
+        "at": "2026-10-09T13:56:00.496Z",
+        "sendCount": 76,
+        "boardSeq": 3195,
+        "boardPrep": 10,
+        "boardReady": 10,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:56:02.501Z",
+        "sendCount": 78,
+        "boardSeq": 3197,
+        "boardPrep": 11,
+        "boardReady": 10,
+        "boardTotal": 21
+      },
+      {
+        "at": "2026-10-09T13:56:04.508Z",
+        "sendCount": 79,
+        "boardSeq": 3198,
+        "boardPrep": 11,
+        "boardReady": 8,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:56:06.516Z",
+        "sendCount": 80,
+        "boardSeq": 3199,
+        "boardPrep": 12,
+        "boardReady": 8,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:56:08.524Z",
+        "sendCount": 81,
+        "boardSeq": 3200,
+        "boardPrep": 1,
+        "boardReady": 7,
+        "boardTotal": 8
+      },
+      {
+        "at": "2026-10-09T13:56:10.531Z",
+        "sendCount": 82,
+        "boardSeq": 3201,
+        "boardPrep": 1,
+        "boardReady": 9,
+        "boardTotal": 10
+      },
+      {
+        "at": "2026-10-09T13:56:12.539Z",
+        "sendCount": 83,
+        "boardSeq": 3202,
+        "boardPrep": 10,
+        "boardReady": 10,
+        "boardTotal": 20
+      },
+      {
+        "at": "2026-10-09T13:56:14.547Z",
+        "sendCount": 84,
+        "boardSeq": 3203,
+        "boardPrep": 9,
+        "boardReady": 10,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:56:16.554Z",
+        "sendCount": 86,
+        "boardSeq": 3205,
+        "boardPrep": 10,
+        "boardReady": 8,
+        "boardTotal": 18
+      },
+      {
+        "at": "2026-10-09T13:56:20.570Z",
+        "sendCount": 87,
+        "boardSeq": 3206,
+        "boardPrep": 11,
+        "boardReady": 8,
+        "boardTotal": 19
+      },
+      {
+        "at": "2026-10-09T13:56:24.585Z",
+        "sendCount": 89,
+        "boardSeq": 3208,
+        "boardPrep": 11,
+        "boardReady": 6,
+        "boardTotal": 17
+      },
+      {
+        "at": "2026-10-09T13:56:26.591Z",
+        "sendCount": 90,
+        "boardSeq": 3209,
+        "boardPrep": 11,
+        "boardReady": 6,
+        "boardTotal": 17
+      }
+    ]
+  },
+  "stopChecks": {
+    "normal": {
+      "afterStop": {
+        "sendCount": 21,
+        "tickets": [
+          "0141:ready",
+          "0143:ready",
+          "0146:preparing",
+          "0147:preparing",
+          "0148:preparing"
+        ]
+      },
+      "afterQuiet": {
+        "sendCount": 21,
+        "tickets": [
+          "0141:ready",
+          "0143:ready",
+          "0146:preparing",
+          "0147:preparing",
+          "0148:preparing"
+        ]
+      }
+    },
+    "peak": {
+      "afterStop": {
+        "sendCount": 90,
+        "tickets": [
+          "0165:ready",
+          "0169:ready",
+          "0171:ready",
+          "0179:ready",
+          "0180:ready",
+          "0181:preparing",
+          "0182:ready",
+          "0183:preparing",
+          "0184:preparing",
+          "0185:preparing",
+          "0186:preparing",
+          "0187:preparing",
+          "0189:preparing",
+          "0190:preparing",
+          "0191:preparing",
+          "0192:preparing",
+          "0193:preparing"
+        ]
+      },
+      "afterQuiet": {
+        "sendCount": 90,
+        "tickets": [
+          "0165:ready",
+          "0169:ready",
+          "0171:ready",
+          "0179:ready",
+          "0180:ready",
+          "0181:preparing",
+          "0182:ready",
+          "0183:preparing",
+          "0184:preparing",
+          "0185:preparing",
+          "0186:preparing",
+          "0187:preparing",
+          "0189:preparing",
+          "0190:preparing",
+          "0191:preparing",
+          "0192:preparing",
+          "0193:preparing"
+        ]
+      }
+    }
+  }
+}
