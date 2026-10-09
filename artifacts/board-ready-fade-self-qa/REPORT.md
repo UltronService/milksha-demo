@@ -57,14 +57,16 @@ CSS 格線（`milksha-board.css`）：`column-gap: 8px`、`row-gap: 4px`；請�
 
 新叫進的號只用自己的 `chipSafeMax`，不會被「全場最緊格」拖累。
 
-### c. 對照截圖（滿格 + 新叫 9999，hold 中）
+### c. 對照截圖（整頁 viewport、請取餐滿格 9990–9999、新叫 9999 pulse hold）
 
-| 解析度 | 安全上限（預設） | 強制 1.3（`animScaleUnsafe=1&animScale=1.3`） |
-|--------|------------------|-----------------------------------------------|
-| 1080 | `screenshots/1920x1080-fullgrid-safe-scale.png` | `screenshots/1920x1080-fullgrid-unsafe-1.3.png` |
-| 4K | `screenshots/3840x2160-fullgrid-safe-scale.png` | `screenshots/3840x2160-fullgrid-unsafe-1.3.png` |
+拍攝條件：先 silent 9 筆再第 10 筆觸發 pulse；`transform` scale 進 hold 後量測（見 `compare-shots-manifest.json`）。
 
-預設行為仍是安全上限；unsafe 僅供視覺對照蓋鄰格。
+| 解析度 | 安全（實測 scale） | 強制 1.3（`animScaleUnsafe=1`） | 2× 鄰格裁切 |
+|--------|-------------------|----------------------------------|-------------|
+| 1080 | `1920x1080-fullboard-safe-scale-1_075.png`（**1.075×**，鄰距 26.4px） | `1920x1080-fullboard-unsafe-scale-1_3.png`（**1.3×**，鄰距 17.3px） | `*-zoom2x.png` |
+| 4K | `3840x2160-fullboard-safe-scale-1_075.png`（**1.075×**） | `3840x2160-fullboard-unsafe-scale-1_3.png`（**1.3×**） | `*-zoom2x.png` |
+
+安全／unsafe 全頁 PNG **md5 不同**（`board-ready-scale-compare-shots.spec.mjs` 斷言）。預設仍走安全上限；unsafe 僅 QA 對照。
 
 ## 自動化
 
