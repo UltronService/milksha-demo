@@ -1,6 +1,6 @@
 # 看板叫號動態自測報告（QA 交付）
 
-- **HEAD**: `e5483f1605739a400ce3e163140688cd19dceebd`
+- **HEAD**: `576994331587ac746dce4dbf385d0265f31cc131`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
 - **CI（此 HEAD）**: （push 後填入此 HEAD 的 Actions run）
 - **指標檔**: `artifacts/board-animation-self-qa/metrics.json`
