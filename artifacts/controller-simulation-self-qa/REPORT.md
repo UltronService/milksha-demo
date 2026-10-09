@@ -1,7 +1,7 @@
 # 控制端「持續模擬門市」自測報告
 
 > **PR**：[#37](https://github.com/UltronService/milksha-demo/pull/37)（`cursor/controller-store-simulation-578c` → `main`）  
-> **HEAD**：`8e8d222`（分支 `cursor/controller-store-simulation-578c`）
+> **HEAD**：`e8e21e9`（分支 `cursor/controller-store-simulation-578c`）
 
 ### 開 PR 紀錄（Cursor ManagePullRequest）
 
