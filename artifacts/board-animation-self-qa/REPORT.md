@@ -1,6 +1,6 @@
 # 看板叫號動態自測報告
 
-- **HEAD**: `e58b40a`（請以 push 後最新 SHA 為準）
+- **HEAD**: `2a67201`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/35
 - **CI**: https://github.com/UltronService/milksha-demo/actions/workflows（PR #35 checks）
 
