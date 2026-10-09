@@ -1,10 +1,10 @@
 # 請取餐淡入（移除 3 秒綠底）自測報告
 
-- **HEAD**: `233b16236c34d17e9749920d9723200ceb1ca5a3`
+- **HEAD**: `485165ae4ab65e5222670dc201011e0eb17b4747`
 - **Base**: `c601df6`（main，#35 合併後）
 - **分支**: `cursor/board-ready-fade-4ad1`
-- **開 PR**: https://github.com/UltronService/milksha-demo/compare/main...cursor/board-ready-fade-4ad1?expand=1
-- **CI**: 此 repo CI 僅在 `pull_request` 或 `main` push 觸發；需 collaborator 開 PR 後 Actions 才會跑。開 PR 後請將此段改為該 HEAD 的 run URL 與 conclusion（本 agent 無權建立 PR）。
+- **PR**: https://github.com/UltronService/milksha-demo/pull/36
+- **CI（485165a）**: https://github.com/UltronService/milksha-demo/actions/runs/37934663359 — **success**
 
 ## 規格變更摘要
 
