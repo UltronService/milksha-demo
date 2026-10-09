@@ -3,15 +3,15 @@
   "samples": [
     {
       "index": 1,
-      "clickToReadyNumberVisibleMs": 22
+      "clickToReadyNumberVisibleMs": 25
     },
     {
       "index": 2,
-      "clickToReadyNumberVisibleMs": 841
+      "clickToReadyNumberVisibleMs": 932
     },
     {
       "index": 3,
-      "clickToReadyNumberVisibleMs": 840
+      "clickToReadyNumberVisibleMs": 833
     }
   ]
 }

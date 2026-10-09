@@ -62,6 +62,21 @@
   }
 
   /**
+   * @param {string | null} raw
+   * @param {number} fallbackMs
+   */
+  function parseUrlDurationMs(raw, fallbackMs) {
+    const n = parseUrlNumber(raw, fallbackMs);
+    if (!Number.isFinite(n)) {
+      return fallbackMs;
+    }
+    if (n > 0 && n < 60) {
+      return n * 1000;
+    }
+    return n;
+  }
+
+  /**
    * @returns {typeof DEFAULTS}
    */
   function getConfig() {
@@ -78,7 +93,14 @@
       if (raw === null) {
         return;
       }
-      const parsed = parseUrlNumber(raw, DEFAULTS[key]);
+      let parsed;
+      if (key === 'readyScale') {
+        parsed = parseUrlNumber(raw, DEFAULTS[key]);
+      } else if (key.indexOf('Ms') >= 0) {
+        parsed = parseUrlDurationMs(raw, DEFAULTS[key]);
+      } else {
+        parsed = parseUrlNumber(raw, DEFAULTS[key]);
+      }
       out[key] = clampNum(parsed, bounds.min, bounds.max, DEFAULTS[key]);
     });
     return out;

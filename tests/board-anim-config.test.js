@@ -26,7 +26,7 @@ test('anim config URL overrides clamp to bounds', function () {
   const c = cfg.getConfig();
   assert.equal(c.readyScale, 1.3);
   assert.equal(c.readyScaleHoldMs, 2000);
-  assert.equal(c.readyScaleInMs, 300);
+  assert.equal(c.readyScaleInMs, 250);
 });
 
 test('anim config accepts valid URL overrides', function () {

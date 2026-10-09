@@ -60,7 +60,7 @@ async function captureReadyFade(page, burstDir) {
       { source_type: 'From_Store_OK', number: '9101' },
     ]);
   });
-  const end = Date.now() + 900;
+  const end = Date.now() + 4200;
   while (Date.now() < end) {
     await page.waitForTimeout(40);
     await shot();

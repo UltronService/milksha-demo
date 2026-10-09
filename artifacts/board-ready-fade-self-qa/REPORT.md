@@ -1,74 +1,56 @@
-# 請取餐淡入（移除 3 秒綠底）自測報告
+# 請取餐放大淡入（scale pulse）自測報告
 
-- **HEAD**: `485165ae4ab65e5222670dc201011e0eb17b4747`
-- **Base**: `c601df6`（main，#35 合併後）
-- **分支**: `cursor/board-ready-fade-4ad1`
+- **HEAD**: （見本分支最新 commit `git rev-parse HEAD`）
 - **PR**: https://github.com/UltronService/milksha-demo/pull/36
-- **CI（485165a）**: https://github.com/UltronService/milksha-demo/actions/runs/37934663359 — **success**
+- **CI**: （見 PR #36 最新 Actions run，需 success）
+- **Base**: `c601df6`
 
-## 規格變更摘要
+## 規格（迷客夏 21:51）
 
-| 項目 | 變更 |
-|------|------|
-| 請取餐新號 | 僅 chip **opacity 0→1**（300ms），與準備中新號相同 |
-| 已移除 | `::before` 綠底、`--milksha-ready-highlight`、`milksha-board-chip--highlight` / `--unhighlighting`、`scheduleReadyHighlight`、timer、`highlightReadyIds` |
-| 不變 | 準備中淡入／FLIP、離開淡出、取餐淡出補位、換頁 0.5s、清空、skip（first / silent / force） |
+1. 新號進請取餐：**opacity 淡入 + `transform: scale` 至約 1.3×**（~0.3s ease-out），**停留 3s**，再 ~0.3s 縮回 1×。無亮色、僅 opacity + scale。
+2. 多張同時叫號一起 pulse；**first / silent / force / reduced-motion / 無 WAAPI** 不放大。換頁、清空、取餐、連續更新會 `cancelAll` 中斷；背景分頁回前景重置 transform（既有 `visibilitychange`）。
+3. 放大不超出請取餐區、不蓋鄰格：`milksha-board-anim-config.js` 依格線與 chip 量測 **safeMax**，實際 `effective = min(readyScale, safeMax)`。滿格 4 位數時 **1.3 會重疊**，本機量測（10 格 `999x`）約 **1080 safeMax≈1.05、4K safeMax≈1.05**（見 `metrics.json`），故實際 pulse 約 **1.05×** 而非 1.3。e2e：`board-ready-scale-bounds.spec.mjs`。
+4. 設定集中於 `js/board/milksha-board-anim-config.js`，URL 覆蓋見下表。
+5. **動態預覽頁**：未實作（估計獨立 preview 頁 + 假資料驅動 + 表單約 **3–4h**；本輪優先動畫與 QA）。
+
+## URL / 設定參數
+
+| 參數 | 對應欄位 | 預設 | 合法範圍 | 說明 |
+|------|-----------|------|----------|------|
+| `animOpacityIn` | opacityInMs | 300 | 50–2000 ms | 準備中／一般淡入 |
+| `animPage` | pageDurationMs | 500 | 100–3000 ms | 換頁 cross-fade |
+| `animScale` | readyScale | 1.3 | 1–1.5 | 請取餐 pulse 峰值倍率 |
+| `animIn` | readyScaleInMs | 300 | 50–2000 | 進入放大＋淡入；**&lt;60 視為秒**（如 0.3→300ms） |
+| `animHold` | readyScaleHoldMs | 3000 | 0–10000 | 停留；**&lt;60 視為秒**（如 2→2000ms） |
+| `animOut` | readyScaleOutMs | 300 | 50–2000 | 縮回；**&lt;60 視為秒** |
 
 ## 自動化
 
 | 項目 | 結果 |
 |------|------|
-| `npm test` | **167 passed** |
-| `npx playwright test board-animation` | **13 passed** |
-| `npm run test:e2e`（本機） | **154 passed**, **2 failed**, 4 skipped（28.2m） |
+| `npm test` | 169 passed |
+| `npx playwright test board-animation board-ready-scale` | 15 passed |
+| `npm run test:e2e` 全量 | 見 `e2e-full.log`（執行中或本機摘要） |
 
-本機失敗（與 #35 相同，非本次 CSS 變更）：
+## 真雲端 zz-qa-store-a（3 次 ms）
 
-1. `guest-clock.spec.mjs` — `Expected /^Roboto/i`, `Received "DejaVu Sans"`（本機未裝 CI Roboto 字型步驟）
-2. `home-board-first-number-after-open.spec.mjs` — 首送 >3s flake（單獨重跑常過）
+見 `live-cloud-samples.json`（最新一輪）。
 
-## 真雲端 zz-qa-store-a（送號→請取餐可見，3 次）
+## 效能（4× CPU，ready pulse 情境）
 
-見 `live-cloud-samples.json`：
+見 `metrics.json` → `perfReadyPulseCpu4x`（`scripts/board-ready-fade-qa-metrics.mjs`）。
 
-| 次 | ms |
-|----|-----|
-| 1 | 22 |
-| 2 | 841 |
-| 3 | 840 |
+## Contact sheet
 
-## 假雲端首送 timeline（#35 項 b）
+- `contact-sheets/1920x1080-ready-fade-in.jpg`
+- `contact-sheets/3840x2160-ready-fade-in.jpg`  
+  prep→ready pulse 連續幀（`scripts/board-ready-fade-contact-sheet.mjs`）。
 
-腳本：`scripts/board-ready-fade-fake-cloud-timeline.mjs` → `fake-cloud-first-send-timeline.json`
+## 變更檔案（看板）
 
-**首送 click→`.milksha-ready .milksha-num` 可見（ms），各 5 次：**
-
-| 版本 | run1–5 |
-|------|--------|
-| **分支**（本 PR） | 367, 387, 401, 385, 400 |
-| **main**（`git archive main` 同腳本） | 394, 407, 379, 404, 395 |
-
-**run1 時間軸（分支，自 t0=啟動 fake-cloud 前）：**
-
-| 階段 | ms |
-|------|-----|
-| fake-cloud listen + 800ms 暖機 | 801 |
-| resetCloudState 完成 | 950 |
-| board goto 送出 | 1046 |
-| `receiverCloud` true（含 devLogin／連線） | 1094 |
-| 控制端 online + 首次送號 click | 1245 |
-| 請取餐號可見 | 1612（**click→visible 367ms**） |
-
-**結論**：#35 自測單次 **4929ms** 為長時間 qa-pack 冷啟動＋輪詢相位 outlier；本次與 main 同條件首送皆 **&lt;410ms**，**非本分支回歸**。慢段主要在 click 之前的 fake-cloud 啟動與 board／controller 連線，非 opacity 動畫。
-
-## Contact sheet（請取餐淡入）
-
-`contact-sheets/1920x1080-ready-fade-in.jpg`、`3840x2160-ready-fade-in.jpg`（prep→ready 連續幀拼接）。
-
-## 變更檔案（僅看板）
-
-- `css/milksha-board.css`
+- `js/board/milksha-board-anim-config.js`（新）
 - `js/board/milksha-board-anim.js`
 - `js/milksha-board.js`
-- `tests/e2e/board-animation-highlight.spec.mjs`
-- `tests/e2e/board-animation.spec.mjs`
+- `css/milksha-board.css`
+- `index.html`
+- `tests/e2e/board-animation*.spec.mjs`, `board-ready-scale-bounds.spec.mjs`
