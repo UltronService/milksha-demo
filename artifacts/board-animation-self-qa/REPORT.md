@@ -29,7 +29,8 @@
 
 ## 自測狀態
 
-- [x] `npm test`（166 passed，HEAD 待最終 push 後更新 SHA）
+- [x] `npm test`（166 passed，HEAD `395c528`）
+- PR：https://github.com/UltronService/milksha-demo/pull/35
 - [x] e2e：`board-animation-highlight.spec.mjs`（標示中／淡回後截圖）
 - [ ] 完整 e2e 1–7、4K 錄影、效能 trace、真雲端 zz-qa-store-a（待續）
 
