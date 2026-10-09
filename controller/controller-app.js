@@ -1119,10 +1119,21 @@
     });
   }
 
+  function simulationFrozenKeepsLocalTickets() {
+    return storeSimulationHost && storeSimulationHost.isFrozen && storeSimulationHost.isFrozen();
+  }
+
   async function refreshBoardLists() {
     if (!transport) return;
     const doc = await transport.readBoard();
     if (doc && doc.data) {
+      if (simulationFrozenKeepsLocalTickets()) {
+        lastBoardSeq = Number(doc.data.seq) || lastBoardSeq;
+        window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
+        renderTicketLists({ tickets: tickets });
+        tickClock();
+        return;
+      }
       tickets = (doc.data.tickets || []).map(function (t) {
         return {
           no: t.no,

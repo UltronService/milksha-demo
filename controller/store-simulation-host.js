@@ -228,6 +228,9 @@
       getSendCount: function () {
         return state.sendCount;
       },
+      isFrozen: function () {
+        return !state.running && state.frozenAtMs != null;
+      },
     };
   }
 
