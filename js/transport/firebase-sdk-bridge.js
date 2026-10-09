@@ -12,6 +12,22 @@
   let appInited = false;
   let firestoreEmulatorConnected = false;
   let authEmulatorConnected = false;
+  /** @type {string|null} */
+  let lastAuthSyncErrorCode = null;
+  let authSyncWarned = false;
+
+  function authErrorCode(err) {
+    if (!err) {
+      return 'unknown';
+    }
+    if (err.code != null && String(err.code).trim()) {
+      return String(err.code);
+    }
+    if (err.message) {
+      return String(err.message).slice(0, 120);
+    }
+    return 'unknown';
+  }
 
   function firebaseGlobal() {
     return root.firebase;
@@ -105,9 +121,21 @@
     }
     try {
       await auth.signInWithCustomToken(customToken);
+      lastAuthSyncErrorCode = null;
     } catch (e) {
-      /* realtime falls back to REST polling */
+      lastAuthSyncErrorCode = authErrorCode(e);
+      if (!authSyncWarned) {
+        authSyncWarned = true;
+        root.console.warn(
+          '[milksha] Firebase Auth sync failed (realtime may use REST polling):',
+          lastAuthSyncErrorCode,
+        );
+      }
     }
+  }
+
+  function getLastAuthSyncError() {
+    return lastAuthSyncErrorCode;
   }
 
   function firestoreDb() {
@@ -123,6 +151,7 @@
     initApp: initApp,
     ensureFirebaseSignedIn: ensureFirebaseSignedIn,
     syncCustomToken: syncCustomToken,
+    getLastAuthSyncError: getLastAuthSyncError,
     firestoreDb: firestoreDb,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

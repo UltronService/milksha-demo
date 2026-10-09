@@ -194,7 +194,12 @@
     }
     el.textContent = '路由：' + route + ' · ' + boardState;
     el.setAttribute('data-route', mode === 'cloud' ? 'cloud' : mode === 'firestore' ? 'firestore' : 'local');
-    el.setAttribute('data-board-online', connected && deviceOnline && !boardLinkHint ? '1' : '0');
+    const boardOnlineAttr = connected && deviceOnline && !boardLinkHint ? '1' : '0';
+    el.setAttribute('data-board-online', boardOnlineAttr);
+    const onlineState = document.getElementById('online-state');
+    if (onlineState) {
+      onlineState.setAttribute('data-board-online', boardOnlineAttr);
+    }
   }
 
   function syncCloudUi() {

@@ -67,6 +67,26 @@
    * @param {object|null} next
    * @returns {boolean}
    */
+  /**
+   * control/pending omits params; full payload lives on devices/{id}.pendingCommand.
+   * @param {object|null} cmd
+   * @returns {boolean}
+   */
+  function realtimeCommandNeedsDevicePoll(cmd) {
+    if (!cmd || !cmd.type) {
+      return false;
+    }
+    const type = String(cmd.type);
+    if (type !== 'slow') {
+      return false;
+    }
+    const params = cmd.params;
+    if (!params || typeof params !== 'object') {
+      return true;
+    }
+    return !Object.prototype.hasOwnProperty.call(params, 'delayMs');
+  }
+
   function pendingCommandChanged(prev, next) {
     const prevId = prev && prev.id ? String(prev.id) : '';
     const nextId = next && next.id ? String(next.id) : '';
@@ -95,6 +115,8 @@
     const onBoardFallback = options.onBoardFallback || function () {};
     const onCommandPollFallback = options.onCommandPollFallback || function () {};
     const onListenerError = options.onListenerError || function () {};
+    const onBoardListenAttached = options.onBoardListenAttached || function () {};
+    const onCommandListenAttached = options.onCommandListenAttached || function () {};
 
     let boardUnsub = null;
     let commandUnsub = null;
@@ -198,6 +220,8 @@
             if (!settled) {
               settled = true;
               boardListenActive = true;
+              pushMatrixTimeline({ kind: 'board_listen_attached' });
+              onBoardListenAttached();
               resolve(true);
             }
           },
@@ -221,6 +245,8 @@
             if (!settled) {
               settled = true;
               commandMode = 'control';
+              pushMatrixTimeline({ kind: 'control_listen_attached' });
+              onCommandListenAttached(commandMode);
               resolve('control');
             }
             if (!snap.exists) {
@@ -259,23 +285,35 @@
         return { boardListen: false, commandMode: 'poll' };
       }
 
+      const boardAttach = withTimeout(attachBoardListener(db), 'board_listen_timeout');
+      const controlAttach = withTimeout(attachControlPendingListener(db), 'control_listen_timeout');
+      let boardErr = null;
+      let controlErr = null;
       try {
-        await withTimeout(attachBoardListener(db), 'board_listen_timeout');
+        await boardAttach;
       } catch (e) {
+        boardErr = e;
+      }
+      try {
+        await controlAttach;
+      } catch (e) {
+        controlErr = e;
+      }
+
+      if (boardErr) {
         stop();
         onBoardFallback('board_listen_failed');
         onCommandPollFallback('board_listen_failed');
         return { boardListen: false, commandMode: 'poll' };
       }
 
-      try {
-        await withTimeout(attachControlPendingListener(db), 'control_listen_timeout');
-        return { boardListen: boardListenActive, commandMode: commandMode };
-      } catch (e) {
+      if (controlErr) {
         stopCommandListener();
         onCommandPollFallback('command_listen_failed');
         return { boardListen: boardListenActive, commandMode: 'poll' };
       }
+
+      return { boardListen: boardListenActive, commandMode: commandMode };
     }
 
     async function forceRefetch() {
@@ -326,6 +364,7 @@
   QMS.Transport.FirestoreRealtime = {
     normalizePendingCommand: normalizePendingCommand,
     pendingCommandChanged: pendingCommandChanged,
+    realtimeCommandNeedsDevicePoll: realtimeCommandNeedsDevicePoll,
     createFirestoreRealtimeListener: createFirestoreRealtimeListener,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

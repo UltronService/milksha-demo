@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { freshContext, urlsLocalHomePoc } from './harness.mjs';
 import { REF_BOARD_NUMBERS, buildRefBoardPayload } from './board-ref-fixtures.mjs';
 
+/** Same-batch tie-break uses payloadIndex DESC → newest array tail is top-left. */
+const REF_BOARD_NUMBERS_DISPLAY = [...REF_BOARD_NUMBERS].reverse();
+
 const CENTER_TOL_PX = 12;
 
 async function readCanvasScale(page) {
@@ -171,8 +174,8 @@ for (const viewport of [
     await applyRefPayload(board);
     const result = await measureBoard(board, viewport);
     expect(result.ok, JSON.stringify(result)).toBe(true);
-    expect(result.prepNums).toEqual(REF_BOARD_NUMBERS);
-    expect(result.readyNums).toEqual(REF_BOARD_NUMBERS);
+    expect(result.prepNums).toEqual(REF_BOARD_NUMBERS_DISPLAY);
+    expect(result.readyNums).toEqual(REF_BOARD_NUMBERS_DISPLAY);
     await ctx.close();
   });
 }

@@ -1,0 +1,2236 @@
+{
+  "at": "2026-10-09T00:28:36.539Z",
+  "headSha": "370d1f19c501f5239b961942b0621c99d4e7abc8",
+  "rounds": 5,
+  "writeStore": "zz-qa-store-a",
+  "versions": {
+    "branch": {
+      "label": "branch",
+      "sha": "370d1f19c501f5239b961942b0621c99d4e7abc8",
+      "chromium": [
+        {
+          "label": "branch-chromium-1",
+          "versionKey": "branch",
+          "browserName": "chromium",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 3880,
+          "realtimeAttachedMs": 4863,
+          "controllerConnectedMs": 4884,
+          "controllerBoardOnlineMs": 4890,
+          "sendToDisplayMs": 73,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 157,
+            "boardGotoToDevLoginComplete": 2476,
+            "boardGotoToFirstHeartbeatSend": 154,
+            "boardGotoToFirstHeartbeatOk": 2745,
+            "boardGotoToControllerConnected": 4884,
+            "boardGotoToControllerBoardOnline": 4890,
+            "heartbeatOkToControllerBoardOnline": 2145
+          },
+          "boardListenAttachedMs": 4856,
+          "controlListenAttachedMs": 4856,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505721703,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1276,
+              "updatedAt": "Timestamp(seconds=1791505660, nanoseconds=523000000)"
+            },
+            "realtimeAttachedMs": 4863,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-chromium-2",
+          "versionKey": "branch",
+          "browserName": "chromium",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 3619,
+          "realtimeAttachedMs": 5186,
+          "controllerConnectedMs": 5205,
+          "controllerBoardOnlineMs": 5212,
+          "sendToDisplayMs": 57,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 120,
+            "boardGotoToDevLoginComplete": 2793,
+            "boardGotoToFirstHeartbeatSend": 114,
+            "boardGotoToFirstHeartbeatOk": 3053,
+            "boardGotoToControllerConnected": 5205,
+            "boardGotoToControllerBoardOnline": 5212,
+            "heartbeatOkToControllerBoardOnline": 2159
+          },
+          "boardListenAttachedMs": 5175,
+          "controlListenAttachedMs": 5175,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505727032,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1277,
+              "updatedAt": "Timestamp(seconds=1791505722, nanoseconds=3000000)"
+            },
+            "realtimeAttachedMs": 5186,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-chromium-3",
+          "versionKey": "branch",
+          "browserName": "chromium",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 3609,
+          "realtimeAttachedMs": 4859,
+          "controllerConnectedMs": 4879,
+          "controllerBoardOnlineMs": 4886,
+          "sendToDisplayMs": 55,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 119,
+            "boardGotoToDevLoginComplete": 2422,
+            "boardGotoToFirstHeartbeatSend": 117,
+            "boardGotoToFirstHeartbeatOk": 2670,
+            "boardGotoToControllerConnected": 4879,
+            "boardGotoToControllerBoardOnline": 4886,
+            "heartbeatOkToControllerBoardOnline": 2216
+          },
+          "boardListenAttachedMs": 4851,
+          "controlListenAttachedMs": 4851,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505732018,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1278,
+              "updatedAt": "Timestamp(seconds=1791505727, nanoseconds=305000000)"
+            },
+            "realtimeAttachedMs": 4859,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-chromium-4",
+          "versionKey": "branch",
+          "browserName": "chromium",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 3024,
+          "realtimeAttachedMs": 4842,
+          "controllerConnectedMs": 4860,
+          "controllerBoardOnlineMs": 4865,
+          "sendToDisplayMs": 59,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 116,
+            "boardGotoToDevLoginComplete": 2443,
+            "boardGotoToFirstHeartbeatSend": 113,
+            "boardGotoToFirstHeartbeatOk": 2696,
+            "boardGotoToControllerConnected": 4860,
+            "boardGotoToControllerBoardOnline": 4865,
+            "heartbeatOkToControllerBoardOnline": 2169
+          },
+          "boardListenAttachedMs": 4831,
+          "controlListenAttachedMs": 4831,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505736981,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1279,
+              "updatedAt": "Timestamp(seconds=1791505732, nanoseconds=275000000)"
+            },
+            "realtimeAttachedMs": 4842,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-chromium-5",
+          "versionKey": "branch",
+          "browserName": "chromium",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 3830,
+          "realtimeAttachedMs": 4864,
+          "controllerConnectedMs": 4881,
+          "controllerBoardOnlineMs": 4888,
+          "sendToDisplayMs": 59,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 114,
+            "boardGotoToDevLoginComplete": 2492,
+            "boardGotoToFirstHeartbeatSend": 112,
+            "boardGotoToFirstHeartbeatOk": 2744,
+            "boardGotoToControllerConnected": 4881,
+            "boardGotoToControllerBoardOnline": 4888,
+            "heartbeatOkToControllerBoardOnline": 2144
+          },
+          "boardListenAttachedMs": 4864,
+          "controlListenAttachedMs": 4864,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505741976,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1280,
+              "updatedAt": "Timestamp(seconds=1791505737, nanoseconds=252000000)"
+            },
+            "realtimeAttachedMs": 4864,
+            "commandModeAtSend": "control"
+          }
+        }
+      ],
+      "firefox": [
+        {
+          "label": "branch-firefox-1",
+          "versionKey": "branch",
+          "browserName": "firefox",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 4184,
+          "realtimeAttachedMs": 5571,
+          "controllerConnectedMs": 5595,
+          "controllerBoardOnlineMs": 5610,
+          "sendToDisplayMs": 99,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 260,
+            "boardGotoToDevLoginComplete": 3113,
+            "boardGotoToFirstHeartbeatSend": 242,
+            "boardGotoToFirstHeartbeatOk": 3600,
+            "boardGotoToControllerConnected": 5595,
+            "boardGotoToControllerBoardOnline": 5610,
+            "heartbeatOkToControllerBoardOnline": 2010
+          },
+          "boardListenAttachedMs": 5564,
+          "controlListenAttachedMs": 5564,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506377268,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5571,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-firefox-2",
+          "versionKey": "branch",
+          "browserName": "firefox",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 4116,
+          "realtimeAttachedMs": 5197,
+          "controllerConnectedMs": 5223,
+          "controllerBoardOnlineMs": 5238,
+          "sendToDisplayMs": 83,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 183,
+            "boardGotoToDevLoginComplete": 2785,
+            "boardGotoToFirstHeartbeatSend": 175,
+            "boardGotoToFirstHeartbeatOk": 3248,
+            "boardGotoToControllerConnected": 5223,
+            "boardGotoToControllerBoardOnline": 5238,
+            "heartbeatOkToControllerBoardOnline": 1990
+          },
+          "boardListenAttachedMs": 5195,
+          "controlListenAttachedMs": 5195,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506382856,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5197,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-firefox-3",
+          "versionKey": "branch",
+          "browserName": "firefox",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 5125,
+          "realtimeAttachedMs": 6129,
+          "controllerConnectedMs": 6156,
+          "controllerBoardOnlineMs": 6171,
+          "sendToDisplayMs": 84,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 196,
+            "boardGotoToDevLoginComplete": 3720,
+            "boardGotoToFirstHeartbeatSend": 189,
+            "boardGotoToFirstHeartbeatOk": 4187,
+            "boardGotoToControllerConnected": 6156,
+            "boardGotoToControllerBoardOnline": 6171,
+            "heartbeatOkToControllerBoardOnline": 1984
+          },
+          "boardListenAttachedMs": 6121,
+          "controlListenAttachedMs": 6121,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506389349,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 6129,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-firefox-4",
+          "versionKey": "branch",
+          "browserName": "firefox",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 4128,
+          "realtimeAttachedMs": 5402,
+          "controllerConnectedMs": 5448,
+          "controllerBoardOnlineMs": 5464,
+          "sendToDisplayMs": 98,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 201,
+            "boardGotoToDevLoginComplete": 3037,
+            "boardGotoToFirstHeartbeatSend": 193,
+            "boardGotoToFirstHeartbeatOk": 3507,
+            "boardGotoToControllerConnected": 5448,
+            "boardGotoToControllerBoardOnline": 5464,
+            "heartbeatOkToControllerBoardOnline": 1957
+          },
+          "boardListenAttachedMs": 5401,
+          "controlListenAttachedMs": 5401,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506395156,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5402,
+            "commandModeAtSend": "control"
+          }
+        },
+        {
+          "label": "branch-firefox-5",
+          "versionKey": "branch",
+          "browserName": "firefox",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 4129,
+          "realtimeAttachedMs": 5354,
+          "controllerConnectedMs": 5379,
+          "controllerBoardOnlineMs": 5394,
+          "sendToDisplayMs": 100,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 179,
+            "boardGotoToDevLoginComplete": 2958,
+            "boardGotoToFirstHeartbeatSend": 178,
+            "boardGotoToFirstHeartbeatOk": 3420,
+            "boardGotoToControllerConnected": 5379,
+            "boardGotoToControllerBoardOnline": 5394,
+            "heartbeatOkToControllerBoardOnline": 1974
+          },
+          "boardListenAttachedMs": 5343,
+          "controlListenAttachedMs": 5343,
+          "controlAfterBoardMs": 0,
+          "boardListen": true,
+          "commandMode": "control",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506400929,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5354,
+            "commandModeAtSend": "control"
+          }
+        }
+      ]
+    },
+    "v5765abf": {
+      "label": "5765abf",
+      "sha": "5765abf",
+      "chromium": [
+        {
+          "label": "v5765abf-chromium-1",
+          "versionKey": "v5765abf",
+          "browserName": "chromium",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 2526,
+          "realtimeAttachedMs": 4442,
+          "controllerConnectedMs": 4461,
+          "controllerBoardOnlineMs": 4468,
+          "sendToDisplayMs": 58,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 115,
+            "boardGotoToDevLoginComplete": 1793,
+            "boardGotoToFirstHeartbeatSend": 2368,
+            "boardGotoToFirstHeartbeatOk": 2368,
+            "boardGotoToControllerConnected": 4461,
+            "boardGotoToControllerBoardOnline": 4468,
+            "heartbeatOkToControllerBoardOnline": 2100
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505746535,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1281,
+              "updatedAt": "Timestamp(seconds=1791505742, nanoseconds=227000000)"
+            },
+            "realtimeAttachedMs": 4442,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-chromium-2",
+          "versionKey": "v5765abf",
+          "browserName": "chromium",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 3093,
+          "realtimeAttachedMs": 4709,
+          "controllerConnectedMs": 4728,
+          "controllerBoardOnlineMs": 4734,
+          "sendToDisplayMs": 59,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 126,
+            "boardGotoToDevLoginComplete": 2004,
+            "boardGotoToFirstHeartbeatSend": 2587,
+            "boardGotoToFirstHeartbeatOk": 2587,
+            "boardGotoToControllerConnected": 4728,
+            "boardGotoToControllerBoardOnline": 4734,
+            "heartbeatOkToControllerBoardOnline": 2147
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505751365,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1282,
+              "updatedAt": "Timestamp(seconds=1791505746, nanoseconds=799000000)"
+            },
+            "realtimeAttachedMs": 4709,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-chromium-3",
+          "versionKey": "v5765abf",
+          "browserName": "chromium",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 3842,
+          "realtimeAttachedMs": 5741,
+          "controllerConnectedMs": 5759,
+          "controllerBoardOnlineMs": 5764,
+          "sendToDisplayMs": 61,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 113,
+            "boardGotoToDevLoginComplete": 3102,
+            "boardGotoToFirstHeartbeatSend": 3681,
+            "boardGotoToFirstHeartbeatOk": 3681,
+            "boardGotoToControllerConnected": 5759,
+            "boardGotoToControllerBoardOnline": 5764,
+            "heartbeatOkToControllerBoardOnline": 2083
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505757235,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1283,
+              "updatedAt": "Timestamp(seconds=1791505751, nanoseconds=631000000)"
+            },
+            "realtimeAttachedMs": 5741,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-chromium-4",
+          "versionKey": "v5765abf",
+          "browserName": "chromium",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 2624,
+          "realtimeAttachedMs": 4571,
+          "controllerConnectedMs": 4587,
+          "controllerBoardOnlineMs": 4595,
+          "sendToDisplayMs": 59,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 129,
+            "boardGotoToDevLoginComplete": 1895,
+            "boardGotoToFirstHeartbeatSend": 2459,
+            "boardGotoToFirstHeartbeatOk": 2459,
+            "boardGotoToControllerConnected": 4587,
+            "boardGotoToControllerBoardOnline": 4595,
+            "heartbeatOkToControllerBoardOnline": 2136
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505761931,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1284,
+              "updatedAt": "Timestamp(seconds=1791505757, nanoseconds=500000000)"
+            },
+            "realtimeAttachedMs": 4571,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-chromium-5",
+          "versionKey": "v5765abf",
+          "browserName": "chromium",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 5545,
+          "realtimeAttachedMs": 7378,
+          "controllerConnectedMs": 7395,
+          "controllerBoardOnlineMs": 7400,
+          "sendToDisplayMs": 59,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 136,
+            "boardGotoToDevLoginComplete": 4790,
+            "boardGotoToFirstHeartbeatSend": 5337,
+            "boardGotoToFirstHeartbeatOk": 5337,
+            "boardGotoToControllerConnected": 7395,
+            "boardGotoToControllerBoardOnline": 7400,
+            "heartbeatOkToControllerBoardOnline": 2063
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791505769439,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1285,
+              "updatedAt": "Timestamp(seconds=1791505762, nanoseconds=198000000)"
+            },
+            "realtimeAttachedMs": 7378,
+            "commandModeAtSend": "poll"
+          }
+        }
+      ],
+      "firefox": [
+        {
+          "label": "v5765abf-firefox-1",
+          "versionKey": "v5765abf",
+          "browserName": "firefox",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 4146,
+          "realtimeAttachedMs": 4370,
+          "controllerConnectedMs": 4394,
+          "controllerBoardOnlineMs": 4409,
+          "sendToDisplayMs": 84,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 205,
+            "boardGotoToDevLoginComplete": 2473,
+            "boardGotoToFirstHeartbeatSend": 3510,
+            "boardGotoToFirstHeartbeatOk": 3510,
+            "boardGotoToControllerConnected": 4394,
+            "boardGotoToControllerBoardOnline": 4409,
+            "heartbeatOkToControllerBoardOnline": 899
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506405715,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 4370,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-firefox-2",
+          "versionKey": "v5765abf",
+          "browserName": "firefox",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 4122,
+          "realtimeAttachedMs": 5432,
+          "controllerConnectedMs": 5455,
+          "controllerBoardOnlineMs": 5469,
+          "sendToDisplayMs": 86,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 185,
+            "boardGotoToDevLoginComplete": 2538,
+            "boardGotoToFirstHeartbeatSend": 3623,
+            "boardGotoToFirstHeartbeatOk": 3623,
+            "boardGotoToControllerConnected": 5455,
+            "boardGotoToControllerBoardOnline": 5469,
+            "heartbeatOkToControllerBoardOnline": 1846
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506411541,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5432,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-firefox-3",
+          "versionKey": "v5765abf",
+          "browserName": "firefox",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 4198,
+          "realtimeAttachedMs": 5707,
+          "controllerConnectedMs": 5730,
+          "controllerBoardOnlineMs": 5745,
+          "sendToDisplayMs": 88,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 184,
+            "boardGotoToDevLoginComplete": 2898,
+            "boardGotoToFirstHeartbeatSend": 3983,
+            "boardGotoToFirstHeartbeatOk": 3983,
+            "boardGotoToControllerConnected": 5730,
+            "boardGotoToControllerBoardOnline": 5745,
+            "heartbeatOkToControllerBoardOnline": 1762
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506417633,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5707,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-firefox-4",
+          "versionKey": "v5765abf",
+          "browserName": "firefox",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 4659,
+          "realtimeAttachedMs": 5328,
+          "controllerConnectedMs": 5352,
+          "controllerBoardOnlineMs": 5367,
+          "sendToDisplayMs": 84,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 717,
+            "boardGotoToDevLoginComplete": 2549,
+            "boardGotoToFirstHeartbeatSend": 4427,
+            "boardGotoToFirstHeartbeatOk": 4427,
+            "boardGotoToControllerConnected": 5352,
+            "boardGotoToControllerBoardOnline": 5367,
+            "heartbeatOkToControllerBoardOnline": 940
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506423343,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5328,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v5765abf-firefox-5",
+          "versionKey": "v5765abf",
+          "browserName": "firefox",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 4137,
+          "realtimeAttachedMs": 5401,
+          "controllerConnectedMs": 5427,
+          "controllerBoardOnlineMs": 5441,
+          "sendToDisplayMs": 101,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 203,
+            "boardGotoToDevLoginComplete": 2474,
+            "boardGotoToFirstHeartbeatSend": 3513,
+            "boardGotoToFirstHeartbeatOk": 3513,
+            "boardGotoToControllerConnected": 5427,
+            "boardGotoToControllerBoardOnline": 5441,
+            "heartbeatOkToControllerBoardOnline": 1928
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": true,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": {
+              "ts": 1791506429150,
+              "kind": "board_snapshot",
+              "fromCache": false,
+              "hasPendingWrites": false,
+              "seq": 1291,
+              "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+            },
+            "realtimeAttachedMs": 5401,
+            "commandModeAtSend": "poll"
+          }
+        }
+      ]
+    },
+    "v7fb4f9c": {
+      "label": "7fb4f9c",
+      "sha": "7fb4f9c",
+      "chromium": [
+        {
+          "label": "v7fb4f9c-chromium-1",
+          "versionKey": "v7fb4f9c",
+          "browserName": "chromium",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 2529,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120133,
+          "controllerBoardOnlineMs": 120140,
+          "sendToDisplayMs": 53,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 114,
+            "boardGotoToDevLoginComplete": 1972,
+            "boardGotoToFirstHeartbeatSend": 2318,
+            "boardGotoToFirstHeartbeatOk": 2492,
+            "boardGotoToControllerConnected": 120133,
+            "boardGotoToControllerBoardOnline": 120140,
+            "heartbeatOkToControllerBoardOnline": 117648
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-chromium-2",
+          "versionKey": "v7fb4f9c",
+          "browserName": "chromium",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 3571,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120140,
+          "controllerBoardOnlineMs": 120146,
+          "sendToDisplayMs": 52,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 122,
+            "boardGotoToDevLoginComplete": 2294,
+            "boardGotoToFirstHeartbeatSend": 2648,
+            "boardGotoToFirstHeartbeatOk": 2817,
+            "boardGotoToControllerConnected": 120140,
+            "boardGotoToControllerBoardOnline": 120146,
+            "heartbeatOkToControllerBoardOnline": 117329
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-chromium-3",
+          "versionKey": "v7fb4f9c",
+          "browserName": "chromium",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 2429,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120134,
+          "controllerBoardOnlineMs": 120139,
+          "sendToDisplayMs": 52,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 114,
+            "boardGotoToDevLoginComplete": 1169,
+            "boardGotoToFirstHeartbeatSend": 1509,
+            "boardGotoToFirstHeartbeatOk": 1728,
+            "boardGotoToControllerConnected": 120134,
+            "boardGotoToControllerBoardOnline": 120139,
+            "heartbeatOkToControllerBoardOnline": 118411
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-chromium-4",
+          "versionKey": "v7fb4f9c",
+          "browserName": "chromium",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 3440,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120133,
+          "controllerBoardOnlineMs": 120141,
+          "sendToDisplayMs": 57,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 114,
+            "boardGotoToDevLoginComplete": 2142,
+            "boardGotoToFirstHeartbeatSend": 2484,
+            "boardGotoToFirstHeartbeatOk": 2668,
+            "boardGotoToControllerConnected": 120133,
+            "boardGotoToControllerBoardOnline": 120141,
+            "heartbeatOkToControllerBoardOnline": 117473
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-chromium-5",
+          "versionKey": "v7fb4f9c",
+          "browserName": "chromium",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 3344,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120131,
+          "controllerBoardOnlineMs": 120137,
+          "sendToDisplayMs": 49,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 111,
+            "boardGotoToDevLoginComplete": 1923,
+            "boardGotoToFirstHeartbeatSend": 2273,
+            "boardGotoToFirstHeartbeatOk": 2455,
+            "boardGotoToControllerConnected": 120131,
+            "boardGotoToControllerBoardOnline": 120137,
+            "heartbeatOkToControllerBoardOnline": 117682
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        }
+      ],
+      "firefox": [
+        {
+          "label": "v7fb4f9c-firefox-1",
+          "versionKey": "v7fb4f9c",
+          "browserName": "firefox",
+          "roundIndex": 1,
+          "boardFirstPaintMs": 4600,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120187,
+          "controllerBoardOnlineMs": 120202,
+          "sendToDisplayMs": 100,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 159,
+            "boardGotoToDevLoginComplete": 2825,
+            "boardGotoToFirstHeartbeatSend": 3610,
+            "boardGotoToFirstHeartbeatOk": 3738,
+            "boardGotoToControllerConnected": 120187,
+            "boardGotoToControllerBoardOnline": 120202,
+            "heartbeatOkToControllerBoardOnline": 116464
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-firefox-2",
+          "versionKey": "v7fb4f9c",
+          "browserName": "firefox",
+          "roundIndex": 2,
+          "boardFirstPaintMs": 4612,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120196,
+          "controllerBoardOnlineMs": 120210,
+          "sendToDisplayMs": 94,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 168,
+            "boardGotoToDevLoginComplete": 2872,
+            "boardGotoToFirstHeartbeatSend": 3473,
+            "boardGotoToFirstHeartbeatOk": 3546,
+            "boardGotoToControllerConnected": 120196,
+            "boardGotoToControllerBoardOnline": 120210,
+            "heartbeatOkToControllerBoardOnline": 116664
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-firefox-3",
+          "versionKey": "v7fb4f9c",
+          "browserName": "firefox",
+          "roundIndex": 3,
+          "boardFirstPaintMs": 4133,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120191,
+          "controllerBoardOnlineMs": 120205,
+          "sendToDisplayMs": 84,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 164,
+            "boardGotoToDevLoginComplete": 2556,
+            "boardGotoToFirstHeartbeatSend": 3136,
+            "boardGotoToFirstHeartbeatOk": 3229,
+            "boardGotoToControllerConnected": 120191,
+            "boardGotoToControllerBoardOnline": 120205,
+            "heartbeatOkToControllerBoardOnline": 116976
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-firefox-4",
+          "versionKey": "v7fb4f9c",
+          "browserName": "firefox",
+          "roundIndex": 4,
+          "boardFirstPaintMs": 4104,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 120200,
+          "controllerBoardOnlineMs": 120215,
+          "sendToDisplayMs": 103,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 175,
+            "boardGotoToDevLoginComplete": 2688,
+            "boardGotoToFirstHeartbeatSend": 3274,
+            "boardGotoToFirstHeartbeatOk": 3355,
+            "boardGotoToControllerConnected": 120200,
+            "boardGotoToControllerBoardOnline": 120215,
+            "heartbeatOkToControllerBoardOnline": 116860
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        },
+        {
+          "label": "v7fb4f9c-firefox-5",
+          "versionKey": "v7fb4f9c",
+          "browserName": "firefox",
+          "roundIndex": 5,
+          "boardFirstPaintMs": 4558,
+          "realtimeAttachedMs": null,
+          "controllerConnectedMs": 121644,
+          "controllerBoardOnlineMs": 121659,
+          "sendToDisplayMs": 84,
+          "phaseMs": {
+            "boardGotoToReceiverReady": 1618,
+            "boardGotoToDevLoginComplete": 2806,
+            "boardGotoToFirstHeartbeatSend": 3433,
+            "boardGotoToFirstHeartbeatOk": 3467,
+            "boardGotoToControllerConnected": 121644,
+            "boardGotoToControllerBoardOnline": 121659,
+            "heartbeatOkToControllerBoardOnline": 118192
+          },
+          "boardListenAttachedMs": null,
+          "controlListenAttachedMs": null,
+          "controlAfterBoardMs": null,
+          "boardListen": false,
+          "commandMode": "poll",
+          "sendTimeline": {
+            "lastBoardSnapshot": null,
+            "realtimeAttachedMs": null,
+            "commandModeAtSend": "poll"
+          }
+        }
+      ]
+    }
+  },
+  "runs": [
+    {
+      "label": "branch-chromium-1",
+      "versionKey": "branch",
+      "browserName": "chromium",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 3880,
+      "realtimeAttachedMs": 4863,
+      "controllerConnectedMs": 4884,
+      "controllerBoardOnlineMs": 4890,
+      "sendToDisplayMs": 73,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 157,
+        "boardGotoToDevLoginComplete": 2476,
+        "boardGotoToFirstHeartbeatSend": 154,
+        "boardGotoToFirstHeartbeatOk": 2745,
+        "boardGotoToControllerConnected": 4884,
+        "boardGotoToControllerBoardOnline": 4890,
+        "heartbeatOkToControllerBoardOnline": 2145
+      },
+      "boardListenAttachedMs": 4856,
+      "controlListenAttachedMs": 4856,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505721703,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1276,
+          "updatedAt": "Timestamp(seconds=1791505660, nanoseconds=523000000)"
+        },
+        "realtimeAttachedMs": 4863,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-chromium-2",
+      "versionKey": "branch",
+      "browserName": "chromium",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 3619,
+      "realtimeAttachedMs": 5186,
+      "controllerConnectedMs": 5205,
+      "controllerBoardOnlineMs": 5212,
+      "sendToDisplayMs": 57,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 120,
+        "boardGotoToDevLoginComplete": 2793,
+        "boardGotoToFirstHeartbeatSend": 114,
+        "boardGotoToFirstHeartbeatOk": 3053,
+        "boardGotoToControllerConnected": 5205,
+        "boardGotoToControllerBoardOnline": 5212,
+        "heartbeatOkToControllerBoardOnline": 2159
+      },
+      "boardListenAttachedMs": 5175,
+      "controlListenAttachedMs": 5175,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505727032,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1277,
+          "updatedAt": "Timestamp(seconds=1791505722, nanoseconds=3000000)"
+        },
+        "realtimeAttachedMs": 5186,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-chromium-3",
+      "versionKey": "branch",
+      "browserName": "chromium",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 3609,
+      "realtimeAttachedMs": 4859,
+      "controllerConnectedMs": 4879,
+      "controllerBoardOnlineMs": 4886,
+      "sendToDisplayMs": 55,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 119,
+        "boardGotoToDevLoginComplete": 2422,
+        "boardGotoToFirstHeartbeatSend": 117,
+        "boardGotoToFirstHeartbeatOk": 2670,
+        "boardGotoToControllerConnected": 4879,
+        "boardGotoToControllerBoardOnline": 4886,
+        "heartbeatOkToControllerBoardOnline": 2216
+      },
+      "boardListenAttachedMs": 4851,
+      "controlListenAttachedMs": 4851,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505732018,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1278,
+          "updatedAt": "Timestamp(seconds=1791505727, nanoseconds=305000000)"
+        },
+        "realtimeAttachedMs": 4859,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-chromium-4",
+      "versionKey": "branch",
+      "browserName": "chromium",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 3024,
+      "realtimeAttachedMs": 4842,
+      "controllerConnectedMs": 4860,
+      "controllerBoardOnlineMs": 4865,
+      "sendToDisplayMs": 59,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 116,
+        "boardGotoToDevLoginComplete": 2443,
+        "boardGotoToFirstHeartbeatSend": 113,
+        "boardGotoToFirstHeartbeatOk": 2696,
+        "boardGotoToControllerConnected": 4860,
+        "boardGotoToControllerBoardOnline": 4865,
+        "heartbeatOkToControllerBoardOnline": 2169
+      },
+      "boardListenAttachedMs": 4831,
+      "controlListenAttachedMs": 4831,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505736981,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1279,
+          "updatedAt": "Timestamp(seconds=1791505732, nanoseconds=275000000)"
+        },
+        "realtimeAttachedMs": 4842,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-chromium-5",
+      "versionKey": "branch",
+      "browserName": "chromium",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 3830,
+      "realtimeAttachedMs": 4864,
+      "controllerConnectedMs": 4881,
+      "controllerBoardOnlineMs": 4888,
+      "sendToDisplayMs": 59,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 114,
+        "boardGotoToDevLoginComplete": 2492,
+        "boardGotoToFirstHeartbeatSend": 112,
+        "boardGotoToFirstHeartbeatOk": 2744,
+        "boardGotoToControllerConnected": 4881,
+        "boardGotoToControllerBoardOnline": 4888,
+        "heartbeatOkToControllerBoardOnline": 2144
+      },
+      "boardListenAttachedMs": 4864,
+      "controlListenAttachedMs": 4864,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505741976,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1280,
+          "updatedAt": "Timestamp(seconds=1791505737, nanoseconds=252000000)"
+        },
+        "realtimeAttachedMs": 4864,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "v5765abf-chromium-1",
+      "versionKey": "v5765abf",
+      "browserName": "chromium",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 2526,
+      "realtimeAttachedMs": 4442,
+      "controllerConnectedMs": 4461,
+      "controllerBoardOnlineMs": 4468,
+      "sendToDisplayMs": 58,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 115,
+        "boardGotoToDevLoginComplete": 1793,
+        "boardGotoToFirstHeartbeatSend": 2368,
+        "boardGotoToFirstHeartbeatOk": 2368,
+        "boardGotoToControllerConnected": 4461,
+        "boardGotoToControllerBoardOnline": 4468,
+        "heartbeatOkToControllerBoardOnline": 2100
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505746535,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1281,
+          "updatedAt": "Timestamp(seconds=1791505742, nanoseconds=227000000)"
+        },
+        "realtimeAttachedMs": 4442,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-chromium-2",
+      "versionKey": "v5765abf",
+      "browserName": "chromium",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 3093,
+      "realtimeAttachedMs": 4709,
+      "controllerConnectedMs": 4728,
+      "controllerBoardOnlineMs": 4734,
+      "sendToDisplayMs": 59,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 126,
+        "boardGotoToDevLoginComplete": 2004,
+        "boardGotoToFirstHeartbeatSend": 2587,
+        "boardGotoToFirstHeartbeatOk": 2587,
+        "boardGotoToControllerConnected": 4728,
+        "boardGotoToControllerBoardOnline": 4734,
+        "heartbeatOkToControllerBoardOnline": 2147
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505751365,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1282,
+          "updatedAt": "Timestamp(seconds=1791505746, nanoseconds=799000000)"
+        },
+        "realtimeAttachedMs": 4709,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-chromium-3",
+      "versionKey": "v5765abf",
+      "browserName": "chromium",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 3842,
+      "realtimeAttachedMs": 5741,
+      "controllerConnectedMs": 5759,
+      "controllerBoardOnlineMs": 5764,
+      "sendToDisplayMs": 61,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 113,
+        "boardGotoToDevLoginComplete": 3102,
+        "boardGotoToFirstHeartbeatSend": 3681,
+        "boardGotoToFirstHeartbeatOk": 3681,
+        "boardGotoToControllerConnected": 5759,
+        "boardGotoToControllerBoardOnline": 5764,
+        "heartbeatOkToControllerBoardOnline": 2083
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505757235,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1283,
+          "updatedAt": "Timestamp(seconds=1791505751, nanoseconds=631000000)"
+        },
+        "realtimeAttachedMs": 5741,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-chromium-4",
+      "versionKey": "v5765abf",
+      "browserName": "chromium",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 2624,
+      "realtimeAttachedMs": 4571,
+      "controllerConnectedMs": 4587,
+      "controllerBoardOnlineMs": 4595,
+      "sendToDisplayMs": 59,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 129,
+        "boardGotoToDevLoginComplete": 1895,
+        "boardGotoToFirstHeartbeatSend": 2459,
+        "boardGotoToFirstHeartbeatOk": 2459,
+        "boardGotoToControllerConnected": 4587,
+        "boardGotoToControllerBoardOnline": 4595,
+        "heartbeatOkToControllerBoardOnline": 2136
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505761931,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1284,
+          "updatedAt": "Timestamp(seconds=1791505757, nanoseconds=500000000)"
+        },
+        "realtimeAttachedMs": 4571,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-chromium-5",
+      "versionKey": "v5765abf",
+      "browserName": "chromium",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 5545,
+      "realtimeAttachedMs": 7378,
+      "controllerConnectedMs": 7395,
+      "controllerBoardOnlineMs": 7400,
+      "sendToDisplayMs": 59,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 136,
+        "boardGotoToDevLoginComplete": 4790,
+        "boardGotoToFirstHeartbeatSend": 5337,
+        "boardGotoToFirstHeartbeatOk": 5337,
+        "boardGotoToControllerConnected": 7395,
+        "boardGotoToControllerBoardOnline": 7400,
+        "heartbeatOkToControllerBoardOnline": 2063
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791505769439,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1285,
+          "updatedAt": "Timestamp(seconds=1791505762, nanoseconds=198000000)"
+        },
+        "realtimeAttachedMs": 7378,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-chromium-1",
+      "versionKey": "v7fb4f9c",
+      "browserName": "chromium",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 2529,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120133,
+      "controllerBoardOnlineMs": 120140,
+      "sendToDisplayMs": 53,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 114,
+        "boardGotoToDevLoginComplete": 1972,
+        "boardGotoToFirstHeartbeatSend": 2318,
+        "boardGotoToFirstHeartbeatOk": 2492,
+        "boardGotoToControllerConnected": 120133,
+        "boardGotoToControllerBoardOnline": 120140,
+        "heartbeatOkToControllerBoardOnline": 117648
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-chromium-2",
+      "versionKey": "v7fb4f9c",
+      "browserName": "chromium",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 3571,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120140,
+      "controllerBoardOnlineMs": 120146,
+      "sendToDisplayMs": 52,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 122,
+        "boardGotoToDevLoginComplete": 2294,
+        "boardGotoToFirstHeartbeatSend": 2648,
+        "boardGotoToFirstHeartbeatOk": 2817,
+        "boardGotoToControllerConnected": 120140,
+        "boardGotoToControllerBoardOnline": 120146,
+        "heartbeatOkToControllerBoardOnline": 117329
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-chromium-3",
+      "versionKey": "v7fb4f9c",
+      "browserName": "chromium",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 2429,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120134,
+      "controllerBoardOnlineMs": 120139,
+      "sendToDisplayMs": 52,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 114,
+        "boardGotoToDevLoginComplete": 1169,
+        "boardGotoToFirstHeartbeatSend": 1509,
+        "boardGotoToFirstHeartbeatOk": 1728,
+        "boardGotoToControllerConnected": 120134,
+        "boardGotoToControllerBoardOnline": 120139,
+        "heartbeatOkToControllerBoardOnline": 118411
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-chromium-4",
+      "versionKey": "v7fb4f9c",
+      "browserName": "chromium",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 3440,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120133,
+      "controllerBoardOnlineMs": 120141,
+      "sendToDisplayMs": 57,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 114,
+        "boardGotoToDevLoginComplete": 2142,
+        "boardGotoToFirstHeartbeatSend": 2484,
+        "boardGotoToFirstHeartbeatOk": 2668,
+        "boardGotoToControllerConnected": 120133,
+        "boardGotoToControllerBoardOnline": 120141,
+        "heartbeatOkToControllerBoardOnline": 117473
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-chromium-5",
+      "versionKey": "v7fb4f9c",
+      "browserName": "chromium",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 3344,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120131,
+      "controllerBoardOnlineMs": 120137,
+      "sendToDisplayMs": 49,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 111,
+        "boardGotoToDevLoginComplete": 1923,
+        "boardGotoToFirstHeartbeatSend": 2273,
+        "boardGotoToFirstHeartbeatOk": 2455,
+        "boardGotoToControllerConnected": 120131,
+        "boardGotoToControllerBoardOnline": 120137,
+        "heartbeatOkToControllerBoardOnline": 117682
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "branch-firefox-1",
+      "versionKey": "branch",
+      "browserName": "firefox",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 4184,
+      "realtimeAttachedMs": 5571,
+      "controllerConnectedMs": 5595,
+      "controllerBoardOnlineMs": 5610,
+      "sendToDisplayMs": 99,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 260,
+        "boardGotoToDevLoginComplete": 3113,
+        "boardGotoToFirstHeartbeatSend": 242,
+        "boardGotoToFirstHeartbeatOk": 3600,
+        "boardGotoToControllerConnected": 5595,
+        "boardGotoToControllerBoardOnline": 5610,
+        "heartbeatOkToControllerBoardOnline": 2010
+      },
+      "boardListenAttachedMs": 5564,
+      "controlListenAttachedMs": 5564,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506377268,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5571,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-firefox-2",
+      "versionKey": "branch",
+      "browserName": "firefox",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 4116,
+      "realtimeAttachedMs": 5197,
+      "controllerConnectedMs": 5223,
+      "controllerBoardOnlineMs": 5238,
+      "sendToDisplayMs": 83,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 183,
+        "boardGotoToDevLoginComplete": 2785,
+        "boardGotoToFirstHeartbeatSend": 175,
+        "boardGotoToFirstHeartbeatOk": 3248,
+        "boardGotoToControllerConnected": 5223,
+        "boardGotoToControllerBoardOnline": 5238,
+        "heartbeatOkToControllerBoardOnline": 1990
+      },
+      "boardListenAttachedMs": 5195,
+      "controlListenAttachedMs": 5195,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506382856,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5197,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-firefox-3",
+      "versionKey": "branch",
+      "browserName": "firefox",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 5125,
+      "realtimeAttachedMs": 6129,
+      "controllerConnectedMs": 6156,
+      "controllerBoardOnlineMs": 6171,
+      "sendToDisplayMs": 84,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 196,
+        "boardGotoToDevLoginComplete": 3720,
+        "boardGotoToFirstHeartbeatSend": 189,
+        "boardGotoToFirstHeartbeatOk": 4187,
+        "boardGotoToControllerConnected": 6156,
+        "boardGotoToControllerBoardOnline": 6171,
+        "heartbeatOkToControllerBoardOnline": 1984
+      },
+      "boardListenAttachedMs": 6121,
+      "controlListenAttachedMs": 6121,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506389349,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 6129,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-firefox-4",
+      "versionKey": "branch",
+      "browserName": "firefox",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 4128,
+      "realtimeAttachedMs": 5402,
+      "controllerConnectedMs": 5448,
+      "controllerBoardOnlineMs": 5464,
+      "sendToDisplayMs": 98,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 201,
+        "boardGotoToDevLoginComplete": 3037,
+        "boardGotoToFirstHeartbeatSend": 193,
+        "boardGotoToFirstHeartbeatOk": 3507,
+        "boardGotoToControllerConnected": 5448,
+        "boardGotoToControllerBoardOnline": 5464,
+        "heartbeatOkToControllerBoardOnline": 1957
+      },
+      "boardListenAttachedMs": 5401,
+      "controlListenAttachedMs": 5401,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506395156,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5402,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "branch-firefox-5",
+      "versionKey": "branch",
+      "browserName": "firefox",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 4129,
+      "realtimeAttachedMs": 5354,
+      "controllerConnectedMs": 5379,
+      "controllerBoardOnlineMs": 5394,
+      "sendToDisplayMs": 100,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 179,
+        "boardGotoToDevLoginComplete": 2958,
+        "boardGotoToFirstHeartbeatSend": 178,
+        "boardGotoToFirstHeartbeatOk": 3420,
+        "boardGotoToControllerConnected": 5379,
+        "boardGotoToControllerBoardOnline": 5394,
+        "heartbeatOkToControllerBoardOnline": 1974
+      },
+      "boardListenAttachedMs": 5343,
+      "controlListenAttachedMs": 5343,
+      "controlAfterBoardMs": 0,
+      "boardListen": true,
+      "commandMode": "control",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506400929,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5354,
+        "commandModeAtSend": "control"
+      }
+    },
+    {
+      "label": "v5765abf-firefox-1",
+      "versionKey": "v5765abf",
+      "browserName": "firefox",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 4146,
+      "realtimeAttachedMs": 4370,
+      "controllerConnectedMs": 4394,
+      "controllerBoardOnlineMs": 4409,
+      "sendToDisplayMs": 84,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 205,
+        "boardGotoToDevLoginComplete": 2473,
+        "boardGotoToFirstHeartbeatSend": 3510,
+        "boardGotoToFirstHeartbeatOk": 3510,
+        "boardGotoToControllerConnected": 4394,
+        "boardGotoToControllerBoardOnline": 4409,
+        "heartbeatOkToControllerBoardOnline": 899
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506405715,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 4370,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-firefox-2",
+      "versionKey": "v5765abf",
+      "browserName": "firefox",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 4122,
+      "realtimeAttachedMs": 5432,
+      "controllerConnectedMs": 5455,
+      "controllerBoardOnlineMs": 5469,
+      "sendToDisplayMs": 86,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 185,
+        "boardGotoToDevLoginComplete": 2538,
+        "boardGotoToFirstHeartbeatSend": 3623,
+        "boardGotoToFirstHeartbeatOk": 3623,
+        "boardGotoToControllerConnected": 5455,
+        "boardGotoToControllerBoardOnline": 5469,
+        "heartbeatOkToControllerBoardOnline": 1846
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506411541,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5432,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-firefox-3",
+      "versionKey": "v5765abf",
+      "browserName": "firefox",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 4198,
+      "realtimeAttachedMs": 5707,
+      "controllerConnectedMs": 5730,
+      "controllerBoardOnlineMs": 5745,
+      "sendToDisplayMs": 88,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 184,
+        "boardGotoToDevLoginComplete": 2898,
+        "boardGotoToFirstHeartbeatSend": 3983,
+        "boardGotoToFirstHeartbeatOk": 3983,
+        "boardGotoToControllerConnected": 5730,
+        "boardGotoToControllerBoardOnline": 5745,
+        "heartbeatOkToControllerBoardOnline": 1762
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506417633,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5707,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-firefox-4",
+      "versionKey": "v5765abf",
+      "browserName": "firefox",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 4659,
+      "realtimeAttachedMs": 5328,
+      "controllerConnectedMs": 5352,
+      "controllerBoardOnlineMs": 5367,
+      "sendToDisplayMs": 84,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 717,
+        "boardGotoToDevLoginComplete": 2549,
+        "boardGotoToFirstHeartbeatSend": 4427,
+        "boardGotoToFirstHeartbeatOk": 4427,
+        "boardGotoToControllerConnected": 5352,
+        "boardGotoToControllerBoardOnline": 5367,
+        "heartbeatOkToControllerBoardOnline": 940
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506423343,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5328,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v5765abf-firefox-5",
+      "versionKey": "v5765abf",
+      "browserName": "firefox",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 4137,
+      "realtimeAttachedMs": 5401,
+      "controllerConnectedMs": 5427,
+      "controllerBoardOnlineMs": 5441,
+      "sendToDisplayMs": 101,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 203,
+        "boardGotoToDevLoginComplete": 2474,
+        "boardGotoToFirstHeartbeatSend": 3513,
+        "boardGotoToFirstHeartbeatOk": 3513,
+        "boardGotoToControllerConnected": 5427,
+        "boardGotoToControllerBoardOnline": 5441,
+        "heartbeatOkToControllerBoardOnline": 1928
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": true,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": {
+          "ts": 1791506429150,
+          "kind": "board_snapshot",
+          "fromCache": false,
+          "hasPendingWrites": false,
+          "seq": 1291,
+          "updatedAt": "Timestamp(seconds=1791506370, nanoseconds=921000000)"
+        },
+        "realtimeAttachedMs": 5401,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-firefox-1",
+      "versionKey": "v7fb4f9c",
+      "browserName": "firefox",
+      "roundIndex": 1,
+      "boardFirstPaintMs": 4600,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120187,
+      "controllerBoardOnlineMs": 120202,
+      "sendToDisplayMs": 100,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 159,
+        "boardGotoToDevLoginComplete": 2825,
+        "boardGotoToFirstHeartbeatSend": 3610,
+        "boardGotoToFirstHeartbeatOk": 3738,
+        "boardGotoToControllerConnected": 120187,
+        "boardGotoToControllerBoardOnline": 120202,
+        "heartbeatOkToControllerBoardOnline": 116464
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-firefox-2",
+      "versionKey": "v7fb4f9c",
+      "browserName": "firefox",
+      "roundIndex": 2,
+      "boardFirstPaintMs": 4612,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120196,
+      "controllerBoardOnlineMs": 120210,
+      "sendToDisplayMs": 94,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 168,
+        "boardGotoToDevLoginComplete": 2872,
+        "boardGotoToFirstHeartbeatSend": 3473,
+        "boardGotoToFirstHeartbeatOk": 3546,
+        "boardGotoToControllerConnected": 120196,
+        "boardGotoToControllerBoardOnline": 120210,
+        "heartbeatOkToControllerBoardOnline": 116664
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-firefox-3",
+      "versionKey": "v7fb4f9c",
+      "browserName": "firefox",
+      "roundIndex": 3,
+      "boardFirstPaintMs": 4133,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120191,
+      "controllerBoardOnlineMs": 120205,
+      "sendToDisplayMs": 84,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 164,
+        "boardGotoToDevLoginComplete": 2556,
+        "boardGotoToFirstHeartbeatSend": 3136,
+        "boardGotoToFirstHeartbeatOk": 3229,
+        "boardGotoToControllerConnected": 120191,
+        "boardGotoToControllerBoardOnline": 120205,
+        "heartbeatOkToControllerBoardOnline": 116976
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-firefox-4",
+      "versionKey": "v7fb4f9c",
+      "browserName": "firefox",
+      "roundIndex": 4,
+      "boardFirstPaintMs": 4104,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 120200,
+      "controllerBoardOnlineMs": 120215,
+      "sendToDisplayMs": 103,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 175,
+        "boardGotoToDevLoginComplete": 2688,
+        "boardGotoToFirstHeartbeatSend": 3274,
+        "boardGotoToFirstHeartbeatOk": 3355,
+        "boardGotoToControllerConnected": 120200,
+        "boardGotoToControllerBoardOnline": 120215,
+        "heartbeatOkToControllerBoardOnline": 116860
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    },
+    {
+      "label": "v7fb4f9c-firefox-5",
+      "versionKey": "v7fb4f9c",
+      "browserName": "firefox",
+      "roundIndex": 5,
+      "boardFirstPaintMs": 4558,
+      "realtimeAttachedMs": null,
+      "controllerConnectedMs": 121644,
+      "controllerBoardOnlineMs": 121659,
+      "sendToDisplayMs": 84,
+      "phaseMs": {
+        "boardGotoToReceiverReady": 1618,
+        "boardGotoToDevLoginComplete": 2806,
+        "boardGotoToFirstHeartbeatSend": 3433,
+        "boardGotoToFirstHeartbeatOk": 3467,
+        "boardGotoToControllerConnected": 121644,
+        "boardGotoToControllerBoardOnline": 121659,
+        "heartbeatOkToControllerBoardOnline": 118192
+      },
+      "boardListenAttachedMs": null,
+      "controlListenAttachedMs": null,
+      "controlAfterBoardMs": null,
+      "boardListen": false,
+      "commandMode": "poll",
+      "sendTimeline": {
+        "lastBoardSnapshot": null,
+        "realtimeAttachedMs": null,
+        "commandModeAtSend": "poll"
+      }
+    }
+  ],
+  "summary": {
+    "branch": {
+      "chromium": {
+        "boardFirstPaintMs": {
+          "median": 3619,
+          "max": 3880
+        },
+        "controllerBoardOnlineMs": {
+          "median": 4888,
+          "max": 5212
+        },
+        "sendToDisplayMs": {
+          "median": 59,
+          "max": 73
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 2476,
+          "boardGotoToFirstHeartbeatOk": 2744,
+          "heartbeatOkToControllerBoardOnline": 2159
+        }
+      },
+      "firefox": {
+        "boardFirstPaintMs": {
+          "median": 4129,
+          "max": 5125
+        },
+        "controllerBoardOnlineMs": {
+          "median": 5464,
+          "max": 6171
+        },
+        "sendToDisplayMs": {
+          "median": 98,
+          "max": 100
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 3037,
+          "boardGotoToFirstHeartbeatOk": 3507,
+          "heartbeatOkToControllerBoardOnline": 1984
+        }
+      }
+    },
+    "v5765abf": {
+      "chromium": {
+        "boardFirstPaintMs": {
+          "median": 3093,
+          "max": 5545
+        },
+        "controllerBoardOnlineMs": {
+          "median": 4734,
+          "max": 7400
+        },
+        "sendToDisplayMs": {
+          "median": 59,
+          "max": 61
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 2004,
+          "boardGotoToFirstHeartbeatOk": 2587,
+          "heartbeatOkToControllerBoardOnline": 2100
+        }
+      },
+      "firefox": {
+        "boardFirstPaintMs": {
+          "median": 4146,
+          "max": 4659
+        },
+        "controllerBoardOnlineMs": {
+          "median": 5441,
+          "max": 5745
+        },
+        "sendToDisplayMs": {
+          "median": 86,
+          "max": 101
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 2538,
+          "boardGotoToFirstHeartbeatOk": 3623,
+          "heartbeatOkToControllerBoardOnline": 1762
+        }
+      }
+    },
+    "v7fb4f9c": {
+      "chromium": {
+        "boardFirstPaintMs": {
+          "median": 3344,
+          "max": 3571
+        },
+        "controllerBoardOnlineMs": {
+          "median": 120140,
+          "max": 120146
+        },
+        "sendToDisplayMs": {
+          "median": 52,
+          "max": 57
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 1972,
+          "boardGotoToFirstHeartbeatOk": 2492,
+          "heartbeatOkToControllerBoardOnline": 117648
+        }
+      },
+      "firefox": {
+        "boardFirstPaintMs": {
+          "median": 4558,
+          "max": 4612
+        },
+        "controllerBoardOnlineMs": {
+          "median": 120210,
+          "max": 121659
+        },
+        "sendToDisplayMs": {
+          "median": 94,
+          "max": 103
+        },
+        "phaseMedian": {
+          "boardGotoToDevLoginComplete": 2806,
+          "boardGotoToFirstHeartbeatOk": 3467,
+          "heartbeatOkToControllerBoardOnline": 116860
+        }
+      }
+    }
+  }
+}

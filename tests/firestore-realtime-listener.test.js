@@ -77,6 +77,81 @@ test('pendingCommandChanged: ack delete does not re-fire same id', () => {
   assert.equal(RT.pendingCommandChanged(a, { id: 'cmd-2' }), true);
 });
 
+test('board and control listeners attach in parallel (control may settle first)', async () => {
+  const attachLog = [];
+  let boardSnapCb = null;
+  let controlSnapCb = null;
+  const boardDoc = {
+    onSnapshot: (onNext, onErr) => {
+      boardSnapCb = onNext;
+      return () => {};
+    },
+    get: async () => ({ exists: false }),
+  };
+  const controlDoc = {
+    onSnapshot: (onNext, onErr) => {
+      controlSnapCb = onNext;
+      return () => {};
+    },
+    get: async () => ({ exists: false }),
+  };
+  const db = {
+    doc: (path) => {
+      if (path.includes('control/pending')) {
+        return controlDoc;
+      }
+      return boardDoc;
+    },
+  };
+  const create = loadCreateListener({
+    isSdkLoaded: () => true,
+    initApp: () => true,
+    ensureFirebaseSignedIn: async () => true,
+    firestoreDb: () => db,
+  });
+  const listener = create({
+    config: {},
+    storeId: 'zz-qa-store-a',
+    deviceId: 'stb-01',
+    session: {},
+    onBoardSnapshot: () => {},
+    onCommandSnapshot: () => {},
+    onBoardFallback: () => {},
+    onCommandPollFallback: () => {},
+    onBoardListenAttached: () => {
+      attachLog.push('board');
+    },
+    onCommandListenAttached: () => {
+      attachLog.push('control');
+    },
+  });
+  const startPromise = listener.start();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(typeof controlSnapCb, 'function');
+  assert.equal(typeof boardSnapCb, 'function');
+  controlSnapCb({
+    exists: false,
+    metadata: {},
+  });
+  boardSnapCb({
+    exists: true,
+    data: () => ({
+      seq: 1,
+      storeId: 'zz-qa-store-a',
+      businessDate: '2026-10-08',
+      updatedAt: new Date().toISOString(),
+      source: 'A',
+      tickets: [],
+    }),
+    updateTime: { toMillis: () => Date.now() },
+    metadata: {},
+  });
+  const mode = await startPromise;
+  assert.equal(mode.boardListen, true);
+  assert.equal(mode.commandMode, 'control');
+  assert.deepEqual(attachLog, ['control', 'board']);
+});
+
 test('onBoardSnapshot path: seq+1 with same ticket number still normalizes', () => {
   const pathsSrc = readFileSync(join(root, 'js/transport/paths.js'), 'utf8');
   const boardSrc = readFileSync(join(root, 'js/board/today-board.js'), 'utf8');

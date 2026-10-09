@@ -38,3 +38,16 @@ test('pendingCommandChanged only when id changes', () => {
   assert.equal(RT.pendingCommandChanged(a, { id: 'other' }), true);
   assert.equal(RT.pendingCommandChanged(null, { id: 'new' }), true);
 });
+
+test('realtimeCommandNeedsDevicePoll for slow without delayMs', () => {
+  const RT = loadRealtime();
+  assert.equal(RT.realtimeCommandNeedsDevicePoll({ id: '1', type: 'clear_now', params: {} }), false);
+  assert.equal(
+    RT.realtimeCommandNeedsDevicePoll({ id: '1', type: 'slow', params: {} }),
+    true,
+  );
+  assert.equal(
+    RT.realtimeCommandNeedsDevicePoll({ id: '1', type: 'slow', params: { delayMs: 500 } }),
+    false,
+  );
+});

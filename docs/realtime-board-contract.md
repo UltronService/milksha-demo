@@ -36,13 +36,14 @@
 | `type` | 指令類型 |
 | `boardSeq` | 發令時 `today_board.seq`（#30） |
 | `issuedAtMs` | 過時 `clear_now` 判斷 |
-| `params` | 依 type |
+
+`params`（例如 `slow.delayMs`、`push_numbers.ready`）僅在舊路徑 `devices/{deviceId}.pendingCommand`；`control/pending` **不含** `params`。前端若從監聽收到需 `params` 的指令且缺欄位，以一次 `pollDevice`／`readDevice` 補齊後執行（仍只 ack 一次）。
 
 後端 ack 後刪除文件 → 監聽收到 **不存在** → 視為無指令（不重跑）。看板執行指令後 **立即** `boxHeartbeat` 帶 `ackCommandId`（沿用 `pendingAckCommandId`）。
 
 ## 前端行為摘要
 
-1. 兩路 `onSnapshot` 共用同一 Firestore 實例。
+1. 兩路 `onSnapshot` 共用同一 Firestore 實例；**板與 control/pending 監聽並行 attach**（不串在板首包之後）。`commandMode` 尚未 `control` 前仍 `pollDevice`。
 2. 監聽成功時停快輪詢；`today_board` 保留約 **60s** REST 保底讀。
 3. 斷線／回前景：`forceRefetch` + `seq` 對齊。
 4. SDK／板監聽失敗 → 全退回 REST 輪詢；僅指令監聽失敗 → `pollDevice` + 板監聽。
