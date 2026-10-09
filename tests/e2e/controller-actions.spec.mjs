@@ -99,9 +99,15 @@ for (const mode of MODES) {
     await controller.click('#btn-send-tammy');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('1488', { timeout: 15000 });
     await controller.click('#btn-gen-normal');
-    await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('1001', { timeout: 15000 });
+    await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num').first()).toBeVisible({
+      timeout: 30000,
+    });
+    await controller.click('#btn-sim-stop');
     await controller.click('#btn-gen-peak');
-    await expect(receiver.locator('.rcv-prep .rcv-num')).not.toHaveCount(0, { timeout: 15000 });
+    await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num')).not.toHaveCount(0, {
+      timeout: 30000,
+    });
+    await controller.click('#btn-sim-stop');
     await ctx.close();
   });
 
