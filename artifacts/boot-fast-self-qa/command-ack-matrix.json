@@ -1,0 +1,487 @@
+{
+  "at": "2026-10-09T01:16:08.286Z",
+  "headSha": "370d1f19c501f5239b961942b0621c99d4e7abc8",
+  "store": "zz-qa-store-a",
+  "rounds": 3,
+  "rows": [
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "3533f44b-02c1-4cf5-89ab-811411c7a152"
+      ],
+      "ackFromNetwork": [
+        "3533f44b-02c1-4cf5-89ab-811411c7a152"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "7d935b54-496f-4587-ac8a-c641bf624ff5"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "caaca2c9-60dd-4988-9401-7630615822d5",
+        "caaca2c9-60dd-4988-9401-7630615822d5"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "a96df2e4-32ff-4256-ad5e-88b76c4d7285"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "chromium",
+      "round": 1,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66"
+      ],
+      "ackFromNetwork": [
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66",
+        "12bce7a0-d6bb-44ef-abbb-098e3b983c66"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "45532571-ebca-4b04-9850-89317e6596ba"
+      ],
+      "ackFromNetwork": [
+        "45532571-ebca-4b04-9850-89317e6596ba"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "b3e9a1d8-7b93-4791-938b-50a157abf10c"
+      ],
+      "ackFromNetwork": [
+        "b3e9a1d8-7b93-4791-938b-50a157abf10c"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "57bbe070-eda2-4903-9ed8-3fd421283da5"
+      ],
+      "ackFromNetwork": [
+        "57bbe070-eda2-4903-9ed8-3fd421283da5"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "d394010a-3013-468e-b9ab-05040082a4d7"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "chromium",
+      "round": 2,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba"
+      ],
+      "ackFromNetwork": [
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba",
+        "4c403a96-674b-4e81-b0bf-92c0e1d74eba"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2",
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2",
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2"
+      ],
+      "ackFromNetwork": [
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2",
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2",
+        "98322f4f-cedd-4f24-8d05-c5ba0ae5f7b2"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "5be67be8-9dc3-4b92-bc92-87e5b44d5749"
+      ],
+      "ackFromNetwork": [
+        "5be67be8-9dc3-4b92-bc92-87e5b44d5749"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "6f501d6c-9206-45bf-b267-38e39c3d53bd"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "417b17d1-4b3b-440c-8750-6fa71e680b09"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "chromium",
+      "round": 3,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd"
+      ],
+      "ackFromNetwork": [
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd",
+        "e82b4195-8464-41d6-b489-ebeeb5dc58bd"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4",
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4"
+      ],
+      "ackFromNetwork": [
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4",
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4",
+        "a45d2ea6-ee99-4cf5-8ef5-b97e79a151c4"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "14f650ed-106c-4a5d-8a5e-d74862d72fdf",
+        "14f650ed-106c-4a5d-8a5e-d74862d72fdf",
+        "a5a52137-c9eb-4e33-b616-140bc6499ee1"
+      ],
+      "ackFromNetwork": [
+        "14f650ed-106c-4a5d-8a5e-d74862d72fdf",
+        "14f650ed-106c-4a5d-8a5e-d74862d72fdf",
+        "14f650ed-106c-4a5d-8a5e-d74862d72fdf"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "83b68dfd-ae38-45e1-8a13-d6353ba9d65a",
+        "83b68dfd-ae38-45e1-8a13-d6353ba9d65a"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "firefox",
+      "round": 1,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b"
+      ],
+      "ackFromNetwork": [
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b",
+        "a23f1a73-b412-4487-8cb7-94d940ea067b"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "31d1f9a0-c481-434a-99b3-6eea90586cf9"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "31d1f9a0-c481-434a-99b3-6eea90586cf9",
+        "31d1f9a0-c481-434a-99b3-6eea90586cf9",
+        "7b5df6ab-31b2-4d45-96e3-1604bbd9a978"
+      ],
+      "ackFromNetwork": [
+        "31d1f9a0-c481-434a-99b3-6eea90586cf9",
+        "31d1f9a0-c481-434a-99b3-6eea90586cf9"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "7b5df6ab-31b2-4d45-96e3-1604bbd9a978",
+        "f93fb151-6430-445f-9816-e4b37bbd84af",
+        "f93fb151-6430-445f-9816-e4b37bbd84af"
+      ],
+      "ackFromNetwork": [
+        "7b5df6ab-31b2-4d45-96e3-1604bbd9a978",
+        "7b5df6ab-31b2-4d45-96e3-1604bbd9a978",
+        "f93fb151-6430-445f-9816-e4b37bbd84af",
+        "f93fb151-6430-445f-9816-e4b37bbd84af"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "617637bf-23a9-48af-af4e-298c0de4ba65"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "firefox",
+      "round": 2,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87"
+      ],
+      "ackFromNetwork": [
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87",
+        "02beca63-a830-4a01-ae80-69aaa432bc87"
+      ],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "clear_now",
+      "commandId": null,
+      "ackFromTimeline": [
+        "207c3edf-3aa6-4fb2-9d19-6dfd873ff92b"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "slow",
+      "commandId": null,
+      "ackFromTimeline": [
+        "3678a1cf-de0a-40c8-be48-8bf99fdb1f34"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "simulate_offline",
+      "commandId": null,
+      "ackFromTimeline": [
+        "91902741-090e-4743-9bc8-9934b902b489"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "restore",
+      "commandId": null,
+      "ackFromTimeline": [
+        "dc9347ad-8e10-4306-86b7-41c2b54afbf9"
+      ],
+      "ackFromNetwork": [],
+      "ok": true
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "push_numbers",
+      "commandId": null,
+      "ackFromTimeline": [],
+      "ackFromNetwork": [],
+      "ok": false
+    },
+    {
+      "browser": "firefox",
+      "round": 3,
+      "type": "reload",
+      "commandId": null,
+      "ackFromTimeline": [
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098"
+      ],
+      "ackFromNetwork": [
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098",
+        "a0dac419-7882-4638-951a-b90027066098"
+      ],
+      "ok": true
+    }
+  ]
+}

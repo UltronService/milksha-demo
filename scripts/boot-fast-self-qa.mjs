@@ -103,6 +103,18 @@ function msSince(t0, ts) {
   return ts != null ? ts - t0 : null;
 }
 
+async function waitNetworkSignal(getValue, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const v = getValue();
+    if (v) {
+      return v;
+    }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return getValue();
+}
+
 async function waitTimelineKind(board, kind, since, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -155,16 +167,9 @@ async function runBootRound(browser, versionKey, siteRoot, browserName, roundInd
     .then(() => Date.now())
     .catch(() => null);
 
-  const authTimelineAt = await waitTimelineKind(board, 'devlogin_complete', t0, 60000);
-  const authCachedAt = await waitTimelineKind(board, 'auth_cached_token', t0, 2000);
-  const devLoginCompleteAt = authTimelineAt || authCachedAt || devLoginDone;
+  const timelineWaitMs = versionKey === 'branch' ? 60000 : 800;
 
-  const hbSendTimeline = await waitTimelineKind(board, 'heartbeat_send', t0, 60000);
-  const hbOkTimeline = await waitTimelineKind(board, 'heartbeat_ok', t0, 60000);
-  const firstHeartbeatSendAt = hbSendTimeline || hbSend;
-  const firstHeartbeatOkAt = hbOkTimeline || hbOk;
-
-  const boardFirstPaintMs = await board
+  const boardFirstPaintPromise = board
     .waitForFunction(
       () => {
         if (document.querySelectorAll('.milksha-ready .milksha-num').length > 0) {
@@ -182,12 +187,41 @@ async function runBootRound(browser, versionKey, siteRoot, browserName, roundInd
     .then(() => Date.now() - t0)
     .catch(() => null);
 
-  const realtimeAttachedMs = await board
-    .waitForFunction(() => window.receiverCloud?.getRealtimeStats?.()?.boardListen, {
-      timeout: 45000,
-    })
+  const realtimeAttachedPromise = board
+    .waitForFunction(
+      () => {
+        const stats = window.receiverCloud?.getRealtimeStats?.();
+        if (stats && stats.boardListen) {
+          return true;
+        }
+        const tl = window.__rcvMatrixTimeline || [];
+        return tl.some((e) => e.kind === 'board_listen_attached');
+      },
+      { timeout: 45000 },
+    )
     .then(() => Date.now() - t0)
     .catch(() => null);
+
+  const authTimelineAt = await waitTimelineKind(board, 'devlogin_complete', t0, timelineWaitMs);
+  const authCachedAt = await waitTimelineKind(board, 'auth_cached_token', t0, timelineWaitMs);
+  let devLoginCompleteAt = authTimelineAt || authCachedAt || devLoginDone;
+  if (!devLoginCompleteAt) {
+    devLoginCompleteAt = await waitNetworkSignal(() => devLoginDone, 60000);
+  }
+
+  const hbSendTimeline = await waitTimelineKind(board, 'heartbeat_send', t0, timelineWaitMs);
+  const hbOkTimeline = await waitTimelineKind(board, 'heartbeat_ok', t0, timelineWaitMs);
+  let firstHeartbeatSendAt = hbSendTimeline || hbSend;
+  if (!firstHeartbeatSendAt) {
+    firstHeartbeatSendAt = await waitNetworkSignal(() => hbSend, 60000);
+  }
+  let firstHeartbeatOkAt = hbOkTimeline || hbOk;
+  if (!firstHeartbeatOkAt) {
+    firstHeartbeatOkAt = await waitNetworkSignal(() => hbOk, 60000);
+  }
+
+  const boardFirstPaintMs = await boardFirstPaintPromise;
+  const realtimeAttachedMs = await realtimeAttachedPromise;
 
   await ctrlNav;
   const controllerConnectedMs = await ctrl
@@ -201,7 +235,15 @@ async function runBootRound(browser, versionKey, siteRoot, browserName, roundInd
     .catch(() => null);
 
   const timeline = await board.evaluate(() => window.__rcvMatrixTimeline || []);
-  const stats = await board.evaluate(() => window.receiverCloud.getRealtimeStats());
+  const stats = await board.evaluate(() => {
+    const rc = window.receiverCloud;
+    if (rc && typeof rc.getRealtimeStats === 'function') {
+      return rc.getRealtimeStats();
+    }
+    const tl = window.__rcvMatrixTimeline || [];
+    const boardListen = tl.some((e) => e.kind === 'board_listen_attached');
+    return { boardListen, commandMode: boardListen ? 'listen' : 'poll' };
+  });
   const tBoardListen = timeline.find((e) => e.kind === 'board_listen_attached');
   const tControlListen = timeline.find((e) => e.kind === 'control_listen_attached');
 
@@ -335,6 +377,14 @@ async function main() {
           const row = await runBootRound(browser, version.key, siteRoots[version.key], name, i);
           report.runs.push(row);
           report.versions[version.key][name].push(row);
+          report.summary = {};
+          for (const v of VERSIONS) {
+            report.summary[v.key] = {
+              chromium: summarizeRuns(report.versions[v.key].chromium),
+              firefox: summarizeRuns(report.versions[v.key].firefox),
+            };
+          }
+          writeFileSync(join(ART, 'live-matrix.json'), JSON.stringify(report, null, 2));
         }
       }
     } finally {

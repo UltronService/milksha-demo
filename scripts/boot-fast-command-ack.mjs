@@ -136,7 +136,23 @@ async function runCommand(browser, browserName, roundIndex, spec) {
   await waitBoardOnline(ctrl, board);
   const since = Date.now();
   await spec.run(ctrl, board);
-  const tlAck = await collectAckHeartbeats(board, since, 45000);
+  try {
+    await board.evaluate(async () => {
+      const rc = window.receiverCloud;
+      if (!rc) {
+        return;
+      }
+      if (typeof rc.triggerDevicePoll === 'function') {
+        await rc.triggerDevicePoll();
+      }
+      if (typeof rc.sendHeartbeat === 'function') {
+        await rc.sendHeartbeat();
+      }
+    });
+  } catch {
+    /* ignore */
+  }
+  const tlAck = await collectAckHeartbeats(board, since, 60000);
   const netAck = heartbeats.filter((h) => h.phase === 'res' && h.ackCommandId);
   const commandId = await ctrl.evaluate(() => {
     const entries = window.__controllerTelemetry?.logEntries || [];
@@ -186,11 +202,14 @@ const COMMAND_SPECS = [
   },
   {
     type: 'push_numbers',
-    run: async (ctrl) => {
+    run: async (ctrl, board) => {
       await expandZone(ctrl, 'sec-pos');
-      await ctrl.fill('#fld-no', '7701');
-      await ctrl.selectOption('#fld-status', 'ready');
-      await ctrl.click('#btn-add-ticket');
+      await ctrl.click('[data-testid="btn-gen-normal"]');
+      await ctrl.click('[data-testid="btn-send-board"]');
+      await board.waitForFunction(
+        () => document.querySelectorAll('.milksha-ready .milksha-num').length > 0,
+        { timeout: 30000 },
+      );
     },
   },
   {

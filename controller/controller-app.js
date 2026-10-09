@@ -1178,12 +1178,12 @@
     let ticks = 0;
     boardOnlineFastProbeTimer = setInterval(function () {
       ticks += 1;
-      if (!connected || deviceOnline || ticks > 35) {
+      if (!connected || deviceOnline || ticks > 70) {
         stopBoardOnlineFastProbe();
         return;
       }
       pollDevice();
-    }, 1000);
+    }, 500);
   }
 
   function startPolling() {
