@@ -3,19 +3,21 @@
 | 項目 | 值 |
 |------|-----|
 | **PR** | https://github.com/UltronService/milksha-demo/pull/34 |
-| **HEAD** | `70002e8`（完整 SHA 見 `git rev-parse HEAD`） |
-| **CI** | https://github.com/UltronService/milksha-demo/actions （分支最新 run；`70002e8` 含 art-alignment e2e 修正） |
+| **HEAD** | `REPLACE_HEAD_SHA` |
+| **CI** | `REPLACE_CI_RUN` |
 | **矩陣腳本** | `node scripts/boot-fast-self-qa.mjs`（`MILKSHA_BOOT_ROUNDS=5`）→ `live-matrix.json` |
 | **Ack 腳本** | `node scripts/boot-fast-command-ack.mjs`（`MILKSHA_ACK_ROUNDS=3`）→ `command-ack-matrix.json` |
 | **寫入店** | `zz-qa-store-a`（未開新店） |
 
 > **數字唯一來源**：本檔所有 ms 指標均取自 `artifacts/boot-fast-self-qa/live-matrix.json` 的 `summary`／`runs`，與摘要表一致。
 
+**產品決策（本 PR）**：控制端「看板在線」耗時 **不擋合併**；控制端僅 **4s** `pollDevice`（已移除實驗性 fast-probe，避免常態增加 Firestore 讀取）。單元測：`tests/controller-polling.test.js`。
+
 ---
 
-## 1. 三版本 × 雙瀏覽器 × 5 輪（中位數／最大值）
+## 1. 真雲端矩陣（歷史一輪；本輪未重跑）
 
-`headSha`（矩陣產出時）：`370d1f19c501f5239b961942b0621c99d4e7abc8`（含 500ms fast-probe 前的量測；probe 調整見本輪 commit，**未重跑全矩陣**）。
+`live-matrix.json` 的 `headSha`：`370d1f19c501f5239b961942b0621c99d4e7abc8`。本輪 **未重跑** 矩陣（交付優先 CI）。
 
 ### Chromium
 
@@ -37,7 +39,7 @@
 
 - 與 **#32 合併點 `5765abf`** 比：本分支 `controllerBoardOnlineMs` Chromium 中位數 **略慢 ~154ms**（4888 vs 4734），Firefox 中位數略慢 ~23ms；**未達「明顯快於 #32」**。
 - 與 **pre-#32 `7fb4f9c` 整包 archive** 比：控制端在 120s 內無法 `#online-state[data-connected="1"]`（見下），**無法用同腳本得到有效的 `controllerBoardOnlineMs` 對照**；板端 `devLogin`／首包心跳仍約 2–2.5s，與 #32 同量級。
-- **本輪前端**：`kick()` 不阻塞 auth、控制端 `startBoardOnlineFastProbe`（1s→**500ms** 間隔）；瓶頸仍在 **心跳成功 → 控制端 `pollDevice` 判定 `deviceOnline`**（見 phase）。
+- **板端**：`kick()` 不阻塞 auth；瓶頸仍在 **心跳成功 → 控制端 4s `pollDevice` 判定 `deviceOnline`**（見 phase）。
 
 ### 1b. Phase 中位數（ms，自看板 `goto` 起算）
 
@@ -47,7 +49,7 @@
 | → 首次 `heartbeat_ok` | 2744 | 2587 | 3507 | 3623 |
 | `heartbeat_ok` → 控制端板在線 | **2159** | **2100** | **1984** | **1762** |
 
-**最久段**：`heartbeat_ok` 之後到控制端顯示板在線（約 **1.8–2.2s**），對應控制端預設 **4s** `pollDevice` 週期 + 雲端 `readDevice`／`lastHeartbeat` 可見性；非 milksha-cloud 程式變更範圍。若要比 pre-#32 更快，需雲端縮短 device 心跳可見延遲或提供 push 通知；前端已用 500ms fast-probe 補洞。
+**最久段**：`heartbeat_ok` 之後到控制端顯示板在線（約 **1.8–2.2s**），對應控制端 **4s** `pollDevice` + 雲端 `readDevice`／`lastHeartbeat` 可見性（本 repo 不改 milksha-cloud）。
 
 ### 1c. `7fb4f9c` 控制端 120s 逾時
 
@@ -121,7 +123,14 @@ Archive 的 `7fb4f9c` **controller** 在真雲端下 **120s 內連不上** `data
 | firefox | 3 | push_numbers | `—` | ✗ |
 | firefox | 3 | reload | `a0dac419-7882-4638-951a-b90027066098` | ✓ |
 
-**push_numbers**：6 輪皆無 `ackCommandId`（`devCommand` 後板端已顯示號碼）。板端僅在 `devices/.../pendingCommand` 執行後 ack；**需雲端確認 `push_numbers` 是否寫入 device pending**（本 repo 不改 milksha-cloud）。
+**`push_numbers`（不當缺陷）**
+
+依 `docs/realtime-board-contract.md`：叫號名單主路徑為 **`today_board` `onSnapshot`**；`boxHeartbeat.ackCommandId` 用於 **裝置指令**（`control/pending`／`pendingCommand` 執行後）。
+
+- 板端 `cloud-runtime.js` 的 `push_numbers` **若**從 `pendingCommand` 進入 `handleCommand`，會套用並 ack。
+- 控制端雲端叫號走 `devCommand`／POS 後，真雲端實測 **號碼已上屏** 但無 `ackCommandId`，與 **雲端直接更新看板文件、不經裝置待執行 pending** 一致。
+
+**驗收**：叫號 **不適用 ack，以上屏為準**。表中 `push_numbers` 的 ✗ 僅表示「無 heartbeat ack」，非功能缺失。
 
 
 ### 上次 Chromium `clear_now` 無 ack 的實際錯誤（修前）
@@ -149,7 +158,7 @@ POS／`push_numbers` 的 `number_content` 為 **陣列下標順序**：**後送�
 | 區塊 | 變更 |
 |------|------|
 | `js/receiver/cloud-runtime.js` | REST `kick`、並行 listen、`clear_now` ack、timeline |
-| `controller/controller-app.js` | `data-board-online` 雙寫、**500ms** fast-probe |
+| `controller/controller-app.js` | `data-board-online` 雙寫；僅 **4s** 輪詢（無 fast-probe） |
 | `scripts/boot-fast-self-qa.mjs` | 三版本、phase、baseline 不誤等 timeline |
 | `scripts/boot-fast-command-ack.mjs` | 6 指令 ack 矩陣 |
 | `js/milksha-board.js` | `payloadIndex` tie-break |
@@ -166,6 +175,5 @@ POS／`push_numbers` 的 `number_content` 為 **陣列下標順序**：**後送�
 
 ## 剩餘／風險
 
-- **項目 1**：中位數仍略慢於 `5765abf`；**500ms probe 未重跑 30 輪矩陣**。
-- **`7fb4f9c` 整包**：控制端連線無法對照，需另議是否只 archive 板端。
-- **項目 5**：若 `push_numbers` ack 仍偶發失敗，見 JSON `ok:false` 行；腳本已改 `btn-send-board` + poll/heartbeat flush（最後一輪 ack 跑完後更新表）。
+- **控制端板在線時間**：已列為不擋 PR；歷史矩陣見 §1。
+- **`7fb4f9c` archive**：舊控制端與現行雲端登入不相容，同腳本無法連線（僅說明，不再量測）。

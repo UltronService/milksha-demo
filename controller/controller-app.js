@@ -1159,33 +1159,6 @@
     }
   }
 
-  let boardOnlineFastProbeTimer = null;
-
-  function stopBoardOnlineFastProbe() {
-    if (boardOnlineFastProbeTimer) {
-      clearInterval(boardOnlineFastProbeTimer);
-      boardOnlineFastProbeTimer = null;
-    }
-  }
-
-  function startBoardOnlineFastProbe() {
-    stopBoardOnlineFastProbe();
-    const modeEl = document.getElementById('fld-mode');
-    const mode = modeEl ? modeEl.value : '';
-    if (mode !== 'cloud' && mode !== 'firestore') {
-      return;
-    }
-    let ticks = 0;
-    boardOnlineFastProbeTimer = setInterval(function () {
-      ticks += 1;
-      if (!connected || deviceOnline || ticks > 70) {
-        stopBoardOnlineFastProbe();
-        return;
-      }
-      pollDevice();
-    }, 500);
-  }
-
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(function () {
@@ -1193,7 +1166,6 @@
       pollDevice();
       refreshBoardLists().catch(function () {});
     }, 4000);
-    startBoardOnlineFastProbe();
   }
 
   let connectInFlight = false;
@@ -1249,7 +1221,6 @@
       clearInterval(pollTimer);
       pollTimer = null;
     }
-    stopBoardOnlineFastProbe();
     const mode = document.getElementById('fld-mode').value;
     const transportMode = mode === 'firestore' ? 'firestore' : mode;
     const config = buildConfig(mode);
@@ -1363,7 +1334,6 @@
       clearInterval(pollTimer);
       pollTimer = null;
     }
-    stopBoardOnlineFastProbe();
     connected = false;
     setConnectedState(false, '');
     const mode = document.getElementById('fld-mode').value;
