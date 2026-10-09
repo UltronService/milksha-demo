@@ -1,6 +1,6 @@
 # 請取餐淡入（移除 3 秒綠底）自測報告
 
-- **HEAD**: `eeaf847`（報告與 artifacts 見同分支最新 commit）
+- **HEAD**: `96446b7b1f3096ab97b2134f30141777f7f6c984`
 - **Base**: `c601df6`（main，#35 合併後）
 - **分支**: `cursor/board-ready-fade-4ad1`
 - **開 PR**: https://github.com/UltronService/milksha-demo/compare/main...cursor/board-ready-fade-4ad1?expand=1
