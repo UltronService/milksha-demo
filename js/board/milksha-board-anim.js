@@ -8,7 +8,6 @@
 
   const DURATION_MS = 300;
   const PAGE_DURATION_MS = 500;
-  const READY_HIGHLIGHT_MS = 3000;
   const BULK_SNAPSHOT_MIN_ITEMS = 6;
   const BULK_SNAPSHOT_MAX_OVERLAP_RATIO = 0.35;
 
@@ -262,7 +261,6 @@
   function createBoardAnimator(deps) {
     let generation = 0;
     let opacityAnimRuns = 0;
-    const highlightTimers = {};
 
     function bumpGeneration() {
       generation += 1;
@@ -294,69 +292,8 @@
       return animateOpacity(el, from, to, durationMs, gen, getGeneration);
     }
 
-    function clearChipHighlight(chip) {
-      if (!chip) {
-        return;
-      }
-      chip.classList.remove('milksha-board-chip--highlight', 'milksha-board-chip--unhighlighting');
-    }
-
-    function cancelZoneHighlights(zoneEl) {
-      if (!zoneEl) {
-        return;
-      }
-      const chips = zoneEl.querySelectorAll('.milksha-board-chip--highlight, .milksha-board-chip--unhighlighting');
-      for (let i = 0; i < chips.length; i += 1) {
-        clearChipHighlight(chips[i]);
-      }
-    }
-
-    /**
-     * @param {Element} chip
-     * @param {string} timerKey
-     */
-    function scheduleReadyHighlight(chip, timerKey) {
-      if (!chip) {
-        return;
-      }
-      clearChipHighlight(chip);
-      chip.classList.add('milksha-board-chip--highlight');
-      if (highlightTimers[timerKey]) {
-        clearTimeout(highlightTimers[timerKey]);
-        delete highlightTimers[timerKey];
-      }
-      highlightTimers[timerKey] = setTimeout(function () {
-        delete highlightTimers[timerKey];
-        if (!chip.isConnected) {
-          return;
-        }
-        chip.classList.add('milksha-board-chip--unhighlighting');
-        let cleared = false;
-        const finish = function () {
-          if (cleared) {
-            return;
-          }
-          cleared = true;
-          chip.removeEventListener('transitionend', onEnd);
-          clearChipHighlight(chip);
-        };
-        const onEnd = function (ev) {
-          if (ev.target !== chip || ev.propertyName !== 'opacity') {
-            return;
-          }
-          finish();
-        };
-        chip.addEventListener('transitionend', onEnd);
-        setTimeout(finish, 400);
-      }, READY_HIGHLIGHT_MS);
-    }
-
     function cancelAll(boardEl) {
       bumpGeneration();
-      Object.keys(highlightTimers).forEach(function (key) {
-        clearTimeout(highlightTimers[key]);
-        delete highlightTimers[key];
-      });
       if (!boardEl || typeof boardEl.querySelectorAll !== 'function') {
         return;
       }
@@ -368,7 +305,6 @@
       for (let j = 0; j < layers.length; j += 1) {
         clearMotionStyles(layers[j]);
       }
-      cancelZoneHighlights(boardEl);
     }
 
     /**
@@ -377,7 +313,6 @@
      * @param {Array<{ id: string, number: string }>} items
      * @param {number} page
      * @param {{
-     *   highlightIds?: string[],
      *   pageTurn?: boolean,
      *   clearAll?: boolean,
      *   prevItems: Array<{ id: string, number: string }>,
@@ -390,12 +325,6 @@
       if (!numbersLayer) {
         return Promise.resolve();
       }
-      const highlightSet = {};
-      const highlightIds = opts.highlightIds || [];
-      for (let h = 0; h < highlightIds.length; h += 1) {
-        highlightSet[highlightIds[h]] = true;
-      }
-
       const prevItems = opts.prevItems || [];
       const prevPage = opts.prevPage || 0;
       const diff = diffVisibleSlots(prevItems, items, prevPage, page, deps.pageSize, deps.layoutPageGrid);
@@ -494,14 +423,7 @@
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
-          if (diff.added.indexOf(id) >= 0) {
-            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
-          } else {
-            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
-          }
-          if (zoneKey === 'ready' && highlightSet[id]) {
-            scheduleReadyHighlight(chip, zoneKey + ':' + id);
-          }
+          promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
         } else if (chip.parentNode !== slot) {
           slot.appendChild(chip);
         }
@@ -521,16 +443,6 @@
           const dx = before.left - after.left;
           const dy = before.top - after.top;
           promises.push(animateTranslate(chip, dx, dy, DURATION_MS, gen, getGeneration));
-        });
-        diff.added.forEach(function (id) {
-          if (zoneKey !== 'ready' || !highlightSet[id]) {
-            return;
-          }
-          const chip = chipById[id];
-          if (!chip) {
-            return;
-          }
-          scheduleReadyHighlight(chip, zoneKey + ':' + id);
         });
       };
 
@@ -572,7 +484,6 @@
   QMS.MilkshaBoardAnim = {
     DURATION_MS: DURATION_MS,
     PAGE_DURATION_MS: PAGE_DURATION_MS,
-    READY_HIGHLIGHT_MS: READY_HIGHLIGHT_MS,
     visibleIdToSlot: visibleIdToSlot,
     diffSlotMaps: diffSlotMaps,
     diffVisibleSlots: diffVisibleSlots,

@@ -35,8 +35,9 @@ test.describe('board call animation specs 1–7', () => {
     expect((await prepNumbers(page)).map((t) => t.trim())).toEqual(['5101']);
   });
 
-  test('2 prep→ready: leave prep, ready fade + green highlight', async ({ page }) => {
+  test('2 prep→ready: leave prep, ready opacity fade-in only', async ({ page }) => {
     await primeBoardForAnimation(page);
+    await resetOpacityAnimCounter(page);
     await page.evaluate(() => {
       window.QMS.runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '5201' }]);
     });
@@ -50,7 +51,8 @@ test.describe('board call animation specs 1–7', () => {
     await expect(page.locator('.milksha-prep [data-item-id="store:5201"]')).toHaveCount(0);
     const chip = page.locator('.milksha-ready [data-item-id="store:5201"]');
     await expect(chip).toBeVisible();
-    await expect(chip).toHaveClass(/milksha-board-chip--highlight/);
+    expect(await opacityAnimRunsSinceReset(page)).toBeGreaterThan(0);
+    await expect(chip).not.toHaveClass(/milksha-board-chip--highlight/);
     await page.waitForTimeout(350);
     await assertChipsOpaqueAndUnique(page);
   });

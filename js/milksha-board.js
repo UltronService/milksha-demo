@@ -507,7 +507,7 @@
     }
 
     /**
-     * @param {{ silentApply: boolean, highlightReadyIds: string[], clearAll: boolean, forceSnapshotSkip?: boolean }} viewOpts
+     * @param {{ silentApply: boolean, clearAll: boolean, forceSnapshotSkip?: boolean }} viewOpts
      */
     function commitBoardView(viewOpts) {
       const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
@@ -547,7 +547,6 @@
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
-            highlightIds: [],
           });
         } else {
           animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
@@ -559,7 +558,6 @@
             prevItems: prevReady,
             prevPage: prevReadyPage,
             pageTurn: prevReadyPage !== readyPage,
-            highlightIds: viewOpts.highlightReadyIds || [],
           });
         }
         updateZonePageIndicator(prepZone, prepPage, prepPages);
@@ -998,7 +996,6 @@
       const clearAll = !wasBoardEmpty && isBoardFullyEmpty(readyItems, prepItems);
       commitBoardView({
         silentApply: silentApply,
-        highlightReadyIds: newReadyIds,
         clearAll: clearAll,
         forceSnapshotSkip: Boolean(opts && opts.forceSnapshotSkip),
       });
