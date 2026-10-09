@@ -258,6 +258,23 @@
   }
 
   /**
+   * @param {{ id: string, number: string } | null | undefined} item
+   * @returns {string}
+   */
+  function renderNumberChip(item) {
+    if (!item || !item.number) {
+      return '';
+    }
+    return (
+      '<div class="milksha-board-chip" data-item-id="' +
+      item.id +
+      '"><span class="milksha-num">' +
+      item.number +
+      '</span></div>'
+    );
+  }
+
+  /**
    * @param {object} brand
    * @param {object} [options]
    */
@@ -342,6 +359,12 @@
     let ringQueue = [];
     let ringRunning = false;
     let scale = 1;
+    let boardAnimator = null;
+    let lastRenderedPrep = [];
+    let lastRenderedReady = [];
+    let lastRenderedPrepPage = 0;
+    let lastRenderedReadyPage = 0;
+    let lastAnimSkipReason = 'init';
 
     function layoutConfig() {
       return orientation === 'portrait' ? LAYOUT_PORTRAIT : LAYOUT_LANDSCAPE;
@@ -413,26 +436,35 @@
       return page;
     }
 
-    function patchZonePage(zoneClass, items, page, totalPages) {
-      const zone = boardEl.querySelector('.milksha-zone.' + zoneClass);
+    function prefersReducedMotion() {
+      try {
+        return Boolean(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      } catch (_err) {
+        return false;
+      }
+    }
+
+    function canUseWebAnimations() {
+      return typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
+    }
+
+    function ensureBoardAnimator() {
+      if (boardAnimator || !QMS.MilkshaBoardAnim || !QMS.MilkshaBoardAnim.createBoardAnimator) {
+        return boardAnimator;
+      }
+      boardAnimator = QMS.MilkshaBoardAnim.createBoardAnimator({
+        document: doc,
+        window: win,
+        pageSize: PAGE_SIZE,
+        layoutPageGrid: layoutPageGrid,
+        pageCountForItems: pageCountForItems,
+      });
+      return boardAnimator;
+    }
+
+    function updateZonePageIndicator(zone, page, totalPages) {
       if (!zone) {
-        renderBoard();
         return;
-      }
-      const cells = layoutPageGrid(items, page, PAGE_SIZE);
-      const cellEls = zone.querySelectorAll('.milksha-num-cell');
-      if (cellEls.length !== PAGE_SIZE) {
-        renderBoard();
-        return;
-      }
-      for (let i = 0; i < PAGE_SIZE; i += 1) {
-        const cell = cells[i];
-        const el = cellEls[i];
-        if (cell && cell.number) {
-          el.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
-        } else {
-          el.innerHTML = '';
-        }
       }
       let ind = zone.querySelector('.milksha-pg-indicator');
       if (totalPages > 1) {
@@ -446,6 +478,137 @@
         ind.textContent = String(page + 1) + '/' + String(totalPages);
       } else if (ind) {
         ind.remove();
+      }
+    }
+
+    function zonesDomReady() {
+      return Boolean(
+        boardEl.querySelector('.milksha-zone.prep .milksha-zone-numbers') &&
+          boardEl.querySelector('.milksha-zone.ready .milksha-zone-numbers'),
+      );
+    }
+
+    function shouldSkipMotion(silentApply, prevPrep, prevReady) {
+      const animApi = QMS.MilkshaBoardAnim;
+      if (!animApi || !animApi.shouldSkipBoardAnimations) {
+        return { skip: true, reason: 'anim-module-missing' };
+      }
+      return animApi.shouldSkipBoardAnimations({
+        isFirstPayload: isFirstPayload,
+        silentApply: silentApply,
+        reduceMotion: prefersReducedMotion(),
+        canUseWebAnimations: canUseWebAnimations(),
+        prevPrep: prevPrep,
+        nextPrep: prepItems,
+        prevReady: prevReady,
+        nextReady: readyItems,
+      });
+    }
+
+    /**
+     * @param {{ silentApply: boolean, highlightReadyIds: string[], clearAll: boolean }} viewOpts
+     */
+    function commitBoardView(viewOpts) {
+      const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
+      const prepPages = pageCountForItems(prepItems.length, PAGE_SIZE);
+      readyPage = clampPage(readyPage, readyPages);
+      prepPage = clampPage(prepPage, prepPages);
+
+      const prevPrep = lastRenderedPrep;
+      const prevReady = lastRenderedReady;
+      const prevPrepPage = lastRenderedPrepPage;
+      const prevReadyPage = lastRenderedReadyPage;
+      const motion = shouldSkipMotion(viewOpts.silentApply, prevPrep, prevReady);
+      lastAnimSkipReason = motion.reason;
+      const animator = ensureBoardAnimator();
+
+      if (motion.skip || !animator || !zonesDomReady()) {
+        if (animator) {
+          animator.cancelAll(boardEl);
+        }
+        renderBoard();
+      } else {
+        animator.cancelAll(boardEl);
+        const prepZone = boardEl.querySelector('.milksha-zone.prep');
+        const readyZone = boardEl.querySelector('.milksha-zone.ready');
+        if (viewOpts.clearAll) {
+          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+            prevItems: prevPrep,
+            prevPage: prevPrepPage,
+            clearAll: true,
+          });
+          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+            prevItems: prevReady,
+            prevPage: prevReadyPage,
+            clearAll: true,
+            highlightIds: [],
+          });
+        } else {
+          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+            prevItems: prevPrep,
+            prevPage: prevPrepPage,
+            pageTurn: prevPrepPage !== prepPage,
+          });
+          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+            prevItems: prevReady,
+            prevPage: prevReadyPage,
+            pageTurn: prevReadyPage !== readyPage,
+            highlightIds: viewOpts.highlightReadyIds || [],
+          });
+        }
+        updateZonePageIndicator(prepZone, prepPage, prepPages);
+        updateZonePageIndicator(readyZone, readyPage, readyPages);
+      }
+
+      lastRenderedPrep = prepItems.slice();
+      lastRenderedReady = readyItems.slice();
+      lastRenderedPrepPage = prepPage;
+      lastRenderedReadyPage = readyPage;
+    }
+
+    function patchZonePage(zoneClass, items, page, totalPages) {
+      const zoneKey = zoneClass.indexOf('prep') >= 0 ? 'prep' : 'ready';
+      const zone = boardEl.querySelector('.milksha-zone.' + zoneClass);
+      if (!zone) {
+        renderBoard();
+        lastRenderedPrep = prepItems.slice();
+        lastRenderedReady = readyItems.slice();
+        lastRenderedPrepPage = prepPage;
+        lastRenderedReadyPage = readyPage;
+        return;
+      }
+      const cellEls = zone.querySelectorAll('.milksha-num-cell');
+      if (cellEls.length !== PAGE_SIZE) {
+        renderBoard();
+        return;
+      }
+      const prevItems = zoneKey === 'prep' ? lastRenderedPrep : lastRenderedReady;
+      const prevPage = zoneKey === 'prep' ? lastRenderedPrepPage : lastRenderedReadyPage;
+      const motion = shouldSkipMotion(true, lastRenderedPrep, lastRenderedReady);
+      const animator = ensureBoardAnimator();
+      if (!motion.skip && animator) {
+        animator.syncZone(zone, zoneKey, items, page, {
+          prevItems: prevItems,
+          prevPage: prevPage,
+          pageTurn: true,
+        });
+      } else {
+        const cells = layoutPageGrid(items, page, PAGE_SIZE);
+        for (let i = 0; i < PAGE_SIZE; i += 1) {
+          const cell = cells[i];
+          const el = cellEls[i];
+          if (cell && cell.number) {
+            el.innerHTML = renderNumberChip(cell);
+          } else {
+            el.innerHTML = '';
+          }
+        }
+      }
+      updateZonePageIndicator(zone, page, totalPages);
+      if (zoneKey === 'prep') {
+        lastRenderedPrepPage = page;
+      } else {
+        lastRenderedReadyPage = page;
       }
     }
 
@@ -511,7 +674,7 @@
         titleEn +
         '</span>';
       z += '</div>';
-      z += '<div class="milksha-art-numbers">';
+      z += '<div class="milksha-art-numbers milksha-zone-numbers">';
       for (let i = 0; i < PAGE_SIZE; i += 1) {
         const center = art.cellCenterBoard(zoneKey, i);
         const pos = art.cellPositionInZone(x, center);
@@ -523,7 +686,7 @@
           pos.top +
           'px">';
         if (cell && cell.number) {
-          z += '<span class="milksha-num">' + cell.number + '</span>';
+          z += renderNumberChip(cell);
         }
         z += '</div>';
       }
@@ -589,14 +752,11 @@
         bodyH +
         'px">';
       z += '<div class="milksha-cream" style="padding:' + cfg.creamPad + 'px">';
-      z += '<div class="milksha-cream-grid">';
+      z += '<div class="milksha-cream-grid milksha-zone-numbers">';
       for (let i = 0; i < PAGE_SIZE; i += 1) {
         const cell = cells[i];
         if (cell && cell.number) {
-          z +=
-            '<div class="milksha-num-cell"><span class="milksha-num">' +
-            cell.number +
-            '</span></div>';
+          z += '<div class="milksha-num-cell">' + renderNumberChip(cell) + '</div>';
         } else {
           z += '<div class="milksha-num-cell"></div>';
         }
@@ -712,6 +872,9 @@
      */
     function applyPayload(numberContent, opts) {
       const now = Date.now();
+      const prevPrepBefore = prepItems.slice();
+      const prevReadyBefore = readyItems.slice();
+      const wasBoardEmpty = isBoardFullyEmpty(prevReadyBefore, prevPrepBefore);
       const parts = partitionNumberContent(numberContent);
       const newReadyIds = detectNewlyReady(prevReadyIdSet, parts.ready);
       const nextReadyIdSet = new Set();
@@ -806,14 +969,26 @@
       }
 
       prevReadyIdSet = nextReadyIdSet;
+      const clearAll = !wasBoardEmpty && isBoardFullyEmpty(readyItems, prepItems);
+      commitBoardView({
+        silentApply: silentApply,
+        highlightReadyIds: newReadyIds,
+        clearAll: clearAll,
+      });
       isFirstPayload = false;
-      renderBoard();
     }
 
     function setOrientation(next) {
       orientation = next === 'portrait' ? 'portrait' : 'landscape';
       applyScale();
+      if (boardAnimator) {
+        boardAnimator.cancelAll(boardEl);
+      }
       renderBoard();
+      lastRenderedPrep = prepItems.slice();
+      lastRenderedReady = readyItems.slice();
+      lastRenderedPrepPage = prepPage;
+      lastRenderedReadyPage = readyPage;
     }
 
     function setMuted(muted) {
@@ -840,7 +1015,30 @@
 
     applyScale();
     renderBoard();
+    lastRenderedPrep = prepItems.slice();
+    lastRenderedReady = readyItems.slice();
+    lastRenderedPrepPage = prepPage;
+    lastRenderedReadyPage = readyPage;
     scheduleZoneTimers();
+
+    doc.addEventListener('visibilitychange', function () {
+      if (doc.visibilityState !== 'visible') {
+        return;
+      }
+      if (!boardAnimator) {
+        return;
+      }
+      boardAnimator.cancelAll(boardEl);
+      const chips = boardEl.querySelectorAll('.milksha-board-chip');
+      for (let i = 0; i < chips.length; i += 1) {
+        chips[i].style.opacity = '1';
+        chips[i].style.transform = '';
+      }
+      const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
+      for (let j = 0; j < layers.length; j += 1) {
+        layers[j].style.opacity = '1';
+      }
+    });
 
     win.addEventListener('resize', applyScale);
     win.addEventListener('orientationchange', applyScale);
@@ -875,6 +1073,12 @@
         if (prepTimer) {
           clearInterval(prepTimer);
         }
+        if (boardAnimator) {
+          boardAnimator.cancelAll(boardEl);
+        }
+      },
+      getAnimSkipReason: function () {
+        return lastAnimSkipReason;
       },
     };
 
@@ -914,6 +1118,7 @@
     layoutPageGrid: layoutPageGrid,
     gridPositionsForCells: gridPositionsForCells,
     computeViewportScale: computeViewportScale,
+    renderNumberChip: renderNumberChip,
     DESIGN_LANDSCAPE_W: DESIGN_LANDSCAPE_W,
     DESIGN_LANDSCAPE_H: DESIGN_LANDSCAPE_H,
     landscapeArtLayout: function () {
@@ -921,5 +1126,11 @@
     },
     bootMilkshaBoard: bootMilkshaBoard,
   };
+  if (QMS.MilkshaBoardAnim) {
+    QMS.MilkshaBoard.shouldSkipBoardAnimations = QMS.MilkshaBoardAnim.shouldSkipBoardAnimations;
+    QMS.MilkshaBoard.diffVisibleSlots = QMS.MilkshaBoardAnim.diffVisibleSlots;
+    QMS.MilkshaBoard.isBulkSnapshotReplace = QMS.MilkshaBoardAnim.isBulkSnapshotReplace;
+    QMS.MilkshaBoard.visibleIdToSlot = QMS.MilkshaBoardAnim.visibleIdToSlot;
+  }
   QMS.bootMilkshaBoard = bootMilkshaBoard;
 })(typeof window !== 'undefined' ? window : globalThis);
