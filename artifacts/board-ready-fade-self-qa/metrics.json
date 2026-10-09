@@ -43,7 +43,7 @@
   },
   "generatedAt": "2026-10-09T14:00:07.984Z",
   "safeScaleMeasurements": {
-    "generatedAt": "2026-10-09T14:04:17.080Z",
+    "generatedAt": "2026-10-09T14:05:01.510Z",
     "viewports": [
       {
         "viewport": "1920x1080",
@@ -52,8 +52,8 @@
             "scenario": "full-10x-9999",
             "chipCount": 10,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 187,
               "cellHeightPx": 81,
               "chipWidthPx": 238,
@@ -110,8 +110,8 @@
             "scenario": "one-chip-corner",
             "chipCount": 1,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 187,
               "cellHeightPx": 81,
               "chipWidthPx": 228,
@@ -132,25 +132,25 @@
             "scenario": "three-chips",
             "chipCount": 3,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 187,
               "cellHeightPx": 81,
-              "chipWidthPx": 228,
-              "chipHeightPx": 99,
-              "numWidthPx": 228,
+              "chipWidthPx": 233,
+              "chipHeightPx": 101,
+              "numWidthPx": 233,
               "zonePaddingLeftPx": null,
               "zonePaddingRightPx": null
             },
-            "layerSafeMin": 1.116,
+            "layerSafeMin": 1.092,
             "perChipSafeMax": [
               {
                 "id": "store:2003",
-                "safeMax": 1.116
+                "safeMax": 1.092
               },
               {
                 "id": "store:2002",
-                "safeMax": 1.116
+                "safeMax": 1.092
               },
               {
                 "id": "store:2001",
@@ -162,8 +162,8 @@
             "scenario": "one-new-on-full-grid",
             "chipCount": 2,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 373,
               "cellHeightPx": 81,
               "chipWidthPx": 187,
@@ -193,33 +193,33 @@
             "scenario": "full-10x-9999",
             "chipCount": 10,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 373,
               "cellHeightPx": 162,
-              "chipWidthPx": 425,
-              "chipHeightPx": 185,
-              "numWidthPx": 425,
+              "chipWidthPx": 415,
+              "chipHeightPx": 180,
+              "numWidthPx": 415,
               "zonePaddingLeftPx": null,
               "zonePaddingRightPx": null
             },
-            "layerSafeMin": 1.196,
+            "layerSafeMin": 1.226,
             "perChipSafeMax": [
               {
                 "id": "store:9999",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9998",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9997",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9996",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9995",
@@ -231,19 +231,19 @@
               },
               {
                 "id": "store:9993",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9992",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9991",
-                "safeMax": 1.196
+                "safeMax": 1.226
               },
               {
                 "id": "store:9990",
-                "safeMax": 1.196
+                "safeMax": 1.226
               }
             ]
           },
@@ -251,13 +251,13 @@
             "scenario": "one-chip-corner",
             "chipCount": 1,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 373,
               "cellHeightPx": 162,
-              "chipWidthPx": 456,
-              "chipHeightPx": 198,
-              "numWidthPx": 456,
+              "chipWidthPx": 466,
+              "chipHeightPx": 202,
+              "numWidthPx": 466,
               "zonePaddingLeftPx": null,
               "zonePaddingRightPx": null
             },
@@ -273,25 +273,25 @@
             "scenario": "three-chips",
             "chipCount": 3,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 373,
               "cellHeightPx": 162,
-              "chipWidthPx": 466,
-              "chipHeightPx": 202,
-              "numWidthPx": 466,
+              "chipWidthPx": 456,
+              "chipHeightPx": 198,
+              "numWidthPx": 456,
               "zonePaddingLeftPx": null,
               "zonePaddingRightPx": null
             },
-            "layerSafeMin": 1.092,
+            "layerSafeMin": 1.116,
             "perChipSafeMax": [
               {
                 "id": "store:2003",
-                "safeMax": 1.092
+                "safeMax": 1.116
               },
               {
                 "id": "store:2002",
-                "safeMax": 1.092
+                "safeMax": 1.116
               },
               {
                 "id": "store:2001",
@@ -303,8 +303,8 @@
             "scenario": "one-new-on-full-grid",
             "chipCount": 2,
             "geometry": {
-              "columnGapPx": null,
-              "rowGapPx": null,
+              "columnGapPx": 0,
+              "rowGapPx": 0,
               "cellWidthPx": 747,
               "cellHeightPx": 162,
               "chipWidthPx": 373,
