@@ -3,8 +3,8 @@
 | 項目 | 值 |
 |------|-----|
 | **PR** | https://github.com/UltronService/milksha-demo/pull/34 |
-| **HEAD** | `REPLACE_HEAD_SHA` |
-| **CI** | `REPLACE_CI_RUN` |
+| **HEAD** | `6700e7d6893ed2ada6429d84bde57ea4402489ac` |
+| **CI** | https://github.com/UltronService/milksha-demo/actions/runs/37869920956 |
 | **矩陣腳本** | `node scripts/boot-fast-self-qa.mjs`（`MILKSHA_BOOT_ROUNDS=5`）→ `live-matrix.json` |
 | **Ack 腳本** | `node scripts/boot-fast-command-ack.mjs`（`MILKSHA_ACK_ROUNDS=3`）→ `command-ack-matrix.json` |
 | **寫入店** | `zz-qa-store-a`（未開新店） |
