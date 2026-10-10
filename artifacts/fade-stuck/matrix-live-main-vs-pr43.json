@@ -1,0 +1,382 @@
+{
+  "store": "zz-qa-ci-store",
+  "mode": "live",
+  "boardCode": "main-workspace",
+  "gitHead": "90b3822a593178c9b8087d0e55df40056890d77a",
+  "mainAssertion": {
+    "assertKind": "main",
+    "runs": 5,
+    "fails": 5,
+    "passes": 0,
+    "results": [
+      {
+        "assertKind": "main",
+        "pass": false,
+        "elapsedMs": 189387,
+        "error": "page.waitForFunction: Timeout 180000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "main",
+        "pass": false,
+        "elapsedMs": 185363,
+        "error": "page.waitForFunction: Timeout 180000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "main",
+        "pass": false,
+        "elapsedMs": 184957,
+        "error": "page.waitForFunction: Timeout 180000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "main",
+        "pass": false,
+        "elapsedMs": 185406,
+        "error": "page.waitForFunction: Timeout 180000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "main",
+        "pass": false,
+        "elapsedMs": 185365,
+        "error": "page.waitForFunction: Timeout 180000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "pr43Assertion": {
+    "assertKind": "pr43",
+    "runs": 5,
+    "fails": 5,
+    "passes": 0,
+    "results": [
+      {
+        "assertKind": "pr43",
+        "pass": false,
+        "elapsedMs": 35332,
+        "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "pr43",
+        "pass": false,
+        "elapsedMs": 35453,
+        "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "pr43",
+        "pass": false,
+        "elapsedMs": 35349,
+        "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "pr43",
+        "pass": false,
+        "elapsedMs": 34951,
+        "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      },
+      {
+        "assertKind": "pr43",
+        "pass": false,
+        "elapsedMs": 35372,
+        "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+        "snap": {
+          "readyNums": 5,
+          "allChips": [
+            {
+              "opacity": "1",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            },
+            {
+              "opacity": "0",
+              "float": false,
+              "inCell": true
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

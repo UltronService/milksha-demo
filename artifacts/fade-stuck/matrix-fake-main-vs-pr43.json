@@ -1,0 +1,92 @@
+{
+  "store": "zz-qa-ci-store",
+  "mode": "fake",
+  "boardCode": "main-workspace",
+  "gitHead": "90b3822a593178c9b8087d0e55df40056890d77a",
+  "mainAssertion": {
+    "assertKind": "main",
+    "runs": 5,
+    "fails": 0,
+    "passes": 5,
+    "results": [
+      {
+        "assertKind": "main",
+        "pass": true,
+        "elapsedMs": 5218,
+        "effectiveTimeoutMs": 180000,
+        "label": "main-2arg-15000-nominal"
+      },
+      {
+        "assertKind": "main",
+        "pass": true,
+        "elapsedMs": 5218,
+        "effectiveTimeoutMs": 180000,
+        "label": "main-2arg-15000-nominal"
+      },
+      {
+        "assertKind": "main",
+        "pass": true,
+        "elapsedMs": 5192,
+        "effectiveTimeoutMs": 180000,
+        "label": "main-2arg-15000-nominal"
+      },
+      {
+        "assertKind": "main",
+        "pass": true,
+        "elapsedMs": 5221,
+        "effectiveTimeoutMs": 180000,
+        "label": "main-2arg-15000-nominal"
+      },
+      {
+        "assertKind": "main",
+        "pass": true,
+        "elapsedMs": 5220,
+        "effectiveTimeoutMs": 180000,
+        "label": "main-2arg-15000-nominal"
+      }
+    ]
+  },
+  "pr43Assertion": {
+    "assertKind": "pr43",
+    "runs": 5,
+    "fails": 0,
+    "passes": 5,
+    "results": [
+      {
+        "assertKind": "pr43",
+        "pass": true,
+        "elapsedMs": 5207,
+        "effectiveTimeoutMs": 30000,
+        "label": "pr43-f5f62cb-in-cell-30s"
+      },
+      {
+        "assertKind": "pr43",
+        "pass": true,
+        "elapsedMs": 5196,
+        "effectiveTimeoutMs": 30000,
+        "label": "pr43-f5f62cb-in-cell-30s"
+      },
+      {
+        "assertKind": "pr43",
+        "pass": true,
+        "elapsedMs": 5186,
+        "effectiveTimeoutMs": 30000,
+        "label": "pr43-f5f62cb-in-cell-30s"
+      },
+      {
+        "assertKind": "pr43",
+        "pass": true,
+        "elapsedMs": 5219,
+        "effectiveTimeoutMs": 30000,
+        "label": "pr43-f5f62cb-in-cell-30s"
+      },
+      {
+        "assertKind": "pr43",
+        "pass": true,
+        "elapsedMs": 5210,
+        "effectiveTimeoutMs": 30000,
+        "label": "pr43-f5f62cb-in-cell-30s"
+      }
+    ]
+  }
+}
