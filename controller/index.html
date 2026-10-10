@@ -190,9 +190,11 @@
             <button type="button" id="btn-send-board" data-testid="btn-send-board" data-requires-connect="1">送整份名單</button>
             <button type="button" id="btn-clear-board" data-testid="btn-clear-board" data-requires-connect="1">送空名單</button>
           </div>
+          <p id="sim-status" class="sim-status" data-testid="sim-status">模擬：已停止</p>
           <div class="row">
-            <button type="button" id="btn-gen-normal" data-testid="btn-gen-normal" data-requires-connect="1">自動產生（一般）</button>
-            <button type="button" id="btn-gen-peak" data-testid="btn-gen-peak" data-requires-connect="1">自動產生（尖峰）</button>
+            <button type="button" id="btn-gen-normal" data-testid="btn-gen-normal" data-requires-connect="1">持續模擬門市（一般）</button>
+            <button type="button" id="btn-gen-peak" data-testid="btn-gen-peak" data-requires-connect="1">持續模擬門市（尖峰）</button>
+            <button type="button" id="btn-sim-stop" data-testid="btn-sim-stop">停止模擬</button>
           </div>
           <details class="advanced" id="tammy-advanced">
             <summary>進階：檢視／送出範例資料</summary>
@@ -285,6 +287,8 @@
     <script src="../js/transport/create-transport.js?v=20261006b"></script>
     <script src="../js/receiver/validate-request.js?v=20261006b"></script>
     <script src="store-list.js?v=20261008a"></script>
-    <script src="controller-app.js?v=20261008a"></script>
+    <script src="store-simulation.js?v=20261009a"></script>
+    <script src="store-simulation-host.js?v=20261009a"></script>
+    <script src="controller-app.js?v=20261009a"></script>
   </body>
 </html>

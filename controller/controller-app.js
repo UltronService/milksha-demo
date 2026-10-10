@@ -27,6 +27,10 @@
   let pollTimer = null;
   let clockTimer = null;
   let commandInFlight = false;
+  /** @type {ReturnType<typeof window.QMS.Controller.StoreSimulationHost.createStoreSimulationHost>|null} */
+  let storeSimulationHost = null;
+  let simulationTestNowMs = null;
+  let simulationTestRng = null;
 
   const LOG_KEY = 'milksha:controller:logs';
   const CmdErrors = window.QMS.Transport.ControllerCommandErrors;
@@ -280,6 +284,7 @@
     'btn-clear-board',
     'btn-gen-normal',
     'btn-gen-peak',
+    'btn-sim-stop',
     'btn-send-tammy',
     'btn-bad-sign',
     'btn-bad-store',
@@ -1114,10 +1119,21 @@
     });
   }
 
+  function simulationFrozenKeepsLocalTickets() {
+    return storeSimulationHost && storeSimulationHost.isFrozen && storeSimulationHost.isFrozen();
+  }
+
   async function refreshBoardLists() {
     if (!transport) return;
     const doc = await transport.readBoard();
     if (doc && doc.data) {
+      if (simulationFrozenKeepsLocalTickets()) {
+        lastBoardSeq = Number(doc.data.seq) || lastBoardSeq;
+        window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
+        renderTicketLists({ tickets: tickets });
+        tickClock();
+        return;
+      }
       tickets = (doc.data.tickets || []).map(function (t) {
         return {
           no: t.no,
@@ -1453,26 +1469,99 @@
     return ticket;
   }
 
-  function generateTickets(kind) {
-    tickets = [];
-    const sources = SOURCE_OPTIONS.map(function (s) {
-      return s.key;
-    });
-    if (kind === 'peak') {
-      for (let i = 0; i < 18; i += 1) {
-        tickets.push({
-          no: String(3000 + i),
-          status: i % 3 === 0 ? 'ready' : 'preparing',
-          sourceKey: sources[i % sources.length],
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    } else {
-      tickets.push({ no: '1001', status: 'preparing', sourceKey: 'store', updatedAt: new Date().toISOString() });
-      tickets.push({ no: '1002', status: 'ready', sourceKey: 'point', updatedAt: new Date().toISOString() });
-      tickets.push({ no: '1003', status: 'preparing', sourceKey: 'uber', updatedAt: new Date().toISOString() });
+  function simulationNowMs() {
+    if (simulationTestNowMs != null) {
+      return simulationTestNowMs;
     }
-    document.getElementById('fld-no').value = kind === 'peak' ? '3018' : '1004';
+    return Date.now();
+  }
+
+  function simulationRng() {
+    if (simulationTestRng) {
+      return simulationTestRng();
+    }
+    return Math.random();
+  }
+
+  function simulationProjectId() {
+    const form = readCloudForm();
+    return (form && form.projectId) || 'milksha-qms-dev';
+  }
+
+  function syncSimulationNumberFieldFromTickets() {
+    const Sim = window.QMS.Controller.StoreSimulation;
+    if (!Sim) {
+      return;
+    }
+    const maxNo = Sim.maxNumericTicketNo(tickets);
+    if (maxNo > 0) {
+      document.getElementById('fld-no').value = Sim.formatOrderNo(maxNo + 1);
+    }
+  }
+
+  function ensureStoreSimulationHost() {
+    const Host = window.QMS.Controller.StoreSimulationHost;
+    if (!Host || storeSimulationHost) {
+      return storeSimulationHost;
+    }
+    storeSimulationHost = Host.createStoreSimulationHost({
+      now: simulationNowMs,
+      rng: simulationRng,
+      storeId: storeId,
+      projectId: simulationProjectId,
+      getTickets: function () {
+        return tickets.slice();
+      },
+      setTickets: function (list) {
+        tickets = list.map(function (t) {
+          return {
+            no: t.no,
+            status: t.status,
+            sourceKey: t.sourceKey || 'store',
+            updatedAt: t.updatedAt || new Date().toISOString(),
+          };
+        });
+        renderTicketLists({ tickets: tickets });
+        syncSimulationNumberFieldFromTickets();
+      },
+      sendBoard: function () {
+        return posSend(ticketsToNc(), false);
+      },
+      showBanner: showUserBanner,
+      onStatus: function (line) {
+        const el = document.getElementById('sim-status');
+        if (el) {
+          el.textContent = line;
+        }
+      },
+    });
+    return storeSimulationHost;
+  }
+
+  function stopStoreSimulation(reason) {
+    if (!storeSimulationHost) {
+      return;
+    }
+    storeSimulationHost.stop(reason || 'user_stop');
+    syncActionButtonStates();
+  }
+
+  function startStoreSimulation(mode) {
+    if (!requireConnect()) {
+      return;
+    }
+    const host = ensureStoreSimulationHost();
+    if (!host) {
+      return;
+    }
+    if (host.isRunning() && host.getMode() === mode) {
+      return;
+    }
+    const started = host.start(mode);
+    if (started) {
+      pushLog({ summary: '持續模擬門市 · ' + (mode === 'peak' ? '尖峰' : '一般') });
+    }
+    syncActionButtonStates();
   }
 
   function urlStoreParam() {
@@ -1837,9 +1926,7 @@
   });
 
   document.getElementById('btn-gen-normal').addEventListener('click', function () {
-    if (!requireConnect()) return;
-    generateTickets('normal');
-    posSend(ticketsToNc(), false).catch(function () {});
+    startStoreSimulation('normal');
   });
 
   function sendQuickDemoNumber() {
@@ -1874,9 +1961,24 @@
   });
 
   document.getElementById('btn-gen-peak').addEventListener('click', function () {
-    if (!requireConnect()) return;
-    generateTickets('peak');
-    posSend(ticketsToNc(), false).catch(function () {});
+    startStoreSimulation('peak');
+  });
+
+  document.getElementById('btn-sim-stop').addEventListener('click', function () {
+    stopStoreSimulation('user_stop');
+    pushLog({ summary: '持續模擬門市 · 已停止' });
+  });
+
+  window.addEventListener('pagehide', function () {
+    stopStoreSimulation('page_hide');
+  });
+  window.addEventListener('beforeunload', function () {
+    stopStoreSimulation('page_hide');
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (storeSimulationHost) {
+      storeSimulationHost.onVisibilityChange();
+    }
   });
 
   document.getElementById('btn-offline').addEventListener('click', function () {
@@ -2048,6 +2150,22 @@
   window.__controller = {
     getTickets: function () {
       return tickets.slice();
+    },
+    getStoreSimulationHost: function () {
+      return ensureStoreSimulationHost();
+    },
+    setSimulationClock: function (opts) {
+      simulationTestNowMs = opts && opts.nowMs != null ? Number(opts.nowMs) : null;
+      simulationTestRng = opts && opts.rng ? opts.rng : null;
+    },
+    startStoreSimulation: function (mode) {
+      startStoreSimulation(mode);
+    },
+    stopStoreSimulation: function (reason) {
+      stopStoreSimulation(reason);
+    },
+    getSimulationSendCount: function () {
+      return storeSimulationHost ? storeSimulationHost.getSendCount() : 0;
     },
     getTransport: function () {
       return transport;
