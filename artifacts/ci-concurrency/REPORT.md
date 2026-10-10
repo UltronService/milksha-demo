@@ -19,8 +19,8 @@
 
 ## 本 PR CI（含 live-cloud job）
 
-- Branch tip：`6e948f6`
-- 最新全綠 run（PR #41）：https://github.com/UltronService/milksha-demo/actions/runs/38072350546 — **success**（`test` + `e2e-live-cloud` 皆綠）
+- Branch tip：`63b35cf`（workflow + REPORT；中間為 retrigger empty commit）
+- **全綠 run（合併依據）**：https://github.com/UltronService/milksha-demo/actions/runs/38072350546 — **success**（`test` + `e2e-live-cloud`，SHA `6e948f6`）
 - 首次 workflow 驗證 run：https://github.com/UltronService/milksha-demo/actions/runs/38065251681 — **success**
 - Workflow 變更 commit：`c46f948`
 
