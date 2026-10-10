@@ -32,5 +32,5 @@ Second-line board guard at `partitionNumberContent` / `normalizeBoardDisplayNumb
 
 - Branch: `cursor/board-number-rules-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/43
-- **SHA:** `22b8c165856abdcb536fc768a3843c9dc5458eee` (fix code `e54abb5`)
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38078717603 — **success**
+- **SHA:** `6d9fe1a93e14ed66c86c0c7da46c7c97284299a6` (QA strings-only fix `e54abb5`)
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38084621347 — **success**
