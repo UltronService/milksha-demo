@@ -1,8 +1,8 @@
 # 請取餐放大淡入（scale pulse）自測報告
 
-- **HEAD**: `0eebd5e0c8cad64784689d097e260bfeabca0583`
+- **HEAD**: `013f1150af7f20eb4da4c08d2cb6fdf543c5a979`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/36
-- **CI**: pending
+- **CI**: https://github.com/UltronService/milksha-demo/actions/runs/38006242530 — in progress
 - **Base**: `c601df6`
 
 ## 規格（07:45 台北決議）
