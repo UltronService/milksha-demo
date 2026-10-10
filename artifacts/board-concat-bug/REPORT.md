@@ -24,7 +24,7 @@
 | Build | SHORT repro | 說明 |
 |-------|-------------|------|
 | **main** anim/board | **FAIL** `reproduced=true` | [qa-repro-main-short.log](./qa-repro-main-short.log) |
-| **fix** branch | **PASS** `reproduced=false` | [qa-repro/results.json](./qa-repro/qa-repro/results.json) 路徑見 run log |
+| **fix** branch | **PASS** `reproduced=false` | `artifacts/board-concat-bug/qa-repro/results.json` |
 
 **15min peak + 15min normal（含 bg/fg）** 全量跑：`artifacts/board-concat-bug/qa-repro-15m.log`（tmux 進行中／完成後更新結論）
 
