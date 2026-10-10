@@ -1,29 +1,44 @@
 import { test, expect } from '@playwright/test';
 import { chromium } from 'playwright';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
+import { LIVE_CLOUD_BOARD_DEVICE, LIVE_CLOUD_STORE_ID } from './live-cloud-config.mjs';
+import { teardownLiveCloudSession } from './live-cloud-teardown.mjs';
 
-const STORE = 'zz-qa-store-a';
-const DEVICE = 'stb-01';
+/** @type {import('playwright').Browser | undefined} */
+let browser;
+/** @type {import('@playwright/test').Page | undefined} */
+let board;
+/** @type {import('@playwright/test').Page | undefined} */
+let ctrl;
 
-function median(nums) {
-  const s = nums.slice().sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
+test.afterEach(async () => {
+  try {
+    await teardownLiveCloudSession(ctrl, board);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+    browser = undefined;
+    board = undefined;
+    ctrl = undefined;
+  }
+});
 
-test.describe('zz-qa-store-a live cloud with branch site route', () => {
+test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => {
   test.describe.configure({ retries: 2 });
 
   test('five sends within 3s and board animates', async () => {
     test.setTimeout(360000);
-    const browser = await chromium.launch();
+    browser = await chromium.launch();
     const ctx = await browser.newContext();
     ctx.setDefaultTimeout(180000);
     await installLiveBranchCloudRoutes(ctx);
-    const board = await ctx.newPage();
-    const ctrl = await ctx.newPage();
-    const ctrlNav = ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${STORE}`);
-    await board.goto(`${GITHUB_PAGES_BASE}/?mode=cloud&store=${STORE}&device=${DEVICE}`);
+    board = await ctx.newPage();
+    ctrl = await ctx.newPage();
+    const ctrlNav = ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${LIVE_CLOUD_STORE_ID}`);
+    await board.goto(
+      `${GITHUB_PAGES_BASE}/?mode=cloud&store=${LIVE_CLOUD_STORE_ID}&device=${LIVE_CLOUD_BOARD_DEVICE}`,
+    );
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 180000 });
     await ctrlNav;
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 180000 });
@@ -50,6 +65,5 @@ test.describe('zz-qa-store-a live cloud with branch site route', () => {
         }),
       { timeout: 15000 },
     );
-    await browser.close();
   });
 });
