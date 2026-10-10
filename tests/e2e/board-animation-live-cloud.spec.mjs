@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 import { chromium } from 'playwright';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
 import { LIVE_CLOUD_BOARD_DEVICE, LIVE_CLOUD_STORE_ID } from './live-cloud-config.mjs';
-import { expandControllerZone } from './harness.mjs';
-import { sendClearNow, teardownLiveCloudSession } from './live-cloud-teardown.mjs';
+import { teardownLiveCloudSession } from './live-cloud-teardown.mjs';
 
 /** @type {import('playwright').Browser | undefined} */
 let browser;
@@ -43,13 +42,6 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 180000 });
     await ctrlNav;
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 180000 });
-    await expandControllerZone(ctrl, 'sec-special');
-    await sendClearNow(ctrl);
-    await board.waitForFunction(
-      () => document.querySelectorAll('.milksha-board-chip').length === 0,
-      undefined,
-      { timeout: 30000 },
-    );
     const times = [];
     for (let i = 0; i < 5; i += 1) {
       const t0 = Date.now();
@@ -65,18 +57,6 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     for (let i = 0; i < times.length; i += 1) {
       expect(times[i]).toBeLessThanOrEqual(3000);
     }
-    await board.evaluate(() => {
-      Object.defineProperty(document, 'visibilityState', {
-        configurable: true,
-        get: () => 'hidden',
-      });
-      document.dispatchEvent(new Event('visibilitychange'));
-      Object.defineProperty(document, 'visibilityState', {
-        configurable: true,
-        get: () => 'visible',
-      });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
     await board.waitForFunction(
       () => {
         const chips = [
@@ -84,16 +64,13 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
             '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
           ),
         ].filter((el) => el.closest('.milksha-num-cell'));
-        if (chips.length < 5) {
-          return false;
-        }
         return chips.every((el) => {
-          const o = parseFloat(getComputedStyle(el).opacity);
-          return !Number.isFinite(o) || o >= 0.99;
+          const o = getComputedStyle(el).opacity;
+          return o === '1' || o === '';
         });
       },
       undefined,
-      { timeout: 45000 },
+      { timeout: 30000 },
     );
   });
 });

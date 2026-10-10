@@ -28,9 +28,18 @@ Second-line board guard at `partitionNumberContent` / `normalizeBoardDisplayNumb
 
 **Green (post-fix):** same suite **6/6 pass**; `board-number-rules.spec.mjs` includes e2e `JSON number 1001 is not displayed`.
 
+## Revert (QA baseline)
+
+- **QA passed at** `7694bd1` (strings-only product fix `e54abb5`).
+- **`6d9fe1a` reverted** — unrequested live-cloud e2e stabilization; branch tests/code restored to QA-approved set.
+
+## Live-cloud flake (separate investigation)
+
+- CI run **38081707389** (`7694bd1`): `board-animation-live-cloud.spec.mjs` — in-cell chips never reached **opacity 1** within 30s after five rapid sends on **zz-qa-ci-store** (possible real board bug; not fixed in this PR).
+
 ## Commit / CI
 
 - Branch: `cursor/board-number-rules-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/43
-- **SHA:** `6d9fe1a93e14ed66c86c0c7da46c7c97284299a6` (QA strings-only fix `e54abb5`)
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38084621347 — **success**
+- **SHA:** _(tip after revert push)_
+- **CI:** _(after revert push)_
