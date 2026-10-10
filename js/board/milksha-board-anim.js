@@ -633,6 +633,10 @@
         return Promise.resolve();
       }
 
+      if (pageTurn && numbersLayer.getAttribute('data-page-turn-anim') === '1') {
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+      }
+
       abortPageTurnLayerState(numbersLayer);
 
       if (opts.clearAll) {
