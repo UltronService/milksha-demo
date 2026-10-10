@@ -1,0 +1,15 @@
+
+Running 1 test using 1 worker
+
+[1A[2K(node:12951) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:12951) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/1] board-cell-peak-simulation.spec.mjs:34:3 › board cell integrity under peak simulation › 3-min peak run: sampled cells, detached drain, no dup numbers
+[1A[2K  Slow test file: board-cell-peak-simulation.spec.mjs (3.1m)
+  Consider splitting slow test files to speed up parallel execution
+  1 passed (3.1m)
