@@ -136,21 +136,11 @@
   }
 
   /**
-   * Board display guard — only exact four-digit strings (no auto-pad).
+   * Board display guard — only exact four-digit strings (no JSON number coercion).
    * @param {unknown} raw
    * @returns {string | null}
    */
   function normalizeBoardDisplayNumber(raw) {
-    if (raw == null) {
-      return null;
-    }
-    if (typeof raw === 'number') {
-      if (!Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
-        return null;
-      }
-      const s = String(raw);
-      return BOARD_NUMBER_FOUR_DIGIT.test(s) ? s : null;
-    }
     if (typeof raw !== 'string') {
       return null;
     }

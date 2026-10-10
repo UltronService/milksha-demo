@@ -60,6 +60,34 @@ test.describe('board number rules (local fake cloud)', () => {
     await ctx.close();
   });
 
+  test('JSON number 1001 is not displayed; string ticket still renders', async ({ browser }) => {
+    const ctx = await freshContext(browser);
+    const board = await ctx.newPage();
+    const { board: boardUrl } = urlsLocalHomePoc();
+    await board.goto(boardUrl);
+    await board.waitForFunction(
+      () => Boolean(window.QMS?.runtime?.applyPayload),
+      { timeout: 25000 },
+    );
+    await board.evaluate(() => {
+      window.QMS.runtime.applyPayload(
+        [
+          { source_type: 'From_Store_OK', number: 1001 },
+          { source_type: 'From_Store_OK', number: '1002' },
+        ],
+        { silent: true },
+      );
+    });
+    const snap = await board.evaluate(() => {
+      const s = window.QMS.runtime.getSnapshot();
+      return s.ready.map((r) => r.number);
+    });
+    expect(snap).toEqual(['1002']);
+    await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1);
+    await expect(board.locator('.milksha-ready .milksha-num')).toHaveText('1002');
+    await ctx.close();
+  });
+
   test('sixty preparing entries render without error', async ({ browser }) => {
     const ctx = await freshContext(browser);
     const board = await ctx.newPage();
