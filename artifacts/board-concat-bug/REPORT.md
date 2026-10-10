@@ -41,8 +41,8 @@
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **SHA:** _(push 後填入)_
-- **CI:** _(green 後填入 run URL)_
+- **SHA:** `e7591c6`（最新；CI 以 branch head 為準）
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38041302764 及後續 run（pending）
 
 ## CI 綠燈 ETA（台北）
 
