@@ -224,23 +224,35 @@
   }
 
   /**
-   * @param {Element} slot
-   * @param {Element | null | undefined} keepChip
+   * @param {Element} numbersLayer
    */
-  function evictExtraChipsFromSlot(slot, keepChip) {
-    if (!slot || typeof slot.querySelectorAll !== 'function') {
+  function removeOrphanLayerFloatChips(numbersLayer) {
+    if (!numbersLayer || typeof numbersLayer.querySelectorAll !== 'function') {
       return;
     }
-    const chips = slot.querySelectorAll('.milksha-board-chip');
-    for (let i = 0; i < chips.length; i += 1) {
-      const c = chips[i];
-      if (keepChip && c === keepChip) {
-        continue;
-      }
-      if (c.parentNode === slot) {
-        slot.removeChild(c);
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let i = 0; i < floats.length; i += 1) {
+      const chip = floats[i];
+      cancelElementAnimations(chip);
+      if (chip.parentNode) {
+        chip.parentNode.removeChild(chip);
       }
     }
+  }
+
+  /**
+   * @param {Element} numbersLayer
+   */
+  function abortPageTurnLayerState(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    if (numbersLayer.getAttribute('data-page-turn-anim') === '1') {
+      numbersLayer.removeAttribute('data-page-turn-anim');
+    }
+    cancelElementAnimations(numbersLayer);
+    snapOpacity(numbersLayer, 1);
+    removeOrphanLayerFloatChips(numbersLayer);
   }
 
   /**
@@ -437,13 +449,123 @@
       if (!boardEl || typeof boardEl.querySelectorAll !== 'function') {
         return;
       }
+      const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
+      for (let j = 0; j < layers.length; j += 1) {
+        abortPageTurnLayerState(layers[j]);
+        removeOrphanLayerFloatChips(layers[j]);
+        clearMotionStyles(layers[j]);
+      }
       const chips = boardEl.querySelectorAll('.milksha-board-chip');
       for (let i = 0; i < chips.length; i += 1) {
         clearMotionStyles(chips[i]);
       }
-      const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
-      for (let j = 0; j < layers.length; j += 1) {
-        clearMotionStyles(layers[j]);
+    }
+
+    /**
+     * @param {Element} chip
+     * @param {Element} numbersLayer
+     * @param {number} gen
+     * @param {number} opacityInMs
+     * @param {Array<Promise<void>>} promises
+     * @param {Set<Element>} pendingRemove
+     */
+    /**
+     * @param {Element} boardRoot
+     * @param {string} id
+     * @param {Element | null} keepChip
+     * @param {Element} numbersLayer
+     * @param {number} gen
+     * @param {number} opacityInMs
+     * @param {Array<Promise<void>>} promises
+     * @param {Set<Element>} pendingRemove
+     */
+    function evictDuplicateItemIdChips(
+      boardRoot,
+      id,
+      keepChip,
+      numbersLayer,
+      gen,
+      opacityInMs,
+      promises,
+      pendingRemove,
+    ) {
+      if (!boardRoot || !id) {
+        return;
+      }
+      const all = boardRoot.querySelectorAll('.milksha-board-chip[data-item-id]');
+      for (let i = 0; i < all.length; i += 1) {
+        const other = all[i];
+        if (other.getAttribute('data-item-id') !== id) {
+          continue;
+        }
+        if (keepChip && other === keepChip) {
+          continue;
+        }
+        cancelElementAnimations(other);
+        clearMotionStyles(other);
+        if (other.parentNode) {
+          other.parentNode.removeChild(other);
+        }
+        pendingRemove.delete(other);
+      }
+    }
+
+    function scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove) {
+      if (!chip || pendingRemove.has(chip)) {
+        return;
+      }
+      pendingRemove.add(chip);
+      detachChipFromSlotForFade(chip, numbersLayer);
+      const fromOpacity = Number.parseFloat(chip.style.opacity);
+      const from = Number.isFinite(fromOpacity) ? fromOpacity : 1;
+      let timeoutId = null;
+      if (deps.window && typeof deps.window.setTimeout === 'function') {
+        timeoutId = deps.window.setTimeout(function () {
+          if (chip.parentNode) {
+            chip.parentNode.removeChild(chip);
+          }
+          pendingRemove.delete(chip);
+        }, opacityInMs + 200);
+      }
+      promises.push(
+        runOpacityAnim(chip, from, 0, opacityInMs, gen).then(function () {
+          if (timeoutId !== null && deps.window.clearTimeout) {
+            deps.window.clearTimeout(timeoutId);
+          }
+          if (chip.parentNode) {
+            chip.parentNode.removeChild(chip);
+          }
+          pendingRemove.delete(chip);
+        }),
+      );
+    }
+
+    /**
+     * @param {Element} numbersLayer
+     * @param {NodeListOf<Element> | Element[]} slotEls
+     * @param {Array<{ id?: string, number?: string } | null>} cells
+     * @param {Record<string, Element>} chipById
+     */
+    function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
+      abortPageTurnLayerState(numbersLayer);
+      removeOrphanLayerFloatChips(numbersLayer);
+      for (let i = 0; i < deps.pageSize; i += 1) {
+        const slot = slotEls[i];
+        slot.innerHTML = '';
+        const cell = cells[i];
+        if (!cell || !cell.number) {
+          continue;
+        }
+        const id = cell.id || '';
+        const chip = deps.document.createElement('div');
+        chip.className = 'milksha-board-chip';
+        chip.setAttribute('data-item-id', id);
+        chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
+        snapOpacity(chip, 1);
+        slot.appendChild(chip);
+        if (id) {
+          chipById[id] = chip;
+        }
       }
     }
 
@@ -473,6 +595,7 @@
         scalePulseSet[pulseIds[pi]] = true;
       }
       const skipReadyScale = Boolean(opts.skipReadyScale);
+      const boardRoot = zoneEl.closest('.milksha-board') || zoneEl;
       if (!numbersLayer) {
         return Promise.resolve();
       }
@@ -487,6 +610,10 @@
         return Promise.resolve();
       }
 
+      const interruptedPageTurn =
+        numbersLayer.getAttribute('data-page-turn-anim') === '1' && !pageTurn;
+      removeOrphanLayerFloatChips(numbersLayer);
+
       const chipById = {};
       const rectsBefore = {};
       numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
@@ -499,6 +626,14 @@
       });
 
       const promises = [];
+      const pendingRemove = new Set();
+
+      if (interruptedPageTurn) {
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        return Promise.resolve();
+      }
+
+      abortPageTurnLayerState(numbersLayer);
 
       if (opts.clearAll) {
         const existing = numbersLayer.querySelectorAll('.milksha-board-chip');
@@ -516,12 +651,15 @@
       }
 
       if (pageTurn) {
+        removeOrphanLayerFloatChips(numbersLayer);
         numbersLayer.setAttribute('data-page-turn-anim', '1');
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
+              numbersLayer.removeAttribute('data-page-turn-anim');
               return;
             }
+            removeOrphanLayerFloatChips(numbersLayer);
             for (let i = 0; i < deps.pageSize; i += 1) {
               const slot = slotEls[i];
               slot.innerHTML = '';
@@ -535,27 +673,36 @@
               }
             }
             snapOpacity(numbersLayer, 0);
-            return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen);
+            return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen).then(function () {
+              if (getGeneration() === gen) {
+                numbersLayer.removeAttribute('data-page-turn-anim');
+              }
+            });
           }),
         );
         return Promise.all(promises);
       }
 
-      const removedChips = [];
+      for (let ri = 0; ri < deps.pageSize; ri += 1) {
+        const slotReconcile = slotEls[ri];
+        const cellReconcile = cells[ri];
+        const expectedId = cellReconcile && cellReconcile.id ? cellReconcile.id : null;
+        const slotChips = slotReconcile.querySelectorAll('.milksha-board-chip');
+        for (let sc = 0; sc < slotChips.length; sc += 1) {
+          const slotChip = slotChips[sc];
+          const slotChipId = slotChip.getAttribute('data-item-id');
+          if (!expectedId || slotChipId !== expectedId) {
+            scheduleChipFadeOutRemove(slotChip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          }
+        }
+      }
+
       diff.removed.forEach(function (id) {
         const chip = chipById[id];
-        if (!chip) {
+        if (!chip || pendingRemove.has(chip)) {
           return;
         }
-        removedChips.push(chip);
-        detachChipFromSlotForFade(chip, numbersLayer);
-        promises.push(
-          runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
-            if (chip.parentNode) {
-              chip.parentNode.removeChild(chip);
-            }
-          }),
-        );
+        scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
       });
 
       for (let i = 0; i < deps.pageSize; i += 1) {
@@ -566,13 +713,27 @@
         }
         const id = cell.id;
         let chip = chipById[id];
-        if (!chip) {
-          evictExtraChipsFromSlot(slot, null);
+        if (chip && chip.parentNode !== slot && !pendingRemove.has(chip)) {
+          const stray = slot.querySelectorAll('.milksha-board-chip');
+          for (let st = 0; st < stray.length; st += 1) {
+            if (stray[st] !== chip) {
+              scheduleChipFadeOutRemove(stray[st], numbersLayer, gen, opacityInMs, promises, pendingRemove);
+            }
+          }
+          evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          slot.appendChild(chip);
+        }
+        if (!chip || pendingRemove.has(chip)) {
+          const strayBefore = slot.querySelectorAll('.milksha-board-chip');
+          for (let sb = 0; sb < strayBefore.length; sb += 1) {
+            scheduleChipFadeOutRemove(strayBefore[sb], numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          }
           chip = deps.document.createElement('div');
           chip.className = 'milksha-board-chip';
           chip.setAttribute('data-item-id', id);
           chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
           snapOpacity(chip, 0);
+          evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
@@ -581,18 +742,13 @@
           } else {
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
-        } else if (chip.parentNode !== slot) {
-          evictExtraChipsFromSlot(slot, chip);
-          slot.appendChild(chip);
-        } else {
-          evictExtraChipsFromSlot(slot, chip);
         }
       }
 
       const afterLayout = function () {
         diff.moved.forEach(function (mv) {
           const chip = chipById[mv.id];
-          if (!chip) {
+          if (!chip || pendingRemove.has(chip)) {
             return;
           }
           const before = rectsBefore[mv.id];
@@ -612,10 +768,13 @@
         if (cellAt && cellAt.number) {
           continue;
         }
-        slotAt.innerHTML = '';
+        const emptyChips = slotAt.querySelectorAll('.milksha-board-chip');
+        for (let ec = 0; ec < emptyChips.length; ec += 1) {
+          scheduleChipFadeOutRemove(emptyChips[ec], numbersLayer, gen, opacityInMs, promises, pendingRemove);
+        }
       }
 
-      return Promise.all(removedChips.length ? promises : []).then(function () {
+      return Promise.all([]).then(function () {
         return new Promise(function (resolve) {
           deps.window.requestAnimationFrame(function () {
             afterLayout();

@@ -30,6 +30,39 @@ function mulberry32(seed) {
   };
 }
 
+test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
+  const { Sim } = loadSimulation();
+  assert.equal(Sim.validateTicketsForBoardPush([{ no: '0001', status: 'preparing' }]).ok, true);
+  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready' }]).ok, false);
+  assert.equal(
+    Sim.validateTicketsForBoardPush([
+      { no: '0001', status: 'preparing' },
+      { no: '0001', status: 'ready' },
+    ]).reason,
+    'duplicate-in-list',
+  );
+  assert.equal(
+    Sim.validateTicketsForBoardPush([
+      { no: '0002', status: 'preparing' },
+      { no: '0002', status: 'ready' },
+    ]).reason,
+    'duplicate-in-list',
+  );
+});
+
+test('recordsToTickets output always passes validateTicketsForBoardPush', function () {
+  const { Sim } = loadSimulation();
+  const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
+  const rng = mulberry32(99);
+  Sim.startOrSwitchSimulation(state, 'peak', 1_000_000, [], rng);
+  for (let t = 0; t < 500; t += 1) {
+    Sim.reconcileSimulation(state, 1_000_000 + t * 8000, rng);
+    const tickets = Sim.recordsToTickets(state.records, 1_000_000 + t * 8000);
+    const check = Sim.validateTicketsForBoardPush(tickets);
+    assert.equal(check.ok, true, JSON.stringify({ t: t, check: check, tickets: tickets.slice(0, 5) }));
+  }
+});
+
 test('jittered intervals stay within 50%-150% of mean', function () {
   const { Sim } = loadSimulation();
   const rng = mulberry32(42);

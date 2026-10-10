@@ -442,6 +442,45 @@
     };
   }
 
+  /**
+   * Cloud/board push guard (mirrors backend PR #20 rules for simulator output).
+   * @param {Array<{ no: string, status?: string }>} tickets
+   * @returns {{ ok: true } | { ok: false, reason: string, no?: string }}
+   */
+  function validateTicketsForBoardPush(tickets) {
+    const list = Array.isArray(tickets) ? tickets : [];
+    const fourDigit = /^\d{4}$/;
+    const seen = new Set();
+    const ready = new Set();
+    const prep = new Set();
+    for (let i = 0; i < list.length; i += 1) {
+      const row = list[i];
+      const no = String(row && row.no != null ? row.no : '').trim();
+      if (!fourDigit.test(no)) {
+        return { ok: false, reason: 'not-four-digit', no: no };
+      }
+      if (seen.has(no)) {
+        return { ok: false, reason: 'duplicate-in-list', no: no };
+      }
+      seen.add(no);
+      const status = String(row.status || '');
+      if (status === 'ready') {
+        ready.add(no);
+      } else {
+        prep.add(no);
+      }
+    }
+    for (const n of prep) {
+      if (ready.has(n)) {
+        return { ok: false, reason: 'same-number-prep-and-ready', no: n };
+      }
+    }
+    if (list.length > 50) {
+      return { ok: false, reason: 'list-over-50', no: String(list.length) };
+    }
+    return { ok: true };
+  }
+
   QMS.Controller.StoreSimulation = {
     SOURCE_KEYS: SOURCE_KEYS,
     MODE_TIMING: MODE_TIMING,
@@ -464,5 +503,6 @@
     simulationEligibility: simulationEligibility,
     runSimulationAnalysis: runSimulationAnalysis,
     activeNumbersOnBoard: activeNumbersOnBoard,
+    validateTicketsForBoardPush: validateTicketsForBoardPush,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this);

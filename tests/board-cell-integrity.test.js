@@ -63,6 +63,9 @@ function makeEl(tag, className) {
     getAttribute: function (k) {
       return this.attrs[k];
     },
+    removeAttribute: function (k) {
+      delete this.attrs[k];
+    },
     appendChild: function (child) {
       if (child.parentNode) {
         child.parentNode.removeChild(child);
@@ -235,6 +238,43 @@ test('syncZone: slot replacement during fade-out keeps one chip per cell', async
   await animDone;
   const badEnd = cellViolations(layer);
   assert.equal(badEnd.length, 0, JSON.stringify(badEnd));
+});
+
+test('syncZone: interrupted page turn hard-rebuilds slots', async function () {
+  const Anim = loadAnimModule();
+  const pageSize = 10;
+  const doc = {
+    createElement: function (tag) {
+      return makeEl(tag, tag === 'div' ? 'milksha-board-chip' : '');
+    },
+  };
+  const win = {
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    performance: { now: function () { return 0; } },
+  };
+  const animator = Anim.createBoardAnimator({
+    document: doc,
+    window: win,
+    pageSize: pageSize,
+    layoutPageGrid: layoutPageGrid,
+    pageCountForItems: function () {
+      return 2;
+    },
+  });
+  const { zone, layer } = buildZone(pageSize);
+  layer.setAttribute('data-page-turn-anim', '1');
+  seedChip(layer, 0, 'store:1111', '1111');
+  seedChip(layer, 1, 'store:2222', '2222');
+  const prev = [{ id: 'store:1111', number: '1111' }, { id: 'store:2222', number: '2222' }];
+  const next = [{ id: 'store:3333', number: '3333' }];
+  await animator.syncZone(zone, 'prep', next, 1, { prevItems: prev, prevPage: 0, pageTurn: false });
+  const bad = cellViolations(layer);
+  assert.equal(bad.length, 0, JSON.stringify(bad));
+  assert.ok(!layer.getAttribute('data-page-turn-anim'));
 });
 
 test('formatOrderNo from store simulation never exceeds 4 digits', function () {

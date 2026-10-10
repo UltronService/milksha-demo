@@ -2,64 +2,54 @@
 
 ## Root cause
 
-見 [ROOT-CAUSE.md](./ROOT-CAUSE.md)。`syncZone` 在淡出舊 chip 時未釋放 slot，新號碼 append 至同一 cell → 視覺黏成 8 位數。
+見 [ROOT-CAUSE.md](./ROOT-CAUSE.md)。`syncZone` 在 slot 仍被淡出 chip 占用時 append 新 chip；page-turn 中斷、分頁切換、背景分頁亦會留下 orphan／雙 chip。
 
-## Fix
+## Fix（#39 第二版）
 
-- `detachChipFromSlotForFade`：淡出 chip 移出 slot，於 numbers layer 絕對定位續播動畫。
-- `evictExtraChipsFromSlot`：插入前清掉 slot 內多餘 chip。
-- `removeOrphanLayerFloatChips`：`cancelAll` / `syncZone` 清掉已取消的浮層 chip，避免 peak 堆疊。
-- CSS：`.milksha-board-chip--layer-float` z-index。
+| # | 問題 | 修復 |
+|---|------|------|
+| 1 | Page 2 五格黏號／翻頁中更新 | 每格 **reconcile** 預期 id；**中斷翻頁** → `hardRebuildSlotsFromCells` |
+| 2 | 背景回前景 | `visibilitychange` → `commitBoardView({ silentApply, forceSnapshotSkip })` 全量重繪 |
+| 3 | 淡出 callback 不觸發 | `scheduleChipFadeOutRemove` + **timeout 強制 remove**；`cancelAll` 清 float |
+| 4 | 淡出占 slot | `detachChipFromSlotForFade` + 插入前 reconcile；跨區 **duplicate id 立即移除** |
 
-**變更檔：** `js/board/milksha-board-anim.js`、`css/milksha-board.css`
+**檔案：** `js/board/milksha-board-anim.js`、`js/milksha-board.js`  
+**模擬器（PR #20 對齊）：** `validateTicketsForBoardPush` + host 送出前檢查（`controller/store-simulation.js`）
 
-## Tests：main FAIL / branch PASS
+## QA repro script
 
-執行：`node scripts/verify-concat-tests-main-vs-branch.mjs`  
-完整輸出：[test-main-vs-branch.log](./test-main-vs-branch.log)
+`node scripts/run-bugconcat-repro.mjs`（本地 `mode=local`；公開站 `BUGCONCAT_PUBLIC=1`）  
+快測：`BUGCONCAT_SHORT=1`（各 90s）
 
-| 測試 | main (`origin/main` anim) | fix branch |
-|------|---------------------------|------------|
-| `tests/board-cell-integrity.test.js`（sync 當下 mid-sync） | **FAIL** `chips:2` slot 0/1 | **PASS** |
-| e2e `prep slot swap during fade-out` | **FAIL** `20252039` / `20222038` | **PASS** |
+| Build | SHORT repro | 說明 |
+|-------|-------------|------|
+| **main** anim/board | **FAIL** `reproduced=true` | [qa-repro-main-short.log](./qa-repro-main-short.log) |
+| **fix** branch | **PASS** `reproduced=false` | [qa-repro/results.json](./qa-repro/qa-repro/results.json) 路徑見 run log |
 
-## Local test results（branch）
+**15min peak + 15min normal（含 bg/fg）** 全量跑：`artifacts/board-concat-bug/qa-repro-15m.log`（tmux 進行中／完成後更新結論）
+
+## Unit / e2e
 
 | 項目 | 結果 |
 |------|------|
-| `npm test` | 182/182 pass |
-| `board-cell-single-number.spec.mjs`（含 fade / pulse / page turn / burst） | 6/6 pass（不含 3-min peak） |
-| `board-animation.spec.mjs` | 與上同批 CI |
-| `playwright test tests/e2e`（全量） | 進行中 → [full-e2e.log](./full-e2e.log) |
-| 3-min peak + detached drain | **1 passed (3.1m)** → [peak-3min.log](./peak-3min.log) |
-
-### main FAIL 摘要（e2e）
-
-```
-cell-chip-count chipCount:2 text:"20252039" nums:["2025","2039"]
-cell-chip-count chipCount:2 text:"20222038" nums:["2022","2038"]
-```
-
-### main FAIL 摘要（unit mid-sync）
-
-```
-mid-sync glued cells: [{"slot":0,"chips":2,"text":"2025"},{"slot":1,"chips":2,"text":"2022"}]
-```
+| `npm test` | 185/185 pass |
+| `verify-concat-tests-main-vs-branch.mjs` | main unit+e2e FAIL / fix PASS |
+| `board-cell-single-number.spec.mjs` | 6/6 pass |
+| `playwright test tests/e2e` | 見 CI |
 
 ## Commit / CI
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **Final SHA:** `6ded556c4eb5d7905459894f9359513509adbd65`
-- **CI run:** https://github.com/UltronService/milksha-demo/actions/runs/38040105330 （`in_progress` → 完成後更新 conclusion）
+- **SHA:** _(push 後填入)_
+- **CI:** _(green 後填入 run URL)_
+
+## CI 綠燈 ETA（台北）
+
+以 **18:05 台北** 推估：CI 含 3min peak + live cloud 長測，全量 e2e 約 **35–50 分** → 預估 **18:40–18:55 台北** 綠燈（若排隊更久可能接近 **19:00**）。15min×2 本地 QA 約 **18:35** 可讀 log。
 
 ## Manual UAT
 
-1. 開 `/?mode=local` 看板。
-2. 快速連續改兩批準備中號碼（或 controller 尖峰模擬）。
-3. 每格僅一個 4 位號；無 8 位黏字；動畫結束後無殘留浮層 chip。
-
-## 後續（未含本 PR）
-
-- 16:53 欄位溢位動畫：獨立 PR（ROOT-CAUSE.md）
-- 16:55 號碼規則：fix 合併後新分支（ROOT-CAUSE.md）
+1. 合併後公開站 zz-qa-store-a 尖峰 5 分鐘：準備區每格單號。
+2. 準備中 >10 等翻頁：第 2 頁無黏號。
+3. 看板分頁切背景 1 分鐘再回：無永久殘留半透明號碼。
