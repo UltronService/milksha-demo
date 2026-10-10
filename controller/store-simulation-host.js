@@ -91,6 +91,14 @@
 
     async function attemptSend(retryIndex) {
       const list = deps.getTickets();
+      if (Sim.validateTicketsForBoardPush) {
+        const check = Sim.validateTicketsForBoardPush(list);
+        if (!check.ok) {
+          deps.showBanner('模擬名單不符合看板規則：' + check.reason + (check.no ? ' (' + check.no + ')' : ''));
+          dirty = false;
+          return false;
+        }
+      }
       const json = ticketsJson(list);
       if (json === lastTicketsJson) {
         dirty = false;

@@ -252,6 +252,10 @@
   transform-origin: center center;
 }
 
+.milksha-zone-numbers .milksha-board-chip--layer-float {
+  z-index: 4;
+}
+
 .milksha-board.milksha-board--landscape-art .milksha-board-chip {
   position: relative;
 }

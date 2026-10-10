@@ -1,0 +1,45 @@
+{
+  "gitSha": "4dc3335",
+  "startedUtc": "2026-10-10T10:03:03.611Z",
+  "finishedUtc": "2026-10-10T10:33:05.653Z",
+  "startedTaipei": "2026-10-10 18:03:03",
+  "finishedTaipei": "2026-10-10 18:33:05",
+  "base": "http://127.0.0.1:8877",
+  "branchBuild": true,
+  "results": [
+    {
+      "id": "peak-15m-bg",
+      "mode": "peak",
+      "durationMs": 900000,
+      "flagEvents": [],
+      "violationCount": 0,
+      "maxDetachedFloatObserved": 0,
+      "endSnapshot": {
+        "detachedFloatCount": 0,
+        "duplicateItemIds": 0,
+        "orphanChipCount": 0,
+        "note": "Runner v1 did not persist end board read; counts inferred from zero flagEvents over 900 samples and no FLAG log lines."
+      },
+      "reproduced": false,
+      "sampleCount": 900
+    },
+    {
+      "id": "normal-15m-bg",
+      "mode": "normal",
+      "durationMs": 900000,
+      "flagEvents": [],
+      "violationCount": 0,
+      "maxDetachedFloatObserved": 0,
+      "endSnapshot": {
+        "detachedFloatCount": 0,
+        "duplicateItemIds": 0,
+        "orphanChipCount": 0,
+        "note": "Runner v1 did not persist end board read; counts inferred from zero flagEvents over 900 samples and no FLAG log lines."
+      },
+      "reproduced": false,
+      "sampleCount": 900
+    }
+  ],
+  "reproduced": false,
+  "tolerance": 0
+}

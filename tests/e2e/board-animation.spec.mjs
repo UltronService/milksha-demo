@@ -87,9 +87,12 @@ test.describe('board call animation specs 1–7', () => {
     }, batch);
     await page.waitForTimeout(350);
     await resetOpacityAnimCounter(page);
-    const turned = await page.evaluate(async () => window.QMS.runtime.advanceZonePageForTest('prep'));
+    const turnPromise = page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+    await expect(page.locator('.milksha-prep .milksha-zone-numbers[data-page-turn-anim="1"]')).toBeAttached({
+      timeout: 3000,
+    });
+    const turned = await turnPromise;
     expect(turned).toBe(true);
-    await expect(page.locator('.milksha-prep .milksha-zone-numbers[data-page-turn-anim="1"]')).toBeAttached();
     await page.waitForFunction(
       () => {
         const t = [...document.querySelectorAll('.milksha-prep .milksha-num')]

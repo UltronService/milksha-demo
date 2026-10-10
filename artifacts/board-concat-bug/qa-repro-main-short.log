@@ -1,0 +1,11 @@
+Main board files (origin/main js/board/milksha-board-anim.js + milksha-board.js)
+BUGCONCAT_SHORT=1 local repro — exit reproduced=true
+
+Sample flags:
+- multi-chip-cell prep cellIndex 0 concat 00110010
+- multi-chip-cell prep cellIndex 0 concat 00100027
+- multi-chip-cell prep cellIndex 3 concat 00170016
+- multi-chip-cell ready cellIndex 7 concat 00120011
+- multi-chip-cell prep cellIndex 1 concat 00280027
+
+Fix branch same script: reproduced=false (2026-10-10 run)

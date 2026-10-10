@@ -1,0 +1,460 @@
+=== board-cell-integrity.test.js on MAIN milksha-board-anim.js ===
+TAP version 13
+# Subtest: syncZone: slot replacement during fade-out keeps one chip per cell
+not ok 1 - syncZone: slot replacement during fade-out keeps one chip per cell
+  ---
+  duration_ms: 3.239384
+  location: '/workspace/tests/board-cell-integrity.test.js:197:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    mid-sync glued cells: [{"slot":0,"chips":2,"text":"2025"},{"slot":1,"chips":2,"text":"2022"}]
+    
+    2 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/tests/board-cell-integrity.test.js:234:10)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:979:25)
+    Test.start (node:internal/test_runner/test:877:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: formatOrderNo from store simulation never exceeds 4 digits
+ok 2 - formatOrderNo from store simulation never exceeds 4 digits
+  ---
+  duration_ms: 1.879226
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 41.046772
+
+
+exit: 1
+
+=== board-cell-single-number (prep slot swap) on MAIN anim ===
+
+Running 1 test using 1 worker
+
+
+
+
+
+[1A[2K[1/1] board-cell-single-number.spec.mjs:11:3 › board cell integrity (one number per grid cell) › prep slot swap during fade-out never glues digits
+[1A[2K  1) board-cell-single-number.spec.mjs:11:3 › board cell integrity (one number per grid cell) › prep slot swap during fade-out never glues digits 
+
+    Error: [{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20222038","nums":["2022","2038"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20222038"},{"kind":"cell-chip-count","zone":"milksha-zone milksha-prep prep","chipCount":2,"text":"20252039","nums":["2025","2039"]},{"kind":"cell-text","zone":"milksha-zone milksha-prep prep","text":"20252039"}]
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  -   1[39m
+    [31m+ Received  + 332[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2022",[39m
+    [31m+       "2038",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20222038",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "chipCount": 2,[39m
+    [31m+     "kind": "cell-chip-count",[39m
+    [31m+     "nums": Array [[39m
+    [31m+       "2025",[39m
+    [31m+       "2039",[39m
+    [31m+     ],[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+   Object {[39m
+    [31m+     "kind": "cell-text",[39m
+    [31m+     "text": "20252039",[39m
+    [31m+     "zone": "milksha-zone milksha-prep prep",[39m
+    [31m+   },[39m
+    [31m+ ][39m
+
+       at board-animation-helpers.mjs:168
+
+      166 |   sampling = false;
+      167 |   const finalSnap = await sampleOnce();
+    > 168 |   expect([...violations, ...finalSnap.violations], JSON.stringify([...violations, ...finalSnap.violations])).toEqual([]);
+          |                                                                                                              ^
+      169 |   expect(peakDetached, 'detached fade chips piled up').toBeLessThanOrEqual(maxDetachedAllowed);
+      170 |   return { peakDetached, finalDetached: finalSnap.detachedCount };
+      171 | }
+        at sampleIntegrityDuringUpdate (/workspace/tests/e2e/board-animation-helpers.mjs:168:110)
+        at /workspace/tests/e2e/board-cell-single-number.spec.mjs:13:45
+
+
+[1A[2K  1 failed
+    board-cell-single-number.spec.mjs:11:3 › board cell integrity (one number per grid cell) › prep slot swap during fade-out never glues digits 
+
+[1A[2K(node:9947) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1A[2K(node:9947) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+exit: 1
+
+=== board-cell-integrity.test.js on FIX branch anim ===
+TAP version 13
+# Subtest: syncZone: slot replacement during fade-out keeps one chip per cell
+ok 1 - syncZone: slot replacement during fade-out keeps one chip per cell
+  ---
+  duration_ms: 5.265391
+  ...
+# Subtest: formatOrderNo from store simulation never exceeds 4 digits
+ok 2 - formatOrderNo from store simulation never exceeds 4 digits
+  ---
+  duration_ms: 1.405587
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 43.670576
+
+exit: 0
+
+=== board-cell-single-number (prep slot swap) on FIX anim ===
+
+Running 1 test using 1 worker
+
+
+
+
+
+[1A[2K[1/1] board-cell-single-number.spec.mjs:11:3 › board cell integrity (one number per grid cell) › prep slot swap during fade-out never glues digits
+[1A[2K  1 passed (1.3s)
+
+exit: 0
+
+=== SUMMARY ===
+main unit FAIL expected: true
+main e2e FAIL expected: true
+fix unit PASS: true
+fix e2e PASS: true

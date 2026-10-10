@@ -1056,15 +1056,7 @@
         return;
       }
       boardAnimator.cancelAll(boardEl);
-      const chips = boardEl.querySelectorAll('.milksha-board-chip');
-      for (let i = 0; i < chips.length; i += 1) {
-        chips[i].style.opacity = '1';
-        chips[i].style.transform = '';
-      }
-      const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
-      for (let j = 0; j < layers.length; j += 1) {
-        layers[j].style.opacity = '1';
-      }
+      commitBoardView({ silentApply: true, forceSnapshotSkip: true });
     });
 
     win.addEventListener('resize', applyScale);
