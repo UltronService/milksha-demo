@@ -4,7 +4,9 @@ import { urlsLocalHomePoc } from './harness.mjs';
 export async function openLocalBoard(page) {
   const { board } = urlsLocalHomePoc();
   await page.goto(board);
-  await page.waitForFunction(() => Boolean(window.QMS?.runtime?.applyPayload), { timeout: 25000 });
+  await page.waitForFunction(() => Boolean(window.QMS?.runtime?.applyPayload), undefined, {
+    timeout: 25000,
+  });
 }
 
 /** Past first-payload + one silent reconnect so incremental updates may animate. */
@@ -43,6 +45,7 @@ export async function waitForChipsOpaque(page, timeout = 8000) {
         const o = getComputedStyle(el).opacity;
         return o === '1' || o === '';
       }),
+    undefined,
     { timeout },
   );
 }

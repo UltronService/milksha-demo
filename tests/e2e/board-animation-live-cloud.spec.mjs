@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { chromium } from 'playwright';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
+import { waitForChipsOpaque } from './board-animation-helpers.mjs';
 import { LIVE_CLOUD_BOARD_DEVICE, LIVE_CLOUD_STORE_ID } from './live-cloud-config.mjs';
-import { teardownLiveCloudSession } from './live-cloud-teardown.mjs';
+import { sendClearNow, teardownLiveCloudSession } from './live-cloud-teardown.mjs';
 
 /** @type {import('playwright').Browser | undefined} */
 let browser;
@@ -39,9 +40,10 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     await board.goto(
       `${GITHUB_PAGES_BASE}/?mode=cloud&store=${LIVE_CLOUD_STORE_ID}&device=${LIVE_CLOUD_BOARD_DEVICE}`,
     );
-    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 180000 });
+    await board.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 180000 });
     await ctrlNav;
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 180000 });
+    await sendClearNow(ctrl);
     const times = [];
     for (let i = 0; i < 5; i += 1) {
       const t0 = Date.now();
@@ -57,13 +59,6 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     for (let i = 0; i < times.length; i += 1) {
       expect(times[i]).toBeLessThanOrEqual(3000);
     }
-    await board.waitForFunction(
-      () =>
-        [...document.querySelectorAll('.milksha-board-chip')].every((el) => {
-          const o = getComputedStyle(el).opacity;
-          return o === '1' || o === '';
-        }),
-      { timeout: 15000 },
-    );
+    await waitForChipsOpaque(board, 15000);
   });
 });

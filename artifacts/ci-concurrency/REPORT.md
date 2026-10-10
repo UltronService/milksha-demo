@@ -17,12 +17,48 @@
 - `push` 僅限 `branches: [main]`；PR 分支更新只會觸發 `pull_request`（不會再觸發 `push`）。
 - 同一 PR 連續 push 時，workflow concurrency 會取消舊 run，避免並行兩套完整 CI。
 
-## 本 PR CI（含 live-cloud job）
+## Run 38081812688（`a20cd28`）失敗調查
 
-- Branch tip：`63b35cf`（workflow + REPORT；中間為 retrigger empty commit）
-- **全綠 run（合併依據）**：https://github.com/UltronService/milksha-demo/actions/runs/38072350546 — **success**（`test` + `e2e-live-cloud`，SHA `6e948f6`）
-- 首次 workflow 驗證 run：https://github.com/UltronService/milksha-demo/actions/runs/38065251681 — **success**
-- Workflow 變更 commit：`c46f948`
+### 1) 失敗 job 日誌（`e2e-live-cloud`）
+
+| 項目 | 內容 |
+|------|------|
+| Run | https://github.com/UltronService/milksha-demo/actions/runs/38081812688 |
+| Job | `e2e-live-cloud`（id `114300115578`），19:57:14–20:16:08 UTC |
+| 失敗測試 | `board-animation-live-cloud.spec.mjs` › `five sends within 3s and board animates` |
+| 通過測試 | `controller-simulation-live-cloud.spec.mjs`（約 8.4m） |
+| 表面錯誤 | `TimeoutError: page.waitForFunction: Timeout **180000ms** exceeded` @ spec 第 60 行（chip opacity 全部變不透明） |
+| 重試 | retry #0/#1/#2 皆在同一 opacity 等待失敗；整段 live-cloud **17.9m** |
+
+五次的「3 秒內出現在 ready 區」斷言（第 57–58 行）在三次重試中**都有跑到**（失敗點在後面的 opacity 等待，而非 3000ms 送號逾時）。
+
+### 2) 是否與其他 CI 同時寫 `zz-qa-ci-store`
+
+**有。** PR #41 的 `e2e-live-cloud` job 雖然掛了 `live-cloud-zz-qa-ci-store`，但**其他尚未合併本 PR 的分支**仍用舊 `ci.yml`：`npm run test:e2e`（含 live-cloud spec），**不會**進入該 concurrency group。
+
+同期範例（與 38081812688 重疊）：
+
+| Run | 分支 | 行為 |
+|-----|------|------|
+| [38081707389](https://github.com/UltronService/milksha-demo/actions/runs/38081707389) | `cursor/board-number-rules-a2ca`（PR #43） | 單一 `test` job、`npm run test:e2e` + `LIVE_CLOUD_STORE_ID=zz-qa-ci-store`；19:56:38 UTC 起跑 e2e |
+| [38081812688](https://github.com/UltronService/milksha-demo/actions/runs/38081812688) | `cursor/ci-live-cloud-concurrency-d85e` | `e2e-live-cloud` job 19:58:12 UTC 起跑真雲端兩 spec |
+
+PR #43 的 workflow 檔（SHA `7694bd1`）仍為整包 `test:e2e`，無 `live-cloud-zz-qa-ci-store` job。
+
+[38078717603](https://github.com/UltronService/milksha-demo/actions/runs/38078717603)（PR #43 較早一次 run）在 19:52 已結束，**不是** 38081812688 窗口內的並行寫入來源。
+
+### 3) 拆分 job 是否少 env / 少 server
+
+- `LIVE_CLOUD_STORE_ID`、`MILKSHA_E2E_ARTIFACTS`、`FONTCONFIG_FILE` 與舊版相同。
+- Live-cloud spec 用 `chromium.launch` + GitHub Pages 路由 shim，**不依賴**本地 `webServer` 內容；拆分前後一致。
+- **測試程式 bug（可重現）**：Playwright `page.waitForFunction(fn, { timeout: N })` 兩參數形式會把 `{ timeout }` 當成 **page 參數**而非 options，實際逾時變成 context 預設 **180s**。opacity 若因並店干擾未收斂，每次重試各等 180s → 與 17.9m 失敗時間吻合。
+
+### 4) 分支修正（非 flake 結論）
+
+- 修正 `waitForFunction` 第三參數傳 `timeout`（`board-animation-helpers`、`live-cloud-teardown`、live-cloud spec）。
+- `board-animation-live-cloud` 連線後先 `clear_now`，opacity 改用 `waitForChipsOpaque(..., 15000)`。
+
+合併 PR #41 後，其他分支 rebase 才會全部進 `live-cloud-zz-qa-ci-store` 排隊；合併前仍可能被舊 workflow 並寫。
 
 ## Concurrency 排隊驗證（兩個 PR 同時跑）
 
@@ -30,17 +66,15 @@
 
 | Run | Branch | `e2e-live-cloud` status |
 |-----|--------|-------------------------|
-| [38065251681](https://github.com/UltronService/milksha-demo/actions/runs/38065251681) | `cursor/ci-live-cloud-concurrency-d85e` | `in_progress`（job id 先啟動） |
-| [38065283913](https://github.com/UltronService/milksha-demo/actions/runs/38065283913) | `cursor/concurrency-probe-d85e` | `pending`（job id `114251563955`，`runner_name: null`，等待 concurrency group） |
+| [38065251681](https://github.com/UltronService/milksha-demo/actions/runs/38065251681) | `cursor/ci-live-cloud-concurrency-d85e` | `in_progress` |
+| [38065283913](https://github.com/UltronService/milksha-demo/actions/runs/38065283913) | `cursor/concurrency-probe-d85e` | `pending`（job `114251563955`） |
 
-```bash
-# 2026-10-10T15:51:14Z 擷取
-gh run view 38065251681 --json jobs --jq '.jobs[] | select(.name=="e2e-live-cloud") | {status, startedAt}'
-gh run view 38065283913 --json jobs --jq '.jobs[] | select(.name=="e2e-live-cloud") | {status, startedAt}'
-```
+## 本 PR CI（tip 全綠後更新）
 
-第二個 run 的 live-cloud job 維持 **pending** 直到第一個完成，符合「排隊、不搶跑、不 cancel 進行中」設定。
+- Branch tip SHA：_(push 後填入)_
+- 最新全綠 run：_(push 後填入)_
+- 確認重跑 run：_(push 後填入)_
 
 ## grep：未動 zz-qa-store-a
 
-此 PR 僅改 `.github/workflows/ci.yml` 與本 REPORT；未改產品碼與 `zz-qa-store-a` 相關測試。
+此 PR 僅改 CI workflow、live-cloud 相關 e2e helper/spec 與本 REPORT。
