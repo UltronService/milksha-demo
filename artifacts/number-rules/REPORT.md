@@ -4,7 +4,8 @@
 
 Second-line board guard at `partitionNumberContent` / `normalizeBoardDisplayNumber`:
 
-- Only render `/^\d{4}$/` values; drop invalid entries with `console.warn` once per distinct bad value.
+- Only render `/^\d{4}$/` **strings**; JSON `number` values are dropped (aligned with backend PR #19 — no coercion).
+- Drop other invalid entries with `console.warn` once per distinct bad value.
 - Dedupe within ready / within preparing; same number in both lists → **ready only**.
 - Payloads with **>50** valid entries still partition/render (push validation remains on simulator/backend).
 
@@ -21,9 +22,15 @@ Second-line board guard at `partitionNumberContent` / `normalizeBoardDisplayNumb
 | E2e | `tests/e2e/board-number-rules.spec.mjs` (local fake cloud only) |
 | Demo script | Non-numeric channel labels → 4-digit equivalents for ring regression |
 
+## QA fix — strings only (TDD)
+
+**Red (pre-fix on `d6f25fa`):** `node --test tests/board-number-rules.test.js` → **3 failed** — `normalizeBoardDisplayNumber(1001)` expected `null` got `"1001"`; partition dropped string siblings incorrectly when JSON numbers present.
+
+**Green (post-fix):** same suite **6/6 pass**; `board-number-rules.spec.mjs` includes e2e `JSON number 1001 is not displayed`.
+
 ## Commit / CI
 
 - Branch: `cursor/board-number-rules-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/43
-- **SHA:** `d6f25fa1d4ddb5df7b4fa9fcae07b030cb594ae7`
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38075430530 — **success**
+- **SHA:** _(CI head — updated after green run)_
+- **CI:** _(updated after green run)_
