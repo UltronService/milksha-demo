@@ -50,14 +50,14 @@ Log：[qa-repro-15m.log](./qa-repro-15m.log) · JSON：[qa-repro/results.json](.
 | `npm test` | 185/185 pass |
 | `verify-concat-tests-main-vs-branch.mjs` | main unit+e2e **FAIL** / fix **PASS** |
 | `board-cell-single-number.spec.mjs` | 6/6 pass |
-| `playwright test tests/e2e` | 見 CI（page-turn e2e 已修於 `b5d981b`） |
+| `playwright test tests/e2e` | **188 passed**（CI run `38046671066`；page-turn e2e 修於 `b5d981b`） |
 
 ## Commit / CI
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **SHA:** `4dc3335`（branch head；含 QA artifacts）
-- **CI:** 見 https://github.com/UltronService/milksha-demo/actions?query=branch%3Acursor%2Ffix-board-concat-numbers-a2ca（最新 run 結論見 Actions）
+- **SHA:** `0d3fbd9c9e9c4dae412dac6228ae7c1e97c7d3ec`
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38046671066 — **success**（completed 2026-10-10T11:38:31Z UTC）
 
 ## Manual UAT
 
