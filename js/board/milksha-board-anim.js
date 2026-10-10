@@ -6,10 +6,23 @@
 
   const QMS = (root.QMS = root.QMS || {});
 
-  const DURATION_MS = 300;
-  const PAGE_DURATION_MS = 500;
-  const READY_HIGHLIGHT_MS = 3000;
   const BULK_SNAPSHOT_MIN_ITEMS = 6;
+
+  function getAnimConfig() {
+    const cfgMod = QMS.MilkshaBoardAnimConfig;
+    if (cfgMod && cfgMod.getConfig) {
+      return cfgMod.getConfig();
+    }
+    return { opacityInMs: 300, pageDurationMs: 500, readyScale: 1.3, readyScaleInMs: 300, readyScaleHoldMs: 3000, readyScaleOutMs: 300 };
+  }
+
+  function getEffectiveReadyScale() {
+    const cfgMod = QMS.MilkshaBoardAnimConfig;
+    if (cfgMod && cfgMod.getEffectiveReadyScale) {
+      return cfgMod.getEffectiveReadyScale();
+    }
+    return { requested: 1.3, effective: 1.3 };
+  }
   const BULK_SNAPSHOT_MAX_OVERLAP_RATIO = 0.35;
 
   /**
@@ -223,6 +236,58 @@
    * @param {() => number} getGeneration
    * @returns {Promise<void>}
    */
+  /**
+   * @param {Element} el
+   * @param {number} peakScale
+   * @param {number} inMs
+   * @param {number} holdMs
+   * @param {number} outMs
+   * @param {number} generation
+   * @param {() => number} getGeneration
+   * @returns {Promise<void>}
+   */
+  function animateReadyPulse(el, peakScale, inMs, holdMs, outMs, generation, getGeneration) {
+    if (!el) {
+      return Promise.resolve();
+    }
+    const peak = Math.max(1, peakScale);
+    const total = inMs + holdMs + outMs;
+    if (!el.animate || total <= 0) {
+      snapOpacity(el, 1);
+      el.style.transform = '';
+      return Promise.resolve();
+    }
+    cancelElementAnimations(el);
+    el.style.transformOrigin = 'center center';
+    el.style.opacity = '0';
+    el.style.transform = 'scale(1)';
+    const inEnd = inMs / total;
+    const holdEnd = (inMs + holdMs) / total;
+    const anim = el.animate(
+      [
+        { opacity: 0, transform: 'scale(1)' },
+        { opacity: 1, transform: 'scale(' + peak + ')', offset: inEnd },
+        { opacity: 1, transform: 'scale(' + peak + ')', offset: holdEnd },
+        { opacity: 1, transform: 'scale(1)' },
+      ],
+      { duration: total, easing: 'ease-out', fill: 'forwards' },
+    );
+    return new Promise(function (resolve) {
+      anim.onfinish = function () {
+        if (getGeneration() !== generation) {
+          resolve();
+          return;
+        }
+        snapOpacity(el, 1);
+        el.style.transform = '';
+        resolve();
+      };
+      anim.oncancel = function () {
+        resolve();
+      };
+    });
+  }
+
   function animateTranslate(el, dx, dy, durationMs, generation, getGeneration) {
     if (!el || !el.animate || (dx === 0 && dy === 0)) {
       el.style.transform = '';
@@ -262,7 +327,6 @@
   function createBoardAnimator(deps) {
     let generation = 0;
     let opacityAnimRuns = 0;
-    const highlightTimers = {};
 
     function bumpGeneration() {
       generation += 1;
@@ -294,69 +358,30 @@
       return animateOpacity(el, from, to, durationMs, gen, getGeneration);
     }
 
-    function clearChipHighlight(chip) {
-      if (!chip) {
-        return;
-      }
-      chip.classList.remove('milksha-board-chip--highlight', 'milksha-board-chip--unhighlighting');
-    }
-
-    function cancelZoneHighlights(zoneEl) {
-      if (!zoneEl) {
-        return;
-      }
-      const chips = zoneEl.querySelectorAll('.milksha-board-chip--highlight, .milksha-board-chip--unhighlighting');
-      for (let i = 0; i < chips.length; i += 1) {
-        clearChipHighlight(chips[i]);
-      }
-    }
-
-    /**
-     * @param {Element} chip
-     * @param {string} timerKey
-     */
-    function scheduleReadyHighlight(chip, timerKey) {
-      if (!chip) {
-        return;
-      }
-      clearChipHighlight(chip);
-      chip.classList.add('milksha-board-chip--highlight');
-      if (highlightTimers[timerKey]) {
-        clearTimeout(highlightTimers[timerKey]);
-        delete highlightTimers[timerKey];
-      }
-      highlightTimers[timerKey] = setTimeout(function () {
-        delete highlightTimers[timerKey];
-        if (!chip.isConnected) {
-          return;
+    function runReadyPulseAnim(el, numbersLayer, gen) {
+      opacityAnimRuns += 1;
+      const cfg = getAnimConfig();
+      const scaleInfo = getEffectiveReadyScale();
+      const peak = scaleInfo.effective;
+      if (el && el.getAttribute) {
+        const id = el.getAttribute('data-item-id');
+        if (id) {
+          notePerf('ready-pulse-start', { id: id, peak: peak, requested: scaleInfo.requested });
         }
-        chip.classList.add('milksha-board-chip--unhighlighting');
-        let cleared = false;
-        const finish = function () {
-          if (cleared) {
-            return;
-          }
-          cleared = true;
-          chip.removeEventListener('transitionend', onEnd);
-          clearChipHighlight(chip);
-        };
-        const onEnd = function (ev) {
-          if (ev.target !== chip || ev.propertyName !== 'opacity') {
-            return;
-          }
-          finish();
-        };
-        chip.addEventListener('transitionend', onEnd);
-        setTimeout(finish, 400);
-      }, READY_HIGHLIGHT_MS);
+      }
+      return animateReadyPulse(
+        el,
+        peak,
+        cfg.readyScaleInMs,
+        cfg.readyScaleHoldMs,
+        cfg.readyScaleOutMs,
+        gen,
+        getGeneration,
+      );
     }
 
     function cancelAll(boardEl) {
       bumpGeneration();
-      Object.keys(highlightTimers).forEach(function (key) {
-        clearTimeout(highlightTimers[key]);
-        delete highlightTimers[key];
-      });
       if (!boardEl || typeof boardEl.querySelectorAll !== 'function') {
         return;
       }
@@ -368,7 +393,6 @@
       for (let j = 0; j < layers.length; j += 1) {
         clearMotionStyles(layers[j]);
       }
-      cancelZoneHighlights(boardEl);
     }
 
     /**
@@ -377,25 +401,29 @@
      * @param {Array<{ id: string, number: string }>} items
      * @param {number} page
      * @param {{
-     *   highlightIds?: string[],
      *   pageTurn?: boolean,
      *   clearAll?: boolean,
+     *   scalePulseIds?: string[],
+     *   skipReadyScale?: boolean,
      *   prevItems: Array<{ id: string, number: string }>,
      *   prevPage: number,
      * }} opts
      */
     function syncZone(zoneEl, zoneKey, items, page, opts) {
+      const animCfg = getAnimConfig();
+      const opacityInMs = animCfg.opacityInMs;
+      const pageDurationMs = animCfg.pageDurationMs;
       const gen = bumpGeneration();
       const numbersLayer = zoneEl.querySelector('.milksha-zone-numbers');
+      const scalePulseSet = {};
+      const pulseIds = opts.scalePulseIds || [];
+      for (let pi = 0; pi < pulseIds.length; pi += 1) {
+        scalePulseSet[pulseIds[pi]] = true;
+      }
+      const skipReadyScale = Boolean(opts.skipReadyScale);
       if (!numbersLayer) {
         return Promise.resolve();
       }
-      const highlightSet = {};
-      const highlightIds = opts.highlightIds || [];
-      for (let h = 0; h < highlightIds.length; h += 1) {
-        highlightSet[highlightIds[h]] = true;
-      }
-
       const prevItems = opts.prevItems || [];
       const prevPage = opts.prevPage || 0;
       const diff = diffVisibleSlots(prevItems, items, prevPage, page, deps.pageSize, deps.layoutPageGrid);
@@ -425,7 +453,7 @@
         for (let c = 0; c < existing.length; c += 1) {
           const chip = existing[c];
           promises.push(
-            runOpacityAnim(chip, 1, 0, DURATION_MS, gen).then(function () {
+            runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
               if (chip.parentNode) {
                 chip.parentNode.removeChild(chip);
               }
@@ -438,7 +466,7 @@
       if (pageTurn) {
         numbersLayer.setAttribute('data-page-turn-anim', '1');
         promises.push(
-          runOpacityAnim(numbersLayer, 1, 0, PAGE_DURATION_MS / 2, gen).then(function () {
+          runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
               return;
             }
@@ -455,7 +483,7 @@
               }
             }
             snapOpacity(numbersLayer, 0);
-            return runOpacityAnim(numbersLayer, 0, 1, PAGE_DURATION_MS / 2, gen);
+            return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen);
           }),
         );
         return Promise.all(promises);
@@ -469,7 +497,7 @@
         }
         removedChips.push(chip);
         promises.push(
-          runOpacityAnim(chip, 1, 0, DURATION_MS, gen).then(function () {
+          runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
             if (chip.parentNode) {
               chip.parentNode.removeChild(chip);
             }
@@ -494,13 +522,10 @@
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
-          if (diff.added.indexOf(id) >= 0) {
-            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
+          if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
+            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
           } else {
-            promises.push(runOpacityAnim(chip, 0, 1, DURATION_MS, gen));
-          }
-          if (zoneKey === 'ready' && highlightSet[id]) {
-            scheduleReadyHighlight(chip, zoneKey + ':' + id);
+            promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
         } else if (chip.parentNode !== slot) {
           slot.appendChild(chip);
@@ -520,17 +545,7 @@
           const after = chip.getBoundingClientRect();
           const dx = before.left - after.left;
           const dy = before.top - after.top;
-          promises.push(animateTranslate(chip, dx, dy, DURATION_MS, gen, getGeneration));
-        });
-        diff.added.forEach(function (id) {
-          if (zoneKey !== 'ready' || !highlightSet[id]) {
-            return;
-          }
-          const chip = chipById[id];
-          if (!chip) {
-            return;
-          }
-          scheduleReadyHighlight(chip, zoneKey + ':' + id);
+          promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
         });
       };
 
@@ -564,15 +579,17 @@
       resetOpacityAnimRuns: function () {
         opacityAnimRuns = 0;
       },
-      DURATION_MS: DURATION_MS,
-      PAGE_DURATION_MS: PAGE_DURATION_MS,
+      getAnimConfig: getAnimConfig,
     };
   }
 
   QMS.MilkshaBoardAnim = {
-    DURATION_MS: DURATION_MS,
-    PAGE_DURATION_MS: PAGE_DURATION_MS,
-    READY_HIGHLIGHT_MS: READY_HIGHLIGHT_MS,
+    getAnimConfig: getAnimConfig,
+    getEffectiveReadyScale: getEffectiveReadyScale,
+    computeSafeReadyScale: function () {
+      return getEffectiveReadyScale().effective;
+    },
+    animateReadyPulse: animateReadyPulse,
     visibleIdToSlot: visibleIdToSlot,
     diffSlotMaps: diffSlotMaps,
     diffVisibleSlots: diffVisibleSlots,

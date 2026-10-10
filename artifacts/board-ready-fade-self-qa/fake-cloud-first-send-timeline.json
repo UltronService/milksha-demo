@@ -1,0 +1,407 @@
+{
+  "generatedAt": "2026-10-09T12:37:23.316Z",
+  "store": "zz-qa-store-a",
+  "firstSendFiveRuns": {
+    "branch": {
+      "label": "branch",
+      "samples": [
+        {
+          "run": 1,
+          "clickToVisibleMs": 367,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 801
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 950
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 1046
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1094
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1245
+            },
+            {
+              "phase": "send-click",
+              "ms": 1245
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1612,
+              "clickToVisibleMs": 367
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 2,
+          "clickToVisibleMs": 387,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 802
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 879
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 959
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1003
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1142
+            },
+            {
+              "phase": "send-click",
+              "ms": 1142
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1529,
+              "clickToVisibleMs": 387
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 3,
+          "clickToVisibleMs": 401,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 802
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 977
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 1062
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1104
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1228
+            },
+            {
+              "phase": "send-click",
+              "ms": 1228
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1629,
+              "clickToVisibleMs": 401
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 4,
+          "clickToVisibleMs": 385,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 802
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 878
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 967
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1009
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1145
+            },
+            {
+              "phase": "send-click",
+              "ms": 1145
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1530,
+              "clickToVisibleMs": 385
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 5,
+          "clickToVisibleMs": 400,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 803
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 880
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 952
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 994
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1118
+            },
+            {
+              "phase": "send-click",
+              "ms": 1118
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1518,
+              "clickToVisibleMs": 400
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        }
+      ]
+    },
+    "main": {
+      "label": "main",
+      "samples": [
+        {
+          "run": 1,
+          "clickToVisibleMs": 394,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 803
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 874
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 962
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1005
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1133
+            },
+            {
+              "phase": "send-click",
+              "ms": 1133
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1527,
+              "clickToVisibleMs": 394
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 2,
+          "clickToVisibleMs": 407,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 801
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 874
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 948
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 990
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1109
+            },
+            {
+              "phase": "send-click",
+              "ms": 1109
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1516,
+              "clickToVisibleMs": 407
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 3,
+          "clickToVisibleMs": 379,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 802
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 879
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 940
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 982
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1126
+            },
+            {
+              "phase": "send-click",
+              "ms": 1126
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1505,
+              "clickToVisibleMs": 379
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 4,
+          "clickToVisibleMs": 404,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 801
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 877
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 947
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 990
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1109
+            },
+            {
+              "phase": "send-click",
+              "ms": 1109
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1513,
+              "clickToVisibleMs": 404
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        },
+        {
+          "run": 5,
+          "clickToVisibleMs": 395,
+          "timeline": [
+            {
+              "phase": "fake-cloud-listen-wait-800ms",
+              "ms": 803
+            },
+            {
+              "phase": "resetCloudState-done",
+              "ms": 880
+            },
+            {
+              "phase": "board-goto-submitted",
+              "ms": 998
+            },
+            {
+              "phase": "receiverCloud-true",
+              "ms": 1044
+            },
+            {
+              "phase": "controller-online",
+              "ms": 1169
+            },
+            {
+              "phase": "send-click",
+              "ms": 1169
+            },
+            {
+              "phase": "ready-num-visible",
+              "ms": 1564,
+              "clickToVisibleMs": 395
+            },
+            {
+              "phase": "board-rcv-timeline",
+              "events": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "note": "run1 timeline 含 fake-cloud 啟動、resetCloudState、receiverCloud、controller online、click→visible"
+}
