@@ -56,8 +56,8 @@ Log：[qa-repro-15m.log](./qa-repro-15m.log) · JSON：[qa-repro/results.json](.
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **SHA:** `b5d981b11b9cebfae3e1b9226d33e3fc23d6d51e`（含 QA artifacts 提交後以 branch head 為準）
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38046543162（`b5d981b` 觸發；結論見 Actions）
+- **SHA:** `4dc3335`（branch head；含 QA artifacts）
+- **CI:** 見 https://github.com/UltronService/milksha-demo/actions?query=branch%3Acursor%2Ffix-board-concat-numbers-a2ca（最新 run 結論見 Actions）
 
 ## Manual UAT
 
