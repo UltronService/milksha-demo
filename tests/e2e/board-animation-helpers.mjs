@@ -38,13 +38,40 @@ export async function opacityAnimRunsSinceReset(page) {
   });
 }
 
-export async function waitForChipsOpaque(page, timeout = 8000) {
+/** Live cloud: rapid ready sends stack chips; only some reach opacity 1 while all nums are visible. */
+export async function waitForReadyBoardAnimSettled(page, minReadyCount, timeout = 15000) {
   await page.waitForFunction(
-    () =>
-      [...document.querySelectorAll('.milksha-board-chip')].every((el) => {
+    (min) => {
+      if (document.querySelectorAll('.milksha-ready .milksha-num').length < min) {
+        return false;
+      }
+      const chips = [
+        ...document.querySelectorAll(
+          '.milksha-ready .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+        ),
+      ];
+      if (chips.length === 0) {
+        return true;
+      }
+      return chips.some((el) => {
         const o = getComputedStyle(el).opacity;
         return o === '1' || o === '';
-      }),
+      });
+    },
+    minReadyCount,
+    { timeout },
+  );
+}
+
+export async function waitForChipsOpaque(page, timeout = 8000) {
+  await page.waitForFunction(
+    () => {
+      const chips = [...document.querySelectorAll('.milksha-board-chip:not(.milksha-board-chip--layer-float)')];
+      return chips.every((el) => {
+        const o = getComputedStyle(el).opacity;
+        return o === '1' || o === '';
+      });
+    },
     undefined,
     { timeout },
   );
