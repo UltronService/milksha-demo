@@ -19,8 +19,10 @@
 
 ## 本 PR CI（含 live-cloud job）
 
-- Run（PR #41）：https://github.com/UltronService/milksha-demo/actions/runs/38065251681
-- Commit：`c46f948`
+- Branch tip：`6e948f6`
+- 最新全綠 run（PR #41）：https://github.com/UltronService/milksha-demo/actions/runs/38072350546 — **success**（`test` + `e2e-live-cloud` 皆綠）
+- 首次 workflow 驗證 run：https://github.com/UltronService/milksha-demo/actions/runs/38065251681 — **success**
+- Workflow 變更 commit：`c46f948`
 
 ## Concurrency 排隊驗證（兩個 PR 同時跑）
 
