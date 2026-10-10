@@ -1,8 +1,8 @@
 # 請取餐放大淡入（scale pulse）自測報告
 
-- **HEAD**: `013f1150af7f20eb4da4c08d2cb6fdf543c5a979`
+- **HEAD**: `718c75f04ab4fd7fc14d20f7187f28e567926a04`
 - **PR**: https://github.com/UltronService/milksha-demo/pull/36
-- **CI**: https://github.com/UltronService/milksha-demo/actions/runs/38006242530 — in progress
+- **CI**: https://github.com/UltronService/milksha-demo/actions/runs/38009141759 — **success**（功能 `013f115`：[38006242530](https://github.com/UltronService/milksha-demo/actions/runs/38006242530)）
 - **Base**: `c601df6`
 
 ## 規格（07:45 台北決議）
@@ -44,7 +44,7 @@
 |------|------|
 | `npm test` | **169 passed** |
 | `npx playwright test board-animation board-ready-scale-overlap` | **32+ passed**（含 20 overlap） |
-| `npm run test:e2e` 全量 | 見 CI |
+| `npm run test:e2e` 全量（CI 38006242530） | **182 passed**, **0 failed**, **1 skipped** |
 
 ## 動態預覽頁
 
