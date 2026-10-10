@@ -1,0 +1,201 @@
+{
+  "mode": "fake",
+  "store": "zz-qa-ci-store",
+  "timeline": [
+    {
+      "waitMs": 0,
+      "snap": {
+        "readyNums": 5,
+        "chipCount": 5,
+        "opacities": [
+          {
+            "text": "2005",
+            "opacity": "0.826459",
+            "inCell": true
+          },
+          {
+            "text": "2004",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2003",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2002",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2001",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 25
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 500,
+      "snap": {
+        "readyNums": 5,
+        "chipCount": 5,
+        "opacities": [
+          {
+            "text": "2005",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2004",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2003",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2002",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2001",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 25
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 2000,
+      "snap": {
+        "readyNums": 5,
+        "chipCount": 5,
+        "opacities": [
+          {
+            "text": "2005",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2004",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2003",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2002",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "2001",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 25
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 8000,
+      "snap": {
+        "readyNums": 5,
+        "chipCount": 5,
+        "opacities": [
+          {
+            "text": "2005",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2004",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2003",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2002",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2001",
+            "opacity": "1",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 25
+        }
+      },
+      "strictPass": true
+    },
+    {
+      "waitMs": 15000,
+      "snap": {
+        "readyNums": 5,
+        "chipCount": 5,
+        "opacities": [
+          {
+            "text": "2005",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2004",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2003",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2002",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2001",
+            "opacity": "1",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 25
+        }
+      },
+      "strictPass": true
+    }
+  ]
+}

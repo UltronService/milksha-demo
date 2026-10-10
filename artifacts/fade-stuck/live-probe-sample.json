@@ -1,0 +1,470 @@
+{
+  "mode": "live",
+  "store": "zz-qa-ci-store",
+  "timeline": [
+    {
+      "waitMs": 0,
+      "snap": {
+        "readyNums": 2,
+        "chipCount": 12,
+        "opacities": [
+          {
+            "text": "0033",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0032",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0029",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0028",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0027",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0024",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0023",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0022",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0021",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0020",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0013",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0012",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 72
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 500,
+      "snap": {
+        "readyNums": 3,
+        "chipCount": 13,
+        "opacities": [
+          {
+            "text": "0033",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0032",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0029",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0028",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0027",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0024",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0023",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0022",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0021",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0020",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "2005",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0013",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0012",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 77
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 2000,
+      "snap": {
+        "readyNums": 2,
+        "chipCount": 4,
+        "opacities": [
+          {
+            "text": "0019",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0018",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0017",
+            "opacity": "0.188471",
+            "inCell": true
+          },
+          {
+            "text": "0013",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 99
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 8000,
+      "snap": {
+        "readyNums": 4,
+        "chipCount": 14,
+        "opacities": [
+          {
+            "text": "0037",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0033",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0032",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0029",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0028",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0027",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0023",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0022",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0021",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0020",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0024",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0019",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0017",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0013",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 129
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 15000,
+      "snap": {
+        "readyNums": 7,
+        "chipCount": 17,
+        "opacities": [
+          {
+            "text": "0043",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0040",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0039",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0038",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0037",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0033",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0028",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0027",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0023",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0022",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0032",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0029",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0018",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0021",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0024",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0019",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0017",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 244
+        }
+      },
+      "strictPass": false
+    },
+    {
+      "waitMs": 45000,
+      "snap": {
+        "readyNums": 6,
+        "chipCount": 16,
+        "opacities": [
+          {
+            "text": "0055",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0051",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0050",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0049",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0048",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0047",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0045",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0040",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0039",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0037",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0046",
+            "opacity": "1",
+            "inCell": true
+          },
+          {
+            "text": "0027",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0043",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0038",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0023",
+            "opacity": "0",
+            "inCell": true
+          },
+          {
+            "text": "0033",
+            "opacity": "0",
+            "inCell": true
+          }
+        ],
+        "animProbe": {
+          "skipReason": "animate",
+          "opacityAnimRuns": 506
+        }
+      },
+      "strictPass": false
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "note": "Captured 2026-10-10 on cursor/fade-stuck-debug; store zz-qa-ci-store; strict = 5 in-cell chips opacity>=0.99",
+  "summary": "strictPass false at 0ms and 500ms; true from 2000ms through 15000ms",
+  "mode": "fake",
+  "store": "zz-qa-ci-store"
+}
