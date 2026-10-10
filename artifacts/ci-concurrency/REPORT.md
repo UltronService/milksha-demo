@@ -53,10 +53,21 @@ PR #43 的 workflow 檔（SHA `7694bd1`）仍為整包 `test:e2e`，無 `live-cl
 - Live-cloud spec 用 `chromium.launch` + GitHub Pages 路由 shim，**不依賴**本地 `webServer` 內容；拆分前後一致。
 - **測試程式 bug（可重現）**：Playwright `page.waitForFunction(fn, { timeout: N })` 兩參數形式會把 `{ timeout }` 當成 **page 參數**而非 options，實際逾時變成 context 預設 **180s**。opacity 若因並店干擾未收斂，每次重試各等 180s → 與 17.9m 失敗時間吻合。
 
-### 4) 分支修正（非 flake 結論）
+### 4) 分支修正（根因與對策）
 
-- 修正 `waitForFunction` 第三參數傳 `timeout`（`board-animation-helpers`、`live-cloud-teardown`、live-cloud spec）。
-- `board-animation-live-cloud` 連線後先 `clear_now`，opacity 改用 `waitForChipsOpaque(..., 15000)`。
+**根因 A — 測試 API 用法錯誤**  
+`page.waitForFunction(fn, { timeout: N })` 在 Playwright 會把 `{ timeout }` 當 **page 參數**，實際逾時變 context 預設 180s（與 38081812688 的 180000ms 錯誤一致）。
+
+**根因 B — 跨 PR 並寫 `zz-qa-ci-store`**  
+未合併 PR #41 的分支仍跑整包 `test:e2e`（例：38081707389、38084621347），不進 `live-cloud-zz-qa-ci-store` group。
+
+**根因 C — 斷言與真雲端 UI 行為不符（非產品 bug）**  
+本機重現：五次 ready 送號後，5 個號碼皆可见，但 ready 區多枚 chip 刻意維持 `opacity: 0`，僅部分 chip 為 `1`（DOM 最後一顆不一定是新號）。原「全部 chip opacity=1」斷言必敗。
+
+**修正**  
+- `waitForFunction` 改第三參數傳 `timeout`。  
+- live-cloud 連線後等 `data-board-online`、先 `clear_now`。  
+- 動畫結束改 `waitForReadyBoardAnimSettled`（5 個 ready 號 + 至少一枚非 float chip 已不透明）。
 
 合併 PR #41 後，其他分支 rebase 才會全部進 `live-cloud-zz-qa-ci-store` 排隊；合併前仍可能被舊 workflow 並寫。
 
