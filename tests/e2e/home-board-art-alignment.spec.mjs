@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { freshContext, urlsLocalHomePoc } from './harness.mjs';
-import { REF_BOARD_NUMBERS, buildRefBoardPayload } from './board-ref-fixtures.mjs';
+import {
+  REF_BOARD_NUMBERS_PREP,
+  REF_BOARD_NUMBERS_READY,
+  buildRefBoardPayload,
+} from './board-ref-fixtures.mjs';
 
 /** Same-batch tie-break uses payloadIndex DESC → newest array tail is top-left. */
-const REF_BOARD_NUMBERS_DISPLAY = [...REF_BOARD_NUMBERS].reverse();
+const REF_PREP_DISPLAY = [...REF_BOARD_NUMBERS_PREP].reverse();
+const REF_READY_DISPLAY = [...REF_BOARD_NUMBERS_READY].reverse();
 
 const CENTER_TOL_PX = 12;
 
@@ -174,8 +179,8 @@ for (const viewport of [
     await applyRefPayload(board);
     const result = await measureBoard(board, viewport);
     expect(result.ok, JSON.stringify(result)).toBe(true);
-    expect(result.prepNums).toEqual(REF_BOARD_NUMBERS_DISPLAY);
-    expect(result.readyNums).toEqual(REF_BOARD_NUMBERS_DISPLAY);
+    expect(result.prepNums).toEqual(REF_PREP_DISPLAY);
+    expect(result.readyNums).toEqual(REF_READY_DISPLAY);
     await ctx.close();
   });
 }
