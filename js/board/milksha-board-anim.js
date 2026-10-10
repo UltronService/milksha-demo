@@ -595,7 +595,10 @@
         scalePulseSet[pulseIds[pi]] = true;
       }
       const skipReadyScale = Boolean(opts.skipReadyScale);
-      const boardRoot = zoneEl.closest('.milksha-board') || zoneEl;
+      const boardRoot =
+        zoneEl && typeof zoneEl.closest === 'function'
+          ? zoneEl.closest('.milksha-board') || zoneEl
+          : zoneEl;
       if (!numbersLayer) {
         return Promise.resolve();
       }
