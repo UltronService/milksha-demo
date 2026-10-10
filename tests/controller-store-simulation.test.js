@@ -63,6 +63,57 @@ test('recordsToTickets output always passes validateTicketsForBoardPush', functi
   }
 });
 
+test('10k reconcile steps: validateTicketsForBoardPush always ok, prep and ready disjoint', function () {
+  const { Sim } = loadSimulation();
+  const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
+  const rng = mulberry32(4242);
+  Sim.startOrSwitchSimulation(state, 'peak', 1_000_000, [], rng);
+  const fourDigit = /^\d{4}$/;
+  for (let t = 0; t < 10000; t += 1) {
+    Sim.reconcileSimulation(state, 1_000_000 + t * 500, rng);
+    const now = 1_000_000 + t * 500;
+    const tickets = Sim.recordsToTickets(state.records, now);
+    const check = Sim.validateTicketsForBoardPush(tickets);
+    assert.equal(check.ok, true, JSON.stringify({ t, check }));
+    const ready = new Set();
+    const prep = new Set();
+    for (let i = 0; i < tickets.length; i += 1) {
+      const no = tickets[i].no;
+      assert.match(no, fourDigit);
+      assert.notEqual(no, '0000');
+      assert.ok(parseInt(no, 10) >= 1);
+      if (tickets[i].status === 'ready') {
+        assert.ok(!prep.has(no), 'overlap prep/ready ' + no);
+        ready.add(no);
+      } else {
+        assert.ok(!ready.has(no), 'overlap ready/prep ' + no);
+        prep.add(no);
+      }
+    }
+  }
+});
+
+test('wrap 9999 to 0001 without colliding with on-board numbers', function () {
+  const { Sim } = loadSimulation();
+  assert.equal(Sim.wrapOrderCounter(10000), 1);
+  assert.equal(Sim.formatOrderNo(Sim.wrapOrderCounter(10000)), '0001');
+  const state = Sim.createSimulationState({ lastIssuedNumber: 9998 });
+  const n1 = Sim.allocateNextNumber(state, new Set(), function () {
+    return 0.99;
+  });
+  assert.equal(n1, '9999');
+  const stateWrap = Sim.createSimulationState({ lastIssuedNumber: 9999 });
+  const nWrap = Sim.allocateNextNumber(stateWrap, new Set(), function () {
+    return 0.99;
+  });
+  assert.equal(nWrap, '0001');
+  const state2 = Sim.createSimulationState({ lastIssuedNumber: 9999 });
+  const n2 = Sim.allocateNextNumber(state2, new Set(['0001']), function () {
+    return 0.99;
+  });
+  assert.equal(n2, '0002');
+});
+
 test('jittered intervals stay within 50%-150% of mean', function () {
   const { Sim } = loadSimulation();
   const rng = mulberry32(42);
