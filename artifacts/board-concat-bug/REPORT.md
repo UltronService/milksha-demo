@@ -21,32 +21,43 @@
 `node scripts/run-bugconcat-repro.mjs`（本地 `mode=local`；公開站 `BUGCONCAT_PUBLIC=1`）  
 快測：`BUGCONCAT_SHORT=1`（各 90s）
 
+### main vs fix（SHORT）
+
 | Build | SHORT repro | 說明 |
 |-------|-------------|------|
-| **main** anim/board | **FAIL** `reproduced=true` | [qa-repro-main-short.log](./qa-repro-main-short.log) |
-| **fix** branch | **PASS** `reproduced=false` | `artifacts/board-concat-bug/qa-repro/results.json` |
+| **main** anim/board | **FAIL** `reproduced=true` | [qa-repro-main-short.log](./qa-repro-main-short.log)（multi-chip-cell／黏號樣本） |
+| **fix** branch | **PASS** `reproduced=false` | 同腳本本地 90s×2 |
 
-**15min peak + 15min normal（含 bg/fg）** 全量跑：`artifacts/board-concat-bug/qa-repro-15m.log`（tmux 進行中／完成後更新結論）
+### 15 min peak + 15 min normal（fake cloud，bg/fg ×4）
+
+Runner：`qa-repro-15m` tmux，`base=http://127.0.0.1:8877`，**2026-10-10 10:03–10:33 UTC**（18:03–18:33 台北）。  
+Log：[qa-repro-15m.log](./qa-repro-15m.log) · JSON：[qa-repro/results.json](./qa-repro/results.json)
+
+| Scenario | Samples (1 Hz) | Violations | Max detached (run) | End detached | End orphan chips |
+|----------|----------------|------------|--------------------|--------------|------------------|
+| `peak-15m-bg` | 900 | **0** | 0† | 0† | 0† |
+| `normal-15m-bg` | 900 | **0** | 0† | 0† | 0† |
+| **Total** | **1800** | **0** | — | — | — |
+
+†Acceptance run used runner v1 (no persisted end board read). Zero `FLAG` lines in log and empty `flagEvents`; `scripts/run-bugconcat-repro.mjs` now records `endSnapshot` / `maxDetachedFloatObserved` for future runs.
+
+**Overall:** `reproduced=false`, tolerance **0**.
 
 ## Unit / e2e
 
 | 項目 | 結果 |
 |------|------|
 | `npm test` | 185/185 pass |
-| `verify-concat-tests-main-vs-branch.mjs` | main unit+e2e FAIL / fix PASS |
+| `verify-concat-tests-main-vs-branch.mjs` | main unit+e2e **FAIL** / fix **PASS** |
 | `board-cell-single-number.spec.mjs` | 6/6 pass |
-| `playwright test tests/e2e` | 見 CI |
+| `playwright test tests/e2e` | 見 CI（page-turn e2e 已修於 `b5d981b`） |
 
 ## Commit / CI
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **SHA:** `e7591c6`（最新；CI 以 branch head 為準）
-- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38041302764 及後續 run（pending）
-
-## CI 綠燈 ETA（台北）
-
-以 **18:05 台北** 推估：CI 含 3min peak + live cloud 長測，全量 e2e 約 **35–50 分** → 預估 **18:40–18:55 台北** 綠燈（若排隊更久可能接近 **19:00**）。15min×2 本地 QA 約 **18:35** 可讀 log。
+- **SHA:** `b5d981b11b9cebfae3e1b9226d33e3fc23d6d51e`（含 QA artifacts 提交後以 branch head 為準）
+- **CI:** https://github.com/UltronService/milksha-demo/actions/runs/38046543162（`b5d981b` 觸發；結論見 Actions）
 
 ## Manual UAT
 

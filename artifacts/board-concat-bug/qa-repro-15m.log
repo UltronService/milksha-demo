@@ -1,0 +1,19 @@
+[2026-10-10T10:03:03.611Z] scenario peak-15m-bg start mode=peak durationMs=900000 base=http://127.0.0.1:8877
+[2026-10-10T10:05:04.495Z] scenario peak-15m-bg background 0 start
+[2026-10-10T10:06:34.073Z] scenario peak-15m-bg background 0 end
+[2026-10-10T10:08:04.656Z] scenario peak-15m-bg background 1 start
+[2026-10-10T10:10:04.471Z] scenario peak-15m-bg background 1 end
+[2026-10-10T10:11:03.887Z] scenario peak-15m-bg background 2 start
+[2026-10-10T10:12:34.471Z] scenario peak-15m-bg background 2 end
+[2026-10-10T10:14:04.026Z] scenario peak-15m-bg background 3 start
+[2026-10-10T10:15:34.641Z] scenario peak-15m-bg background 3 end
+[2026-10-10T10:18:04.593Z] scenario normal-15m-bg start mode=normal durationMs=900000 base=http://127.0.0.1:8877
+[2026-10-10T10:20:05.628Z] scenario normal-15m-bg background 0 start
+[2026-10-10T10:21:35.171Z] scenario normal-15m-bg background 0 end
+[2026-10-10T10:23:05.737Z] scenario normal-15m-bg background 1 start
+[2026-10-10T10:25:05.457Z] scenario normal-15m-bg background 1 end
+[2026-10-10T10:26:05.809Z] scenario normal-15m-bg background 2 start
+[2026-10-10T10:27:35.337Z] scenario normal-15m-bg background 2 end
+[2026-10-10T10:29:05.851Z] scenario normal-15m-bg background 3 start
+[2026-10-10T10:30:35.369Z] scenario normal-15m-bg background 3 end
+[2026-10-10T10:33:05.653Z] done reproduced=false

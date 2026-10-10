@@ -259,6 +259,7 @@ async function runScenario(ctx, board, ctrl, scenario) {
   const endAt = startedAt + durationMs;
   const flags = [];
   const orphanSince = new Map();
+  let maxDetachedFloat = 0;
   const bgSchedule = (backgroundCycles || []).map((bc, i) => ({
     ...bc,
     at: startedAt + bc.startOffsetMs,
@@ -283,6 +284,7 @@ async function runScenario(ctx, board, ctrl, scenario) {
     const tickets = await readTickets(ctrl);
     const ticketNos = tickets.map((t) => t.no);
     const boardSample = await readBoardSample(board);
+    maxDetachedFloat = Math.max(maxDetachedFloat, boardSample.detachedFloatCount || 0);
     const sample = { at: now, elapsedMs: now - startedAt, tickets, board: boardSample };
     const sampleFlags = analyzeFlags(sample, ticketNos, orphanSince);
     if (sampleFlags.length) {
@@ -293,11 +295,29 @@ async function runScenario(ctx, board, ctrl, scenario) {
   }
 
   await stopSim(ctrl);
+  await board.waitForTimeout(500);
+  const endTickets = await readTickets(ctrl);
+  const endTicketNos = endTickets.map((t) => t.no);
+  const endBoard = await readBoardSample(board);
+  const endOrphanFlags = analyzeFlags(
+    { at: Date.now(), board: endBoard },
+    endTicketNos,
+    new Map(),
+  ).filter((f) => f.kind === 'orphan-chip' || f.kind === 'duplicate-data-item-id');
+  const violationCount = flags.reduce((n, ev) => n + ev.flags.length, 0);
   return {
     id,
     mode,
     durationMs,
     flagEvents: flags,
+    violationCount,
+    maxDetachedFloatObserved: maxDetachedFloat,
+    endSnapshot: {
+      detachedFloatCount: endBoard.detachedFloatCount,
+      duplicateItemIds: endBoard.duplicateItemIds,
+      chipCount: endBoard.chipCount,
+      orphanChipCount: endOrphanFlags.length,
+    },
     reproduced: flags.length > 0,
     sampleCount: Math.floor(durationMs / SAMPLE_MS),
   };
@@ -343,7 +363,9 @@ async function main() {
   await browser.close();
 
   const report = {
+    gitSha: process.env.GIT_SHA || '',
     startedTaipei: taipeiNow(),
+    finishedUtc: new Date().toISOString(),
     base: BASE,
     branchBuild: !USE_PUBLIC,
     results,
