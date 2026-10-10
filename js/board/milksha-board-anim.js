@@ -189,6 +189,58 @@
     el.style.opacity = '';
     el.style.transform = '';
     el.style.willChange = '';
+    el.classList.remove('milksha-board-chip--layer-float');
+    el.style.position = '';
+    el.style.left = '';
+    el.style.top = '';
+    el.style.width = '';
+    el.style.height = '';
+    el.style.pointerEvents = '';
+  }
+
+  /**
+   * Reparent a chip onto the numbers layer so its slot can accept a replacement while fade-out runs.
+   * @param {Element} chip
+   * @param {Element} numbersLayer
+   */
+  function detachChipFromSlotForFade(chip, numbersLayer) {
+    if (!chip || !numbersLayer || chip.parentNode === numbersLayer) {
+      return;
+    }
+    const parent = chip.parentNode;
+    if (!parent || !parent.classList || !parent.classList.contains('milksha-num-cell')) {
+      return;
+    }
+    const layerRect = numbersLayer.getBoundingClientRect();
+    const chipRect = chip.getBoundingClientRect();
+    chip.classList.add('milksha-board-chip--layer-float');
+    chip.style.position = 'absolute';
+    chip.style.left = chipRect.left - layerRect.left + 'px';
+    chip.style.top = chipRect.top - layerRect.top + 'px';
+    chip.style.width = chipRect.width + 'px';
+    chip.style.height = chipRect.height + 'px';
+    chip.style.pointerEvents = 'none';
+    numbersLayer.appendChild(chip);
+  }
+
+  /**
+   * @param {Element} slot
+   * @param {Element | null | undefined} keepChip
+   */
+  function evictExtraChipsFromSlot(slot, keepChip) {
+    if (!slot || typeof slot.querySelectorAll !== 'function') {
+      return;
+    }
+    const chips = slot.querySelectorAll('.milksha-board-chip');
+    for (let i = 0; i < chips.length; i += 1) {
+      const c = chips[i];
+      if (keepChip && c === keepChip) {
+        continue;
+      }
+      if (c.parentNode === slot) {
+        slot.removeChild(c);
+      }
+    }
   }
 
   /**
@@ -496,6 +548,7 @@
           return;
         }
         removedChips.push(chip);
+        detachChipFromSlotForFade(chip, numbersLayer);
         promises.push(
           runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
             if (chip.parentNode) {
@@ -514,6 +567,7 @@
         const id = cell.id;
         let chip = chipById[id];
         if (!chip) {
+          evictExtraChipsFromSlot(slot, null);
           chip = deps.document.createElement('div');
           chip.className = 'milksha-board-chip';
           chip.setAttribute('data-item-id', id);
@@ -528,7 +582,10 @@
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
         } else if (chip.parentNode !== slot) {
+          evictExtraChipsFromSlot(slot, chip);
           slot.appendChild(chip);
+        } else {
+          evictExtraChipsFromSlot(slot, chip);
         }
       }
 
