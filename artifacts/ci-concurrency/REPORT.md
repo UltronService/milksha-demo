@@ -80,11 +80,12 @@ PR #43 的 workflow 檔（SHA `7694bd1`）仍為整包 `test:e2e`，無 `live-cl
 | [38065251681](https://github.com/UltronService/milksha-demo/actions/runs/38065251681) | `cursor/ci-live-cloud-concurrency-d85e` | `in_progress` |
 | [38065283913](https://github.com/UltronService/milksha-demo/actions/runs/38065283913) | `cursor/concurrency-probe-d85e` | `pending`（job `114251563955`） |
 
-## 本 PR CI（tip 全綠後更新）
+## 本 PR CI（tip 全綠）
 
-- Branch tip SHA：_(push 後填入)_
-- 最新全綠 run：_(push 後填入)_
-- 確認重跑 run：_(push 後填入)_
+- Branch tip SHA：`c8712b9`
+- 全綠 run #1：https://github.com/UltronService/milksha-demo/actions/runs/38086805485（`7e49ad9`，`test` + `e2e-live-cloud`）
+- 全綠 run #2（確認）：https://github.com/UltronService/milksha-demo/actions/runs/38088944616（`c8712b9` empty retrigger）
+- 失敗調查 run：https://github.com/UltronService/milksha-demo/actions/runs/38081812688（`a20cd28`，見上文）
 
 ## grep：未動 zz-qa-store-a
 
