@@ -25,7 +25,7 @@ $ rg 'zz-qa-store-a' tests/e2e/*live-cloud* tests/e2e/live-cloud*.mjs .github/wo
 ## Git
 
 - Branch: `cursor/ci-live-cloud-store-d85e`
-- Commit SHA: _(see below after commit)_
+- Commit SHA: `da1db39`
 
 ## GitHub Actions
 
