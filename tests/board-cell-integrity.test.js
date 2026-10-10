@@ -79,30 +79,47 @@ function makeEl(tag, className) {
       }
       return child;
     },
-    querySelector: function () {
-      return null;
+    querySelector: function (sel) {
+      const all = this.querySelectorAll(sel);
+      return all.length ? all[0] : null;
     },
     querySelectorAll: function (sel) {
       const out = [];
+      const self = this;
+      function matches(el) {
+        if (sel === '.milksha-zone-numbers') {
+          return el.classList.contains('milksha-zone-numbers');
+        }
+        if (sel === '.milksha-num-cell') {
+          return el.classList.contains('milksha-num-cell');
+        }
+        if (sel === '.milksha-board-chip[data-item-id]') {
+          return el.classList.contains('milksha-board-chip');
+        }
+        if (sel === '.milksha-board-chip') {
+          return el.classList.contains('milksha-board-chip');
+        }
+        if (sel === '.milksha-board-chip--layer-float') {
+          return el.classList.contains('milksha-board-chip--layer-float');
+        }
+        return false;
+      }
       function walk(n) {
         if (!n || !n.children) {
           return;
         }
         for (let i = 0; i < n.children.length; i += 1) {
           const c = n.children[i];
-          if (sel === '.milksha-zone-numbers' && c.classList.contains('milksha-zone-numbers')) {
-            out.push(c);
-          }
-          if (sel === '.milksha-num-cell' && c.classList.contains('milksha-num-cell')) {
-            out.push(c);
-          }
-          if (sel === '.milksha-board-chip[data-item-id]' && c.classList.contains('milksha-board-chip')) {
+          if (matches(c)) {
             out.push(c);
           }
           walk(c);
         }
       }
-      walk(this);
+      if (matches(self)) {
+        out.push(self);
+      }
+      walk(self);
       return out;
     },
     getBoundingClientRect: function () {
@@ -212,10 +229,12 @@ test('syncZone: slot replacement during fade-out keeps one chip per cell', async
     { id: 'store:2038', number: '2038' },
   ];
 
-  await animator.syncZone(zone, 'prep', next, 0, { prevItems: prev, prevPage: 0 });
-
-  const bad = cellViolations(layer);
-  assert.equal(bad.length, 0, JSON.stringify(bad));
+  const animDone = animator.syncZone(zone, 'prep', next, 0, { prevItems: prev, prevPage: 0 });
+  const badMid = cellViolations(layer);
+  assert.equal(badMid.length, 0, 'mid-sync glued cells: ' + JSON.stringify(badMid));
+  await animDone;
+  const badEnd = cellViolations(layer);
+  assert.equal(badEnd.length, 0, JSON.stringify(badEnd));
 });
 
 test('formatOrderNo from store simulation never exceeds 4 digits', function () {

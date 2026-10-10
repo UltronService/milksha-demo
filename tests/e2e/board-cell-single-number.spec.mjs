@@ -4,12 +4,13 @@ import {
   assertEachCellSingleNumber,
   sampleIntegrityDuringUpdate,
   findCellIntegrityViolations,
+  getBoardIntegritySnapshot,
 } from './board-animation-helpers.mjs';
 
 test.describe('board cell integrity (one number per grid cell)', () => {
   test('prep slot swap during fade-out never glues digits', async ({ page }) => {
     await primeBoardForAnimation(page);
-    await sampleIntegrityDuringUpdate(page, async () => {
+    const { peakDetached, finalDetached } = await sampleIntegrityDuringUpdate(page, async () => {
       await page.evaluate(() => {
         window.QMS.runtime.applyPayload([
           { source_type: 'From_Store_Preparing', number: '2025' },
@@ -24,6 +25,42 @@ test.describe('board cell integrity (one number per grid cell)', () => {
         ]);
       });
     });
+    expect(finalDetached).toBe(0);
+    expect(peakDetached).toBeLessThanOrEqual(4);
+  });
+
+  test('fade-out plus new data: detached chips drain', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    for (let i = 0; i < 6; i += 1) {
+      const base = 6000 + i * 2;
+      await sampleIntegrityDuringUpdate(
+        page,
+        async () => {
+          await page.evaluate(
+            ([a, b]) => {
+              window.QMS.runtime.applyPayload([
+                { source_type: 'From_Store_Preparing', number: a },
+                { source_type: 'From_Store_Preparing', number: b },
+              ]);
+            },
+            [String(base), String(base + 1)],
+          );
+          await page.waitForTimeout(20);
+          await page.evaluate(
+            ([a, b]) => {
+              window.QMS.runtime.applyPayload([
+                { source_type: 'From_Store_Preparing', number: b },
+                { source_type: 'From_Store_Preparing', number: a },
+              ]);
+            },
+            [String(base + 2), String(base + 3)],
+          );
+        },
+        { samples: 20, intervalMs: 25 },
+      );
+    }
+    const snap = await getBoardIntegritySnapshot(page);
+    expect(snap.detachedCount).toBe(0);
   });
 
   test('prep→ready while new prep arrives: sampled cells stay valid', async ({ page }) => {
