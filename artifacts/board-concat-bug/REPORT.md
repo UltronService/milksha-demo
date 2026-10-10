@@ -30,15 +30,28 @@
 | `npm test` | 182/182 pass |
 | `board-cell-single-number.spec.mjs`（含 fade / pulse / page turn / burst） | 6/6 pass（不含 3-min peak） |
 | `board-animation.spec.mjs` | 與上同批 CI |
-| `playwright test tests/e2e`（全量） | 見 [full-e2e.log](./full-e2e.log) |
-| 3-min peak + detached drain | 見 [peak-3min.log](./peak-3min.log) |
+| `playwright test tests/e2e`（全量） | 進行中 → [full-e2e.log](./full-e2e.log) |
+| 3-min peak + detached drain | **1 passed (3.1m)** → [peak-3min.log](./peak-3min.log) |
+
+### main FAIL 摘要（e2e）
+
+```
+cell-chip-count chipCount:2 text:"20252039" nums:["2025","2039"]
+cell-chip-count chipCount:2 text:"20222038" nums:["2022","2038"]
+```
+
+### main FAIL 摘要（unit mid-sync）
+
+```
+mid-sync glued cells: [{"slot":0,"chips":2,"text":"2025"},{"slot":1,"chips":2,"text":"2022"}]
+```
 
 ## Commit / CI
 
 - Branch: `cursor/fix-board-concat-numbers-a2ca`
 - PR: https://github.com/UltronService/milksha-demo/pull/39
-- **Final SHA:** _(pending push)_
-- **CI run:** _(pending green)_
+- **Final SHA:** `6ded556c4eb5d7905459894f9359513509adbd65`
+- **CI run:** https://github.com/UltronService/milksha-demo/actions/runs/38040105330 （`in_progress` → 完成後更新 conclusion）
 
 ## Manual UAT
 
