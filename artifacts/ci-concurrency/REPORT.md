@@ -82,7 +82,7 @@ PR #43 的 workflow 檔（SHA `7694bd1`）仍為整包 `test:e2e`，無 `live-cl
 
 ## 本 PR CI（tip 全綠）
 
-- Branch tip SHA：`c8712b9`
+- Branch tip SHA：`66c6e38`（REPORT 更新；程式修正見 `7e49ad9` / `cab20a9`）
 - 全綠 run #1：https://github.com/UltronService/milksha-demo/actions/runs/38086805485（`7e49ad9`，`test` + `e2e-live-cloud`）
 - 全綠 run #2（確認）：https://github.com/UltronService/milksha-demo/actions/runs/38088944616（`c8712b9` empty retrigger）
 - 失敗調查 run：https://github.com/UltronService/milksha-demo/actions/runs/38081812688（`a20cd28`，見上文）
