@@ -597,6 +597,17 @@
       return page;
     }
 
+    function isBoardMotionOn() {
+      try {
+        if (!win.location) {
+          return false;
+        }
+        return new URLSearchParams(win.location.search).get('motion') === 'on';
+      } catch (_err) {
+        return false;
+      }
+    }
+
     function prefersReducedMotion() {
       try {
         return Boolean(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -651,6 +662,9 @@
     }
 
     function shouldSkipMotion(silentApply, prevPrep, prevReady, forceSnapshotSkip) {
+      if (!isBoardMotionOn()) {
+        return { skip: true, reason: 'motion-off' };
+      }
       const animApi = QMS.MilkshaBoardAnim;
       if (!animApi || !animApi.shouldSkipBoardAnimations) {
         return { skip: true, reason: 'anim-module-missing' };
@@ -762,7 +776,7 @@
         lastRenderedReady = readyItems.slice();
         lastRenderedPrepPage = prepPage;
         lastRenderedReadyPage = readyPage;
-        return;
+        return Promise.resolve();
       }
       const numbersLayer = zone.querySelector('.milksha-zone-numbers');
       const cellEls = numbersLayer
@@ -775,12 +789,12 @@
         } else {
           lastRenderedReadyPage = page;
         }
-        return;
+        return Promise.resolve();
       }
       const prevItems = zoneKey === 'prep' ? lastRenderedPrep : lastRenderedReady;
       const prevPage = zoneKey === 'prep' ? lastRenderedPrepPage : lastRenderedReadyPage;
       const animator = ensureBoardAnimator();
-      const pageMotionOk = !prefersReducedMotion() && canUseWebAnimations();
+      const pageMotionOk = isBoardMotionOn() && !prefersReducedMotion() && canUseWebAnimations();
       if (pageMotionOk && animator) {
         const animDone = animator.syncZone(zone, zoneKey, items, page, {
           prevItems: prevItems,
