@@ -1,9 +1,9 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**Base:** `main` @ `b24cd2d` (includes #43 `f9d0513` newest-first board partition)  
-**HEAD:** `604565b`  
-**PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
+**Base:** `main` @ `9846953` (#44 ready fade / transparency fix) atop #43 `f9d0513`  
+**HEAD:** `5f6f8cd`  
+**PR:** https://github.com/UltronService/milksha-demo/pull/46  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
 ## TDD summary (boundary order)
@@ -19,28 +19,29 @@
 | 8 | Settled numbers match layout queue / `layoutPageGrid` | e2e test 8 + `layoutQueueNumbers` |
 | 9–10 | 1080p / 4K contact sheets | `artifacts/column-move/screenshots/column-move-prep-1080p.png`, `column-move-prep-4k.png` |
 
-**Unit:** `tests/column-move-plan.test.js` (`detectColumnMovePlan` sixth-on-page, including newest-first `enterSlot === 0`).
+**Unit:** `tests/column-move-plan.test.js`; **#44 regression:** `tests/board-ready-fade-regression.test.js` (203 tests in `npm test`).
 
 ## Implementation notes
 
-- Isolated helpers in `js/board/milksha-board-anim.js`: `detectColumnMovePlan`, `animateColumnMoveSlideDownOut`, `animateColumnMoveEnterFromAbove` (no edits to ready-pulse / fade-in paths).
-- Sixth-on-page detection uses **visible count 5→6** (not fixed slot 5) so newest-first prep queues (#43) trigger column-move.
-- Exit motion uses **layer clones** so in-cell chips stay intact (#39 one-chip-per-cell).
-- Post-move settle runs **only when `columnMovePlan` is active** — avoids clearing ready 1.3× pulse transforms on every sync.
-- Config: `columnMoveMs` (default 300) in `milksha-board-anim-config.js` (`animColumnMove` URL param).
+- Isolated column-move helpers in `js/board/milksha-board-anim.js` (no edits to `animateReadyPulse` / ready-pulse timing).
+- Merged with **#44**: `snapOpacity` on cancel + moved-chip slot reconcile (`movedIdSet`) preserved alongside column-move paths.
+- Sixth-on-page: visible count **5→6** (newest-first #43).
+- Column-move settle: opacity on hold chips; clear **transform** only on enter-from-above chips (does not reset ready 1.3× pulse on unrelated cells).
+- Config: `columnMoveMs` (default 300) in `milksha-board-anim-config.js`.
 - **Stores:** local fake-cloud e2e only; no `zz-qa-store-a`.
 
-## Local verification
+## Local verification (`5f6f8cd`)
 
 ```text
-npm test → 195 pass
-npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10 pass
+npm test → 203 pass (includes board-ready-fade-regression.test.js)
+npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10
+npx playwright test tests/e2e/board-ready-fade-multi-apply.spec.mjs tests/e2e/board-ready-fade-pulse-cancel.spec.mjs → pass
+npx playwright test tests/e2e/board-cell-peak-simulation.spec.mjs → pass
 ```
 
 ## CI
 
-- Prior failure (opacity / plan on #43 order): https://github.com/UltronService/milksha-demo/actions/runs/38105816755
-- Latest run: _(after push on `604565b`)_
+- **Green:** https://github.com/UltronService/milksha-demo/actions/runs/38112772401 (`5f6f8cd`, full `npm test` + `test:e2e` including live-cloud fade).
 
 ## Contact sheets
 
