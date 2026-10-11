@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * RED: real cloud zz-qa-ci-store — fails (exit 1) if any sampled frame has cross-zone numbers.
- * Uses git archive site root (default 4146812) + Pages route.
+ * RED: real cloud zz-qa-ci-store — exit 1 when cross-zone numbers appear on sampled frames.
  */
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,11 +8,10 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { extractCommitSiteRoot } from '../pr53-live/real-cloud-harness.mjs';
 import { readCrossZoneViolations } from './cross-zone-assert.mjs';
+import { readFrameEvidence, inferMotionInFlight } from './frame-evidence.mjs';
 import {
   installRealCloudRoutes,
-  publicUrls,
   waitOnline,
-  clearNow,
   fireTicket,
   addTicket,
 } from '../pr53-live/real-cloud-harness.mjs';
@@ -29,11 +27,17 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function slotForNumber(slots, num) {
+  const hit = slots.find((s) => s.num === num);
+  return hit ? hit.slot : null;
+}
+
 async function main() {
   mkdirSync(ART, { recursive: true });
   const { dir, cleanup } = await extractCommitSiteRoot(SHA, ROOT);
   const allViolations = [];
-  const frames = [];
+  const failingFrames = [];
+  let cycleApplyStartIdx = 0;
   try {
     const browser = await chromium.launch({ headless: true });
     const ctx = await browser.newContext({ viewport: VP });
@@ -42,7 +46,12 @@ async function main() {
     const board = await ctx.newPage();
     const ctrl = await ctx.newPage();
     await waitOnline(board, ctrl);
-    await clearNow(ctrl, board);
+    await teardownLiveCloudSession(ctrl, board);
+    await board.evaluate(() => {
+      if (window.__pr53Diag) {
+        window.__pr53Diag.applyPayloadCalls = [];
+      }
+    });
     for (let i = 0; i < 12; i += 1) {
       await addTicket(ctrl, board, 'preparing', String(7100 + i), 'prep');
     }
@@ -50,17 +59,43 @@ async function main() {
       await addTicket(ctrl, board, 'ready', String(8100 + i), 'ready');
     }
     for (let c = 0; c < CYCLES; c += 1) {
+      cycleApplyStartIdx = await board.evaluate(
+        () => window.__pr53Diag?.applyPayloadCalls?.length ?? 0,
+      );
       await board.waitForTimeout(5200);
       await fireTicket(ctrl, 'preparing', String(7200 + c));
       const t0 = Date.now();
       while (Date.now() - t0 < 6500) {
+        const tMs = Date.now() - t0;
         const v = await readCrossZoneViolations(board);
         if (!v.ok && v.violations?.length) {
+          const evidence = await readFrameEvidence(board);
+          const applySinceCycle = await board.evaluate((start) => {
+            const all = window.__pr53Diag?.applyPayloadCalls ?? [];
+            return all.slice(start);
+          }, cycleApplyStartIdx);
           for (const x of v.violations) {
-            allViolations.push({ cycle: c, tMs: Date.now() - t0, ...x });
+            const zoneSlots = x.zone === 'ready' ? evidence.slots.ready : evidence.slots.prep;
+            const row = {
+              cycle: c,
+              tMs,
+              number: x.number,
+              zone: x.zone,
+              slot: slotForNumber(zoneSlots, x.number),
+              indicator: x.indicator,
+              motionInFlight: inferMotionInFlight(evidence.motion),
+              motion: evidence.motion,
+              slots: evidence.slots,
+              snapshot: evidence.snapshot,
+              applyPayloadSinceCycleStart: applySinceCycle,
+              applyPayloadJustBefore: applySinceCycle.slice(-8),
+            };
+            allViolations.push(row);
+            if (failingFrames.length < 15) {
+              failingFrames.push(row);
+            }
           }
         }
-        frames.push({ cycle: c, tMs: Date.now() - t0, ...(await readCrossZoneViolations(board)) });
         await sleep(50);
       }
     }
@@ -71,14 +106,28 @@ async function main() {
   }
   const unique = [...new Map(allViolations.map((v) => [`${v.cycle}:${v.zone}:${v.number}`, v])).values()];
   const out = {
+    store: 'zz-qa-ci-store',
     sha: SHA,
     cycles: CYCLES,
+    viewport: `${VP.w}x${VP.h}`,
     violationEvents: allViolations.length,
-    uniqueViolations: unique,
+    uniqueViolationCount: unique.length,
+    uniqueViolations: unique.map((u) => ({
+      cycle: u.cycle,
+      number: u.number,
+      zone: u.zone,
+      slot: u.slot,
+      motionInFlight: u.motionInFlight,
+    })),
     red: unique.length > 0,
+    exitCode: unique.length > 0 ? 1 : 0,
   };
   writeFileSync(join(ART, 'real-cloud-red-result.json'), JSON.stringify(out, null, 2));
-  writeFileSync(join(ART, 'real-cloud-red-frames-sample.json'), JSON.stringify(frames.slice(0, 200), null, 2));
+  writeFileSync(join(ART, 'real-cloud-red-failing-frames.json'), JSON.stringify(failingFrames, null, 2));
+  writeFileSync(
+    join(ART, 'REAL-CLOUD-RED-RUN.md'),
+    `# Real-cloud RED run\n\n- red: ${out.red}\n- unique violations: ${out.uniqueViolationCount}\n- events: ${out.violationEvents}\n`,
+  );
   console.log(JSON.stringify(out, null, 2));
   process.exit(unique.length > 0 ? 1 : 0);
 }

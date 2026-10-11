@@ -27,14 +27,20 @@ jobs:
       - name: Install e2e platform fonts
         run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
       - name: RED real cloud cross-zone (4146812 site, 10 cycles)
-        run: node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+        id: red
+        run: |
+          set +e
+          node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
         env:
           LIVE_CLOUD_STORE_ID: zz-qa-ci-store
           CROSS_ZONE_SITE_SHA: '4146812'
           CROSS_ZONE_CYCLES: '10'
           MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
           FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
-        continue-on-error: true
+      - name: Assert RED reproduced (exit 1 expected)
+        run: |
+          test "${{ steps.red.outputs.exit }}" = "1" || (echo "Expected RED exit 1, got ${{ steps.red.outputs.exit }}" && exit 1)
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
