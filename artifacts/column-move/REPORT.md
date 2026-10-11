@@ -2,7 +2,7 @@
 
 **Branch:** `cursor/column-move-animation-a2ca`  
 **Base:** `main` @ `f9d0513` (#43 merged 2026-10-11 08:15 Taipei) — branch rebased onto this tip  
-**HEAD:** `bc8f7f0` (update after push if amended)  
+**HEAD:** `5726164`  
 **PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
