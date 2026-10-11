@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-10-11T00:30:00Z",
+  "store": "zz-qa-ci-store",
+  "boardJs": "local tree via installGithubPagesSiteRoute (post-merge main f9d0513)",
+  "qaFact": "Public site desktop Chrome 10/10: clear + 5× send ~1s → 5 ready chips, only newest opacity 1, others 0 for 39s+",
+  "hypothesis4Headless": "ruled out by QA",
+  "intervalMatrix": {
+    "live": {
+      "1000msGap": { "rounds": 3, "stuckNotAllOpaqueAt45s": "3/3", "avgTransparentAt45s": 4 },
+      "5000msGap": { "rounds": 3, "stuckNotAllOpaqueAt45s": "3/3", "avgTransparentAt45s": 4 }
+    },
+    "fake": {
+      "200msGap": { "rounds": 3, "stuckNotAllOpaqueAt45s": "0/3", "avgTransparentAt45s": 0 },
+      "1000msGap": { "rounds": 3, "stuckNotAllOpaqueAt45s": "0/3", "avgTransparentAt45s": 0 },
+      "5000msGap": { "rounds": 3, "stuckNotAllOpaqueAt45s": "0/3", "avgTransparentAt45s": 0 }
+    }
+  },
+  "applyPayloadPerSend": {
+    "fake": [1, 2, 1, 1, 1],
+    "live": [2, 5, 1, 2, 1],
+    "note": "Counts are deltas after hook install; send 2 live saw 5 board applies in ~800ms window."
+  },
+  "rawJson": [
+    "artifacts/fade-stuck/interval-matrix-live-1791678177837.json",
+    "artifacts/fade-stuck/interval-matrix-fake-1791678356092.json"
+  ]
+}
