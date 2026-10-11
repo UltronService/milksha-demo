@@ -41,5 +41,6 @@ Asset: **`20261011j`**
 
 ## CI
 
-- SHA: _(after push)_
-- URL: _(when green)_
+- **SHA:** `843b10eb` (full: `843b10e…` on branch)
+- **PR:** https://github.com/UltronService/milksha-demo/pull/52
+- **Checks:** subscribed — reply when `test` + `e2e-live-cloud` green
