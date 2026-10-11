@@ -2,7 +2,7 @@
 
 **Branch:** `cursor/column-move-animation-a2ca`  
 **Base:** `main` @ `9846953` (#44 ready fade / transparency fix) atop #43 `f9d0513`  
-**HEAD:** `5f6f8cd`  
+**HEAD:** _(see tip after push)_  
 **PR:** https://github.com/UltronService/milksha-demo/pull/46  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
