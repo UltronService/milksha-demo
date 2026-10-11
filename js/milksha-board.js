@@ -623,6 +623,25 @@
       return boardAnimator;
     }
 
+    function traceSyncZone(animator, zoneEl, zoneKey, items, page, opts) {
+      const animPromise = animator.syncZone(zoneEl, zoneKey, items, page, opts);
+      const trace = QMS.MilkshaBoardMotionTrace;
+      if (!trace || !trace.isEnabled || !trace.isEnabled()) {
+        return animPromise;
+      }
+      const motionType = trace.inferZoneMotionType(
+        zoneKey,
+        opts.prevItems || [],
+        items,
+        opts,
+        page,
+        PAGE_SIZE,
+        layoutPageGrid,
+      );
+      trace.trackZoneAnimation(motionType, zoneEl, animPromise);
+      return animPromise;
+    }
+
     function updateZonePageIndicator(zone, page, totalPages) {
       if (!zone) {
         return;
@@ -700,23 +719,23 @@
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          traceSyncZone(animator, prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          traceSyncZone(animator, readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
           });
         } else {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          traceSyncZone(animator, prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             pageTurn: prevPrepPage !== prepPage,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          traceSyncZone(animator, readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             pageTurn: prevReadyPage !== readyPage,
@@ -769,7 +788,7 @@
       const pageMotionOk = !prefersReducedMotion() && canUseWebAnimations();
       if (pageMotionOk && animator) {
         updateZonePageIndicator(zone, page, totalPages);
-        const animDone = animator.syncZone(zone, zoneKey, items, page, {
+        const animDone = traceSyncZone(animator, zone, zoneKey, items, page, {
           prevItems: prevItems,
           prevPage: prevPage,
           pageTurn: true,
