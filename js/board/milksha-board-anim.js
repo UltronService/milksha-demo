@@ -675,6 +675,7 @@
     if (!chip) {
       return Promise.resolve();
     }
+    chip.style.visibility = 'visible';
     const dy = Math.max(24, dyIn);
     if (!chip.animate || durationMs <= 0) {
       snapOpacity(chip, 1);
@@ -935,6 +936,41 @@
     }
 
     /**
+     * @param {Element} chip
+     * @param {number} opacityInMs
+     * @param {Promise<void>[]} promises
+     */
+    function scheduleChipCssFadeIn(chip, opacityInMs, promises) {
+      if (!chip) {
+        return;
+      }
+      snapOpacity(chip, 0);
+      cancelElementAnimations(chip);
+      chip.style.visibility = 'visible';
+      chip.style.transition = 'opacity ' + opacityInMs + 'ms ease-out';
+      chip.style.opacity = '0';
+      if (chip.offsetHeight) {
+        /* reflow */
+      }
+      chip.style.opacity = '1';
+      opacityAnimRuns += 1;
+      promises.push(
+        new Promise(function (resolve) {
+          const done = function () {
+            chip.style.transition = '';
+            snapOpacity(chip, 1);
+            resolve();
+          };
+          if (deps.window && typeof deps.window.setTimeout === 'function') {
+            deps.window.setTimeout(done, opacityInMs + 40);
+          } else {
+            done();
+          }
+        }),
+      );
+    }
+
+    /**
      * @param {Element} numbersLayer
      * @param {NodeListOf<Element> | Element[]} slotEls
      * @param {Array<{ id?: string, number?: string } | null>} cells
@@ -1079,6 +1115,7 @@
       const columnMoveEnterFromAboveIds = {};
       const columnMoveEnterFromBelowIds = {};
       const columnMoveSkipFlipIds = {};
+      const pageTwoFadeInIds = {};
       /** @type {null | { chip: Element, pitch: number }} */
       let deferredBackfillEnterFromBelow = null;
       /** @type {Promise<void>} */
@@ -1097,6 +1134,10 @@
         if (columnMovePlan.kind === 'left-column-backfill-removal') {
           const backfillId = columnMovePlan.backfillId;
           const deferBackfillMotion = diff.removed.length > 0;
+          if (deferBackfillMotion && backfillId && chipById[backfillId]) {
+            snapOpacity(chipById[backfillId], 0);
+            chipById[backfillId].style.visibility = 'hidden';
+          }
           if (!deferBackfillMotion) {
             const rtSlot = columnMovePlan.rightTopSlot;
             const prevCellsBf = deps.layoutPageGrid(prevItems, page, deps.pageSize);
@@ -1137,6 +1178,10 @@
           if (backfillId) {
             columnMoveEnterFromBelowIds[backfillId] = true;
             columnMoveSkipFlipIds[backfillId] = true;
+          }
+          if (columnMovePlan.pageTwoFadeInId) {
+            columnMoveSkipFlipIds[columnMovePlan.pageTwoFadeInId] = true;
+            pageTwoFadeInIds[columnMovePlan.pageTwoFadeInId] = true;
           }
           for (let bmi = 0; bmi < diff.moved.length; bmi += 1) {
             columnMoveSkipFlipIds[diff.moved[bmi].id] = true;
@@ -1402,6 +1447,8 @@
                 animateColumnMoveEnterFromBelow(chip, pitchBelow, columnMoveDurationMs, gen, getGeneration),
               );
             }
+          } else if (pageTwoFadeInIds[id]) {
+            scheduleChipCssFadeIn(chip, opacityInMs, promises);
           }
         }
         if (!chip || pendingRemove.has(chip)) {
@@ -1434,13 +1481,8 @@
             } else {
               promises.push(animateColumnMoveEnterFromBelow(chip, pitchInBelow, columnMoveDurationMs, gen, getGeneration));
             }
-          } else if (
-            columnMovePlan &&
-            columnMovePlan.kind === 'left-column-backfill-removal' &&
-            columnMovePlan.pageTwoFadeInId &&
-            id === columnMovePlan.pageTwoFadeInId
-          ) {
-            promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
+          } else if (pageTwoFadeInIds[id]) {
+            scheduleChipCssFadeIn(chip, opacityInMs, promises);
           } else if (
             zoneKey === 'ready' &&
             !skipReadyScale &&
@@ -1470,7 +1512,8 @@
             if (
               pendingRemove.has(holdChip) ||
               (holdId && columnMoveEnterFromAboveIds[holdId]) ||
-              (holdId && columnMoveEnterFromBelowIds[holdId])
+              (holdId && columnMoveEnterFromBelowIds[holdId]) ||
+              (holdId && pageTwoFadeInIds[holdId])
             ) {
               continue;
             }
@@ -1502,7 +1545,11 @@
               return;
             }
             if (columnMoveSkipFlipIds[mv.id]) {
-              if (columnMoveEnterFromAboveIds[mv.id] || columnMoveEnterFromBelowIds[mv.id]) {
+              if (
+                columnMoveEnterFromAboveIds[mv.id] ||
+                columnMoveEnterFromBelowIds[mv.id] ||
+                pageTwoFadeInIds[mv.id]
+              ) {
                 return;
               }
               const beforeSkipped = rectsBefore[mv.id];
@@ -1515,6 +1562,12 @@
               if (Math.abs(dxSkipped) > 2) {
                 dxSkipped = 0;
               }
+              const hideDuringFlip =
+                columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
+              if (hideDuringFlip) {
+                snapOpacity(chip, 0);
+                chip.style.visibility = 'hidden';
+              }
               const flipPromise = animateTranslate(
                 chip,
                 dxSkipped,
@@ -1523,6 +1576,7 @@
                 gen,
                 getGeneration,
               ).then(function () {
+                chip.style.visibility = 'visible';
                 snapOpacity(chip, 1);
                 chip.style.transform = '';
               });

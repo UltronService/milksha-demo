@@ -288,7 +288,7 @@ for (const zone of ['prep', 'ready']) {
               enter: pickColumnMoveEnterSample(enterPushed, enterSlot),
             };
           },
-          { samples: count >= 10 ? 50 : 36, intervalMs: 12 },
+          { samples: count >= 10 ? 56 : 48, intervalMs: 12 },
         );
         if (pulsePromise) {
           await pulsePromise;

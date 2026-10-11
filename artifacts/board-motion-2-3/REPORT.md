@@ -1,33 +1,45 @@
 # Board motion items 2–3 — delivery report
 
 **Branch:** `cursor/board-motion-items-2-3-a2ca`  
-**Base:** `main` @ #46
+**PR:** https://github.com/UltronService/milksha-demo/pull/52
 
-## Red → green
+## Reverse backfill boundary 1–10 (TDD)
 
-| Test | Fix |
-|------|-----|
-| Item 2 (PR #47) leaving fade in place | CSS-transition fade (`cssInPlace`) for removed ids only; `data-fade-out` + defer reparent/FLIP until removed fade completes |
-| Item 3 backfill no overlap | `left-column-backfill-removal`: slide up-out clone, enter left-bottom from below, vertical skip-FLIP; sequence after removed fade + exit clone |
-| QA #46 skip-FLIP opacity | Always `snapOpacity(chip, 1)` after vertical skip-FLIP translate (interrupt-safe) |
-| Column-move #46 regressions | WAAPI stray fades (non-removed); sync placement for overflow; enter sampling uses slot vs id probe |
+| # | Test | Red cause | Green fix |
+|---|------|-----------|-----------|
+| 1 | prep right-top slides up/out | Wrong payload (`prepPayload` on rows); short poll | Apply `zoneRows` directly; exit-clone slot sampling |
+| 2 | prep enter left-bottom from below | Same payload bug | `chipMotionSampleLeftBottomMotion` + long poll |
+| 3 | prep other right chips slide up | Follower hidden during FLIP / slot probe | `chipMotionSampleColumnSlot` at slot 6 |
+| 4–6 | ready mirror of 1–3 | Same | Same helpers on ready zone |
+| 7 | both zones vertical / no overlap | `getBoundingClientRect` column leak vs transform | Transform `tx` while visible; hide during backfill skip-FLIP |
+| 8 | one chip per cell | — | Already green once payload fixed |
+| 9 | settle order + opacity 1 | — | `assertZoneSlotOrderExact` |
+| 10 | 1080p + 4K contact sheets | — | `artifacts/board-motion-2-3/screenshots/backfill-prep-{1080p,4k}.png` |
+| + | page-2 fade right-bottom | Moved chip skipped CSS fade; short sample | `pageTwoFadeInIds` + `scheduleChipCssFadeIn`; slot opacity poll |
+
+Spec: `tests/e2e/board-motion-backfill-boundary.spec.mjs`  
+Helpers: `tests/e2e/board-motion-backfill-helpers.mjs`
+
+## Items 2–3 + QA
+
+| Item | Spec / unit |
+|------|-------------|
+| 2 in-place leave fade | `board-motion-items-red.spec.mjs` |
+| 3 no overlap | same + `board-motion-backfill.test.js` |
+| QA #46 opacity interrupt | `snapOpacity(1)` after skip-FLIP |
 
 ## Local verification
 
 ```text
-npm test → 209 pass
+npm test → 211 pass
+npx playwright test tests/e2e/board-motion-backfill-boundary.spec.mjs → 11/11
 npx playwright test tests/e2e/board-motion-items-red.spec.mjs → 2/2
-npx playwright test tests/e2e/board-column-move.spec.mjs → 20/20 (single run; arrival loop tests can flake under --repeat-each)
+npx playwright test tests/e2e/board-column-move.spec.mjs → 20/20 (may need re-run if arrival sampling flakes)
 ```
 
-Asset bump: **`20261011i`**
-
-## Owner 10-test boundary (item 3 backfill)
-
-PR #47 red tests (items 2 & 3) are in `board-motion-items-red.spec.mjs`. Full prep/ready boundary 1–10 + 1080p/4K contact sheets for **left-column backfill removal** are not duplicated here (column-move boundary 1–10 covers the inverse overflow path on #46).
+Asset: **`20261011j`**
 
 ## CI
 
-- **PR:** https://github.com/UltronService/milksha-demo/pull/52
-- **SHA:** `2c2add3b6f049f4c8066197191365791cc966cec`
-- **Checks:** _(pending — subscribe for green test + e2e-live-cloud)_
+- SHA: _(after push)_
+- URL: _(when green)_

@@ -38,6 +38,33 @@ function ids(count, base) {
   return out;
 }
 
+test('detectLeftColumnBackfillRemovalPlan: oldest-first queue (e2e order)', () => {
+  const Anim = loadAnim();
+  const prev = Array.from({ length: 7 }, (_, i) => ({
+    id: 'store:' + (5200 + i),
+    number: String(5200 + i),
+  }));
+  const next = prev.filter((e) => e.number !== '5203');
+  const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
+  const plan = Anim.detectLeftColumnBackfillRemovalPlan(prev, next, 0, 10, layoutPageGrid, diff);
+  assert.ok(plan);
+  assert.equal(plan.backfillId, 'store:5205');
+});
+
+test('detectLeftColumnBackfillRemovalPlan: page-2 fade-in id on 11→10 shrink', () => {
+  const Anim = loadAnim();
+  const prev = Array.from({ length: 11 }, (_, i) => ({
+    id: 'store:' + (8100 + i),
+    number: String(8100 + i),
+  }));
+  const next = prev.filter((e) => e.number !== '8103');
+  const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
+  const plan = Anim.detectLeftColumnBackfillRemovalPlan(prev, next, 0, 10, layoutPageGrid, diff);
+  assert.ok(plan);
+  assert.equal(plan.pageTwoFadeInId, 'store:8110');
+  assert.ok(diff.added.includes('store:8110') || diff.moved.some((m) => m.id === 'store:8110'));
+});
+
 test('detectLeftColumnBackfillRemovalPlan: remove left column triggers right-top backfill', () => {
   const Anim = loadAnim();
   const prev = ids(7, 2100);
