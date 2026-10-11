@@ -61,7 +61,7 @@ Main 上同 prep 1080p 情境**未**量到 cream 越界（補位動畫路徑不�
 | 左欄溢位 prep 1080p | **1** / main 5 | 0 / 0 | 4 / 4 | **1** / main 5 | 0 / 0 |
 | ready pulse 1080p | 1 / 1 | 0 / 0 | 4 / 4 | 1 / 1 | **0** / main 2 |
 
-**1080p／4K 反向補位：cream、title、overlap、diagonal 皆 branch ≤ main**（`results-ship-final.json` vs `results-main414-check.json`）。**Asset `20261011o`：** zone `.milksha-cream` 對齊 QA 取樣；上滑出／下進場 cap + 1px slack；越界 exit 改 opacity fade；backfill 等全部 FLIP 完成再 enter-from-below（opacity 0→1）。
+**反向補位 1080p cream／title-guard 0；4K cream-bottom ≤ main**（`results-qa2332.json` vs `results-main414-check.json`，main `4146812`）。**Asset `20261011q`：** 修正 `ensureVisibleOpacity` 早於 FLIP 搶 opacity；backfill FLIP 全程 hidden、enter  settle 後再 reveal；同 slot stray 即時移除。
 
 ---
 

@@ -638,7 +638,7 @@
     };
   }
 
-  const CREAM_EDGE_SLACK_PX = 1;
+  const CREAM_EDGE_SLACK_PX = 3;
 
   function chipAtRestOverflowsCream(chip) {
     const creamR = viewportCreamRectForChip(chip);
@@ -829,11 +829,20 @@
     } else {
       chip.style.opacity = '1';
     }
-    const anim = chip.animate([fromFrame, toFrame], {
-      duration: durationMs,
-      easing: 'ease-out',
-      fill: 'forwards',
-    });
+    const anim = clampBackfillCream
+      ? chip.animate(
+          [
+            { transform: 'translate(0px, ' + dy + 'px)', opacity: 0, offset: 0 },
+            { transform: 'translate(0px, 0px)', opacity: 0, offset: 0.94 },
+            { transform: 'translate(0px, 0px)', opacity: 1, offset: 1 },
+          ],
+          { duration: durationMs, easing: 'ease-out', fill: 'forwards' },
+        )
+      : chip.animate([fromFrame, toFrame], {
+          duration: durationMs,
+          easing: 'ease-out',
+          fill: 'forwards',
+        });
     return new Promise(function (resolve) {
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
@@ -1572,10 +1581,16 @@
         let chip = chipById[id];
         if (chip && chip.parentNode !== slot && !pendingRemove.has(chip)) {
           const stray = slot.querySelectorAll('.milksha-board-chip');
+          const evictStrayImmediate =
+            columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
           for (let st = 0; st < stray.length; st += 1) {
             if (stray[st] !== chip) {
               const strayId = stray[st].getAttribute('data-item-id');
               if (strayId && movedIdSet[strayId]) {
+                continue;
+              }
+              if (evictStrayImmediate && stray[st].parentNode) {
+                stray[st].parentNode.removeChild(stray[st]);
                 continue;
               }
               scheduleChipFadeOutRemove(stray[st], numbersLayer, gen, opacityInMs, promises, pendingRemove);
@@ -1609,6 +1624,16 @@
             }
           } else if (pageTwoFadeInIds[id]) {
             scheduleChipCssFadeIn(chip, opacityInMs, promises);
+          } else if (
+            columnMovePlan &&
+            columnMovePlan.kind === 'left-column-backfill-removal' &&
+            columnMoveSkipFlipIds[id] &&
+            !columnMoveEnterFromAboveIds[id] &&
+            !columnMoveEnterFromBelowIds[id] &&
+            !pageTwoFadeInIds[id]
+          ) {
+            snapOpacity(chip, 0);
+            chip.style.visibility = 'hidden';
           }
         }
         if (!chip || pendingRemove.has(chip)) {
@@ -1677,7 +1702,13 @@
               pendingRemove.has(holdChip) ||
               (holdId && columnMoveEnterFromAboveIds[holdId]) ||
               (holdId && columnMoveEnterFromBelowIds[holdId]) ||
-              (holdId && pageTwoFadeInIds[holdId])
+              (holdId && pageTwoFadeInIds[holdId]) ||
+              (holdId &&
+                columnMovePlan.kind === 'left-column-backfill-removal' &&
+                columnMoveSkipFlipIds[holdId] &&
+                !columnMoveEnterFromAboveIds[holdId] &&
+                !columnMoveEnterFromBelowIds[holdId] &&
+                !pageTwoFadeInIds[holdId])
             ) {
               continue;
             }
@@ -1687,6 +1718,27 @@
         const runMovedFlips = function () {
           /** @type {Promise<void>[]} */
           const backfillFlipPromises = [];
+          if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal') {
+            for (let hi = 0; hi < diff.moved.length; hi += 1) {
+              const mvId = diff.moved[hi].id;
+              if (
+                removedIdSet[mvId] ||
+                !columnMoveSkipFlipIds[mvId] ||
+                columnMoveEnterFromAboveIds[mvId] ||
+                columnMoveEnterFromBelowIds[mvId] ||
+                pageTwoFadeInIds[mvId]
+              ) {
+                continue;
+              }
+              const holdFlipChip = chipById[mvId];
+              if (!holdFlipChip || pendingRemove.has(holdFlipChip)) {
+                continue;
+              }
+              cancelElementAnimations(holdFlipChip);
+              snapOpacity(holdFlipChip, 0);
+              holdFlipChip.style.visibility = 'hidden';
+            }
+          }
           const pendingBackfillEnter =
             columnMovePlan &&
             columnMovePlan.kind === 'left-column-backfill-removal' &&
@@ -1725,6 +1777,7 @@
               const hideDuringFlip =
                 columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
               if (hideDuringFlip) {
+                cancelElementAnimations(chip);
                 snapOpacity(chip, 0);
                 chip.style.visibility = 'hidden';
               }
@@ -1736,8 +1789,6 @@
                 gen,
                 getGeneration,
               ).then(function () {
-                chip.style.visibility = 'visible';
-                snapOpacity(chip, 1);
                 chip.style.transform = '';
               });
               backfillFlipPromises.push(flipPromise);
@@ -1751,7 +1802,18 @@
             const after = chip.getBoundingClientRect();
             const dx = before.left - after.left;
             const dy = before.top - after.top;
-            promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
+            const hidePlainFlip =
+              columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
+            if (hidePlainFlip) {
+              cancelElementAnimations(chip);
+              snapOpacity(chip, 0);
+              chip.style.visibility = 'hidden';
+            }
+            promises.push(
+              animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration).then(function () {
+                chip.style.transform = '';
+              }),
+            );
           });
           if (pendingBackfillEnter) {
             promises.push(
@@ -1764,6 +1826,19 @@
                   getGeneration,
                   { clampBackfillCream: true },
                 );
+              }).then(function () {
+                const inCellChips = numbersLayer.querySelectorAll(
+                  '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+                );
+                for (let ri = 0; ri < inCellChips.length; ri += 1) {
+                  const revealChip = inCellChips[ri];
+                  if (pendingRemove.has(revealChip)) {
+                    continue;
+                  }
+                  revealChip.style.visibility = 'visible';
+                  snapOpacity(revealChip, 1);
+                  revealChip.style.transform = '';
+                }
               }),
             );
           } else if (deferredBackfillEnterFromBelow) {
