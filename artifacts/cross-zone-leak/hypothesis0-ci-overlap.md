@@ -29,3 +29,5 @@
 - **38182993862 執行當下無第二個 `live-cloud-zz-qa-ci-store` writer**；`e2e-live-cloud` 排隊至 RED 結束後才開跑。
 - **7112 來源**在該 run 仍不能仅靠 overlap 解釋；需 **push_numbers + Firestore + apply 逐筆**（見 capture workflow）。
 - **假設 H0-other-writer：** 對 **38182993862 時段** → **未證實**；對 repo 整體仍可能（舊 branch 整包 `test:e2e` 見 `artifacts/ci-concurrency/REPORT.md`），**本窗無證據**。
+
+_Capture workflow: `cross-zone-hypothesis0-capture.yml`（45 輪 × 最多 2 次 attempt）。_
