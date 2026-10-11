@@ -120,6 +120,39 @@
     return ib - ia;
   }
 
+  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
+  const warnedInvalidBoardNumbers = new Set();
+
+  /**
+   * @param {unknown} raw
+   */
+  function warnInvalidBoardNumberOnce(raw) {
+    const key = typeof raw === 'string' ? raw : JSON.stringify(raw);
+    if (warnedInvalidBoardNumbers.has(key)) {
+      return;
+    }
+    warnedInvalidBoardNumbers.add(key);
+    console.warn('[milksha-board] dropped invalid board number:', raw);
+  }
+
+  /**
+   * Board display guard — only exact four-digit strings (no JSON number coercion).
+   * @param {unknown} raw
+   * @returns {string | null}
+   */
+  function normalizeBoardDisplayNumber(raw) {
+    if (typeof raw !== 'string') {
+      return null;
+    }
+    const trimmed = raw.trim();
+    return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
+  }
+
+  /** @param {() => void} fn — test hook */
+  function resetInvalidBoardNumberWarningsForTest() {
+    warnedInvalidBoardNumbers.clear();
+  }
+
   /**
    * @param {Array<{ source_type: string, number: string }>} numberContent
    * @returns {{ ready: Array<{ id: string, sourceKey: string, number: string }>, preparing: Array<{ id: string, sourceKey: string, number: string }> }}
@@ -129,11 +162,20 @@
     const preparing = [];
     const readyIds = {};
     const prepIds = {};
+    const readyNumbers = new Set();
+    const prepNumbers = new Set();
     const list = Array.isArray(numberContent) ? numberContent : [];
 
     for (let i = 0; i < list.length; i += 1) {
       const row = list[i];
-      if (!row || typeof row.number !== 'string') {
+      if (!row || typeof row !== 'object') {
+        continue;
+      }
+      const normalized = normalizeBoardDisplayNumber(row.number);
+      if (!normalized) {
+        if (row.number !== undefined) {
+          warnInvalidBoardNumberOnce(row.number);
+        }
         continue;
       }
       const parsed = parseSourceType(row.source_type);
@@ -141,19 +183,36 @@
         continue;
       }
       const entry = {
-        id: makeItemId(parsed.sourceKey, row.number),
+        id: makeItemId(parsed.sourceKey, normalized),
         sourceKey: parsed.sourceKey,
-        number: row.number,
+        number: normalized,
         payloadIndex: i,
       };
       if (parsed.zone === 'ready') {
+        if (readyNumbers.has(normalized)) {
+          continue;
+        }
         if (!readyIds[entry.id]) {
           readyIds[entry.id] = true;
+          readyNumbers.add(normalized);
           ready.push(entry);
+          if (prepNumbers.has(normalized)) {
+            prepNumbers.delete(normalized);
+            for (let pi = preparing.length - 1; pi >= 0; pi -= 1) {
+              if (preparing[pi].number === normalized) {
+                delete prepIds[preparing[pi].id];
+                preparing.splice(pi, 1);
+              }
+            }
+          }
         }
-      } else {
-        if (!readyIds[entry.id] && !prepIds[entry.id]) {
+      } else if (!readyNumbers.has(normalized)) {
+        if (prepNumbers.has(normalized)) {
+          continue;
+        }
+        if (!prepIds[entry.id]) {
           prepIds[entry.id] = true;
+          prepNumbers.add(normalized);
           preparing.push(entry);
         }
       }
@@ -161,7 +220,7 @@
 
     const prepFiltered = [];
     for (let j = 0; j < preparing.length; j += 1) {
-      if (!readyIds[preparing[j].id]) {
+      if (!readyIds[preparing[j].id] && !readyNumbers.has(preparing[j].number)) {
         prepFiltered.push(preparing[j]);
       }
     }
@@ -1165,6 +1224,8 @@
 
   QMS.MilkshaBoard = {
     parseSourceType: parseSourceType,
+    normalizeBoardDisplayNumber: normalizeBoardDisplayNumber,
+    resetInvalidBoardNumberWarningsForTest: resetInvalidBoardNumberWarningsForTest,
     partitionNumberContent: partitionNumberContent,
     detectNewlyReady: detectNewlyReady,
     splitPopQueue: splitPopQueue,

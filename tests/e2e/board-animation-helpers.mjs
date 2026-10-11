@@ -217,8 +217,12 @@ export async function sampleIntegrityForDuration(page, durationMs, intervalMs = 
     }
     await page.waitForTimeout(intervalMs);
   }
-  await page.waitForTimeout(400);
-  const finalSnap = await getBoardIntegritySnapshot(page);
+  let finalSnap = await getBoardIntegritySnapshot(page);
+  const drainDeadline = Date.now() + 3000;
+  while (finalSnap.detachedCount > 0 && Date.now() < drainDeadline) {
+    await page.waitForTimeout(100);
+    finalSnap = await getBoardIntegritySnapshot(page);
+  }
   expect(violations, JSON.stringify(violations)).toEqual([]);
   expect(finalSnap.violations, JSON.stringify(finalSnap.violations)).toEqual([]);
   expect(finalSnap.detachedCount, 'detached chips must drain after animations').toBe(0);

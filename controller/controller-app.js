@@ -968,7 +968,20 @@
         response: res,
       });
       showUserBanner('');
-      await refreshBoardLists();
+      const BoardRefresh = window.QMS.Transport.BoardRefreshAfterCommand;
+      try {
+        if (BoardRefresh && BoardRefresh.refreshBoardIgnoringSupersededAbort) {
+          await BoardRefresh.refreshBoardIgnoringSupersededAbort(refreshBoardLists);
+        } else {
+          await refreshBoardLists();
+        }
+      } catch (refreshErr) {
+        pushLog({
+          summary:
+            'push_numbers 後同步看板略過 · ' +
+            (refreshErr && refreshErr.message ? String(refreshErr.message) : 'unknown'),
+        });
+      }
       return {
         isSuccess: true,
         information: '資料顯示成功',
@@ -1951,6 +1964,10 @@
         bumpNumberFieldAfterSend(no);
       })
       .catch(function (e) {
+        const BoardRefresh = window.QMS.Transport.BoardRefreshAfterCommand;
+        if (BoardRefresh && BoardRefresh.isSupersededInflightReadAbort(e)) {
+          return;
+        }
         tickets.splice(ticketCountBefore);
         presentConnectError(e);
       });

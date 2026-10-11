@@ -121,6 +121,11 @@
           httpDateReadable: httpDateReadable,
         };
       } catch (err) {
+        if (signal.aborted) {
+          const abortErr = new Error('signal is aborted without reason');
+          abortErr.name = 'AbortError';
+          throw abortErr;
+        }
         if (err && err.name === 'AbortError') {
           throw err;
         }

@@ -64,6 +64,24 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     for (let i = 0; i < times.length; i += 1) {
       expect(times[i]).toBeLessThanOrEqual(3000);
     }
+<<<<<<< HEAD
     await waitForReadyBoardAnimSettled(board, 5, 15000);
+=======
+    await board.waitForFunction(
+      () => {
+        const chips = [
+          ...document.querySelectorAll(
+            '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
+          ),
+        ].filter((el) => el.closest('.milksha-num-cell'));
+        return chips.every((el) => {
+          const o = getComputedStyle(el).opacity;
+          return o === '1' || o === '';
+        });
+      },
+      undefined,
+      { timeout: 30000 },
+    );
+>>>>>>> origin/main
   });
 });
