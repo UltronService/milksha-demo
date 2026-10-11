@@ -1,3 +1,20 @@
+## Hypothesis 0 — 三欄對照（cycles 27–29）
+
+**定案：B)** 測試／腳本**未**以正常流程把 7112 從 prep 改 ready（無 `btn-one-ready`、無對 7112 下單）；`push_numbers` **意圖上** ready／preparing 皆不含 7112，但 Firestore `today_board`（與 board 收到的 snapshot apply）已把 **7112 列在 ready**；看板 DOM／`getSnapshot()` 與雲端一致 — **非看板錯分（非 C）**；請後端查 `push_numbers` 寫入／合併。來源 run [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862)；後續 run 已加 push／`readBoard` 擷取（`hypothesis0-cycle-table.json`）。
+
+| Cycle | (1) push_numbers 直前（preparing / ready） | (2) Firestore `today_board` | (3) `getSnapshot()` + ready DOM slots | ABC |
+| --- | --- | --- | --- | --- |
+| 27 | **腳本意圖**：prep `7100–7111`+`7200–7226`、ready `8100–8111`，**皆無 7112**（該 run 無 HTTP 錄影；見 `run-real-cloud-cross-zone-red.mjs` seed） | **7112∈ready**、prep 38 筆無 7112（leak 前 apply len=50, prep=38, ready=12；snapshot.ready 已含 7112 ⇒ `From_Store_OK`） | ready 尾端 `…8101,7112`；slots `0:8101` `1:7112` | **B** |
+| 28 | 同 27 | 同 27（ready=12 含 7112） | 同型；slots `0:8101` `1:7112` | **B** |
+| 29 | 同 27 | 同 27 | 同型；slots `0:8101` `1:7112` | **B** |
+
+**排除 A（測試正常 prep→ready 但期望沒跟上）：** 7112 從未作為一張票送進 controller；`bumpNumberFieldAfterSend` 只在欄位顯示 7112，不會自動進 ready。若未來 push 錄影顯示 `params.ready` 含 7112，才改判 **A**（送端／期望 bug）。
+
+**排除 C：** 若雲端 doc 為 ready，看板 `partitionNumberContent` / `applyPayload`（`js/milksha-board.js` 164–232、1148–1149）本來就會放進 `readyItems` — 與觀測一致，非「doc prep、board ready」。
+
+---
+
+
 # Cross-zone 滲漏診斷（prep 7112 出現在 ready 區）
 
 ## 真雲 RED 已實跑（非預期）
@@ -24,20 +41,20 @@
 
 ---
 
-## 假設（排序）
+## 假設（排序，Hypothesis 0 後）
 
-1. **`applyPayload` / 雲端列表合併時，prep 票被 append 進 `readyItems`（`js/milksha-board.js` `applyPayload`）** — 驗證：在 `applyPayload` 入口記錄每筆 `From_Store_OK` vs `Preparing` 與合併後 `readyItems` 尾端；預測：出現 leak 的 apply 後 `readyItems` 含 `7112` 且 `preparing` 亦含。  
-2. **Page-turn 中 `layer-float` clone 未清除，chip 掛入錯 zone 的 slot（`js/board/milksha-board-anim.js` `pageTurn` / `removeOrphanLayerFloatChips`）** — 驗證：leak 幀比對 float 數與 slot `itemId` 是否來自 prep；預測：`floatChips>0` 時 slot1 的 7112 與 prep chip 同 id。  
-3. **真雲連續 `board_snapshot` 使 `cloud-runtime.js` `applyNumberContent` 在動畫中途覆寫 state（`js/receiver/cloud-runtime.js`）** — 驗證：對照 `__pr53Diag.applyPayloadCalls` 與 Firestore timeline；預測：leak 前單次 apply 帶 **ready=12 且列表含 7112**。  
-4. **末頁僅 2 格應顯示時，layout 把 prep 第 13 筆填進 ready page-2 slot1（`layoutPageGrid` / page index）** — 驗證：leak 時 `readyPage` 與 `layoutPageGrid(readyItems, page)` 輸出；預測：page2 slot1 被指派 `7112` 的 cell。  
-5. **#53 延後 indicator 與此 bug 無關；revert 後仍 RED** — 驗證：4146812 site 上 30 輪 RED；預測：revert 不能消除 7112 in ready snapshot。  
+0. **（已定案 B）雲端 `today_board` 將 7112 標 ready，看板照單全收** — 送端腳本未送 7112；後端寫入／合併待查。  
+1. **後端 `push_numbers` 或 doc 合併把「未送出的 7112」或 prep 列誤寫入 ready（取代 8100）** — 用新 hook 對照每輪 `params` vs `readBoard()`。  
+2. **Page-turn `layer-float` 造成誤判 cross-zone，但 snapshot 已含 7112** — 動畫為加重因素，非根因。  
+3. **#53 revert 後仍 RED** — 已證；與 page-turn indicator 無關。  
+4. **layout 單獨把 prep 填 ready slot 但 snapshot 無 7112** — Hypothesis 0 已否決（snapshot 與 doc 同為 ready）。  
 
 ---
 
 ## 建議修復測試邊界（3–5 項）
 
-1. 真雲 `zz-qa-ci-store`：30 輪 page-turn + mid prep，**零** prep `7xxx` 出現在 ready **slot**；`getSnapshot().ready` 不得含 prep 號。  
-2. 單輪：ready **2/2** 僅 slot0–1 為 `{8101,8100}`（或當頁 10 格與 snapshot 一致）。  
+1. 真雲：30 輪後 **Firestore `today_board` 與 `push_numbers` 一致**；ready 不得含未送單的 prep 序號（如 7112）。  
+2. 看板：`getSnapshot().ready` 與 Firestore ready 列表一致；ready **2/2** slot 與 snapshot 同頁一致（期望 `{8101,8100}` 當 seed 未變）。  
 3. Page-turn + **1×** 全量 apply 後，**layer-float** 計數為 0。  
 4. 連續 **5×** silent+non-silent apply 模擬 snapshot 風暴，slot 與 snapshot 仍一致。  
 5. 1080 與 4K 各 10 輪，cross-zone 事件為 0。  

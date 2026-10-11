@@ -171,6 +171,31 @@ async function main() {
         }
         await sleep(50);
       }
+      if (c >= 27 && c <= 29 && !capturedH0Cycles.has(c)) {
+        const has7112Ready = await board.evaluate(() => {
+          const ready = (window.QMS?.runtime?.getSnapshot?.()?.ready ?? []).map((it) => String(it.number));
+          return ready.includes('7112');
+        });
+        if (has7112Ready) {
+          capturedH0Cycles.add(c);
+          const evidence = await readFrameEvidence(board);
+          const push = lastPushNumbersSince(netLog.devCommands, cyclePushStartIdx);
+          const firestore = await readFirestoreTodayBoard(ctrl);
+          const lastApply = await board.evaluate(() => window.__pr53Diag?.lastAppliedPayload ?? null);
+          const triplet = {
+            cycle: c,
+            tMs: 'cycle-end',
+            push: push
+              ? { preparing: push.preparing || [], ready: push.ready || [] }
+              : { preparing: [], ready: [] },
+            firestore,
+            board: { snapshot: evidence.snapshot, slots: evidence.slots },
+            apply7112: lastApply?.item7112,
+          };
+          triplet.abc = classifyLeakRow(triplet);
+          hypothesis0CycleRows.push(triplet);
+        }
+      }
     }
     await teardownLiveCloudSession(ctrl, board);
     await browser.close();
