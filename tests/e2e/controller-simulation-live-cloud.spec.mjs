@@ -78,11 +78,12 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud continuous simulation`, () => {
     await board.goto(
       `${GITHUB_PAGES_BASE}/?mode=cloud&store=${LIVE_CLOUD_STORE_ID}&device=${LIVE_CLOUD_BOARD_DEVICE}`,
     );
-    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 180000 });
+    await board.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 180000 });
     await ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${LIVE_CLOUD_STORE_ID}`);
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 180000 });
     await ctrl.waitForFunction(
       () => document.getElementById('online-state')?.getAttribute('data-board-online') === '1',
+      undefined,
       { timeout: 180000 },
     );
 
