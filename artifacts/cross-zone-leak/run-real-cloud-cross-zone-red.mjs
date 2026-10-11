@@ -16,11 +16,29 @@ import {
   addTicket,
 } from '../pr53-live/real-cloud-harness.mjs';
 import { teardownLiveCloudSession } from '../../tests/e2e/live-cloud-teardown.mjs';
+import { expandControllerZone } from '../../tests/e2e/harness.mjs';
+
+async function expandClear(ctrl, board) {
+  await expandControllerZone(ctrl, 'sec-special');
+  await ctrl.click('[data-testid="btn-clear-now"]');
+  await ctrl.click('[data-testid="btn-sim-stop"]').catch(() => {});
+  await board.waitForTimeout(4000);
+  await board.waitForFunction(
+    () => document.querySelectorAll('.milksha-board-chip').length === 0,
+    undefined,
+    { timeout: 120000 },
+  );
+  await board.evaluate(() => {
+    if (window.__pr53Diag) {
+      window.__pr53Diag.applyPayloadCalls = [];
+    }
+  });
+}
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ART = join(dirname(fileURLToPath(import.meta.url)));
 const SHA = process.env.CROSS_ZONE_SITE_SHA || '4146812';
-const CYCLES = Number(process.env.CROSS_ZONE_CYCLES || 10);
+const CYCLES = Number(process.env.CROSS_ZONE_CYCLES || 30);
 const VP = { width: 1920, height: 1080 };
 
 function sleep(ms) {
@@ -46,12 +64,7 @@ async function main() {
     const board = await ctx.newPage();
     const ctrl = await ctx.newPage();
     await waitOnline(board, ctrl);
-    await teardownLiveCloudSession(ctrl, board);
-    await board.evaluate(() => {
-      if (window.__pr53Diag) {
-        window.__pr53Diag.applyPayloadCalls = [];
-      }
-    });
+    await expandClear(ctrl, board);
     for (let i = 0; i < 12; i += 1) {
       await addTicket(ctrl, board, 'preparing', String(7100 + i), 'prep');
     }

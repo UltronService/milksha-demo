@@ -9,9 +9,23 @@ export const DIAG_INIT_SCRIPT = () => {
     if (rt && typeof rt.applyPayload === 'function' && !rt.__pr53DiagWrapped) {
       const orig = rt.applyPayload.bind(rt);
       rt.applyPayload = function pr53DiagApplyPayload(list, opts) {
+        let prep = 0;
+        let ready = 0;
+        if (Array.isArray(list)) {
+          for (const it of list) {
+            const st = it && it.source_type ? String(it.source_type) : '';
+            if (st.includes('OK')) {
+              ready += 1;
+            } else if (st.includes('Preparing')) {
+              prep += 1;
+            }
+          }
+        }
         window.__pr53Diag.applyPayloadCalls.push({
           t: Date.now(),
           len: Array.isArray(list) ? list.length : 0,
+          prep,
+          ready,
           silent: Boolean(opts && opts.silent),
         });
         return orig(list, opts);

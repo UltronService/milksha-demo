@@ -43,6 +43,27 @@ export async function readCrossZoneViolations(board) {
     }
     scan('prep', prepAllowed);
     scan('ready', readyAllowed);
+
+    const rootReady = document.querySelector('.milksha-zone.ready');
+    const layer = rootReady?.querySelector('.milksha-zone-numbers');
+    const opacity = layer ? Number.parseFloat(getComputedStyle(layer).opacity) : 0;
+    const settled = opacity >= 0.99;
+    if (settled) {
+      const readySlots = [...(rootReady?.querySelectorAll('.milksha-num-cell .milksha-num') ?? [])].map((el) =>
+        el.textContent.trim(),
+      );
+      for (const n of readySlots) {
+        if (n && /^7\d{3}$/.test(n)) {
+          violations.push({
+            zone: 'ready',
+            number: n,
+            indicator: rootReady?.querySelector('.milksha-pg-indicator')?.textContent?.trim() || '',
+            kind: 'prep-number-in-ready-slot',
+            slots: readySlots,
+          });
+        }
+      }
+    }
     return { ok: violations.length === 0, violations };
   });
 }
