@@ -511,16 +511,25 @@
      * @param {number} zoneLeftPx
      * @returns {{ left: number, top: number } | null}
      */
-    function artPageIndicatorAnchorPx(zoneKey, zoneLeftPx) {
+    /**
+     * Bottom-right inset against visible cream rect (board design coords → zone-local).
+     * @param {'prep' | 'ready'} zoneKey
+     * @param {number} zoneLeftPx
+     * @returns {{ left: number, top: number } | null}
+     */
+    function artPageIndicatorPositionPx(zoneKey, zoneLeftPx) {
       const art = landscapeArtLayout();
       if (!art) {
         return null;
       }
       const cream = art.creamRectForZone(zoneKey);
       const inset = PAGE_INDICATOR_INSET_PX;
+      const fontPx = PAGE_INDICATOR_FONT_PX;
+      const creamRight = cream.left + cream.width;
+      const creamBottom = cream.top + cream.height;
       return {
-        left: cream.left - zoneLeftPx + cream.width - inset,
-        top: cream.top + cream.height - inset,
+        left: creamRight - zoneLeftPx - inset,
+        top: creamBottom - inset - fontPx,
       };
     }
 
@@ -536,12 +545,12 @@
       ind.classList.add('milksha-pg-indicator');
       if (useLandscapeArtGrid()) {
         ind.classList.add('milksha-pg-indicator--art');
-        const anchor = artPageIndicatorAnchorPx(zoneKey, parseZoneLeftPx(zoneEl));
-        if (anchor) {
-          ind.style.left = anchor.left + 'px';
-          ind.style.top = anchor.top + 'px';
-          ind.style.right = '';
-          ind.style.bottom = '';
+        const pos = artPageIndicatorPositionPx(zoneKey, parseZoneLeftPx(zoneEl));
+        if (pos) {
+          ind.style.left = pos.left + 'px';
+          ind.style.top = pos.top + 'px';
+          ind.style.right = 'auto';
+          ind.style.bottom = 'auto';
         }
       } else {
         ind.classList.remove('milksha-pg-indicator--art');
@@ -874,9 +883,11 @@
         z += '</div>';
       }
       if (totalPages > 1) {
-        const anchor = artPageIndicatorAnchorPx(zoneKey, x);
-        const indLeft = anchor ? anchor.left : cream.left - x + cream.width - PAGE_INDICATOR_INSET_PX;
-        const indTop = anchor ? anchor.top : cream.top + cream.height - PAGE_INDICATOR_INSET_PX;
+        const pos = artPageIndicatorPositionPx(zoneKey, x);
+        const indLeft = pos ? pos.left : cream.left - x + cream.width - PAGE_INDICATOR_INSET_PX;
+        const indTop = pos
+          ? pos.top
+          : cream.top + cream.height - PAGE_INDICATOR_INSET_PX - PAGE_INDICATOR_FONT_PX;
         z +=
           '<div class="milksha-pg-indicator milksha-pg-indicator--art" style="left:' +
           indLeft +

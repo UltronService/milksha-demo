@@ -128,8 +128,12 @@
 .milksha-board.milksha-board--landscape-art .milksha-pg-indicator--art {
   position: absolute;
   z-index: 5;
-  transform: translate(-100%, -100%);
+  right: auto;
+  bottom: auto;
+  transform: translateX(-100%);
   transform-origin: 100% 100%;
+  line-height: 1;
+  max-height: var(--milksha-pg-ind-font, 28px);
 }
 
 .milksha-board * {
