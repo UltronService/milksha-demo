@@ -2,9 +2,6 @@ name: Cross-zone leak RED (real cloud)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - cursor/cross-zone-leak-diagnose
 
 concurrency:
   group: live-cloud-zz-qa-ci-store
