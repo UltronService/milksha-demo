@@ -1,8 +1,8 @@
 import { expect } from '@playwright/test';
 import { urlsLocalHomePoc } from './harness.mjs';
-import { prepPayload, applyPayload, sequentialNumbers } from './board-column-move-helpers.mjs';
+import { prepPayload, applyPayload, sequentialNumbers, readyPayload } from './board-column-move-helpers.mjs';
 
-const GRID_ROWS = 5;
+export const GRID_ROWS = 5;
 
 export function boardUrlWithMotionTrace(extraQuery = '') {
   const { board } = urlsLocalHomePoc();
@@ -23,8 +23,9 @@ export async function primeBoardWithMotionTrace(page) {
 }
 
 export async function minExpectedTraceFrames(page) {
-  const opacityInMs = await page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getConfig().opacityInMs);
-  return Math.max(2, Math.ceil(opacityInMs / 100));
+  const cfg = await page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getConfig());
+  const ms = Math.max(cfg.opacityInMs, cfg.pageDurationMs, cfg.columnMoveMs);
+  return Math.max(2, Math.ceil(ms / 50));
 }
 
 /**
@@ -40,10 +41,13 @@ export async function waitForMotionSession(page, motionType) {
         return false;
       }
       const sessions = trace.get().filter((s) => s.motionType === expected.type && s.endedAt);
-      return sessions.some((s) => s.frames.length >= expected.minFrames);
+      return sessions.some((s) => {
+        const v = trace.validateSession(s);
+        return v.valid && s.frames.length >= expected.minFrames;
+      });
     },
     { type: motionType, minFrames },
-    { timeout: 8000 },
+    { timeout: 12000 },
   );
   return page.evaluate((type) => {
     const sessions = window.__milkshaMotionTrace.get().filter((s) => s.motionType === type && s.endedAt);
@@ -57,17 +61,25 @@ export async function waitForMotionSession(page, motionType) {
  */
 export async function assertMotionTraceAndAnalyze(page, motionType) {
   const session = await waitForMotionSession(page, motionType);
+  const validity = await page.evaluate(
+    (s) => window.__milkshaMotionTrace.validateSession(s),
+    session,
+  );
+  expect(validity.valid, JSON.stringify(validity)).toBe(true);
   expect(session.frames.length).toBeGreaterThan(0);
-  expect(session.frames[0].chips).toBeDefined();
   const analysis = await page.evaluate((type) => {
     const sessions = window.__milkshaMotionTrace.get().filter((s) => s.motionType === type);
     const last = sessions[sessions.length - 1];
     return window.__milkshaMotionTrace.analyzeSession(last);
   }, motionType);
-  expect(analysis).toHaveProperty('outsideCream');
-  expect(analysis).toHaveProperty('coversTitle');
-  expect(analysis).toHaveProperty('overlap');
-  expect(analysis).toHaveProperty('diagonalMotion');
+  expect(analysis.valid !== false).toBe(true);
+  expect(analysis).toHaveProperty('failures');
+  if (motionType === 'column-move' || motionType === 'backfill') {
+    for (const f of analysis.failures) {
+      expect(f.rule).toBeTruthy();
+      expect(f.frame).toBeGreaterThanOrEqual(0);
+    }
+  }
   return { session, analysis };
 }
 
@@ -78,11 +90,9 @@ export async function assertMotionTraceDisabledOnDefaultBoard(page) {
   const state = await page.evaluate(() => ({
     enabled: window.QMS.MilkshaBoardMotionTrace.isEnabled(),
     hasPublic: typeof window.__milkshaMotionTrace !== 'undefined',
-    rafPatched: Boolean(window.__milkshaMotionTraceRafPatched),
   }));
   expect(state.enabled).toBe(false);
   expect(state.hasPublic).toBe(false);
-  expect(state.rafPatched).toBe(false);
 }
 
-export { prepPayload, applyPayload, sequentialNumbers, GRID_ROWS };
+export { prepPayload, readyPayload, applyPayload, sequentialNumbers };

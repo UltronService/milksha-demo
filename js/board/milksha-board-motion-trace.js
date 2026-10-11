@@ -6,6 +6,10 @@
 
   const QMS = (root.QMS = root.QMS || {});
 
+  const SAMPLE_INTERVAL_MS = 50;
+  const MAX_FRAMES_PER_SESSION = 480;
+  const MAX_SESSIONS = 32;
+
   /**
    * @param {Window & typeof globalThis} win
    * @returns {boolean}
@@ -31,23 +35,149 @@
     return;
   }
 
-  /** @type {Array<{ motionType: string, zoneKey?: string, startedAt: number, endedAt?: number, frames: Array<object> }>} */
+  /** @type {Array<object>} */
   let sessions = [];
   /** @type {Set<object>} */
   const activeSessions = new Set();
-  let rafId = 0;
+  let sampleTimerId = 0;
+
+  function getAnimDurations() {
+    const cfgMod = QMS.MilkshaBoardAnimConfig;
+    if (cfgMod && cfgMod.getConfig) {
+      return cfgMod.getConfig();
+    }
+    return { opacityInMs: 300, pageDurationMs: 500, columnMoveMs: 300 };
+  }
 
   /**
-   * @param {Element | null | undefined} el
+   * @param {string} motionType
    * @returns {number}
    */
-  function parseOpacity(el) {
-    if (!el || !root.getComputedStyle) {
+  function motionDurationMs(motionType) {
+    const cfg = getAnimDurations();
+    if (motionType === 'page-turn') {
+      return cfg.pageDurationMs;
+    }
+    if (motionType === 'column-move') {
+      return cfg.columnMoveMs;
+    }
+    return cfg.opacityInMs;
+  }
+
+  /**
+   * @returns {{ left: number, top: number, scale: number }}
+   */
+  function boardCanvasMetrics() {
+    const doc = root.document;
+    const canvas = doc && doc.getElementById ? doc.getElementById('milksha-board-canvas') : null;
+    const cRect = canvas && canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
+    let scale = 1;
+    if (canvas && canvas.style && canvas.style.transform) {
+      const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+      if (m) {
+        scale = Number.parseFloat(m[1]) || 1;
+      }
+    }
+    return { left: cRect.left, top: cRect.top, scale: scale };
+  }
+
+  /**
+   * @param {DOMRect} r
+   * @param {{ left: number, top: number, scale: number }} canvas
+   * @returns {{ left: number, top: number, right: number, bottom: number, width: number, height: number }}
+   */
+  function rectToBoard(r, canvas) {
+    const s = canvas.scale || 1;
+    return {
+      left: (r.left - canvas.left) / s,
+      top: (r.top - canvas.top) / s,
+      right: (r.right - canvas.left) / s,
+      bottom: (r.bottom - canvas.top) / s,
+      width: r.width / s,
+      height: r.height / s,
+    };
+  }
+
+  /**
+   * @param {string | null | undefined} transform
+   * @returns {{ scale: number, tx: number, ty: number }}
+   */
+  function parseTransform(transform) {
+    if (!transform || transform === 'none') {
+      return { scale: 1, tx: 0, ty: 0 };
+    }
+    const m = transform.match(/matrix\(([^)]+)\)/);
+    if (m) {
+      const p = m[1].split(',').map(function (part) {
+        return Number.parseFloat(part.trim());
+      });
+      if (p.length >= 6) {
+        return { scale: p[0], tx: p[4], ty: p[5] };
+      }
+    }
+    return { scale: 1, tx: 0, ty: 0 };
+  }
+
+  /**
+   * @param {Element} chip
+   * @returns {number}
+   */
+  function parseOpacity(chip) {
+    if (!chip || !root.getComputedStyle) {
       return 1;
     }
-    const raw = root.getComputedStyle(el).opacity;
+    const raw = root.getComputedStyle(chip).opacity;
     const n = Number.parseFloat(raw);
     return Number.isFinite(n) ? n : 1;
+  }
+
+  /**
+   * @param {Element} chip
+   * @returns {'in-cell' | 'fading-out' | 'float-layer' | 'exit-clone'}
+   */
+  function chipRole(chip) {
+    if (chip.getAttribute('data-column-move-exit-clone') === '1') {
+      return 'exit-clone';
+    }
+    if (chip.classList.contains('milksha-board-chip--layer-float')) {
+      if (parseOpacity(chip) < 0.99) {
+        return 'fading-out';
+      }
+      return 'float-layer';
+    }
+    return 'in-cell';
+  }
+
+  /**
+   * @returns {Record<string, { cream: object | null, title: object | null }>}
+   */
+  function captureZoneLayoutRects() {
+    const doc = root.document;
+    const out = { prep: { cream: null, title: null }, ready: { cream: null, title: null } };
+    if (!doc || typeof doc.querySelector !== 'function') {
+      return out;
+    }
+    const canvas = boardCanvasMetrics();
+    const zones = [
+      { key: 'prep', sel: '.milksha-zone.milksha-prep' },
+      { key: 'ready', sel: '.milksha-zone.milksha-ready' },
+    ];
+    for (let zi = 0; zi < zones.length; zi += 1) {
+      const z = zones[zi];
+      const zoneEl = doc.querySelector(z.sel);
+      if (!zoneEl) {
+        continue;
+      }
+      const creamEl = zoneEl.querySelector('.milksha-cream');
+      const titleEl = zoneEl.querySelector('.milksha-ztitle');
+      if (creamEl && creamEl.getBoundingClientRect) {
+        out[z.key].cream = rectToBoard(creamEl.getBoundingClientRect(), canvas);
+      }
+      if (titleEl && titleEl.getBoundingClientRect) {
+        out[z.key].title = rectToBoard(titleEl.getBoundingClientRect(), canvas);
+      }
+    }
+    return out;
   }
 
   /**
@@ -59,15 +189,7 @@
     if (!doc || typeof doc.querySelectorAll !== 'function') {
       return [];
     }
-    const canvas = doc.getElementById('milksha-board-canvas');
-    const cRect = canvas && canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
-    let scale = 1;
-    if (canvas && canvas.style && canvas.style.transform) {
-      const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
-      if (m) {
-        scale = Number.parseFloat(m[1]) || 1;
-      }
-    }
+    const canvas = boardCanvasMetrics();
     const chips = doc.querySelectorAll('.milksha-board-chip[data-item-id]');
     const out = [];
     for (let i = 0; i < chips.length; i += 1) {
@@ -95,6 +217,8 @@
           }
         }
       }
+      const cs = root.getComputedStyle(chip);
+      const tf = parseTransform(cs.transform);
       const r = chip.getBoundingClientRect();
       out.push({
         number,
@@ -102,39 +226,66 @@
         zone,
         slot,
         opacity: parseOpacity(chip),
-        floating: chip.classList.contains('milksha-board-chip--layer-float'),
-        rect: {
-          left: (r.left - cRect.left) / scale,
-          top: (r.top - cRect.top) / scale,
-          right: (r.right - cRect.left) / scale,
-          bottom: (r.bottom - cRect.top) / scale,
-          width: r.width / scale,
-          height: r.height / scale,
-        },
+        scale: tf.scale,
+        tx: tf.tx,
+        ty: tf.ty,
+        role: chipRole(chip),
+        rect: rectToBoard(r, canvas),
       });
     }
     return out;
   }
 
-  function tick() {
-    rafId = 0;
+  /**
+   * @param {object} session
+   * @param {number} t
+   */
+  function pushFrame(session, t) {
+    const frame = {
+      t: t,
+      chips: captureChipSnapshots(t),
+      zoneRects: captureZoneLayoutRects(),
+    };
+    session.frames.push(frame);
+    while (session.frames.length > MAX_FRAMES_PER_SESSION) {
+      session.frames.shift();
+    }
+  }
+
+  function sampleActiveSessions() {
     if (activeSessions.size === 0) {
       return;
     }
     const t = root.performance && root.performance.now ? root.performance.now() : Date.now();
     activeSessions.forEach(function (session) {
-      session.frames.push({ t: t, chips: captureChipSnapshots(t) });
+      pushFrame(session, t);
     });
-    if (activeSessions.size > 0) {
-      rafId = root.requestAnimationFrame(tick);
-    }
   }
 
-  function ensureRafLoop() {
-    if (rafId !== 0 || activeSessions.size === 0) {
+  function ensureSampleLoop() {
+    if (sampleTimerId !== 0 || activeSessions.size === 0) {
       return;
     }
-    rafId = root.requestAnimationFrame(tick);
+    sampleTimerId = root.setInterval(sampleActiveSessions, SAMPLE_INTERVAL_MS);
+  }
+
+  function stopSampleLoopIfIdle() {
+    if (activeSessions.size > 0 || sampleTimerId === 0) {
+      return;
+    }
+    root.clearInterval(sampleTimerId);
+    sampleTimerId = 0;
+  }
+
+  /**
+   * @param {object} session
+   * @returns {{ valid: boolean, reason?: string }}
+   */
+  function validateSession(session) {
+    if (!session || !Array.isArray(session.frames) || session.frames.length === 0) {
+      return { valid: false, reason: 'zero_frames' };
+    }
+    return { valid: true };
   }
 
   /**
@@ -144,29 +295,41 @@
    * @returns {Promise<void>}
    */
   function trackZoneAnimation(motionType, zoneEl, endPromise) {
+    while (sessions.length >= MAX_SESSIONS) {
+      sessions.shift();
+    }
     const session = {
       motionType: motionType,
       zoneKey: zoneEl && zoneEl.classList && zoneEl.classList.contains('milksha-ready') ? 'ready' : 'prep',
       startedAt: root.performance && root.performance.now ? root.performance.now() : Date.now(),
+      endedAt: undefined,
       frames: [],
     };
     sessions.push(session);
     activeSessions.add(session);
-    session.frames.push({
-      t: session.startedAt,
-      chips: captureChipSnapshots(session.startedAt),
-    });
-    ensureRafLoop();
-    return Promise.resolve(endPromise).finally(function () {
-      const endT = root.performance && root.performance.now ? root.performance.now() : Date.now();
-      session.endedAt = endT;
-      session.frames.push({ t: endT, chips: captureChipSnapshots(endT) });
-      activeSessions.delete(session);
-      if (activeSessions.size === 0 && rafId !== 0 && root.cancelAnimationFrame) {
-        root.cancelAnimationFrame(rafId);
-        rafId = 0;
-      }
-    });
+    pushFrame(session, session.startedAt);
+    ensureSampleLoop();
+
+    const minEndAt = session.startedAt + motionDurationMs(motionType);
+
+    return Promise.resolve(endPromise)
+      .then(function () {
+        const now = root.performance && root.performance.now ? root.performance.now() : Date.now();
+        const waitMs = Math.max(0, minEndAt - now);
+        if (waitMs <= 0) {
+          return undefined;
+        }
+        return new Promise(function (resolve) {
+          root.setTimeout(resolve, waitMs);
+        });
+      })
+      .finally(function () {
+        const endT = root.performance && root.performance.now ? root.performance.now() : Date.now();
+        pushFrame(session, endT);
+        session.endedAt = endT;
+        activeSessions.delete(session);
+        stopSampleLoopIfIdle();
+      });
   }
 
   /**
@@ -220,6 +383,9 @@
       if (zoneKey === 'prep' && diff.added.length > 0) {
         return 'new-order-fade-in';
       }
+      if (zoneKey === 'ready' && diff.added.length > 0) {
+        return 'new-order-fade-in';
+      }
       if (diff.moved.length > 0) {
         return 'backfill';
       }
@@ -232,64 +398,106 @@
   }
 
   /**
-   * @param {Array<{ t: number, chips: Array<{ number: string, itemId: string, zone: string, slot: number, rect: object, opacity: number }> }>} frames
-   * @param {{ layout?: { creamRectForZone: (z: string) => object, TITLE_GUARD_MAX_Y?: number } | null }} options
+   * @param {object} violation
+   * @returns {object}
+   */
+  function enrichFailure(violation) {
+    return violation;
+  }
+
+  /**
+   * @param {Array<object>} frames
+   * @param {{ motionType?: string }} options
    */
   function analyzeFrames(frames, options) {
-    const layout = options && options.layout ? options.layout : null;
-    const titleMaxY =
-      layout && Number.isFinite(layout.TITLE_GUARD_MAX_Y) ? layout.TITLE_GUARD_MAX_Y : 330;
+    const motionType = options && options.motionType ? options.motionType : '';
     const outsideCream = [];
     const coversTitle = [];
     const overlap = [];
     const diagonalMotion = [];
+    const failures = [];
 
-    /** @type {Map<string, { left: number, top: number }>} */
-    const lastCenterByKey = new Map();
+    /** @type {Map<string, { tx: number, ty: number }>} */
+    const lastTranslateByKey = new Map();
 
     for (let fi = 0; fi < frames.length; fi += 1) {
       const frame = frames[fi];
       const chips = frame.chips || [];
+      const zoneRects = frame.zoneRects || {};
       for (let ci = 0; ci < chips.length; ci += 1) {
         const chip = chips[ci];
         if (!chip.rect) {
           continue;
         }
         const zone = chip.zone === 'ready' ? 'ready' : 'prep';
-        if (layout && layout.creamRectForZone) {
-          const cream = layout.creamRectForZone(zone);
-          const r = chip.rect;
+        const cream = zoneRects[zone] && zoneRects[zone].cream ? zoneRects[zone].cream : null;
+        const title = zoneRects[zone] && zoneRects[zone].title ? zoneRects[zone].title : null;
+        const r = chip.rect;
+        if (cream) {
           const inside =
             r.left >= cream.left &&
             r.top >= cream.top &&
-            r.right <= cream.left + cream.width &&
-            r.bottom <= cream.top + cream.height;
+            r.right <= cream.right &&
+            r.bottom <= cream.bottom;
           if (!inside) {
-            outsideCream.push({ frame: fi, t: frame.t, number: chip.number, zone: chip.zone, rect: r });
-          }
-          if (r.top < titleMaxY) {
-            coversTitle.push({ frame: fi, t: frame.t, number: chip.number, zone: chip.zone, rect: r });
-          }
-        }
-        const cx = (chip.rect.left + chip.rect.right) / 2;
-        const cy = (chip.rect.top + chip.rect.bottom) / 2;
-        const trackKey = chip.itemId || chip.number || String(ci);
-        const prev = lastCenterByKey.get(trackKey);
-        if (prev) {
-          const dx = cx - prev.left;
-          const dy = cy - prev.top;
-          if (dx !== 0 && dy !== 0) {
-            diagonalMotion.push({
+            const entry = enrichFailure({
+              rule: 'outsideCream',
               frame: fi,
               t: frame.t,
               number: chip.number,
               itemId: chip.itemId,
+              zone: chip.zone,
+              role: chip.role,
+              px: {
+                left: r.left - cream.left,
+                top: r.top - cream.top,
+                right: cream.right - r.right,
+                bottom: cream.bottom - r.bottom,
+              },
+            });
+            outsideCream.push(entry);
+            failures.push(entry);
+          }
+        }
+        if (title) {
+          if (rectsOverlap(r, title)) {
+            const entry = enrichFailure({
+              rule: 'coversTitle',
+              frame: fi,
+              t: frame.t,
+              number: chip.number,
+              itemId: chip.itemId,
+              zone: chip.zone,
+              role: chip.role,
+            });
+            coversTitle.push(entry);
+            failures.push(entry);
+          }
+        }
+        const trackKey = chip.itemId || chip.number || String(ci);
+        const tx = Number.isFinite(chip.tx) ? chip.tx : 0;
+        const ty = Number.isFinite(chip.ty) ? chip.ty : 0;
+        const prev = lastTranslateByKey.get(trackKey);
+        if (prev) {
+          const dx = tx - prev.tx;
+          const dy = ty - prev.ty;
+          if (dx !== 0 && dy !== 0) {
+            const entry = enrichFailure({
+              rule: 'diagonalMotion',
+              frame: fi,
+              t: frame.t,
+              number: chip.number,
+              itemId: chip.itemId,
+              zone: chip.zone,
+              role: chip.role,
               dx,
               dy,
             });
+            diagonalMotion.push(entry);
+            failures.push(entry);
           }
         }
-        lastCenterByKey.set(trackKey, { left: cx, top: cy });
+        lastTranslateByKey.set(trackKey, { tx: tx, ty: ty });
       }
       for (let a = 0; a < chips.length; a += 1) {
         for (let b = a + 1; b < chips.length; b += 1) {
@@ -300,35 +508,57 @@
             continue;
           }
           if (rectsOverlap(chips[a].rect, chips[b].rect)) {
-            overlap.push({
+            const entry = enrichFailure({
+              rule: 'overlap',
               frame: fi,
               t: frame.t,
               a: chips[a].number,
               b: chips[b].number,
               zone: chips[a].zone,
+              roleA: chips[a].role,
+              roleB: chips[b].role,
             });
+            overlap.push(entry);
+            failures.push(entry);
           }
         }
       }
     }
+
+    const detailFailures =
+      motionType === 'column-move' || motionType === 'backfill'
+        ? failures.map(function (f) {
+            return f;
+          })
+        : failures;
 
     return {
       outsideCream,
       coversTitle,
       overlap,
       diagonalMotion,
-      failed:
-        outsideCream.length > 0 ||
-        coversTitle.length > 0 ||
-        overlap.length > 0 ||
-        diagonalMotion.length > 0,
+      failures: detailFailures,
+      failed: failures.length > 0,
     };
   }
 
   function analyzeSession(session) {
-    const layout =
-      QMS.Board && QMS.Board.LandscapeArtLayout ? QMS.Board.LandscapeArtLayout : null;
-    return analyzeFrames(session.frames || [], { layout });
+    const validity = validateSession(session);
+    if (!validity.valid) {
+      return {
+        valid: false,
+        reason: validity.reason,
+        outsideCream: [],
+        coversTitle: [],
+        overlap: [],
+        diagonalMotion: [],
+        failures: [{ rule: 'invalidSession', reason: validity.reason }],
+        failed: true,
+      };
+    }
+    const analysis = analyzeFrames(session.frames || [], { motionType: session.motionType });
+    analysis.valid = true;
+    return analysis;
   }
 
   function analyzeAllSessions() {
@@ -336,6 +566,7 @@
       return {
         motionType: session.motionType,
         frameCount: session.frames.length,
+        validation: validateSession(session),
         analysis: analyzeSession(session),
       };
     });
@@ -348,14 +579,19 @@
     clear: function () {
       sessions = [];
       activeSessions.clear();
-      if (rafId !== 0 && root.cancelAnimationFrame) {
-        root.cancelAnimationFrame(rafId);
-        rafId = 0;
-      }
+      stopSampleLoopIfIdle();
     },
+    validateSession: validateSession,
     analyzeFrames: analyzeFrames,
     analyzeSession: analyzeSession,
     analyzeAll: analyzeAllSessions,
+    getConfig: function () {
+      return {
+        sampleIntervalMs: SAMPLE_INTERVAL_MS,
+        maxFramesPerSession: MAX_FRAMES_PER_SESSION,
+        maxSessions: MAX_SESSIONS,
+      };
+    },
   };
 
   QMS.MilkshaBoardMotionTrace = {
@@ -365,5 +601,7 @@
     trackZoneAnimation: trackZoneAnimation,
     inferZoneMotionType: inferZoneMotionType,
     analyzeFrames: analyzeFrames,
+    validateSession: validateSession,
+    captureChipSnapshotsForTest: captureChipSnapshots,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
