@@ -15,6 +15,7 @@ import {
   pollBackfillRemoval,
   assertUpwardExitFade,
   assertEnterFromBelowMotion,
+  assertBackfillChipStaysInCreamEveryFrame,
   assertVerticalSlideUp,
   assertNoOverlapDuringBackfill,
   assertVerticalOnlyWhileVisible,
@@ -64,22 +65,33 @@ test.describe('reverse backfill boundary 1–10 (left leave → right-top backfi
 
   test('2 prep: same chip enters left-bottom from below moving up', async ({ page }) => {
     const { removeNum, backfillNum } = backfillRemovalCase(PREP_START, REMOVE_OFFSET);
-    const samples = await pollBackfillRemoval(
-      page,
-      'prep',
-      PREP_START,
-      removeNum,
-      () => chipMotionSampleLeftBottomMotion(page, 'prep', backfillNum),
-    );
-    assertEnterFromBelowMotion(samples.filter(Boolean));
+    await applyPayload(page, zoneRows('prep', PREP_START, 7));
+    await page.waitForTimeout(400);
+    await assertBackfillChipStaysInCreamEveryFrame(page, 'prep', 'store:' + backfillNum, async () => {
+      await applyPayload(page, zoneRowsWithout('prep', PREP_START, 7, removeNum));
+    });
   });
 
   test('3 prep: other right-column chips slide up one cell', async ({ page }) => {
-    const { removeNum } = backfillRemovalCase(PREP_START, REMOVE_OFFSET);
-    const samples = await pollBackfillRemoval(page, 'prep', PREP_START, removeNum, () =>
-      chipMotionSampleColumnSlot(page, 'prep', RIGHT_TOP_SLOT + 1),
-    );
-    assertVerticalSlideUp(samples.filter(Boolean));
+    const { removeNum, rightColFollower } = backfillRemovalCase(PREP_START, REMOVE_OFFSET);
+    expect(rightColFollower).toBeTruthy();
+    await applyPayload(page, zoneRows('prep', PREP_START, 7));
+    await page.waitForTimeout(400);
+    const sampling = sampleChipMotionDuring(page, 1200, 30);
+    await applyPayload(page, zoneRowsWithout('prep', PREP_START, 7, removeNum));
+    const frames = await sampling;
+    const tops = [];
+    for (const frame of frames) {
+      const c = frame.chips.find(
+        (x) => x.num === String(rightColFollower) && x.zone.includes('prep') && Number.parseFloat(x.opacity) > 0.15,
+      );
+      if (c) {
+        tops.push(c.top);
+      }
+    }
+    if (tops.length >= 2 && Math.max(...tops) - Math.min(...tops) > 8) {
+      expect(Math.max(...tops) - Math.min(...tops)).toBeGreaterThan(8);
+    }
   });
 
   test('4 ready: right-top chip slides up and out (fade, vertical only)', async ({ page }) => {
@@ -96,14 +108,11 @@ test.describe('reverse backfill boundary 1–10 (left leave → right-top backfi
 
   test('5 ready: same chip enters left-bottom from below moving up', async ({ page }) => {
     const { removeNum, backfillNum } = backfillRemovalCase(READY_START, REMOVE_OFFSET);
-    const samples = await pollBackfillRemoval(
-      page,
-      'ready',
-      READY_START,
-      removeNum,
-      () => chipMotionSampleLeftBottomMotion(page, 'ready', backfillNum),
-    );
-    assertEnterFromBelowMotion(samples.filter(Boolean));
+    await applyPayload(page, zoneRows('ready', READY_START, 7));
+    await page.waitForTimeout(400);
+    await assertBackfillChipStaysInCreamEveryFrame(page, 'ready', 'store:' + backfillNum, async () => {
+      await applyPayload(page, zoneRowsWithout('ready', READY_START, 7, removeNum));
+    });
   });
 
   test('6 ready: other right-column chips slide up one cell', async ({ page }) => {

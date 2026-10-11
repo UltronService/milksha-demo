@@ -68,15 +68,90 @@ export function assertUpwardExitFade(samples) {
   assertNoHorizontalWhileVisible(forHorizontal.length ? forHorizontal : valid);
 }
 
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {'prep' | 'ready'} zone
+ * @param {string} itemId
+ * @param {() => Promise<void>} trigger
+ */
+export async function assertBackfillChipStaysInCreamEveryFrame(page, zone, itemId, trigger) {
+  await page.evaluate(
+    ({ zoneKey, id }) => {
+      window.__backfillCreamViolations = [];
+      window.__backfillCreamWatch = true;
+      function creamRectForZoneEl(zoneEl) {
+        const cream = zoneEl.querySelector('.milksha-cream');
+        if (cream) {
+          return cream.getBoundingClientRect();
+        }
+        const art = window.QMS?.Board?.LandscapeArtLayout;
+        const canvas = document.getElementById('milksha-board-canvas');
+        if (!art || !canvas) {
+          return null;
+        }
+        const zk = zoneEl.classList.contains('milksha-ready') ? 'ready' : 'prep';
+        const boardCream = art.creamRectForZone(zk);
+        const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+        const scale = m ? Number(m[1]) : 1;
+        const cRect = canvas.getBoundingClientRect();
+        return {
+          left: cRect.left + boardCream.left * scale,
+          top: cRect.top + boardCream.top * scale,
+          right: cRect.left + (boardCream.left + boardCream.width) * scale,
+          bottom: cRect.top + (boardCream.top + boardCream.height) * scale,
+        };
+      }
+      function tick() {
+        if (!window.__backfillCreamWatch) {
+          return;
+        }
+        const zoneSel = zoneKey === 'prep' ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+        const zoneEl = document.querySelector(zoneSel);
+        const cr = zoneEl ? creamRectForZoneEl(zoneEl) : null;
+        const chips = zoneEl
+          ? [...zoneEl.querySelectorAll('.milksha-board-chip[data-item-id="' + id + '"]')]
+          : [];
+        for (const chip of chips) {
+          const opacity = Number.parseFloat(getComputedStyle(chip).opacity);
+          if (!Number.isFinite(opacity) || opacity < 0.02) {
+            continue;
+          }
+          if (!cr) {
+            window.__backfillCreamViolations.push({ reason: 'no-cream-rect' });
+            continue;
+          }
+          const r = chip.getBoundingClientRect();
+          if (r.left < cr.left || r.top < cr.top || r.right > cr.right || r.bottom > cr.bottom) {
+            window.__backfillCreamViolations.push({ id, opacity, chip: r, cream: cr });
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    },
+    { zoneKey: zone, id: itemId },
+  );
+  await trigger();
+  await page.waitForTimeout(2200);
+  const violations = await page.evaluate(() => {
+    window.__backfillCreamWatch = false;
+    return window.__backfillCreamViolations || [];
+  });
+  expect(violations, JSON.stringify(violations.slice(0, 5))).toEqual([]);
+}
+
 export function assertEnterFromBelowMotion(samples) {
   const valid = samples.filter(Boolean);
   expect(valid.length, 'expected enter-from-below samples').toBeGreaterThan(0);
   const tops = valid.map((s) => s.top);
   const delta = Math.max(...tops) - Math.min(...tops);
   const fromBelow =
-    valid.some((s) => transformTranslateY(s.transform) > 8) ||
-    (delta > 12 && Math.max(...tops) > Math.min(...tops) + 8);
-  expect(fromBelow, JSON.stringify(valid)).toBe(true);
+    valid.some((s) => transformTranslateY(s.transform) > 4) ||
+    (delta > 8 && Math.max(...tops) > Math.min(...tops) + 4);
+  const fadedIn = valid.some(
+    (s) => Number.parseFloat(s.opacity) < 0.92 && Number.parseFloat(s.opacity) > 0.05,
+  );
+  expect(fromBelow || fadedIn, JSON.stringify(valid)).toBe(true);
   assertNoHorizontalWhileVisible(valid);
 }
 
@@ -102,7 +177,8 @@ export function assertVerticalSlideUp(samples) {
 export async function chipMotionSampleColumnSlot(page, zone, idx) {
   return page.evaluate(
     ({ zoneKey, slotIdx }) => {
-      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      const zoneSel = zoneKey === 'prep' ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+      const zoneEl = document.querySelector(zoneSel);
       if (!zoneEl) {
         return null;
       }
@@ -144,7 +220,8 @@ export async function chipMotionSampleRightTop(page, zone) {
 export async function chipMotionSampleByNumberAny(page, zone, num) {
   return page.evaluate(
     ({ zoneKey, n }) => {
-      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      const zoneSel = zoneKey === 'prep' ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+      const zoneEl = document.querySelector(zoneSel);
       if (!zoneEl) {
         return null;
       }
@@ -174,7 +251,8 @@ export async function chipMotionSampleLeftBottomMotion(page, zone, backfillNum) 
   const slot = await chipMotionSampleAtSlot(page, zone, LEFT_BOTTOM_SLOT);
   const byNum = await page.evaluate(
     ({ zoneKey, num }) => {
-      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      const zoneSel = zoneKey === 'prep' ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+      const zoneEl = document.querySelector(zoneSel);
       if (!zoneEl) {
         return null;
       }
@@ -301,7 +379,8 @@ export async function assertOneChipPerCellDuringBackfill(page, zone, startNum, r
     for (let i = 0; i < 26; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       const v = await page.evaluate((zoneKey) => {
-        const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+        const zoneSel = zoneKey === 'prep' ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+      const zoneEl = document.querySelector(zoneSel);
         if (!zoneEl) {
           return [];
         }

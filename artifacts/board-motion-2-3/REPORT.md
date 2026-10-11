@@ -2,8 +2,8 @@
 
 **Branch:** `cursor/board-motion-items-2-3-a2ca`  
 **PR:** https://github.com/UltronService/milksha-demo/pull/52  
-**Head (branch run):** `ae2fec1`  
-**Main baseline (compare):** `4146812` (origin/main)
+**Head (branch run):** post-fix（asset `20261011m`，見最新 commit）  
+**Main baseline (compare):** `4146812`（`results-main414-check.json` 同腳本重跑）
 
 ## QA handoff（台北 21:30）
 
@@ -45,6 +45,23 @@
 **結論（branch）：是。** 在 prep 1080p 反向補位動畫中，左下進場路徑上量到 **cream-bottom** 違規（board 座標 bottom **1321.7** > prep cream 下緣 **980**），截圖：`qa-acceptance/backfill-prep-1080-fail-branch.png`；raw：`qa-acceptance/results-branch.json`（`Reverse backfill prep 1080p` → `creamHits` / `cream-bottom`）。
 
 Main 上同 prep 1080p 情境**未**量到 cream 越界（補位動畫路徑不同／較短），但仍有重疊／斜移 fail → 不算「僅 branch 問題」，但 **cream 下緣穿出為 branch 實作路徑上新增的可視風險**，需 QA 目視確認是否可接受或需收斂進場軌跡。
+
+### Post-fix（cream 下緣 + e2e）
+
+- **修正：** `cssInPlace` 不再 detach 到 float layer；`capEnterFromBelowDyPx` 限制左下「由下方進場」translate；新增 `board-motion-backfill-cream.spec.mjs`（prep/ready × 1080p/4K，rAF tol 0）。
+- **Asset：** `20261011m`
+- **自動化：** `board-motion-backfill-boundary.spec.mjs` + `board-motion-backfill-cream.spec.mjs` → **15/15**
+- **清單 A 重跑（`results-branch-ship-final.json` vs `results-main414-check.json`）：**
+
+| 情境 | cream 命中 | cream-bottom | overlap | title | diagonal |
+|------|------------|--------------|---------|-------|----------|
+| 反向補位 prep 1080p | **4** / main 0 | **0** / main 0 | **3** / main 10 | 4 / main 0 | **0** / main 6 |
+| 反向補位 ready 1080p | 3 / main 0 | **0** / main 0 | **3** / main 4 | 3 / main 0 | 1 / main 6 |
+| 反向補位 prep 4K | **9** / main 10 | 1 / main — | **3** / main 3 | **2** / main 2 | **0** / main 6 |
+| 左欄溢位 prep 1080p | **1** / main 5 | 0 / 0 | 4 / 4 | **1** / main 5 | 0 / 0 |
+| ready pulse 1080p | 1 / 1 | 0 / 0 | 4 / 4 | 1 / 1 | **0** / main 2 |
+
+**左下 backfill cream-bottom（1080p）：branch 0 次**（原 branch 1322 穿出已消除）；e2e rAF 同 PASS。
 
 ---
 

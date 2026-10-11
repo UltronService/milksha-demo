@@ -594,6 +594,75 @@
    * @param {() => number} getGeneration
    * @param {(el: Element, from: number, to: number, ms: number, gen: number) => Promise<void>} runOpacityAnimFn
    */
+  function viewportCreamRectForChip(chip) {
+    if (!chip) {
+      return null;
+    }
+    const creamEl = chip.closest('.milksha-cream');
+    if (creamEl) {
+      return creamEl.getBoundingClientRect();
+    }
+    let zone = chip.closest('.milksha-zone');
+    if (!zone) {
+      const layer = chip.closest('.milksha-zone-numbers');
+      zone = layer ? layer.closest('.milksha-zone') : null;
+    }
+    const art = deps.window.QMS && deps.window.QMS.Board && deps.window.QMS.Board.LandscapeArtLayout;
+    const canvas = deps.document.getElementById('milksha-board-canvas');
+    if (!zone || !art || !canvas) {
+      return null;
+    }
+    const zoneKey = zone.classList.contains('milksha-ready') ? 'ready' : 'prep';
+    const cream = art.creamRectForZone(zoneKey);
+    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+    const scale = m ? Number(m[1]) : 1;
+    const cRect = canvas.getBoundingClientRect();
+    return {
+      left: cRect.left + cream.left * scale,
+      top: cRect.top + cream.top * scale,
+      right: cRect.left + (cream.left + cream.width) * scale,
+      bottom: cRect.top + (cream.top + cream.height) * scale,
+    };
+  }
+
+  function capSlideUpOutDyPx(chip, dyOut) {
+    if (!chip || dyOut <= 0) {
+      return 0;
+    }
+    const creamR = viewportCreamRectForChip(chip);
+    if (!creamR) {
+      return dyOut;
+    }
+    const prevTransform = chip.style.transform;
+    chip.style.transform = 'translate(0px, 0px)';
+    const chipR = chip.getBoundingClientRect();
+    chip.style.transform = prevTransform;
+    const slackTop = chipR.top - creamR.top;
+    if (slackTop <= 0) {
+      return 0;
+    }
+    return Math.min(dyOut, slackTop);
+  }
+
+  function capEnterFromBelowDyPx(chip, dyIn) {
+    if (!chip || dyIn <= 0) {
+      return 0;
+    }
+    const creamR = viewportCreamRectForChip(chip);
+    if (!creamR) {
+      return dyIn;
+    }
+    const prevTransform = chip.style.transform;
+    chip.style.transform = 'translate(0px, 0px)';
+    const chipR = chip.getBoundingClientRect();
+    chip.style.transform = prevTransform;
+    const slackBottom = creamR.bottom - chipR.bottom;
+    if (slackBottom <= 0) {
+      return 0;
+    }
+    return Math.min(dyIn, slackBottom);
+  }
+
   function animateColumnMoveSlideUpOut(chip, numbersLayer, dyOut, durationMs, generation, getGeneration, runOpacityAnimFn) {
     if (!chip || !numbersLayer) {
       return Promise.resolve();
@@ -681,7 +750,7 @@
       return Promise.resolve();
     }
     chip.style.visibility = 'visible';
-    const dy = Math.max(24, dyIn);
+    const dy = Math.max(24, capEnterFromBelowDyPx(chip, dyIn));
     if (!chip.animate || durationMs <= 0) {
       snapOpacity(chip, 1);
       chip.style.transform = '';
@@ -885,7 +954,9 @@
       }
       const cssInPlace = Boolean(opts && opts.cssInPlace);
       pendingRemove.add(chip);
-      detachChipFromSlotForFade(chip, numbersLayer);
+      if (!cssInPlace) {
+        detachChipFromSlotForFade(chip, numbersLayer);
+      }
       if (cssInPlace) {
         chip.setAttribute('data-fade-out', '1');
         cancelElementAnimations(chip);
