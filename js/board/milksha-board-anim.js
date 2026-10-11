@@ -884,6 +884,13 @@
         pageTurn &&
         !domVisibleLayoutMatches(
           slotEls,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+        ) &&
+        !domVisibleLayoutMatches(
+          slotEls,
           prevItems,
           prevPage,
           deps.pageSize,
