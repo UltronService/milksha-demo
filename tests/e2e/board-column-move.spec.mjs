@@ -14,6 +14,7 @@ import {
   pollMotionSamples,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
+  pickColumnMoveEnterSample,
   prepPayload,
   readyPayload,
   applyPayload,
@@ -282,7 +283,10 @@ for (const zone of ['prep', 'ready']) {
           async () => {
             const enterSlot = await chipMotionSampleAtSlot(page, zone, GRID_ROWS);
             const enterPushed = await chipMotionSampleForNumberWithLeft(page, zone, pushed);
-            return { exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1), enter: enterPushed || enterSlot };
+            return {
+              exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1),
+              enter: pickColumnMoveEnterSample(enterPushed, enterSlot),
+            };
           },
           { samples: count >= 10 ? 50 : 36, intervalMs: 12 },
         );

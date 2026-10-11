@@ -131,6 +131,27 @@ export function assertDownwardExitMotion(samples) {
   expect(movedDown || faded, JSON.stringify(samples)).toBe(true);
 }
 
+/** Prefer the sample that shows vertical enter motion (slot vs id probe can disagree mid-FLIP). */
+export function pickColumnMoveEnterSample(pushedSample, slotSample) {
+  if (!pushedSample) {
+    return slotSample;
+  }
+  if (!slotSample) {
+    return pushedSample;
+  }
+  const pushedTy = Math.abs(transformTranslateY(pushedSample.transform));
+  const slotTy = Math.abs(transformTranslateY(slotSample.transform));
+  const pushedTopSpan = pushedSample.top ?? 0;
+  const slotTopSpan = slotSample.top ?? 0;
+  if (slotTy > pushedTy + 2) {
+    return slotSample;
+  }
+  if (pushedTy > slotTy + 2) {
+    return pushedSample;
+  }
+  return slotSample.top !== undefined ? slotSample : pushedSample;
+}
+
 export function assertEnterFromAboveMotion(samples) {
   const tops = samples.map((s) => s.top);
   const delta = Math.max(...tops) - Math.min(...tops);

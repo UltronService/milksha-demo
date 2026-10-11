@@ -870,39 +870,65 @@
     }
 
     /**
+     * @param {{ cssInPlace?: boolean }} [opts] cssInPlace: CSS opacity transition (FLIP-safe) for removed chips
      * @returns {Promise<void> | undefined}
      */
-    function scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove) {
+    function scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove, opts) {
       if (!chip || pendingRemove.has(chip)) {
         return undefined;
       }
+      const cssInPlace = Boolean(opts && opts.cssInPlace);
       pendingRemove.add(chip);
-      chip.setAttribute('data-fade-out', '1');
       detachChipFromSlotForFade(chip, numbersLayer);
-      cancelElementAnimations(chip);
-      chip.style.transition = 'opacity ' + opacityInMs + 'ms ease-out';
-      chip.style.opacity = '1';
-      if (chip.offsetHeight) {
-        /* reflow so transition runs */
+      if (cssInPlace) {
+        chip.setAttribute('data-fade-out', '1');
+        cancelElementAnimations(chip);
+        chip.style.transition = 'opacity ' + opacityInMs + 'ms ease-out';
+        chip.style.opacity = '1';
+        if (chip.offsetHeight) {
+          /* reflow so transition runs */
+        }
+        chip.style.opacity = '0';
+        opacityAnimRuns += 1;
+        const fadeDone = new Promise(function (resolve) {
+          const finishFadeRemove = function () {
+            if (chip.parentNode) {
+              chip.parentNode.removeChild(chip);
+            }
+            chip.removeAttribute('data-fade-out');
+            chip.style.transition = '';
+            chip.style.opacity = '';
+            pendingRemove.delete(chip);
+            resolve();
+          };
+          if (deps.window && typeof deps.window.setTimeout === 'function') {
+            deps.window.setTimeout(finishFadeRemove, opacityInMs + 40);
+          } else {
+            finishFadeRemove();
+          }
+        });
+        promises.push(fadeDone);
+        return fadeDone;
       }
-      chip.style.opacity = '0';
-      opacityAnimRuns += 1;
-      const fadeDone = new Promise(function (resolve) {
-        const finishFadeRemove = function () {
+      const fromOpacity = Number.parseFloat(chip.style.opacity);
+      const from = Number.isFinite(fromOpacity) ? fromOpacity : 1;
+      let timeoutId = null;
+      if (deps.window && typeof deps.window.setTimeout === 'function') {
+        timeoutId = deps.window.setTimeout(function () {
           if (chip.parentNode) {
             chip.parentNode.removeChild(chip);
           }
-          chip.removeAttribute('data-fade-out');
-          chip.style.transition = '';
-          chip.style.opacity = '';
           pendingRemove.delete(chip);
-          resolve();
-        };
-        if (deps.window && typeof deps.window.setTimeout === 'function') {
-          deps.window.setTimeout(finishFadeRemove, opacityInMs + 40);
-        } else {
-          finishFadeRemove();
+        }, opacityInMs + 200);
+      }
+      const fadeDone = runOpacityAnim(chip, from, 0, opacityInMs, gen).then(function () {
+        if (timeoutId !== null && deps.window.clearTimeout) {
+          deps.window.clearTimeout(timeoutId);
         }
+        if (chip.parentNode) {
+          chip.parentNode.removeChild(chip);
+        }
+        pendingRemove.delete(chip);
       });
       promises.push(fadeDone);
       return fadeDone;
@@ -1259,7 +1285,16 @@
             if (slotChipId && movedIdSet[slotChipId]) {
               continue;
             }
-            const fadeP = scheduleChipFadeOutRemove(slotChip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+            const fadeOpts = slotChipId && removedIdSet[slotChipId] ? { cssInPlace: true } : undefined;
+            const fadeP = scheduleChipFadeOutRemove(
+              slotChip,
+              numbersLayer,
+              gen,
+              opacityInMs,
+              promises,
+              pendingRemove,
+              fadeOpts,
+            );
             if (fadeP && slotChipId && removedIdSet[slotChipId]) {
               removedFadeWaiters.push(fadeP);
             }
@@ -1272,7 +1307,9 @@
         if (!chip || pendingRemove.has(chip)) {
           return;
         }
-        const fadeP = scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+        const fadeP = scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove, {
+          cssInPlace: true,
+        });
         if (fadeP) {
           removedFadeWaiters.push(fadeP);
         }
@@ -1600,25 +1637,30 @@
       });
       };
 
-      const runPlacementPipeline = function () {
-        const afterExit =
-          columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal' && diff.removed.length > 0
-            ? backfillExitClonePromise
-            : Promise.resolve();
-        return afterExit.then(function () {
-          runCellPlacementLoop();
-          return runEmptySlotCleanupAndFlip();
-        });
+      const deferPlacementForBackfillExit =
+        columnMovePlan &&
+        columnMovePlan.kind === 'left-column-backfill-removal' &&
+        diff.removed.length > 0;
+
+      const startPlacement = function () {
+        if (deferPlacementForBackfillExit) {
+          return backfillExitClonePromise.then(function () {
+            runCellPlacementLoop();
+            return runEmptySlotCleanupAndFlip();
+          });
+        }
+        runCellPlacementLoop();
+        return runEmptySlotCleanupAndFlip();
       };
 
       if (removedFadeWaiters.length > 0) {
         return Promise.all(removedFadeWaiters).then(function () {
           finishZonePlacementAndAnimate();
-          return runPlacementPipeline();
+          return startPlacement();
         });
       }
       finishZonePlacementAndAnimate();
-      return runPlacementPipeline();
+      return startPlacement();
     }
 
     return {

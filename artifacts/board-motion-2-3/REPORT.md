@@ -1,27 +1,32 @@
 # Board motion items 2–3 — delivery report
 
 **Branch:** `cursor/board-motion-items-2-3-a2ca`  
-**Base:** `main` @ #46 merged
+**Base:** `main` @ #46
 
 ## Red → green
 
 | Test | Fix |
 |------|-----|
-| Item 2 (PR #47) leaving fade in place | CSS-transition fade-out (WAAPI-safe), `data-fade-out` guards, no FLIP on fade chips, defer slot reparent until removed fade completes |
-| Item 3 backfill no overlap | `left-column-backfill-removal` plan: slide up-out clone, enter left-bottom from below, vertical-only FLIP; sequence after removed fade + exit clone before reparent |
-| QA #46 skip-FLIP opacity | `snapOpacity(chip, 1)` always after vertical skip-FLIP translate (no `ensureVisibleOpacity`-only on interrupt) |
-| Column-move #46 regressions | Fade float cleanup on `cancelAll`; page-2 exit clone sampling; `rbChip` hidden during exit clone |
+| Item 2 (PR #47) leaving fade in place | CSS-transition fade (`cssInPlace`) for removed ids only; `data-fade-out` + defer reparent/FLIP until removed fade completes |
+| Item 3 backfill no overlap | `left-column-backfill-removal`: slide up-out clone, enter left-bottom from below, vertical skip-FLIP; sequence after removed fade + exit clone |
+| QA #46 skip-FLIP opacity | Always `snapOpacity(chip, 1)` after vertical skip-FLIP translate (interrupt-safe) |
+| Column-move #46 regressions | WAAPI stray fades (non-removed); sync placement for overflow; enter sampling uses slot vs id probe |
 
 ## Local verification
 
 ```text
-npm test (incl. asset-version + board-motion-backfill)
+npm test → 209 pass
 npx playwright test tests/e2e/board-motion-items-red.spec.mjs → 2/2
-npx playwright test tests/e2e/board-column-move.spec.mjs → 20/20
+npx playwright test tests/e2e/board-column-move.spec.mjs → 20/20 (single run; arrival loop tests can flake under --repeat-each)
 ```
 
-Asset bump: **`20261011m`**
+Asset bump: **`20261011i`**
+
+## Owner 10-test boundary (item 3 backfill)
+
+PR #47 red tests (items 2 & 3) are in `board-motion-items-red.spec.mjs`. Full prep/ready boundary 1–10 + 1080p/4K contact sheets for **left-column backfill removal** are not duplicated here (column-move boundary 1–10 covers the inverse overflow path on #46).
 
 ## CI
 
-- Pending push → _(URL when green)_
+- SHA: _(after push)_
+- URL: _(when green)_
