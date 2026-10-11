@@ -214,7 +214,11 @@ function makeDomEl(tag, className) {
       return out;
     },
     getBoundingClientRect() {
-      const idx = this._slotIndex || 0;
+      let idx = this._slotIndex;
+      if (idx === undefined && this.parentNode && this.parentNode._slotIndex !== undefined) {
+        idx = this.parentNode._slotIndex;
+      }
+      idx = idx || 0;
       return { left: 0, top: idx * 50, width: 120, height: 40, right: 120, bottom: idx * 50 + 40 };
     },
     animate(keyframes, _options) {
@@ -245,6 +249,16 @@ function makeDomEl(tag, className) {
       }
       anims.push(anim);
       el._lastAnim = anim;
+      const isTranslateOnly =
+        keyframes &&
+        keyframes[0] &&
+        keyframes[0].transform !== undefined &&
+        keyframes[0].opacity === undefined;
+      if (isTranslateOnly) {
+        setImmediate(function () {
+          anim.finish();
+        });
+      }
       return anim;
     },
     getAnimations() {

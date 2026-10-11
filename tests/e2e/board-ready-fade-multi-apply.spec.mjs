@@ -37,6 +37,40 @@ async function readyInCellOpacitySample(page) {
 }
 
 test.describe('ready fade regression (fake local board, live multi-apply pattern)', () => {
+  test('forced pulse cancel on oldest ready chip during multi-apply burst stays opaque', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    await page.evaluate(() => {
+      window.QMS.runtime.applyPayload([{ source_type: 'From_Store_OK', number: '2001' }]);
+    });
+    await page.evaluate(() => {
+      const chip = document.querySelector('.milksha-ready .milksha-num-cell .milksha-board-chip');
+      if (!chip) {
+        throw new Error('missing first ready chip');
+      }
+      for (const anim of chip.getAnimations()) {
+        anim.cancel();
+      }
+    });
+    const payload = [
+      { source_type: 'From_Store_OK', number: '2002' },
+      { source_type: 'From_Store_OK', number: '2001' },
+    ];
+    await page.evaluate((p) => {
+      for (let i = 0; i < 5; i += 1) {
+        window.QMS.runtime.applyPayload(p);
+      }
+    }, payload);
+    await page.waitForTimeout(100);
+    const opacities = await readyInCellOpacitySample(page);
+    const bad = opacities.filter((c) => !Number.isFinite(c.opacity) || c.opacity < 0.99);
+    expect(
+      bad,
+      `deterministic cancel + burst must not leave stuck opacity 0; got ${JSON.stringify(opacities)}`,
+    ).toEqual([]);
+    const integrity = await getBoardIntegritySnapshot(page);
+    expect(integrity.violations, JSON.stringify(integrity.violations)).toEqual([]);
+  });
+
   test('five sends 1s apart with 5× applyPayload burst per send → all ready chips opaque', async ({
     page,
   }) => {
