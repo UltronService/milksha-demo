@@ -279,6 +279,7 @@
     return new Promise(function (resolve) {
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
+          snapOpacity(el, to);
           resolve();
           return;
         }
@@ -286,6 +287,7 @@
         resolve();
       };
       anim.oncancel = function () {
+        snapOpacity(el, to);
         resolve();
       };
     });
@@ -337,16 +339,21 @@
       { duration: total, easing: 'ease-out', fill: 'forwards' },
     );
     return new Promise(function (resolve) {
+      function snapReadyPulseEndState() {
+        snapOpacity(el, 1);
+        el.style.transform = '';
+      }
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
+          snapReadyPulseEndState();
           resolve();
           return;
         }
-        snapOpacity(el, 1);
-        el.style.transform = '';
+        snapReadyPulseEndState();
         resolve();
       };
       anim.oncancel = function () {
+        snapReadyPulseEndState();
         resolve();
       };
     });
@@ -984,6 +991,11 @@
         return Promise.all(promises);
       }
 
+      const movedIdSet = {};
+      for (let mi = 0; mi < diff.moved.length; mi += 1) {
+        movedIdSet[diff.moved[mi].id] = true;
+      }
+
       for (let ri = 0; ri < deps.pageSize; ri += 1) {
         const slotReconcile = slotEls[ri];
         const cellReconcile = cells[ri];
@@ -993,6 +1005,9 @@
           const slotChip = slotChips[sc];
           const slotChipId = slotChip.getAttribute('data-item-id');
           if (!expectedId || slotChipId !== expectedId) {
+            if (slotChipId && movedIdSet[slotChipId]) {
+              continue;
+            }
             scheduleChipFadeOutRemove(slotChip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
           }
         }
@@ -1018,6 +1033,10 @@
           const stray = slot.querySelectorAll('.milksha-board-chip');
           for (let st = 0; st < stray.length; st += 1) {
             if (stray[st] !== chip) {
+              const strayId = stray[st].getAttribute('data-item-id');
+              if (strayId && movedIdSet[strayId]) {
+                continue;
+              }
               scheduleChipFadeOutRemove(stray[st], numbersLayer, gen, opacityInMs, promises, pendingRemove);
             }
           }
@@ -1027,6 +1046,10 @@
         if (!chip || pendingRemove.has(chip)) {
           const strayBefore = slot.querySelectorAll('.milksha-board-chip');
           for (let sb = 0; sb < strayBefore.length; sb += 1) {
+            const strayId = strayBefore[sb].getAttribute('data-item-id');
+            if (strayId && movedIdSet[strayId]) {
+              continue;
+            }
             scheduleChipFadeOutRemove(strayBefore[sb], numbersLayer, gen, opacityInMs, promises, pendingRemove);
           }
           chip = deps.document.createElement('div');
