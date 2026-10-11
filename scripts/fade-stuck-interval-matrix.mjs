@@ -113,7 +113,7 @@ async function runRound(board, ctrl, gapMs) {
   await board.waitForFunction(
     () => document.querySelectorAll('.milksha-board-chip').length === 0,
     undefined,
-    { timeout: 30000 },
+    { timeout: mode === 'live' ? 120000 : 30000 },
   );
 
   const sendMarks = [];
