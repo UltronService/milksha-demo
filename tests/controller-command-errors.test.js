@@ -19,6 +19,14 @@ function loadCmdErrors() {
   return sandbox.QMS.Transport.ControllerCommandErrors;
 }
 
+test('resolveErrorCode maps response.error stale_list', function () {
+  const E = loadCmdErrors();
+  assert.equal(E.resolveErrorCode({ status: 409, response: { error: 'stale_list' } }), 'stale_list');
+  assert.equal(E.resolveErrorCode({ status: 409, response: { code: 'stale_list' } }), 'stale_list');
+  assert.equal(E.isStaleListConflict({ status: 409, response: { error: 'stale_list' } }), true);
+  assert.equal(E.isStaleListConflict({ status: 500, response: { code: 'internal_error' } }), false);
+});
+
 test('connect user message prefers response code over http status', function () {
   const E = loadCmdErrors();
   assert.equal(

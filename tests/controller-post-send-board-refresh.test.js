@@ -97,6 +97,15 @@ test('post-send refresh ignores superseded AbortError (no connect alert, ticket 
   assert.equal(ui.tickets[1].no, '2002');
 });
 
+test('stale_list conflict is not treated as connect/devCommand failure', function () {
+  const CmdErrors = loadCmdErrors();
+  const staleErr = { status: 409, response: { error: 'stale_list' } };
+  assert.equal(CmdErrors.resolveErrorCode(staleErr), 'stale_list');
+  assert.equal(CmdErrors.isStaleListConflict(staleErr), true);
+  assert.equal(CmdErrors.devCommandUserMessage(staleErr), '');
+  assert.equal(CmdErrors.connectUserMessage(staleErr), '');
+});
+
 test('real push_numbers failure still surfaces error and rolls back local ticket', async function () {
   const devErr = { status: 500, response: { code: 'internal_error', message: 'fail' } };
   const CmdErrors = loadCmdErrors();
