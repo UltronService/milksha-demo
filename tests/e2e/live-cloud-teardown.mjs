@@ -46,6 +46,7 @@ export async function assertLiveCloudBoardEmpty(board) {
     () =>
       document.querySelectorAll('.milksha-prep .milksha-num').length === 0 &&
       document.querySelectorAll('.milksha-ready .milksha-num').length === 0,
+    undefined,
     { timeout: 15000 },
   );
   const prep = await board.locator('.milksha-prep .milksha-num').count();
