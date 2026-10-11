@@ -1,0 +1,43 @@
+name: Cross-zone leak RED (real cloud)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/cross-zone-leak-diagnose
+
+concurrency:
+  group: live-cloud-zz-qa-ci-store
+  cancel-in-progress: false
+
+jobs:
+  cross-zone-red:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Install e2e platform fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
+      - name: RED real cloud cross-zone (4146812 site, 10 cycles)
+        run: node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          CROSS_ZONE_SITE_SHA: '4146812'
+          CROSS_ZONE_CYCLES: '10'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+        continue-on-error: true
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-zone-leak
+          path: artifacts/cross-zone-leak/
