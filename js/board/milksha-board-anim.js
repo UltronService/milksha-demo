@@ -204,6 +204,11 @@
     el.style.width = '';
     el.style.height = '';
     el.style.pointerEvents = '';
+    el.style.visibility = '';
+    el.style.transition = '';
+    if (el.removeAttribute) {
+      el.removeAttribute('data-fade-out');
+    }
   }
 
   /**
@@ -1046,6 +1051,14 @@
       const interruptedPageTurn =
         numbersLayer.getAttribute('data-page-turn-anim') === '1' && !pageTurn;
       removeOrphanLayerFloatChips(numbersLayer);
+
+      numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+        if (chip.getAttribute && chip.getAttribute('data-fade-out') === '1') {
+          return;
+        }
+        chip.style.visibility = '';
+        chip.style.transition = '';
+      });
 
       const chipById = {};
       const rectsBefore = {};

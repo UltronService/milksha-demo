@@ -171,12 +171,20 @@ test.describe('board call animation specs 1–7', () => {
         ]);
       }, i);
     }
-    await page.waitForTimeout(500);
+    await page.waitForFunction(
+      () => {
+        const prep = [...document.querySelectorAll('.milksha-prep .milksha-num')]
+          .map((el) => el.textContent?.trim() || '')
+          .filter(Boolean);
+        const ready = [...document.querySelectorAll('.milksha-ready .milksha-num')]
+          .map((el) => el.textContent?.trim() || '')
+          .filter(Boolean);
+        return prep.length === 1 && ready.length === 1 && prep[0] === '5704' && ready[0] === '5804';
+      },
+      null,
+      { timeout: 5000 },
+    );
     await assertChipsOpaqueAndUnique(page);
-    const prep = (await prepNumbers(page)).map((t) => t.trim());
-    const ready = (await readyNumbers(page)).map((t) => t.trim());
-    expect(prep[0]).toBe('5704');
-    expect(ready[0]).toBe('5804');
   });
 
   test('background tab return: chips not stuck semi-transparent', async ({ page }) => {
