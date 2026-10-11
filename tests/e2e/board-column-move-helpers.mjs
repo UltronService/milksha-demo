@@ -125,15 +125,105 @@ export async function pollMotionSamples(page, trigger, sample, opts = {}) {
   const samples = opts.samples ?? 20;
   const intervalMs = opts.intervalMs ?? 16;
   const out = [];
-  const poll = (async () => {
-    for (let i = 0; i < samples; i += 1) {
-      out.push(await sample());
-      await page.waitForTimeout(intervalMs);
-    }
-  })();
-  await trigger();
-  await poll;
+  const triggerPromise = trigger();
+  for (let i = 0; i < samples; i += 1) {
+    out.push(await sample());
+    await page.waitForTimeout(intervalMs);
+  }
+  await triggerPromise;
   return out;
+}
+
+/**
+ * One evaluate per frame: exit slot, enter slot, and pushed id (in-cell + float).
+ * @param {import('@playwright/test').Page} page
+ * @param {'prep' | 'ready'} zone
+ * @param {string} pushedNumber
+ * @param {number} exitSlotIndex
+ * @param {number} enterSlotIndex
+ */
+export async function sampleColumnMoveMotionFrame(
+  page,
+  zone,
+  pushedNumber,
+  exitSlotIndex,
+  enterSlotIndex,
+  trackNumber,
+) {
+  return page.evaluate(
+    ({ zoneKey, pushed, exitIdx, enterIdx, trackNum }) => {
+      function readChip(chip, float) {
+        if (!chip) {
+          return null;
+        }
+        const cs = getComputedStyle(chip);
+        const r = chip.getBoundingClientRect();
+        return {
+          opacity: cs.opacity,
+          transform: cs.transform,
+          top: r.top,
+          left: r.left,
+          float,
+        };
+      }
+
+      function sampleAtSlot(zoneEl, idx) {
+        const cells = [...zoneEl.querySelectorAll('.milksha-num-cell')];
+        const cell = cells[idx];
+        if (!cell) {
+          return null;
+        }
+        const chip = cell.querySelector('.milksha-board-chip:not(.milksha-board-chip--layer-float)');
+        if (chip) {
+          return readChip(chip, false);
+        }
+        const floats = [...zoneEl.querySelectorAll('.milksha-board-chip--layer-float')];
+        const cr = cell.getBoundingClientRect();
+        const float = floats.find((el) => {
+          const r = el.getBoundingClientRect();
+          const horizontal = Math.abs(r.left - cr.left) < 40;
+          if (el.getAttribute('data-column-move-exit-clone') === '1') {
+            return horizontal;
+          }
+          return horizontal && Math.abs(r.top - cr.top) < 80;
+        });
+        return readChip(float, Boolean(float));
+      }
+
+      function sampleByNumber(zoneEl, num, allowFloat) {
+        const chips = [
+          ...zoneEl.querySelectorAll('.milksha-board-chip[data-item-id="store:' + num + '"]'),
+        ];
+        let chip = allowFloat
+          ? chips.find((el) => el.classList.contains('milksha-board-chip--layer-float')) || chips[0]
+          : chips.find((el) => !el.classList.contains('milksha-board-chip--layer-float'));
+        if (!chip) {
+          return null;
+        }
+        return readChip(chip, chip.classList.contains('milksha-board-chip--layer-float'));
+      }
+
+      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      if (!zoneEl) {
+        return { exit: null, enterSlot: null, enterPushed: null, enterPushedFloat: null };
+      }
+      const track = trackNum ? sampleByNumber(zoneEl, trackNum, false) : null;
+      return {
+        exit: sampleAtSlot(zoneEl, exitIdx),
+        enterSlot: sampleAtSlot(zoneEl, enterIdx),
+        enterPushed: sampleByNumber(zoneEl, pushed, false),
+        enterPushedFloat: sampleByNumber(zoneEl, pushed, true),
+        track,
+      };
+    },
+    {
+      zoneKey: zone,
+      pushed: String(pushedNumber),
+      exitIdx: exitSlotIndex,
+      enterIdx: enterSlotIndex,
+      trackNum: trackNumber ? String(trackNumber) : '',
+    },
+  );
 }
 
 export function assertDownwardExitMotion(samples) {
