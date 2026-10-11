@@ -22,10 +22,17 @@ export async function primeBoardWithMotionTrace(page) {
   });
 }
 
-export async function minExpectedTraceFrames(page) {
-  const cfg = await page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getConfig());
-  const ms = Math.max(cfg.opacityInMs, cfg.pageDurationMs, cfg.columnMoveMs);
-  return Math.max(2, Math.ceil(ms / 50));
+export async function minExpectedTraceFrames(page, motionType) {
+  return page.evaluate((type) => {
+    const cfg = window.QMS.MilkshaBoardAnimConfig.getConfig();
+    let ms = cfg.opacityInMs;
+    if (type === 'page-turn') {
+      ms = cfg.pageDurationMs;
+    } else if (type === 'column-move') {
+      ms = cfg.columnMoveMs;
+    }
+    return Math.max(2, Math.ceil(ms / 50) + 1);
+  }, motionType);
 }
 
 /**
@@ -33,7 +40,7 @@ export async function minExpectedTraceFrames(page) {
  * @param {string} motionType
  */
 export async function waitForMotionSession(page, motionType) {
-  const minFrames = await minExpectedTraceFrames(page);
+  const minFrames = await minExpectedTraceFrames(page, motionType);
   await page.waitForFunction(
     (expected) => {
       const trace = window.__milkshaMotionTrace;
