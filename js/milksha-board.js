@@ -711,21 +711,35 @@
             clearAll: true,
           });
         } else {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          const prepTurn = prevPrepPage !== prepPage;
+          const readyTurn = prevReadyPage !== readyPage;
+          const prepDone = animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
-            pageTurn: prevPrepPage !== prepPage,
+            pageTurn: prepTurn,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          const readyDone = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
-            pageTurn: prevReadyPage !== readyPage,
+            pageTurn: readyTurn,
             scalePulseIds: motion.skip ? [] : viewOpts.newReadyIdsForPulse || [],
             skipReadyScale: motion.skip,
           });
+          if (!prepTurn) {
+            updateZonePageIndicator(prepZone, prepPage, prepPages);
+          }
+          if (!readyTurn) {
+            updateZonePageIndicator(readyZone, readyPage, readyPages);
+          }
+          Promise.all([prepDone, readyDone]).then(function () {
+            if (prepTurn) {
+              updateZonePageIndicator(prepZone, prepPage, prepPages);
+            }
+            if (readyTurn) {
+              updateZonePageIndicator(readyZone, readyPage, readyPages);
+            }
+          });
         }
-        updateZonePageIndicator(prepZone, prepPage, prepPages);
-        updateZonePageIndicator(readyZone, readyPage, readyPages);
       }
 
       lastRenderedPrep = prepItems.slice();
@@ -768,7 +782,6 @@
       const animator = ensureBoardAnimator();
       const pageMotionOk = !prefersReducedMotion() && canUseWebAnimations();
       if (pageMotionOk && animator) {
-        updateZonePageIndicator(zone, page, totalPages);
         const animDone = animator.syncZone(zone, zoneKey, items, page, {
           prevItems: prevItems,
           prevPage: prevPage,
@@ -780,7 +793,15 @@
           lastRenderedReadyPage = page;
         }
         return Promise.resolve(animDone).then(function () {
-          updateZonePageIndicator(zone, page, totalPages);
+          const currentPage = zoneKey === 'prep' ? lastRenderedPrepPage : lastRenderedReadyPage;
+          if (currentPage !== page) {
+            return undefined;
+          }
+          const pagesNow = pageCountForItems(
+            zoneKey === 'prep' ? prepItems.length : readyItems.length,
+            PAGE_SIZE,
+          );
+          updateZonePageIndicator(zone, currentPage, pagesNow);
           return undefined;
         });
       } else {

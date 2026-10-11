@@ -94,6 +94,33 @@
   }
 
   /**
+   * Whether visible slot chips match the layout for (items, page).
+   * @param {NodeListOf<Element> | Element[]} slotEls
+   * @param {Array<{ id: string }>} items
+   * @param {number} page
+   * @param {number} pageSize
+   * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
+   * @returns {boolean}
+   */
+  function domVisibleLayoutMatches(slotEls, items, page, pageSize, layoutPageGrid) {
+    const cells = layoutPageGrid(items, page, pageSize);
+    for (let i = 0; i < pageSize; i += 1) {
+      const slot = slotEls[i];
+      if (!slot) {
+        return false;
+      }
+      const cell = cells[i];
+      const expectedId = cell && cell.id ? cell.id : '';
+      const chip = slot.querySelector('.milksha-board-chip[data-item-id]');
+      const domId = chip ? chip.getAttribute('data-item-id') || '' : '';
+      if (domId !== expectedId) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * @param {Array<{ id: string }>} prevItems
    * @param {Array<{ id: string }>} nextItems
    * @returns {boolean}
@@ -853,6 +880,28 @@
 
       abortPageTurnLayerState(numbersLayer);
 
+      if (
+        pageTurn &&
+        !domVisibleLayoutMatches(
+          slotEls,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+        ) &&
+        !domVisibleLayoutMatches(
+          slotEls,
+          prevItems,
+          prevPage,
+          deps.pageSize,
+          deps.layoutPageGrid,
+        )
+      ) {
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        snapOpacity(numbersLayer, 1);
+        return Promise.resolve();
+      }
+
       let columnMovePlan = detectColumnMovePlan(
         prevItems,
         items,
@@ -981,6 +1030,18 @@
 
       if (pageTurn) {
         removeOrphanLayerFloatChips(numbersLayer);
+        const domShowsPrevPage = domVisibleLayoutMatches(
+          slotEls,
+          prevItems,
+          prevPage,
+          deps.pageSize,
+          deps.layoutPageGrid,
+        );
+        if (!domShowsPrevPage) {
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          snapOpacity(numbersLayer, 1);
+          return Promise.resolve();
+        }
         numbersLayer.setAttribute('data-page-turn-anim', '1');
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
