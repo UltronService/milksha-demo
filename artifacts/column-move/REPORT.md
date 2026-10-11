@@ -2,7 +2,7 @@
 
 **Branch:** `cursor/column-move-animation-a2ca`  
 **Base:** `main` @ `b24cd2d` (includes #43 `f9d0513` newest-first board partition)  
-**HEAD:** `6a88b97`  
+**HEAD:** `604565b`  
 **PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
@@ -40,7 +40,7 @@ npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10 pass
 ## CI
 
 - Prior failure (opacity / plan on #43 order): https://github.com/UltronService/milksha-demo/actions/runs/38105816755
-- Latest run: _(after push on `6a88b97`)_
+- Latest run: _(after push on `604565b`)_
 
 ## Contact sheets
 
