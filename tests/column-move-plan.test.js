@@ -30,6 +30,36 @@ function layoutPageGrid(items, page, pageSize) {
   return cells;
 }
 
+function newestFirstIds(count, prefix) {
+  const out = [];
+  for (let i = count; i >= 1; i -= 1) {
+    out.push({ id: prefix + ':' + (1000 + i), number: String(1000 + i) });
+  }
+  return out;
+}
+
+test('detectColumnMovePlan left-column-overflow 5->6 newest-first', function () {
+  const Anim = loadAnim();
+  const prev = newestFirstIds(5, 'store');
+  const next = [{ id: 'store:1006', number: '1006' }].concat(prev);
+  const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
+  const plan = Anim.detectColumnMovePlan(prev, next, 0, 10, layoutPageGrid, diff);
+  assert.equal(plan.kind, 'left-column-overflow');
+  assert.equal(plan.enterSlot, 0);
+  assert.equal(plan.addedId, 'store:1006');
+  assert.equal(plan.pushedId, 'store:1001');
+});
+
+test('detectColumnMovePlan left-column-overflow 8->9', function () {
+  const Anim = loadAnim();
+  const prev = newestFirstIds(8, 'store');
+  const next = [{ id: 'store:1009', number: '1009' }].concat(prev);
+  const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
+  const plan = Anim.detectColumnMovePlan(prev, next, 0, 10, layoutPageGrid, diff);
+  assert.equal(plan.kind, 'left-column-overflow');
+  assert.equal(plan.pushedId, 'store:1004');
+});
+
 function ids(n, prefix) {
   const out = [];
   for (let i = 0; i < n; i += 1) {
@@ -38,32 +68,11 @@ function ids(n, prefix) {
   return out;
 }
 
-test('detectColumnMovePlan sixth-on-page', function () {
-  const Anim = loadAnim();
-  const prev = ids(5, 'store');
-  const next = ids(6, 'store');
-  const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
-  const plan = Anim.detectColumnMovePlan(prev, next, 0, 10, layoutPageGrid, diff);
-  assert.equal(plan.kind, 'sixth-on-page');
-  assert.equal(plan.enterSlot, 5);
-  const prevNewestFirst = [];
-  for (let i = 5; i >= 1; i -= 1) {
-    prevNewestFirst.push({ id: 'store:' + (1000 + i), number: String(1000 + i) });
-  }
-  const nextNewestFirst = [{ id: 'store:1006', number: '1006' }].concat(prevNewestFirst);
-  const diff2 = Anim.diffVisibleSlots(prevNewestFirst, nextNewestFirst, 0, 0, 10, layoutPageGrid);
-  const plan2 = Anim.detectColumnMovePlan(prevNewestFirst, nextNewestFirst, 0, 10, layoutPageGrid, diff2);
-  assert.equal(plan2.kind, 'sixth-on-page');
-  assert.equal(plan2.enterSlot, 0);
-  assert.equal(plan2.leftBottomSlot, 4);
-});
-
 test('detectColumnMovePlan right-bottom page two overflow', function () {
   const Anim = loadAnim();
   const prev = ids(10, 'store');
   const next = ids(11, 'store');
   const diff = Anim.diffVisibleSlots(prev, next, 0, 0, 10, layoutPageGrid);
-  assert.equal(diff.added.length, 0);
   const plan = Anim.detectColumnMovePlan(prev, next, 0, 10, layoutPageGrid, diff);
-  assert.equal(plan, null);
+  assert.equal(plan.kind, 'right-bottom-page-two');
 });

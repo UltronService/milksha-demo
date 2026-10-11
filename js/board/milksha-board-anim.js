@@ -393,18 +393,30 @@
    * @param {number} pageSize
    * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
    * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
-   * @returns {null | { kind: string, addedId: string, enterSlot: number, leftBottomSlot?: number, rightBottomSlot?: number, shiftSlots?: number[] }}
+   * @returns {null | { kind: string, addedId: string, pushedId?: string, enterSlot: number, leftBottomSlot?: number, rightTopSlot?: number, rightBottomSlot?: number }}
    */
   function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
     if (diff.pageTurn || diff.removed.length > 0) {
       return null;
     }
+    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
+    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
+    if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
+      const nextMapEarly = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
+      const addedIdOverflow = diff.added.length === 1 ? diff.added[0] : '';
+      const enterSlotOverflow = addedIdOverflow ? nextMapEarly.get(addedIdOverflow) : -1;
+      return {
+        kind: 'right-bottom-page-two',
+        addedId: addedIdOverflow,
+        enterSlot: enterSlotOverflow === undefined ? -1 : enterSlotOverflow,
+        rightBottomSlot: pageSize - 1,
+      };
+    }
     if (diff.added.length !== 1) {
       return null;
     }
     const addedId = diff.added[0];
-    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
-    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
+    const prevMap = visibleIdToSlot(prevItems, page, pageSize, layoutPageGrid);
     const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
     const enterSlot = nextMap.get(addedId);
     if (enterSlot === undefined) {
@@ -419,35 +431,28 @@
       return null;
     }
     if (nextN !== prevN + 1) {
-      if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
+      return null;
+    }
+    if (prevN >= 5 && prevN <= 9 && enterSlot === 0) {
+      const prevCells = layoutPageGrid(prevItems, page, pageSize);
+      const lbCell = prevCells[GRID_ROWS - 1];
+      const pushedId = lbCell && lbCell.id ? lbCell.id : null;
+      if (!pushedId) {
+        return null;
+      }
+      const pushedFrom = prevMap.get(pushedId);
+      const pushedTo = nextMap.get(pushedId);
+      if (pushedFrom === GRID_ROWS - 1 && pushedTo === GRID_ROWS) {
         return {
-          kind: 'right-bottom-page-two',
+          kind: 'left-column-overflow',
           addedId: addedId,
-          enterSlot: enterSlot,
-          rightBottomSlot: pageSize - 1,
+          pushedId: pushedId,
+          enterSlot: 0,
+          leftBottomSlot: GRID_ROWS - 1,
+          rightTopSlot: GRID_ROWS,
         };
       }
       return null;
-    }
-    if (prevN === 5 && nextN === 6) {
-      return {
-        kind: 'sixth-on-page',
-        addedId: addedId,
-        enterSlot: enterSlot,
-        leftBottomSlot: GRID_ROWS - 1,
-      };
-    }
-    if (enterSlot > GRID_ROWS && prevN >= GRID_ROWS) {
-      const shiftSlots = [];
-      for (let s = GRID_ROWS; s < enterSlot; s += 1) {
-        shiftSlots.push(s);
-      }
-      return {
-        kind: 'right-column-append',
-        addedId: addedId,
-        enterSlot: enterSlot,
-        shiftSlots: shiftSlots,
-      };
     }
     return null;
   }
@@ -874,16 +879,20 @@
       const columnMoveSkipFlipIds = {};
       let columnMoveDurationMs = opacityInMs;
       if (columnMovePlan) {
+        if (zoneKey === 'ready' && columnMovePlan.addedId) {
+          scalePulseSet[columnMovePlan.addedId] = true;
+        }
         columnMoveDurationMs =
           typeof animCfg.columnMoveMs === 'number' && animCfg.columnMoveMs > 0
             ? animCfg.columnMoveMs
             : opacityInMs;
         numbersLayer.setAttribute('data-column-move-anim', '1');
         const pitch = estimateRowPitchPx(slotEls[GRID_ROWS - 1] || slotEls[0], numbersLayer);
-        if (columnMovePlan.kind === 'sixth-on-page') {
+        if (columnMovePlan.kind === 'left-column-overflow') {
+          const pushedId = columnMovePlan.pushedId;
           const lbSlot = columnMovePlan.leftBottomSlot;
           const lbCell = deps.layoutPageGrid(prevItems, page, deps.pageSize)[lbSlot];
-          const lbId = lbCell && lbCell.id ? lbCell.id : null;
+          const lbId = lbCell && lbCell.id ? lbCell.id : pushedId;
           if (lbId && chipById[lbId]) {
             const lbChip = chipById[lbId];
             const lbRect = lbChip.getBoundingClientRect();
@@ -912,9 +921,13 @@
               ),
             );
           }
-          columnMoveEnterFromAboveIds[columnMovePlan.addedId] = true;
-        } else if (columnMovePlan.kind === 'right-column-append') {
-          columnMoveEnterFromAboveIds[columnMovePlan.addedId] = true;
+          if (pushedId) {
+            columnMoveEnterFromAboveIds[pushedId] = true;
+            columnMoveSkipFlipIds[pushedId] = true;
+          }
+          for (let cmi = 0; cmi < diff.moved.length; cmi += 1) {
+            columnMoveSkipFlipIds[diff.moved[cmi].id] = true;
+          }
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {
           const rbSlot = columnMovePlan.rightBottomSlot;
           const prevCells = deps.layoutPageGrid(prevItems, page, deps.pageSize);
@@ -1050,6 +1063,19 @@
           }
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
           slot.appendChild(chip);
+          if (columnMoveEnterFromAboveIds[id]) {
+            snapOpacity(chip, 0);
+            const pitchMoved = estimateRowPitchPx(slot, numbersLayer);
+            promises.push(
+              animateColumnMoveEnterFromAbove(
+                chip,
+                pitchMoved,
+                columnMoveDurationMs,
+                gen,
+                getGeneration,
+              ),
+            );
+          }
         }
         if (!chip || pendingRemove.has(chip)) {
           const strayBefore = slot.querySelectorAll('.milksha-board-chip');
@@ -1070,11 +1096,17 @@
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
           if (columnMoveEnterFromAboveIds[id]) {
-            snapOpacity(chip, 1);
+            snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
             promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
-          } else if (columnMovePlan) {
-            snapOpacity(chip, 1);
+          } else if (
+            zoneKey === 'ready' &&
+            !skipReadyScale &&
+            columnMovePlan &&
+            columnMovePlan.kind === 'left-column-overflow' &&
+            id === columnMovePlan.addedId
+          ) {
+            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
           } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
             promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
           } else {
@@ -1099,11 +1131,34 @@
           }
         }
         diff.moved.forEach(function (mv) {
-          if (columnMoveSkipFlipIds[mv.id]) {
-            return;
-          }
           const chip = chipById[mv.id];
           if (!chip || pendingRemove.has(chip)) {
+            return;
+          }
+          if (columnMoveSkipFlipIds[mv.id]) {
+            if (columnMoveEnterFromAboveIds[mv.id]) {
+              return;
+            }
+            const beforeSkipped = rectsBefore[mv.id];
+            if (!beforeSkipped) {
+              return;
+            }
+            const afterSkipped = chip.getBoundingClientRect();
+            let dxSkipped = beforeSkipped.left - afterSkipped.left;
+            const dySkipped = beforeSkipped.top - afterSkipped.top;
+            if (Math.abs(dxSkipped) > 2) {
+              snapOpacity(chip, 0);
+              dxSkipped = 0;
+            }
+            promises.push(
+              animateTranslate(chip, dxSkipped, dySkipped, columnMoveDurationMs, gen, getGeneration).then(
+                function () {
+                  if (getGeneration() === gen) {
+                    ensureVisibleOpacity(chip);
+                  }
+                },
+              ),
+            );
             return;
           }
           const before = rectsBefore[mv.id];

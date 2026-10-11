@@ -1,44 +1,30 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**Base:** `main` @ `9846953` (#44) + CI concurrency split from `origin/main`  
-**HEAD:** `66e04ef`  
-**PR:** https://github.com/UltronService/milksha-demo/pull/46 (ready for review)  
-**Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
+**PR:** https://github.com/UltronService/milksha-demo/pull/46  
+**QA fix:** newest-first slot 0 = fade/pulse (ready 1.3×); slot-4 chip pushed to slot 5 via down-out + enter-from-above (not `addedId`).
 
-## TDD summary (boundary order)
+## Red → green (QA aa87361)
 
-| # | Behaviour | Evidence |
-|---|-----------|----------|
-| 1 | Prep: left column bottom slides down/out on 6th | `tests/e2e/board-column-move.spec.mjs` |
-| 2 | Prep: 6th enters right top from above | e2e + `chipMotionSampleForNumber` |
-| 3 | **Prep and ready:** right bottom vacates (page-2 overflow) | e2e test 3 |
-| 4–5 | Ready: mirror of 1–2 | e2e tests 4–5 |
-| 6 | Transform + opacity only during move window | e2e test 6 |
-| 7 | Cell integrity during column move (#39) | integrity sampling |
-| 8 | Settled numbers match layout | e2e test 8 |
-| 9–10 | 1080p / 4K contact sheets | `artifacts/column-move/screenshots/` |
+| Issue | Fix |
+|-------|-----|
+| HIGH: new ready/prep used enter-from-above | `columnMoveEnterFromAboveIds` only for **`pushedId`** (prev slot 4); new at slot 0 uses fade / `runReadyPulseAnim` |
+| MED1: diagonal FLIP on pushed chip | `columnMoveSkipFlipIds` for all moves; pushed chip enter-from-above at slot 5; exit clone unchanged |
+| MED2: only 5→6 detected | `left-column-overflow` for **prevN 5..9**, enterSlot 0; page-2 `right-bottom-page-two` when 11 items |
+| MED3: loose tests | E2e: per-step 6–10 prep+ready, pulse on new ready, slot-4 exit + slot-5 enter, horizontal guard, exact slot order |
 
-**Unit:** `tests/column-move-plan.test.js`; **#44:** `tests/board-ready-fade-regression.test.js`, `board-ready-fade-*.spec.mjs`.
-
-## Merge / coexistence with #44
-
-- `git merge origin/main` @ `9846953`: auto-merge kept **#44** (`snapOpacity` on cancel, `movedIdSet` slot reconcile) and column-move helpers.
-- Column-move hold/settle uses `ensureVisibleOpacity` so sibling **ready pulse WAAPI** is not cancelled during column-move (#44 regression safe).
-
-## Local verification (`26d2b91`)
+## Local verification
 
 ```text
-npm test → 203 pass
-column-move + board-ready-fade-* + full board-ready-scale-overlap-grid → pass
-board-cell-peak-simulation → pass (see prior run in session)
+npm test → 204 pass (incl. board-ready-fade-regression + column-move-plan)
+npx playwright test tests/e2e/board-column-move.spec.mjs → 20/20
+board-ready-fade-*.spec.mjs, board-ready-scale-overlap-grid (spot), board-cell-peak smoke
 ```
 
 ## CI
 
-- **Green (split workflow, both jobs):** https://github.com/UltronService/milksha-demo/actions/runs/38119632474 — `66e04ef` (`npm test`, 207 non–live-cloud e2e, live-cloud fade + simulation).
+- Pending single push (live-cloud queue): _(URL after green)_
 
 ## Contact sheets
 
-- 1080p: `artifacts/column-move/screenshots/column-move-prep-1080p.png`
-- 4K: `artifacts/column-move/screenshots/column-move-prep-4k.png`
+- `artifacts/column-move/screenshots/column-move-prep-1080p.png`, `column-move-prep-4k.png`
