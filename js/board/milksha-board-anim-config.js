@@ -8,6 +8,7 @@
 
   const DEFAULTS = {
     opacityInMs: 300,
+    columnMoveMs: 300,
     pageDurationMs: 500,
     readyScale: 1.3,
     readyScaleInMs: 300,
@@ -17,6 +18,7 @@
 
   const BOUNDS = {
     opacityInMs: { min: 50, max: 2000 },
+    columnMoveMs: { min: 50, max: 2000 },
     pageDurationMs: { min: 100, max: 3000 },
     readyScale: { min: 1, max: 1.5 },
     readyScaleInMs: { min: 50, max: 2000 },
@@ -26,6 +28,7 @@
 
   const URL_KEYS = {
     animOpacityIn: 'opacityInMs',
+    animColumnMove: 'columnMoveMs',
     animPage: 'pageDurationMs',
     animScale: 'readyScale',
     animIn: 'readyScaleInMs',
