@@ -1121,7 +1121,10 @@
                     continue;
                   }
                   snapOpacity(settled, 1);
-                  settled.style.transform = '';
+                  const settledId = settled.getAttribute('data-item-id');
+                  if (settledId && columnMoveEnterFromAboveIds[settledId]) {
+                    settled.style.transform = '';
+                  }
                 }
                 if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
                   numbersLayer.removeAttribute('data-column-move-anim');
