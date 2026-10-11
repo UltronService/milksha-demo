@@ -28,5 +28,6 @@ PR #47 red tests (items 2 & 3) are in `board-motion-items-red.spec.mjs`. Full pr
 
 ## CI
 
-- SHA: _(after push)_
-- URL: _(when green)_
+- **PR:** https://github.com/UltronService/milksha-demo/pull/52
+- **SHA:** `2c2add3b6f049f4c8066197191365791cc966cec`
+- **Checks:** _(pending — subscribe for green test + e2e-live-cloud)_
