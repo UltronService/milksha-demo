@@ -35,5 +35,5 @@ Skipped: `QA_WEB_API_KEY` not available in this environment. Use uploaded `repro
 
 ## CI
 
-- Branch SHA: `1f39bff`
-- GitHub Actions run id: _(pending)_
+- Branch SHA: `c99f6d1`
+- GitHub Actions run id: [38099547698](https://github.com/UltronService/milksha-demo/actions/runs/38099547698) — **success**
