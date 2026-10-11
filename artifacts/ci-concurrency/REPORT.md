@@ -82,9 +82,15 @@ PR #43 的 workflow 檔（SHA `7694bd1`）仍為整包 `test:e2e`，無 `live-cl
 
 ## 本 PR CI（tip 全綠）
 
-- Branch tip SHA：`66c6e38`（REPORT 更新；程式修正見 `7e49ad9` / `cab20a9`）
-- 全綠 run #1：https://github.com/UltronService/milksha-demo/actions/runs/38086805485（`7e49ad9`，`test` + `e2e-live-cloud`）
-- 全綠 run #2（確認）：https://github.com/UltronService/milksha-demo/actions/runs/38088944616（`c8712b9` empty retrigger）
+### 2026-10-11 — merge `main` @ `9846953`（#44 ready fade fix）
+
+- Branch tip SHA：`29fc7a9`（merge `origin/main` #44 + #45；live-cloud spec = **main 全 chip opacity** 斷言，未弱化）
+- **全綠：** https://github.com/UltronService/milksha-demo/actions/runs/38112915363 — `test` ✅ + `e2e-live-cloud` ✅（`zz-qa-ci-store`）
+- 先前 live-cloud 在 #44 合入前因板端 opacity 卡 0 而 30s 逾時（[38110939864](https://github.com/UltronService/milksha-demo/actions/runs/38110939864)）；#44 合入後同斷言通過。
+
+### 歷史
+
+- 全綠 run：https://github.com/UltronService/milksha-demo/actions/runs/38086805485（`7e49ad9`）
 - 失敗調查 run：https://github.com/UltronService/milksha-demo/actions/runs/38081812688（`a20cd28`，見上文）
 
 ## grep：未動 zz-qa-store-a
