@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { chromium } from 'playwright';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
-import { waitForReadyBoardAnimSettled } from './board-animation-helpers.mjs';
 import { LIVE_CLOUD_BOARD_DEVICE, LIVE_CLOUD_STORE_ID } from './live-cloud-config.mjs';
 import { sendClearNow, teardownLiveCloudSession } from './live-cloud-teardown.mjs';
 
@@ -64,9 +63,6 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
     for (let i = 0; i < times.length; i += 1) {
       expect(times[i]).toBeLessThanOrEqual(3000);
     }
-<<<<<<< HEAD
-    await waitForReadyBoardAnimSettled(board, 5, 15000);
-=======
     await board.waitForFunction(
       () => {
         const chips = [
@@ -82,6 +78,5 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
       undefined,
       { timeout: 30000 },
     );
->>>>>>> origin/main
   });
 });
