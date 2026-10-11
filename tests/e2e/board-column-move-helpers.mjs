@@ -6,6 +6,29 @@ import { prepNumbers, readyNumbers } from './board-animation-helpers.mjs';
  * @param {'prep' | 'ready'} zone
  * @param {number} slotIndex 0-based cell index in zone grid
  */
+export async function chipMotionSampleForNumber(page, zone, number) {
+  return page.evaluate(
+    ({ zoneKey, num }) => {
+      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      if (!zoneEl) {
+        return null;
+      }
+      const chip = zoneEl.querySelector('.milksha-board-chip[data-item-id="store:' + num + '"]');
+      if (!chip || chip.classList.contains('milksha-board-chip--layer-float')) {
+        return null;
+      }
+      const cs = getComputedStyle(chip);
+      return {
+        opacity: cs.opacity,
+        transform: cs.transform,
+        top: chip.getBoundingClientRect().top,
+        float: false,
+      };
+    },
+    { zoneKey: zone, num: String(number) },
+  );
+}
+
 export async function chipMotionSampleAtSlot(page, zone, slotIndex) {
   return page.evaluate(
     ({ zoneKey, idx }) => {

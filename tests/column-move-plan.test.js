@@ -46,7 +46,16 @@ test('detectColumnMovePlan sixth-on-page', function () {
   const plan = Anim.detectColumnMovePlan(prev, next, 0, 10, layoutPageGrid, diff);
   assert.equal(plan.kind, 'sixth-on-page');
   assert.equal(plan.enterSlot, 5);
-  assert.equal(plan.leftBottomSlot, 4);
+  const prevNewestFirst = [];
+  for (let i = 5; i >= 1; i -= 1) {
+    prevNewestFirst.push({ id: 'store:' + (1000 + i), number: String(1000 + i) });
+  }
+  const nextNewestFirst = [{ id: 'store:1006', number: '1006' }].concat(prevNewestFirst);
+  const diff2 = Anim.diffVisibleSlots(prevNewestFirst, nextNewestFirst, 0, 0, 10, layoutPageGrid);
+  const plan2 = Anim.detectColumnMovePlan(prevNewestFirst, nextNewestFirst, 0, 10, layoutPageGrid, diff2);
+  assert.equal(plan2.kind, 'sixth-on-page');
+  assert.equal(plan2.enterSlot, 0);
+  assert.equal(plan2.leftBottomSlot, 4);
 });
 
 test('detectColumnMovePlan right-bottom page two overflow', function () {

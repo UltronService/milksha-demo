@@ -414,7 +414,7 @@
       }
       return null;
     }
-    if (prevN === 5 && enterSlot === GRID_ROWS) {
+    if (prevN === 5 && nextN === 6) {
       return {
         kind: 'sixth-on-page',
         addedId: addedId,
@@ -1042,6 +1042,8 @@
             snapOpacity(chip, 1);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
             promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
+          } else if (columnMovePlan) {
+            snapOpacity(chip, 1);
           } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
             promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
           } else {
@@ -1051,6 +1053,20 @@
       }
 
       const afterLayout = function () {
+        if (columnMovePlan) {
+          removeOrphanLayerFloatChips(numbersLayer);
+          const holdChips = numbersLayer.querySelectorAll(
+            '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+          );
+          for (let hi = 0; hi < holdChips.length; hi += 1) {
+            const holdChip = holdChips[hi];
+            const holdId = holdChip.getAttribute('data-item-id');
+            if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
+              continue;
+            }
+            snapOpacity(holdChip, 1);
+          }
+        }
         diff.moved.forEach(function (mv) {
           if (columnMoveSkipFlipIds[mv.id]) {
             return;
@@ -1096,21 +1112,16 @@
                     clone.parentNode.removeChild(clone);
                   }
                 }
-                for (let si = 0; si < deps.pageSize; si += 1) {
-                  const cellSettle = cells[si];
-                  const slotSettle = slotEls[si];
-                  if (!cellSettle || !cellSettle.id || !slotSettle) {
+                const inCellChips = numbersLayer.querySelectorAll(
+                  '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+                );
+                for (let si = 0; si < inCellChips.length; si += 1) {
+                  const settled = inCellChips[si];
+                  if (pendingRemove.has(settled)) {
                     continue;
                   }
-                  const settled = slotSettle.querySelector(
-                    '.milksha-board-chip[data-item-id="' + cellSettle.id + '"]',
-                  );
-                  if (settled && !pendingRemove.has(settled)) {
-                    snapOpacity(settled, 1);
-                    if (!settled.classList.contains('milksha-board-chip--layer-float')) {
-                      settled.style.transform = '';
-                    }
-                  }
+                  snapOpacity(settled, 1);
+                  settled.style.transform = '';
                 }
                 if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
                   numbersLayer.removeAttribute('data-column-move-anim');

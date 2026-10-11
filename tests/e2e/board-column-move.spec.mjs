@@ -11,6 +11,7 @@ import {
 } from './board-animation-helpers.mjs';
 import {
   chipMotionSampleAtSlot,
+  chipMotionSampleForNumber,
   pollMotionSamples,
   assertDownwardExitMotion,
   assertEnterFromAboveMotion,
@@ -52,7 +53,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const samples = await pollMotionSamples(
       page,
       () => applyPayload(page, prepPayload([6301, 6302, 6303, 6304, 6305, 6306])),
-      () => chipMotionSampleAtSlot(page, 'prep', GRID_ROWS),
+      () => chipMotionSampleForNumber(page, 'prep', 6306),
       { samples: 22, intervalMs: 16 },
     );
     assertEnterFromAboveMotion(samples);
@@ -111,7 +112,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const samples = await pollMotionSamples(
       page,
       () => applyPayload(page, readyPayload([6701, 6702, 6703, 6704, 6705, 6706])),
-      () => chipMotionSampleAtSlot(page, 'ready', GRID_ROWS),
+      () => chipMotionSampleForNumber(page, 'ready', 6706),
       { samples: 22, intervalMs: 16 },
     );
     assertEnterFromAboveMotion(samples);
