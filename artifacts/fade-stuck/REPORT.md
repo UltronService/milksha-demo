@@ -51,15 +51,19 @@ Raw: `artifacts/fade-stuck/interval-matrix-live-1791680868182.json`, log `interv
 ## Local verification
 
 ```bash
-npm test
-npx playwright test tests/e2e/board-ready-fade-pulse-cancel.spec.mjs tests/e2e/board-ready-fade-multi-apply.spec.mjs tests/e2e/board-cell-peak-simulation.spec.mjs
+npm test                                    # 196 pass
+npx playwright test tests/e2e/board-ready-fade-pulse-cancel.spec.mjs \
+  tests/e2e/board-ready-fade-multi-apply.spec.mjs \
+  tests/e2e/board-cell-peak-simulation.spec.mjs
 ```
 
 #39 integrity: `board-cell-peak-simulation.spec.mjs` **pass** (3-min peak + smoke).
 
+Full local `npx playwright test tests/e2e`: **191 passed**, 3 failed (`guest-clock.spec.mjs` ring overlay geometry — unrelated to anim fix), 4 skipped (~41m).
+
 ## CI
 
-- Run: https://github.com/UltronService/milksha-demo/actions/runs/38101192209 (update if superseded on tip push)
+- Tip run: https://github.com/UltronService/milksha-demo/actions/runs/38101832515 (job on `c881b6f`)
 
 ## Next (not in #44)
 
