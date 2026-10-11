@@ -30,4 +30,13 @@
 - **7112 來源**在該 run 仍不能仅靠 overlap 解釋；需 **push_numbers + Firestore + apply 逐筆**（見 capture workflow）。
 - **假設 H0-other-writer：** 對 **38182993862 時段** → **未證實**；對 repo 整體仍可能（舊 branch 整包 `test:e2e` 見 `artifacts/ci-concurrency/REPORT.md`），**本窗無證據**。
 
+## 後端 07:02:48 台北（seq 12525 ready=[7112]）
+
+| 台北時間 | GHA run | 說明 |
+| --- | --- | --- |
+| **07:01:08 – 07:05:15** | [38182681355](https://github.com/UltronService/milksha-demo/actions/runs/38182681355) | **07:02:48 push 落在此 run**（cross-zone seed） |
+| **07:06:22 – 07:16:57** | [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862) | leak 觀測；**07:05:07** 推定前 run clear；**07:16:51** 推定本 run clear |
+
+後端無 job 名；**時間上**與 cross-zone harness 一致，**非** e2e-live-cloud（07:16:59 才開始）。
+
 _Capture workflow: `cross-zone-hypothesis0-capture.yml`（45 輪 × 最多 2 次 attempt）。_

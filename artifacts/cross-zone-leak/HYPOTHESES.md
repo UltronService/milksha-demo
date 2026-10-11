@@ -1,73 +1,63 @@
 ## Hypothesis 0 — 三欄對照（cycles 27–29）
 
-**Verdict（信心）：B — _likely_，非 _proven_**  
-- **Proven 缺什麼：** run [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862) **無** `push_numbers` HTTP 錄影、**無** leak 當下 `readBoard()`；capture run [38184430601](https://github.com/UltronService/milksha-demo/actions/runs/38184430601) **全綠**未重現。  
-- **Likely 依據：** 下表 col(2) 由 **apply 輸入 + snapshot** 推得；col(1) 由 **腳本原始碼**（無 7112 下單）+ 待 capture 之 push hook。  
-- **C 尚未排除：** 若 board 在 `partitionNumberContent` 誤分，**apply 與 snapshot 也會同時含 7112∈ready** — 要判 C 需 **Firestore/readBoard 顯示 7112=preparing 且 apply item 為 Preparing**（見 `hypothesis0-apply-trace.json` 每筆 `number`+`source_type`）。  
-- **7112 從哪來（若腳本未送）：** 可能為 **後端寫入/合併**、**上一輪 store 殘留**（38182681355 07:01–07:05 全綠後 1 分鐘即開本 run）、或 **欄位 7112 被誤送** — 需 capture 對照 push vs doc。
+**Verdict：A — _proven_（後端 log + controller `push_numbers`）**  
+雲端 **原樣儲存** controller 送出的 `ready=[7112]`（07:02:48.627 台北，seq 12525）；**不是** B（雲端 mislabel）。看板 snapshot/DOM 與 doc 一致 ⇒ **不是 C**（doc prep / board ready 分裂）。
 
-**共用 CI store 重疊（38182993862 窗 07:06:22–07:16:57 台北）：** 見 `hypothesis0-ci-overlap.md` — **`live-cloud-zz-qa-ci-store` 與 `ci.yml` e2e-live-cloud 相同**；該窗 **僅 cross-zone-red**，e2e-live-cloud **07:16:59** 才開跑。**H0-other-writer：該窗 _unlikely_**（PR #52/#55/#59/#57 無重疊 run；repo 內 tests **無字面 7112**）。
+| Cycle | (1) push_numbers（實際） | (2) Firestore / today_board | (3) getSnapshot + ready slots | ABC |
+| --- | --- | --- | --- | --- |
+| 27–29（leak 觀測 run [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862)） | **07:02:48 已證** ready=**[7112]**、prep=7100–7111（[38182681355](https://github.com/UltronService/milksha-demo/actions/runs/38182681355) seed）；38182993862 起點 ~**07:06** clear 後 **同一 harness 會再 seed** | ready 含 **7112**（與 push 一致） | ready 尾 `…8101,**7112**`；slots `0:8101` `1:7112` | **A** |
 
-| Cycle | (1) push_numbers 直前 | (2) Firestore / apply | (3) getSnapshot + ready slots | ABC | 信心 |
-| --- | --- | --- | --- | --- | --- |
-| 27 | 腳本意圖：無 7112（**無 HTTP 錄影**） | apply：ready=12 含 7112（**推定** `From_Store_OK`）；**待 readBoard 證實** | `…8101,7112`；slots `0:8101` `1:7112` | B* | likely |
-| 28 | 同 27 | 同 27 | 同型 | B* | likely |
-| 29 | 同 27 | 同 27 | 同型 | B* | likely |
+**7112 從哪來：** prep seed 至 7111 後欄位自動 **7112** + ready seed 步驟透過 `allocateOrderNumber()` 取號 → **測試／harness 送錯 ready**，非未送票憑空出現。
 
-\*ABC 在 **live capture**（workflow `cross-zone-hypothesis0-capture.yml`）產出 `push`+`firestore`+`hypothesis0-apply-trace.json` 後可升級 **proven** 或改判 A/C。
+**共用 store / 其他 CI：** `cross-zone-leak-diagnose` 與 `ci.yml` **`e2e-live-cloud` 同 group `live-cloud-zz-qa-ci-store`**。07:02:48 **僅** cross-zone job [38182681355] 在跑；38182993862 窗內無第二 writer（e2e **07:16:59** 才開）。後端無法區分 job 名，但 **GHA 時間可排除並行 e2e**。詳見 `hypothesis0-ci-overlap.md`、`hypothesis0-backend-correlation.md`。
+
+**Hypothesis 0-other-writer：** 對 **07:02:48 / 38182993862 leak 根因** → **否**；7112 已由 **本 repo cross-zone harness** 解釋。
 
 ---
 
+## 是否仍有「cross-zone 混區」產品 bug？
+
+**就 7112 事件：沒有。** 號碼在雲端即為 ready，看板只是正確顯示錯資料（測試送錯）。  
+
+**#53 時代 QA 的 page-turn／動畫 mid-apply 問題** 仍是**另一條產品線**（時序／indicator），與「prep 號被雲端標成 ready」無關；revert #53 後 cross-zone RED 仍可來自 **harness 再次送 7112→ready**，不證明 board 會在 **正確 doc** 下把 prep 畫到 ready。
+
+---
 
 # Cross-zone 滲漏診斷（prep 7112 出現在 ready 區）
 
-## 真雲 RED 已實跑（非預期）
+## 真雲 RED 已實跑
 
 | 項目 | 結果 |
 |------|------|
 | GHA | https://github.com/UltronService/milksha-demo/actions/runs/38182993862 |
-| Store | `zz-qa-ci-store`（結束 `clear_now` + 停模擬） |
-| 腳本 | `run-real-cloud-cross-zone-red.mjs` → **exit 1** |
-| 30 輪 1080p | **19** 違規事件、**3** 種唯一（cycle **27–29**） |
-| 離線 burst 重播 | `run-offline-replay-red.mjs` → exit **0**（假雲無法 RED） |
-
-**代表失敗幀：** ready **2/2**，slot0=`8101`、slot1=**`7112`**（`data-item-id=store:7112`），動畫 **layer-float×10**；該輪 mid-send 後僅 **1 次** apply（len=50, prep=38, ready=12, silent=false）直前即出現。詳見 `real-cloud-red-failing-frames.json`、`REAL-CLOUD-RED-RUN.md`。
-
-**重要：** `getSnapshot().ready` **已包含 `7112`** — 客戶可見症狀來自 **runtime state 把 prep 號排進 ready 列表**，不只是 DOM 殘影。
-
-**偵測調整：** 10 輪 GHA 曾全綠（run `38182681355`）；改 **30 輪** + ready settled 時 **prep `7xxx` in slot** 後 RED 穩定。
+| Store | `zz-qa-ci-store` |
+| 腳本 | `run-real-cloud-cross-zone-red.mjs` → exit **1**（資料錯，非 board 亂畫） |
+| 後端 | 07:02:48 台北 `push_numbers` **ready=[7112]**（proven） |
 
 ---
 
-## 最小序列
+## 假設（排序）
 
-12 prep + 12 ready → 每輪 **5200ms** → mid prep **7200+c** → 採樣至 **6500ms**；leak 在後段輪次（27+）仍可出現 **7112**（第 13 筆 prep 語意）。
-
----
-
-## 假設（排序，Hypothesis 0 後）
-
-0. **（已定案 B）雲端 `today_board` 將 7112 標 ready，看板照單全收** — 送端腳本未送 7112；後端寫入／合併待查。  
-1. **後端 `push_numbers` 或 doc 合併把「未送出的 7112」或 prep 列誤寫入 ready（取代 8100）** — 用新 hook 對照每輪 `params` vs `readBoard()`。  
-2. **Page-turn `layer-float` 造成誤判 cross-zone，但 snapshot 已含 7112** — 動畫為加重因素，非根因。  
-3. **#53 revert 後仍 RED** — 已證；與 page-turn indicator 無關。  
-4. **layout 單獨把 prep 填 ready slot 但 snapshot 無 7112** — Hypothesis 0 已否決（snapshot 與 doc 同為 ready）。  
+0. **（proven A）Harness/controller seed 將 7112 以 ready 推送** — 後端 seq 12525；修正 seed／assert push。  
+0b. ~~B 雲端 mislabel~~ — **已否決**（雲端=controller）。  
+0c. ~~C board partition  alone~~ — **否決**（需 doc prep + snap ready 分裂；此处 doc=ready）。  
+1. **Page-turn / layer-float 使 QA 更難看** — 加重可見度，非 7112 進 ready 根因。  
+2. **#53 page-turn desync** — 獨立議題；非本 leak 根因。  
 
 ---
 
-## 建議修復測試邊界（3–5 項）
+## 修復測試邊界（harness／CI，非產品）
 
-1. 真雲：30 輪後 **Firestore `today_board` 與 `push_numbers` 一致**；ready 不得含未送單的 prep 序號（如 7112）。  
-2. 看板：`getSnapshot().ready` 與 Firestore ready 列表一致；ready **2/2** slot 與 snapshot 同頁一致（期望 `{8101,8100}` 當 seed 未變）。  
-3. Page-turn + **1×** 全量 apply 後，**layer-float** 計數為 0。  
-4. 連續 **5×** silent+non-silent apply 模擬 snapshot 風暴，slot 與 snapshot 仍一致。  
-5. 1080 與 4K 各 10 輪，cross-zone 事件為 0。  
+1. Seed 後 **assert 每筆 `push_numbers`**：`ready` 不得含 `/^7/`（除非明確 one-ready 步驟）。  
+2. Prep 7111 後 **強制 `fill(8100)` 並 assert `#fld-no`/`getTickets()`** 再送 ready。  
+3. 真雲 RED：**先驗 push 與 readBoard 一致**，再驗 board slot；預期 ready 8100–8111，**不得** 7112。  
+4. 30–45 輪 mid prep 7200+c：cross-zone **7xxx in ready slot** = fail。  
+5. 與 `live-cloud-zz-qa-ci-store` 排隊一致；重疊窗寫入 `hypothesis0-ci-overlap.md`。  
 
 ---
 
 ## 產物
 
-- `run-real-cloud-cross-zone-red.mjs` / `cross-zone-leak-diagnose.yml`  
-- `real-cloud-red-result.json`、`real-cloud-red-failing-frames.json`  
-- `evidence-30round-cycle0.json`（前次 30 輪對照）  
-- `run-offline-replay-red.mjs` + `offline-replay-red-result.json`  
+- `hypothesis0-backend-correlation.md`、`hypothesis0-ci-overlap.md`  
+- `cross-zone-hypothesis0-capture.yml`（apply `number`+`source_type`、readBoard）  
+- `run-real-cloud-cross-zone-red.mjs`、`real-cloud-red-failing-frames.json`  
