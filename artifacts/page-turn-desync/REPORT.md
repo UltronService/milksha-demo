@@ -35,6 +35,11 @@
 | 1080p | `screenshot-1080p.jpg` |
 | 4K | `screenshot-4k.jpg` |
 
+## CI（2026-10-11）
+- Run: https://github.com/UltronService/milksha-demo/actions/runs/38146389520
+- SHA: `38cf72d7472deb3c128cd2f261dbcfb3905a171f`
+- `test` + `e2e-live-cloud`: pass
+
 ## PR overlap
 未修改 `detectColumnMovePlan`／換欄 backfill（PR #52 範圍）。僅 `syncZone` stale-DOM 換頁、`commitBoardView`／`patchZonePage` 指示器時序。
 
