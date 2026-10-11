@@ -989,6 +989,26 @@
         commandId: res && res.commandId,
       };
     } catch (e) {
+      if (CmdErrors && CmdErrors.isStaleListConflict && CmdErrors.isStaleListConflict(e)) {
+        hideCommandErrorAlert();
+        showUserBanner('');
+        const BoardRefreshStale = window.QMS.Transport.BoardRefreshAfterCommand;
+        try {
+          if (BoardRefreshStale && BoardRefreshStale.refreshBoardIgnoringSupersededAbort) {
+            await BoardRefreshStale.refreshBoardIgnoringSupersededAbort(refreshBoardLists);
+          } else {
+            await refreshBoardLists();
+          }
+        } catch (refreshErr) {
+          pushLog({
+            summary:
+              'push_numbers stale_list 後同步看板略過 · ' +
+              (refreshErr && refreshErr.message ? String(refreshErr.message) : 'unknown'),
+          });
+        }
+        pushLog({ kind: 'devCommand', summary: 'push_numbers stale_list · 已同步雲端列表', response: e.response });
+        return { isSuccess: true, information: '已同步雲端列表', staleList: true };
+      }
       const userMessage =
         CmdErrors && CmdErrors.devCommandUserMessage
           ? CmdErrors.devCommandUserMessage(e, {})
@@ -1851,7 +1871,10 @@
     document.getElementById('fld-no').value = no;
     addTicketLocal(undefined, undefined, no);
     posSend(ticketsToNc(), false)
-      .then(function () {
+      .then(function (res) {
+        if (res && res.staleList) {
+          return;
+        }
         bumpNumberFieldAfterSend(no);
       })
       .catch(function () {});
@@ -1957,6 +1980,9 @@
     tickets.push(ticket);
     posSend(ticketsToNc(), false)
       .then(function (res) {
+        if (res && res.staleList) {
+          return;
+        }
         if (res && res.isSuccess === false) {
           tickets.splice(ticketCountBefore);
           return;
@@ -1966,6 +1992,12 @@
       .catch(function (e) {
         const BoardRefresh = window.QMS.Transport.BoardRefreshAfterCommand;
         if (BoardRefresh && BoardRefresh.isSupersededInflightReadAbort(e)) {
+          return;
+        }
+        if (CmdErrors && CmdErrors.isStaleListConflict && CmdErrors.isStaleListConflict(e)) {
+          hideCommandErrorAlert();
+          showUserBanner('');
+          refreshBoardLists().catch(function () {});
           return;
         }
         tickets.splice(ticketCountBefore);

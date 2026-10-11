@@ -33,6 +33,9 @@
     if (response && response.code != null && String(response.code)) {
       return String(response.code);
     }
+    if (response && response.error != null && String(response.error)) {
+      return String(response.error);
+    }
     if (opts && opts.validationCode) {
       return String(opts.validationCode);
     }
@@ -47,6 +50,15 @@
   }
 
   /**
+   * @param {{ status?: number, response?: object }} err
+   * @returns {boolean}
+   */
+  function isStaleListConflict(err) {
+    const code = resolveErrorCode(err, {});
+    return code === 'stale_list';
+  }
+
+  /**
    * @param {{ status?: number, response?: object, message?: string }} err
    * @param {{ validationCode?: string }} [opts]
    * @returns {string}
@@ -56,6 +68,9 @@
    * @returns {string}
    */
   function connectUserMessage(err) {
+    if (isStaleListConflict(err)) {
+      return '';
+    }
     const status = err && err.status ? Number(err.status) : 0;
     const code = resolveErrorCode(err, {});
     if (code === 'invalid_token' || code === 'unauthorized' || status === 401) {
@@ -71,6 +86,9 @@
   }
 
   function devCommandUserMessage(err, opts) {
+    if (isStaleListConflict(err)) {
+      return '';
+    }
     const status = err && err.status ? Number(err.status) : 0;
     const response = err && err.response ? err.response : null;
     const code = resolveErrorCode(err, opts);
@@ -167,6 +185,7 @@
     USER_MSG_STORE_NOT_ALLOWED: USER_MSG_STORE_NOT_ALLOWED,
     connectUserMessage: connectUserMessage,
     devCommandUserMessage: devCommandUserMessage,
+    isStaleListConflict: isStaleListConflict,
     resolveErrorCode: resolveErrorCode,
     sanitizeForDetail: sanitizeForDetail,
     formatErrorDetailText: formatErrorDetailText,
