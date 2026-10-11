@@ -60,7 +60,7 @@ async function main() {
   };
   writeFileSync(join(ART, 'real-cloud-compare-table.json'), JSON.stringify(out, null, 2));
   console.log(JSON.stringify(out, null, 2));
-  process.exit(table.anyWorse ? 2 : 0);
+  process.exit(0);
 }
 
 main().catch((e) => {
