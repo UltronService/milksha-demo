@@ -42,6 +42,10 @@ jobs:
         run: |
           test "${{ steps.red.outputs.exit }}" = "1"
           node -e "const r=require('./artifacts/cross-zone-leak/real-cloud-red-result.json'); if(!r.red) { console.error('red flag false'); process.exit(1);}"
+      - name: Hypothesis 0 verdict present
+        run: |
+          test -f artifacts/cross-zone-leak/hypothesis0-verdict.json
+          node -e "const v=require('./artifacts/cross-zone-leak/hypothesis0-verdict.json'); if(!v.verdict||v.verdict==='inconclusive'){console.error(v);process.exit(1);} console.log(v.verdict,v.upstream||'');"
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4

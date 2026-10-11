@@ -17,6 +17,12 @@ import {
 } from '../pr53-live/real-cloud-harness.mjs';
 import { teardownLiveCloudSession } from '../../tests/e2e/live-cloud-teardown.mjs';
 import { expandControllerZone } from '../../tests/e2e/harness.mjs';
+import {
+  installHypothesis0Capture,
+  readController7112,
+  lookup7112InApplyLog,
+  summarizeHypothesis0,
+} from './hypothesis0-capture.mjs';
 
 async function expandClear(ctrl, board) {
   await expandControllerZone(ctrl, 'sec-special');
@@ -56,10 +62,13 @@ async function main() {
   const allViolations = [];
   const failingFrames = [];
   let cycleApplyStartIdx = 0;
+  /** @type {ReturnType<typeof summarizeHypothesis0> & { cycle?: number } | null} */
+  let hypothesis0Verdict = null;
   try {
     const browser = await chromium.launch({ headless: true });
     const ctx = await browser.newContext({ viewport: VP });
     ctx.setDefaultTimeout(180000);
+    const netLog = await installHypothesis0Capture(ctx);
     await installRealCloudRoutes(ctx, dir);
     const board = await ctx.newPage();
     const ctrl = await ctx.newPage();
@@ -107,6 +116,23 @@ async function main() {
             if (failingFrames.length < 15) {
               failingFrames.push(row);
             }
+            if (!hypothesis0Verdict && v.violations.some((x) => x.number === '7112')) {
+              const allApply = await board.evaluate(() => window.__pr53Diag?.applyPayloadCalls ?? []);
+              const controller = await readController7112(ctrl);
+              hypothesis0Verdict = summarizeHypothesis0({
+                apply7112: lookup7112InApplyLog(allApply),
+                devCommands: netLog.devCommands,
+                todayBoardReads: netLog.todayBoardReads,
+                controller,
+                frame: evidence,
+              });
+              hypothesis0Verdict.cycle = c;
+              hypothesis0Verdict.tMs = tMs;
+              hypothesis0Verdict.applyJustBeforeLeak = applySinceCycle.slice(-3);
+              hypothesis0Verdict.pushNumbersWith7112 = netLog.devCommands.filter(
+                (d) => d.type === 'push_numbers' && (d.has7112InReady || d.has7112InPreparing),
+              );
+            }
           }
         }
         await sleep(50);
@@ -141,6 +167,9 @@ async function main() {
     join(ART, 'REAL-CLOUD-RED-RUN.md'),
     `# Real-cloud RED run\n\n- red: ${out.red}\n- unique violations: ${out.uniqueViolationCount}\n- events: ${out.violationEvents}\n`,
   );
+  if (hypothesis0Verdict) {
+    writeFileSync(join(ART, 'hypothesis0-verdict.json'), JSON.stringify(hypothesis0Verdict, null, 2));
+  }
   console.log(JSON.stringify(out, null, 2));
   process.exit(unique.length > 0 ? 1 : 0);
 }

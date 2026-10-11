@@ -21,12 +21,25 @@ export const DIAG_INIT_SCRIPT = () => {
             }
           }
         }
+        let item7112 = null;
+        if (Array.isArray(list)) {
+          for (const it of list) {
+            if (it && String(it.number) === '7112') {
+              item7112 = {
+                source_type: it.source_type ? String(it.source_type) : '',
+                number: String(it.number),
+              };
+              break;
+            }
+          }
+        }
         window.__pr53Diag.applyPayloadCalls.push({
           t: Date.now(),
           len: Array.isArray(list) ? list.length : 0,
           prep,
           ready,
           silent: Boolean(opts && opts.silent),
+          item7112,
         });
         return orig(list, opts);
       };
