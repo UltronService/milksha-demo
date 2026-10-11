@@ -63,7 +63,7 @@ Full local `npx playwright test tests/e2e`: **191 passed**, 3 failed (`guest-clo
 
 ## CI
 
-- Tip run: https://github.com/UltronService/milksha-demo/actions/runs/38101832515 (job on `c881b6f`)
+- **Green:** https://github.com/UltronService/milksha-demo/actions/runs/38102946004 (`54e9bd9`)
 
 ## Next (not in #44)
 
