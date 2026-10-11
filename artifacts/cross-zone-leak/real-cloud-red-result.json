@@ -1,0 +1,33 @@
+{
+  "store": "zz-qa-ci-store",
+  "sha": "4146812",
+  "cycles": 30,
+  "viewport": "1920x1080",
+  "violationEvents": 19,
+  "uniqueViolationCount": 3,
+  "uniqueViolations": [
+    {
+      "cycle": 27,
+      "number": "7112",
+      "zone": "ready",
+      "slot": 1,
+      "motionInFlight": "page-turn"
+    },
+    {
+      "cycle": 28,
+      "number": "7112",
+      "zone": "ready",
+      "slot": 1,
+      "motionInFlight": "none"
+    },
+    {
+      "cycle": 29,
+      "number": "7112",
+      "zone": "ready",
+      "slot": 1,
+      "motionInFlight": "none"
+    }
+  ],
+  "red": true,
+  "exitCode": 1
+}
