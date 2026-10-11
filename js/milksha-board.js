@@ -49,6 +49,10 @@
   const DESIGN_LANDSCAPE_W = LAYOUT_LANDSCAPE.W;
   const DESIGN_LANDSCAPE_H = LAYOUT_LANDSCAPE.H;
 
+  /** Page indicator tokens @ 1920×1080 design canvas (scales with board canvas). */
+  const PAGE_INDICATOR_FONT_PX = 28;
+  const PAGE_INDICATOR_INSET_PX = 16;
+
   /**
    * Uniform scale to fit design canvas in viewport (no upscale cap).
    * @param {number} viewportW
@@ -480,6 +484,104 @@
       const art = landscapeArtLayout();
       const numFont = useLandscapeArtGrid() && art ? art.NUM_FONT_PX : cfg.numFont;
       rootEl.style.setProperty('--milksha-num-font', numFont + 'px');
+      rootEl.style.setProperty('--milksha-pg-ind-font', PAGE_INDICATOR_FONT_PX + 'px');
+      rootEl.style.setProperty('--milksha-pg-ind-inset', PAGE_INDICATOR_INSET_PX + 'px');
+    }
+
+    /**
+     * @param {Element} zoneEl
+     * @returns {number}
+     */
+    function parseZoneLeftPx(zoneEl) {
+      if (!zoneEl || !zoneEl.style) {
+        return 0;
+      }
+      const raw = zoneEl.style.left;
+      if (raw) {
+        const n = Number.parseFloat(raw);
+        if (Number.isFinite(n)) {
+          return n;
+        }
+      }
+      return 0;
+    }
+
+    /**
+     * @param {'prep' | 'ready'} zoneKey
+     * @param {number} zoneLeftPx
+     * @returns {{ left: number, top: number } | null}
+     */
+    /**
+     * Bottom-right inset against visible cream rect (board design coords → zone-local).
+     * @param {'prep' | 'ready'} zoneKey
+     * @param {number} zoneLeftPx
+     * @returns {{ left: number, top: number } | null}
+     */
+    function artPageIndicatorPositionPx(zoneKey, zoneLeftPx) {
+      const art = landscapeArtLayout();
+      if (!art) {
+        return null;
+      }
+      const cream = art.creamRectForZone(zoneKey);
+      const inset = PAGE_INDICATOR_INSET_PX;
+      const fontPx = PAGE_INDICATOR_FONT_PX;
+      const creamRight = cream.left + cream.width;
+      const creamBottom = cream.top + cream.height;
+      return {
+        left: creamRight - zoneLeftPx - inset,
+        top: creamBottom - inset - fontPx,
+      };
+    }
+
+    /**
+     * @param {Element} ind
+     * @param {Element} zoneEl
+     * @param {'prep' | 'ready'} zoneKey
+     */
+    function applyPageIndicatorPlacement(ind, zoneEl, zoneKey) {
+      if (!ind || !zoneEl) {
+        return;
+      }
+      ind.classList.add('milksha-pg-indicator');
+      if (useLandscapeArtGrid()) {
+        ind.classList.add('milksha-pg-indicator--art');
+        const pos = artPageIndicatorPositionPx(zoneKey, parseZoneLeftPx(zoneEl));
+        if (pos) {
+          ind.style.left = pos.left + 'px';
+          ind.style.top = pos.top + 'px';
+          ind.style.right = 'auto';
+          ind.style.bottom = 'auto';
+        }
+      } else {
+        ind.classList.remove('milksha-pg-indicator--art');
+        ind.style.left = '';
+        ind.style.top = '';
+        ind.style.right = '';
+        ind.style.bottom = '';
+      }
+    }
+
+    /**
+     * @param {Element} zone
+     * @returns {'prep' | 'ready'}
+     */
+    function zoneKeyFromZoneEl(zone) {
+      if (zone && zone.classList && zone.classList.contains('ready')) {
+        return 'ready';
+      }
+      return 'prep';
+    }
+
+    /**
+     * @param {Element} zone
+     */
+    function removeAllPageIndicators(zone) {
+      if (!zone) {
+        return;
+      }
+      zone.querySelectorAll('.milksha-pg-indicator').forEach(function (el) {
+        el.remove();
+      });
     }
 
     function clampPage(page, count) {
@@ -525,19 +627,20 @@
       if (!zone) {
         return;
       }
-      let ind = zone.querySelector('.milksha-pg-indicator');
-      if (totalPages > 1) {
-        if (!ind) {
-          ind = doc.createElement('div');
-          ind.className = useLandscapeArtGrid()
-            ? 'milksha-pg-indicator milksha-pg-indicator--art'
-            : 'milksha-pg-indicator';
-          zone.appendChild(ind);
-        }
-        ind.textContent = String(page + 1) + '/' + String(totalPages);
-      } else if (ind) {
-        ind.remove();
+      const zoneKey = zoneKeyFromZoneEl(zone);
+      const numbersLayer = zone.querySelector('.milksha-zone-numbers');
+      if (totalPages <= 1) {
+        removeAllPageIndicators(zone);
+        return;
       }
+      if (!numbersLayer) {
+        return;
+      }
+      removeAllPageIndicators(zone);
+      const ind = doc.createElement('div');
+      numbersLayer.appendChild(ind);
+      applyPageIndicatorPlacement(ind, zone, zoneKey);
+      ind.textContent = String(page + 1) + '/' + String(totalPages);
     }
 
     function zonesDomReady() {
@@ -594,8 +697,8 @@
         renderBoard();
       } else {
         animator.cancelAll(boardEl);
-        const prepZone = boardEl.querySelector('.milksha-zone.prep');
-        const readyZone = boardEl.querySelector('.milksha-zone.ready');
+        const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
+        const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
           animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
@@ -636,7 +739,9 @@
      */
     function patchZonePage(zoneClass, items, page, totalPages) {
       const zoneKey = zoneClass.indexOf('prep') >= 0 ? 'prep' : 'ready';
-      const zone = boardEl.querySelector('.milksha-zone.' + zoneClass);
+      const zoneSel =
+        zoneClass.indexOf('prep') >= 0 ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
+      const zone = boardEl.querySelector(zoneSel);
       if (!zone) {
         renderBoard();
         lastRenderedPrep = prepItems.slice();
@@ -663,6 +768,7 @@
       const animator = ensureBoardAnimator();
       const pageMotionOk = !prefersReducedMotion() && canUseWebAnimations();
       if (pageMotionOk && animator) {
+        updateZonePageIndicator(zone, page, totalPages);
         const animDone = animator.syncZone(zone, zoneKey, items, page, {
           prevItems: prevItems,
           prevPage: prevPage,
@@ -674,6 +780,7 @@
           lastRenderedReadyPage = page;
         }
         return Promise.resolve(animDone).then(function () {
+          updateZonePageIndicator(zone, page, totalPages);
           return undefined;
         });
       } else {
@@ -775,23 +882,24 @@
         }
         z += '</div>';
       }
-      z += '</div>';
       if (totalPages > 1) {
-        const indLeft = cream.left - x + cream.width - 52;
-        const indTop = cream.top + cream.height - 34;
+        const pos = artPageIndicatorPositionPx(zoneKey, x);
+        const indLeft = pos ? pos.left : cream.left - x + cream.width - PAGE_INDICATOR_INSET_PX;
+        const indTop = pos
+          ? pos.top
+          : cream.top + cream.height - PAGE_INDICATOR_INSET_PX - PAGE_INDICATOR_FONT_PX;
         z +=
           '<div class="milksha-pg-indicator milksha-pg-indicator--art" style="left:' +
           indLeft +
           'px;top:' +
           indTop +
-          'px" data-started-at="' +
-          pageStartedAt +
-          '">' +
+          'px">' +
           (page + 1) +
           '/' +
           totalPages +
           '</div>';
       }
+      z += '</div>';
       z += '</div>';
       return z;
     }
@@ -846,18 +954,15 @@
           z += '<div class="milksha-num-cell"></div>';
         }
       }
-      z += '</div>';
       if (totalPages > 1) {
         z +=
-          '<div class="milksha-pg-indicator" data-started-at="' +
-          pageStartedAt +
-          '">' +
+          '<div class="milksha-pg-indicator">' +
           (page + 1) +
           '/' +
           totalPages +
           '</div>';
       }
-      z += '</div></div></div>';
+      z += '</div></div></div></div>';
       return z;
     }
 

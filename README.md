@@ -74,6 +74,8 @@ npm test
 npm run test:e2e
 ```
 
+變更任何由入口 HTML 引用的 `js/`、`css/`（或 `controller/` 內同類靜態檔）時，須同步更新 `config/asset-version.json` 並將各入口的 `?v=` 改為同一版本（`npm test` 會檢查）。
+
 ## 目錄摘要
 
 - `index.html` — 看板入口
