@@ -21,7 +21,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ART = join(dirname(fileURLToPath(import.meta.url)));
 const SHA = process.env.CROSS_ZONE_SITE_SHA || '4146812';
 const CYCLES = Number(process.env.CROSS_ZONE_CYCLES || 10);
-const VP = { w: 1920, h: 1080 };
+const VP = { width: 1920, height: 1080 };
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -109,7 +109,7 @@ async function main() {
     store: 'zz-qa-ci-store',
     sha: SHA,
     cycles: CYCLES,
-    viewport: `${VP.w}x${VP.h}`,
+    viewport: `${VP.width}x${VP.height}`,
     violationEvents: allViolations.length,
     uniqueViolationCount: unique.length,
     uniqueViolations: unique.map((u) => ({
