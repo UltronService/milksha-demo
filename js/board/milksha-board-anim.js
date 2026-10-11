@@ -1087,32 +1087,34 @@
           deps.window.requestAnimationFrame(function () {
             afterLayout();
             Promise.all(promises).then(function () {
-              removeOrphanLayerFloatChips(numbersLayer);
-              const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
-              for (let ec = 0; ec < exitClones.length; ec += 1) {
-                const clone = exitClones[ec];
-                if (clone.parentNode) {
-                  clone.parentNode.removeChild(clone);
-                }
-              }
-              for (let si = 0; si < deps.pageSize; si += 1) {
-                const cellSettle = cells[si];
-                const slotSettle = slotEls[si];
-                if (!cellSettle || !cellSettle.id || !slotSettle) {
-                  continue;
-                }
-                const settled = slotSettle.querySelector(
-                  '.milksha-board-chip[data-item-id="' + cellSettle.id + '"]',
-                );
-                if (settled && !pendingRemove.has(settled)) {
-                  snapOpacity(settled, 1);
-                  if (!settled.classList.contains('milksha-board-chip--layer-float')) {
-                    settled.style.transform = '';
+              if (columnMovePlan) {
+                removeOrphanLayerFloatChips(numbersLayer);
+                const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+                for (let ec = 0; ec < exitClones.length; ec += 1) {
+                  const clone = exitClones[ec];
+                  if (clone.parentNode) {
+                    clone.parentNode.removeChild(clone);
                   }
                 }
-              }
-              if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
-                numbersLayer.removeAttribute('data-column-move-anim');
+                for (let si = 0; si < deps.pageSize; si += 1) {
+                  const cellSettle = cells[si];
+                  const slotSettle = slotEls[si];
+                  if (!cellSettle || !cellSettle.id || !slotSettle) {
+                    continue;
+                  }
+                  const settled = slotSettle.querySelector(
+                    '.milksha-board-chip[data-item-id="' + cellSettle.id + '"]',
+                  );
+                  if (settled && !pendingRemove.has(settled)) {
+                    snapOpacity(settled, 1);
+                    if (!settled.classList.contains('milksha-board-chip--layer-float')) {
+                      settled.style.transform = '';
+                    }
+                  }
+                }
+                if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+                  numbersLayer.removeAttribute('data-column-move-anim');
+                }
               }
               resolve();
             });
