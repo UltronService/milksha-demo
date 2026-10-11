@@ -16,7 +16,6 @@ import {
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
   pickColumnMoveEnterSample,
-  sampleColumnMoveMotionFrame,
   prepPayload,
   readyPayload,
   applyPayload,
@@ -61,20 +60,12 @@ test.describe('column-move animation boundary 1–10', () => {
     const combined = await pollMotionSamples(
       page,
       () => applyPayload(page, prepPayload([...nums, Number(newest)])),
-      () =>
-        sampleColumnMoveMotionFrame(
-          page,
-          'prep',
-          pushed,
-          GRID_ROWS - 1,
-          GRID_ROWS,
-          newest,
-        ).then((frame) => ({
-          exit: frame.exit,
-          enterSlot: frame.enterSlot,
-          enterPushed: frame.enterPushedFloat || frame.enterPushed,
-          newest: frame.track,
-        })),
+      async () => ({
+        exit: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS - 1),
+        enterSlot: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS),
+        enterPushed: await chipMotionSampleForNumberIncludingFloat(page, 'prep', pushed),
+        newest: await chipMotionSampleForNumberWithLeft(page, 'prep', newest),
+      }),
       { samples: 64, intervalMs: 14 },
     );
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
@@ -297,18 +288,15 @@ for (const zone of ['prep', 'ready']) {
               applyHook();
             }
           },
-          () =>
-            sampleColumnMoveMotionFrame(
-              page,
-              zone,
-              pushed,
-              GRID_ROWS - 1,
-              GRID_ROWS,
-            ).then((frame) => ({
-              exit: frame.exit,
-              enterSlot: frame.enterSlot,
-              enterPushed: frame.enterPushedFloat || frame.enterPushed,
-            })),
+          async () => {
+            const enterSlot = await chipMotionSampleAtSlot(page, zone, GRID_ROWS);
+            const enterPushed = await chipMotionSampleForNumberWithLeft(page, zone, pushed);
+            return {
+              exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1),
+              enterSlot,
+              enterPushed: await chipMotionSampleForNumberIncludingFloat(page, zone, pushed),
+            };
+          },
           { samples: count >= 10 ? 56 : 48, intervalMs: 12 },
         );
         if (pulsePromise) {

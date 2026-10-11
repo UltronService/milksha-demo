@@ -183,7 +183,6 @@
     if (!el) {
       return;
     }
-    el.style.visibility = 'visible';
     el.style.opacity = '1';
   }
 
@@ -237,9 +236,6 @@
     numbersLayer.appendChild(chip);
   }
 
-  /**
-   * @param {Element} numbersLayer
-   */
   /**
    * @param {Element} numbersLayer
    * @param {{ includeFadeOut?: boolean }} [opts]
@@ -475,51 +471,6 @@
   }
 
   /**
-   * Left-column removal: right-top backfills left-bottom (vertical staged move).
-   * @param {Array<{ id: string }>} prevItems
-   * @param {Array<{ id: string }>} nextItems
-   * @param {number} page
-   * @param {number} pageSize
-   * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
-   * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
-   * @returns {null | { kind: 'left-column-backfill-removal', removedId: string, backfillId: string, pageTwoFadeInId: string | null, rightTopSlot: number, leftBottomSlot: number }}
-   */
-  function detectLeftColumnBackfillRemovalPlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
-    if (diff.pageTurn || diff.removed.length !== 1) {
-      return null;
-    }
-    if (diff.added.length > 1) {
-      return null;
-    }
-    const removedId = diff.removed[0];
-    const prevMap = visibleIdToSlot(prevItems, page, pageSize, layoutPageGrid);
-    const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
-    const removedFrom = prevMap.get(removedId);
-    if (removedFrom === undefined || removedFrom >= GRID_ROWS) {
-      return null;
-    }
-    let backfillId = null;
-    prevMap.forEach(function (fromSlot, id) {
-      const toSlot = nextMap.get(id);
-      if (fromSlot === GRID_ROWS && toSlot === GRID_ROWS - 1) {
-        backfillId = id;
-      }
-    });
-    if (!backfillId) {
-      return null;
-    }
-    const pageTwoFadeInId = diff.added.length === 1 ? diff.added[0] : null;
-    return {
-      kind: 'left-column-backfill-removal',
-      removedId: removedId,
-      backfillId: backfillId,
-      pageTwoFadeInId: pageTwoFadeInId,
-      rightTopSlot: GRID_ROWS,
-      leftBottomSlot: GRID_ROWS - 1,
-    };
-  }
-
-  /**
    * @param {Element} slotEl
    * @param {Element} numbersLayer
    */
@@ -588,175 +539,6 @@
 
   /**
    * @param {Element} chip
-   * @param {Element} numbersLayer
-   * @param {number} dyOut magnitude (upward)
-   * @param {number} durationMs
-   * @param {number} generation
-   * @param {() => number} getGeneration
-   * @param {(el: Element, from: number, to: number, ms: number, gen: number) => Promise<void>} runOpacityAnimFn
-   */
-  function viewportCreamRectForChip(chip) {
-    if (!chip) {
-      return null;
-    }
-    let zone = chip.closest('.milksha-zone');
-    if (!zone) {
-      const layer = chip.closest('.milksha-zone-numbers');
-      zone = layer ? layer.closest('.milksha-zone') : null;
-    }
-    if (zone) {
-      const creamEl = zone.querySelector('.milksha-cream');
-      if (creamEl) {
-        const r = creamEl.getBoundingClientRect();
-        return {
-          left: r.left,
-          top: r.top,
-          right: r.right,
-          bottom: r.bottom,
-          scale: 1,
-        };
-      }
-    }
-    const win = typeof window !== 'undefined' ? window : globalThis;
-    const doc = win.document;
-    const art = win.QMS && win.QMS.Board && win.QMS.Board.LandscapeArtLayout;
-    const canvas = doc && doc.getElementById('milksha-board-canvas');
-    if (!zone || !art || !canvas) {
-      return null;
-    }
-    const zoneKey = zone.classList.contains('milksha-ready') ? 'ready' : 'prep';
-    const cream = art.creamRectForZone(zoneKey);
-    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
-    const scale = m ? Number(m[1]) : 1;
-    const cRect = canvas.getBoundingClientRect();
-    return {
-      left: cRect.left + cream.left * scale,
-      top: cRect.top + cream.top * scale,
-      right: cRect.left + (cream.left + cream.width) * scale,
-      bottom: cRect.top + (cream.top + cream.height) * scale,
-      scale: scale,
-    };
-  }
-
-  const CREAM_EDGE_SLACK_PX = 3;
-
-  function chipAtRestOverflowsCream(chip) {
-    const creamR = viewportCreamRectForChip(chip);
-    if (!creamR || !chip) {
-      return false;
-    }
-    const prevTransform = chip.style.transform;
-    chip.style.transform = 'translate(0px, 0px)';
-    const chipR = chip.getBoundingClientRect();
-    chip.style.transform = prevTransform;
-    const pad = CREAM_EDGE_SLACK_PX;
-    return (
-      chipR.left < creamR.left + pad ||
-      chipR.top < creamR.top + pad ||
-      chipR.right > creamR.right - pad ||
-      chipR.bottom > creamR.bottom - pad
-    );
-  }
-
-  function capSlideUpOutDyPx(chip, dyOut) {
-    if (!chip || dyOut <= 0) {
-      return 0;
-    }
-    const creamR = viewportCreamRectForChip(chip);
-    if (!creamR) {
-      return dyOut;
-    }
-    const prevTransform = chip.style.transform;
-    chip.style.transform = 'translate(0px, 0px)';
-    const chipR = chip.getBoundingClientRect();
-    chip.style.transform = prevTransform;
-    let slackTop = chipR.top - creamR.top;
-    if (slackTop <= 0) {
-      return 0;
-    }
-    const win = typeof window !== 'undefined' ? window : globalThis;
-    const doc = win.document;
-    const art = win.QMS && win.QMS.Board && win.QMS.Board.LandscapeArtLayout;
-    const canvas = doc && doc.getElementById('milksha-board-canvas');
-    if (art && canvas) {
-      const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
-      const scale = m ? Number(m[1]) : 1;
-      const cRect = canvas.getBoundingClientRect();
-      const titleGuardVpY = cRect.top + art.TITLE_GUARD_MAX_Y * scale;
-      const titleSlack = chipR.top - titleGuardVpY;
-      if (titleSlack < slackTop) {
-        slackTop = Math.max(0, titleSlack);
-      }
-    }
-    slackTop = Math.max(0, slackTop - CREAM_EDGE_SLACK_PX);
-    return Math.min(dyOut, slackTop);
-  }
-
-  function capEnterFromBelowDyPx(chip, dyIn) {
-    if (!chip || dyIn <= 0) {
-      return 0;
-    }
-    const creamR = viewportCreamRectForChip(chip);
-    if (!creamR) {
-      return dyIn;
-    }
-    const prevTransform = chip.style.transform;
-    chip.style.transform = 'translate(0px, 0px)';
-    const chipR = chip.getBoundingClientRect();
-    chip.style.transform = prevTransform;
-    const slackBottom = creamR.bottom - chipR.bottom;
-    if (slackBottom <= 0) {
-      return 0;
-    }
-    const slack = Math.max(0, slackBottom - CREAM_EDGE_SLACK_PX);
-    return Math.min(dyIn, slack);
-  }
-
-  function animateColumnMoveSlideUpOut(chip, numbersLayer, dyOut, durationMs, generation, getGeneration, runOpacityAnimFn) {
-    if (!chip || !numbersLayer) {
-      return Promise.resolve();
-    }
-    detachChipFromSlotForFade(chip, numbersLayer);
-    let dyMag = 0;
-    if (!chipAtRestOverflowsCream(chip)) {
-      dyMag = Math.max(24, dyOut);
-      dyMag = capSlideUpOutDyPx(chip, dyMag);
-    }
-    const dy = dyMag > 0 ? -dyMag : 0;
-    chip.style.transform = 'translate(0px, 0px)';
-    const movePromise =
-      dy === 0
-        ? runOpacityAnimFn(chip, 1, 0, durationMs, generation)
-        : chip.animate && durationMs > 0
-        ? new Promise(function (resolve) {
-            const anim = chip.animate(
-              [
-                { transform: 'translate(0px, 0px)', opacity: 1 },
-                { transform: 'translate(0px, ' + dy + 'px)', opacity: 0 },
-              ],
-              { duration: durationMs, easing: 'ease-in', fill: 'forwards' },
-            );
-            anim.onfinish = function () {
-              resolve();
-            };
-            anim.oncancel = function () {
-              resolve();
-            };
-          })
-        : runOpacityAnimFn(chip, 1, 0, durationMs, generation);
-    return movePromise.then(function () {
-      if (getGeneration() !== generation) {
-        return;
-      }
-      if (chip.parentNode) {
-        chip.parentNode.removeChild(chip);
-      }
-      clearMotionStyles(chip);
-    });
-  }
-
-  /**
-   * @param {Element} chip
    * @param {number} dyIn
    * @param {number} durationMs
    * @param {number} generation
@@ -786,71 +568,6 @@
           return;
         }
         chip.style.transform = '';
-        resolve();
-      };
-      anim.oncancel = function () {
-        resolve();
-      };
-    });
-  }
-
-  /**
-   * @param {Element} chip
-   * @param {number} dyIn positive = start below cell
-   * @param {number} durationMs
-   * @param {number} generation
-   * @param {() => number} getGeneration
-   */
-  function animateColumnMoveEnterFromBelow(chip, dyIn, durationMs, generation, getGeneration, opts) {
-    if (!chip) {
-      return Promise.resolve();
-    }
-    const clampBackfillCream = Boolean(opts && opts.clampBackfillCream);
-    chip.style.visibility = 'visible';
-    let dy;
-    if (clampBackfillCream) {
-      dy = capEnterFromBelowDyPx(chip, dyIn);
-    } else {
-      dy = Math.max(24, dyIn);
-    }
-    if (dy <= 0 || !chip.animate || durationMs <= 0) {
-      chip.style.transform = '';
-      snapOpacity(chip, 1);
-      return Promise.resolve();
-    }
-    cancelElementAnimations(chip);
-    chip.style.transform = 'translate(0px, ' + dy + 'px)';
-    const fromFrame = { transform: 'translate(0px, ' + dy + 'px)' };
-    const toFrame = { transform: 'translate(0px, 0px)' };
-    if (clampBackfillCream) {
-      fromFrame.opacity = 0;
-      toFrame.opacity = 1;
-      chip.style.opacity = '0';
-    } else {
-      chip.style.opacity = '1';
-    }
-    const anim = clampBackfillCream
-      ? chip.animate(
-          [
-            { transform: 'translate(0px, ' + dy + 'px)', opacity: 0, offset: 0 },
-            { transform: 'translate(0px, 0px)', opacity: 0, offset: 0.94 },
-            { transform: 'translate(0px, 0px)', opacity: 1, offset: 1 },
-          ],
-          { duration: durationMs, easing: 'ease-out', fill: 'forwards' },
-        )
-      : chip.animate([fromFrame, toFrame], {
-          duration: durationMs,
-          easing: 'ease-out',
-          fill: 'forwards',
-        });
-    return new Promise(function (resolve) {
-      anim.onfinish = function () {
-        if (getGeneration() !== generation) {
-          resolve();
-          return;
-        }
-        chip.style.transform = '';
-        snapOpacity(chip, 1);
         resolve();
       };
       anim.oncancel = function () {
@@ -1093,41 +810,6 @@
     }
 
     /**
-     * @param {Element} chip
-     * @param {number} opacityInMs
-     * @param {Promise<void>[]} promises
-     */
-    function scheduleChipCssFadeIn(chip, opacityInMs, promises) {
-      if (!chip) {
-        return;
-      }
-      snapOpacity(chip, 0);
-      cancelElementAnimations(chip);
-      chip.style.visibility = 'visible';
-      chip.style.transition = 'opacity ' + opacityInMs + 'ms ease-out';
-      chip.style.opacity = '0';
-      if (chip.offsetHeight) {
-        /* reflow */
-      }
-      chip.style.opacity = '1';
-      opacityAnimRuns += 1;
-      promises.push(
-        new Promise(function (resolve) {
-          const done = function () {
-            chip.style.transition = '';
-            snapOpacity(chip, 1);
-            resolve();
-          };
-          if (deps.window && typeof deps.window.setTimeout === 'function') {
-            deps.window.setTimeout(done, opacityInMs + 40);
-          } else {
-            done();
-          }
-        }),
-      );
-    }
-
-    /**
      * @param {Element} numbersLayer
      * @param {NodeListOf<Element> | Element[]} slotEls
      * @param {Array<{ id?: string, number?: string } | null>} cells
@@ -1252,17 +934,6 @@
         deps.layoutPageGrid,
         diff,
       );
-      const backfillRemovalPlan = detectLeftColumnBackfillRemovalPlan(
-        prevItems,
-        items,
-        page,
-        deps.pageSize,
-        deps.layoutPageGrid,
-        diff,
-      );
-      if (backfillRemovalPlan) {
-        columnMovePlan = backfillRemovalPlan;
-      }
       if (
         !columnMovePlan &&
         page === 0 &&
@@ -1278,13 +949,7 @@
         };
       }
       const columnMoveEnterFromAboveIds = {};
-      const columnMoveEnterFromBelowIds = {};
       const columnMoveSkipFlipIds = {};
-      const pageTwoFadeInIds = {};
-      /** @type {null | { chip: Element, pitch: number }} */
-      let deferredBackfillEnterFromBelow = null;
-      /** @type {Promise<void>} */
-      let backfillExitClonePromise = Promise.resolve();
       let columnMoveDurationMs = opacityInMs;
       if (columnMovePlan) {
         if (zoneKey === 'ready' && columnMovePlan.addedId) {
@@ -1296,63 +961,7 @@
             : opacityInMs;
         numbersLayer.setAttribute('data-column-move-anim', '1');
         const pitch = estimateRowPitchPx(slotEls[GRID_ROWS - 1] || slotEls[0], numbersLayer);
-        if (columnMovePlan.kind === 'left-column-backfill-removal') {
-          const backfillId = columnMovePlan.backfillId;
-          const deferBackfillMotion = diff.removed.length > 0;
-          if (deferBackfillMotion && backfillId && chipById[backfillId]) {
-            snapOpacity(chipById[backfillId], 0);
-            chipById[backfillId].style.visibility = 'hidden';
-          }
-          if (!deferBackfillMotion) {
-            const rtSlot = columnMovePlan.rightTopSlot;
-            const prevCellsBf = deps.layoutPageGrid(prevItems, page, deps.pageSize);
-            const rtCell = prevCellsBf[rtSlot];
-            const rtId = rtCell && rtCell.id ? rtCell.id : backfillId;
-            if (rtId && chipById[rtId]) {
-              const rtChip = chipById[rtId];
-              const rtRect = rtChip.getBoundingClientRect();
-              const layerRectRt = numbersLayer.getBoundingClientRect();
-              const exitClone = rtChip.cloneNode(true);
-              exitClone.removeAttribute('data-item-id');
-              exitClone.setAttribute('data-column-move-exit-clone', '1');
-              exitClone.classList.add('milksha-board-chip--layer-float');
-              exitClone.style.position = 'absolute';
-              exitClone.style.left = rtRect.left - layerRectRt.left + 'px';
-              exitClone.style.top = rtRect.top - layerRectRt.top + 'px';
-              exitClone.style.width = rtRect.width + 'px';
-              exitClone.style.height = rtRect.height + 'px';
-              exitClone.style.pointerEvents = 'none';
-              exitClone.style.visibility = 'visible';
-              snapOpacity(exitClone, 1);
-              numbersLayer.appendChild(exitClone);
-              promises.push(
-                animateColumnMoveSlideUpOut(
-                  exitClone,
-                  numbersLayer,
-                  pitch,
-                  columnMoveDurationMs,
-                  gen,
-                  getGeneration,
-                  runOpacityAnim,
-                ),
-              );
-            }
-            if (backfillId && chipById[backfillId]) {
-              snapOpacity(chipById[backfillId], 0);
-            }
-          }
-          if (backfillId) {
-            columnMoveEnterFromBelowIds[backfillId] = true;
-            columnMoveSkipFlipIds[backfillId] = true;
-          }
-          if (columnMovePlan.pageTwoFadeInId) {
-            columnMoveSkipFlipIds[columnMovePlan.pageTwoFadeInId] = true;
-            pageTwoFadeInIds[columnMovePlan.pageTwoFadeInId] = true;
-          }
-          for (let bmi = 0; bmi < diff.moved.length; bmi += 1) {
-            columnMoveSkipFlipIds[diff.moved[bmi].id] = true;
-          }
-        } else if (columnMovePlan.kind === 'left-column-overflow') {
+        if (columnMovePlan.kind === 'left-column-overflow') {
           const pushedId = columnMovePlan.pushedId;
           const lbSlot = columnMovePlan.leftBottomSlot;
           const lbCell = deps.layoutPageGrid(prevItems, page, deps.pageSize)[lbSlot];
@@ -1526,51 +1135,67 @@
         }
       });
 
-      function finishZonePlacementAndAnimate() {
-        if (
-          columnMovePlan &&
-          columnMovePlan.kind === 'left-column-backfill-removal' &&
-          diff.removed.length > 0
-        ) {
-          const backfillId = columnMovePlan.backfillId;
-          const pitchBf = estimateRowPitchPx(slotEls[GRID_ROWS - 1] || slotEls[0], numbersLayer);
-          const rtSlot = columnMovePlan.rightTopSlot;
-          const prevCellsBf = deps.layoutPageGrid(prevItems, page, deps.pageSize);
-          const rtCell = prevCellsBf[rtSlot];
-          const rtId = rtCell && rtCell.id ? rtCell.id : backfillId;
-          if (rtId && chipById[rtId]) {
-            const rtChip = chipById[rtId];
-            const rtRect = rtChip.getBoundingClientRect();
-            const layerRectRt = numbersLayer.getBoundingClientRect();
-            const exitClone = rtChip.cloneNode(true);
-            exitClone.removeAttribute('data-item-id');
-            exitClone.setAttribute('data-column-move-exit-clone', '1');
-            exitClone.classList.add('milksha-board-chip--layer-float');
-            exitClone.style.position = 'absolute';
-            exitClone.style.left = rtRect.left - layerRectRt.left + 'px';
-            exitClone.style.top = rtRect.top - layerRectRt.top + 'px';
-            exitClone.style.width = rtRect.width + 'px';
-            exitClone.style.height = rtRect.height + 'px';
-            exitClone.style.pointerEvents = 'none';
-            exitClone.style.visibility = 'visible';
-            snapOpacity(exitClone, 1);
-            numbersLayer.appendChild(exitClone);
-            snapOpacity(rtChip, 0);
-            backfillExitClonePromise = animateColumnMoveSlideUpOut(
-              exitClone,
-              numbersLayer,
-              pitchBf,
-              columnMoveDurationMs,
-              gen,
-              getGeneration,
-              runOpacityAnim,
-            );
-            promises.push(backfillExitClonePromise);
+      const afterLayout = function () {
+        if (columnMovePlan) {
+          removeOrphanLayerFloatChips(numbersLayer);
+          const holdChips = numbersLayer.querySelectorAll(
+            '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+          );
+          for (let hi = 0; hi < holdChips.length; hi += 1) {
+            const holdChip = holdChips[hi];
+            const holdId = holdChip.getAttribute('data-item-id');
+            if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
+              continue;
+            }
+            ensureVisibleOpacity(holdChip);
           }
         }
+        diff.moved.forEach(function (mv) {
+          if (removedIdSet[mv.id]) {
+            return;
+          }
+          const chip = chipById[mv.id];
+          if (!chip || pendingRemove.has(chip) || chip.getAttribute('data-fade-out') === '1') {
+            return;
+          }
+          if (columnMoveSkipFlipIds[mv.id]) {
+            if (columnMoveEnterFromAboveIds[mv.id]) {
+              return;
+            }
+            const beforeSkipped = rectsBefore[mv.id];
+            if (!beforeSkipped) {
+              return;
+            }
+            const afterSkipped = chip.getBoundingClientRect();
+            let dxSkipped = beforeSkipped.left - afterSkipped.left;
+            const dySkipped = beforeSkipped.top - afterSkipped.top;
+            if (Math.abs(dxSkipped) > 2) {
+              snapOpacity(chip, 0);
+              dxSkipped = 0;
+            }
+            promises.push(
+              animateTranslate(chip, dxSkipped, dySkipped, columnMoveDurationMs, gen, getGeneration).then(
+                function () {
+                  if (getGeneration() === gen) {
+                    ensureVisibleOpacity(chip);
+                  }
+                },
+              ),
+            );
+            return;
+          }
+          const before = rectsBefore[mv.id];
+          if (!before) {
+            return;
+          }
+          const after = chip.getBoundingClientRect();
+          const dx = before.left - after.left;
+          const dy = before.top - after.top;
+          promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
+        });
       };
 
-      const runCellPlacementLoop = function () {
+      const runPlacementAndFlip = function () {
       for (let i = 0; i < deps.pageSize; i += 1) {
         const cell = cells[i];
         const slot = slotEls[i];
@@ -1581,16 +1206,10 @@
         let chip = chipById[id];
         if (chip && chip.parentNode !== slot && !pendingRemove.has(chip)) {
           const stray = slot.querySelectorAll('.milksha-board-chip');
-          const evictStrayImmediate =
-            columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
           for (let st = 0; st < stray.length; st += 1) {
             if (stray[st] !== chip) {
               const strayId = stray[st].getAttribute('data-item-id');
               if (strayId && movedIdSet[strayId]) {
-                continue;
-              }
-              if (evictStrayImmediate && stray[st].parentNode) {
-                stray[st].parentNode.removeChild(stray[st]);
                 continue;
               }
               scheduleChipFadeOutRemove(stray[st], numbersLayer, gen, opacityInMs, promises, pendingRemove);
@@ -1610,30 +1229,6 @@
                 getGeneration,
               ),
             );
-          } else if (columnMoveEnterFromBelowIds[id]) {
-            snapOpacity(chip, 0);
-            const pitchBelow = estimateRowPitchPx(slot, numbersLayer);
-            if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal' && id === columnMovePlan.backfillId) {
-              deferredBackfillEnterFromBelow = { chip: chip, pitch: pitchBelow };
-            } else {
-              promises.push(
-                animateColumnMoveEnterFromBelow(chip, pitchBelow, columnMoveDurationMs, gen, getGeneration, {
-                  clampBackfillCream: true,
-                }),
-              );
-            }
-          } else if (pageTwoFadeInIds[id]) {
-            scheduleChipCssFadeIn(chip, opacityInMs, promises);
-          } else if (
-            columnMovePlan &&
-            columnMovePlan.kind === 'left-column-backfill-removal' &&
-            columnMoveSkipFlipIds[id] &&
-            !columnMoveEnterFromAboveIds[id] &&
-            !columnMoveEnterFromBelowIds[id] &&
-            !pageTwoFadeInIds[id]
-          ) {
-            snapOpacity(chip, 0);
-            chip.style.visibility = 'hidden';
           }
         }
         if (!chip || pendingRemove.has(chip)) {
@@ -1658,20 +1253,6 @@
             snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
             promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
-          } else if (columnMoveEnterFromBelowIds[id]) {
-            snapOpacity(chip, 0);
-            const pitchInBelow = estimateRowPitchPx(slot, numbersLayer);
-            if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal' && id === columnMovePlan.backfillId) {
-              deferredBackfillEnterFromBelow = { chip: chip, pitch: pitchInBelow };
-            } else {
-              promises.push(
-                animateColumnMoveEnterFromBelow(chip, pitchInBelow, columnMoveDurationMs, gen, getGeneration, {
-                  clampBackfillCream: true,
-                }),
-              );
-            }
-          } else if (pageTwoFadeInIds[id]) {
-            scheduleChipCssFadeIn(chip, opacityInMs, promises);
           } else if (
             zoneKey === 'ready' &&
             !skipReadyScale &&
@@ -1687,183 +1268,7 @@
           }
         }
       }
-      };
 
-      const afterLayout = function () {
-        if (columnMovePlan) {
-          removeOrphanLayerFloatChips(numbersLayer);
-          const holdChips = numbersLayer.querySelectorAll(
-            '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
-          );
-          for (let hi = 0; hi < holdChips.length; hi += 1) {
-            const holdChip = holdChips[hi];
-            const holdId = holdChip.getAttribute('data-item-id');
-            if (
-              pendingRemove.has(holdChip) ||
-              (holdId && columnMoveEnterFromAboveIds[holdId]) ||
-              (holdId && columnMoveEnterFromBelowIds[holdId]) ||
-              (holdId && pageTwoFadeInIds[holdId]) ||
-              (holdId &&
-                columnMovePlan.kind === 'left-column-backfill-removal' &&
-                columnMoveSkipFlipIds[holdId] &&
-                !columnMoveEnterFromAboveIds[holdId] &&
-                !columnMoveEnterFromBelowIds[holdId] &&
-                !pageTwoFadeInIds[holdId])
-            ) {
-              continue;
-            }
-            ensureVisibleOpacity(holdChip);
-          }
-        }
-        const runMovedFlips = function () {
-          /** @type {Promise<void>[]} */
-          const backfillFlipPromises = [];
-          if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal') {
-            for (let hi = 0; hi < diff.moved.length; hi += 1) {
-              const mvId = diff.moved[hi].id;
-              if (
-                removedIdSet[mvId] ||
-                !columnMoveSkipFlipIds[mvId] ||
-                columnMoveEnterFromAboveIds[mvId] ||
-                columnMoveEnterFromBelowIds[mvId] ||
-                pageTwoFadeInIds[mvId]
-              ) {
-                continue;
-              }
-              const holdFlipChip = chipById[mvId];
-              if (!holdFlipChip || pendingRemove.has(holdFlipChip)) {
-                continue;
-              }
-              cancelElementAnimations(holdFlipChip);
-              snapOpacity(holdFlipChip, 0);
-              holdFlipChip.style.visibility = 'hidden';
-            }
-          }
-          const pendingBackfillEnter =
-            columnMovePlan &&
-            columnMovePlan.kind === 'left-column-backfill-removal' &&
-            deferredBackfillEnterFromBelow
-              ? deferredBackfillEnterFromBelow
-              : null;
-          if (pendingBackfillEnter) {
-            deferredBackfillEnterFromBelow = null;
-          }
-          diff.moved.forEach(function (mv) {
-            if (removedIdSet[mv.id]) {
-              return;
-            }
-            const chip = chipById[mv.id];
-            if (!chip || pendingRemove.has(chip) || chip.getAttribute('data-fade-out') === '1') {
-              return;
-            }
-            if (columnMoveSkipFlipIds[mv.id]) {
-              if (
-                columnMoveEnterFromAboveIds[mv.id] ||
-                columnMoveEnterFromBelowIds[mv.id] ||
-                pageTwoFadeInIds[mv.id]
-              ) {
-                return;
-              }
-              const beforeSkipped = rectsBefore[mv.id];
-              if (!beforeSkipped) {
-                return;
-              }
-              const afterSkipped = chip.getBoundingClientRect();
-              let dxSkipped = beforeSkipped.left - afterSkipped.left;
-              const dySkipped = beforeSkipped.top - afterSkipped.top;
-              if (Math.abs(dxSkipped) > 2) {
-                dxSkipped = 0;
-              }
-              const hideDuringFlip =
-                columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
-              if (hideDuringFlip) {
-                cancelElementAnimations(chip);
-                snapOpacity(chip, 0);
-                chip.style.visibility = 'hidden';
-              }
-              const flipPromise = animateTranslate(
-                chip,
-                dxSkipped,
-                dySkipped,
-                columnMoveDurationMs,
-                gen,
-                getGeneration,
-              ).then(function () {
-                chip.style.transform = '';
-              });
-              backfillFlipPromises.push(flipPromise);
-              promises.push(flipPromise);
-              return;
-            }
-            const before = rectsBefore[mv.id];
-            if (!before) {
-              return;
-            }
-            const after = chip.getBoundingClientRect();
-            const dx = before.left - after.left;
-            const dy = before.top - after.top;
-            const hidePlainFlip =
-              columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal';
-            if (hidePlainFlip) {
-              cancelElementAnimations(chip);
-              snapOpacity(chip, 0);
-              chip.style.visibility = 'hidden';
-            }
-            promises.push(
-              animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration).then(function () {
-                chip.style.transform = '';
-              }),
-            );
-          });
-          if (pendingBackfillEnter) {
-            promises.push(
-              Promise.all(backfillFlipPromises).then(function () {
-                return animateColumnMoveEnterFromBelow(
-                  pendingBackfillEnter.chip,
-                  pendingBackfillEnter.pitch,
-                  columnMoveDurationMs,
-                  gen,
-                  getGeneration,
-                  { clampBackfillCream: true },
-                );
-              }).then(function () {
-                const inCellChips = numbersLayer.querySelectorAll(
-                  '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
-                );
-                for (let ri = 0; ri < inCellChips.length; ri += 1) {
-                  const revealChip = inCellChips[ri];
-                  if (pendingRemove.has(revealChip)) {
-                    continue;
-                  }
-                  revealChip.style.visibility = 'visible';
-                  snapOpacity(revealChip, 1);
-                  revealChip.style.transform = '';
-                }
-              }),
-            );
-          } else if (deferredBackfillEnterFromBelow) {
-            const deferredFallback = deferredBackfillEnterFromBelow;
-            deferredBackfillEnterFromBelow = null;
-            promises.push(
-              animateColumnMoveEnterFromBelow(
-                deferredFallback.chip,
-                deferredFallback.pitch,
-                columnMoveDurationMs,
-                gen,
-                getGeneration,
-                { clampBackfillCream: true },
-              ),
-            );
-          }
-        };
-        if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal') {
-          promises.push(backfillExitClonePromise.then(runMovedFlips));
-        } else {
-          runMovedFlips();
-        }
-      };
-
-      const runEmptySlotCleanupAndFlip = function () {
       for (let s = 0; s < deps.pageSize; s += 1) {
         const cellAt = cells[s];
         const slotAt = slotEls[s];
@@ -1879,8 +1284,8 @@
       return Promise.all([]).then(function () {
         return new Promise(function (resolve) {
           deps.window.requestAnimationFrame(function () {
-            afterLayout();
             const tailStart = promises.length;
+            afterLayout();
             const waitTail = function () {
               const tail = promises.slice(tailStart);
               return tail.length > 0 ? Promise.all(tail) : Promise.resolve();
@@ -1904,11 +1309,7 @@
                     continue;
                   }
                   const settledId = settled.getAttribute('data-item-id');
-                  if (
-                    settledId &&
-                    (columnMoveEnterFromAboveIds[settledId] || columnMoveEnterFromBelowIds[settledId])
-                  ) {
-                    settled.style.visibility = 'visible';
+                  if (settledId && columnMoveEnterFromAboveIds[settledId]) {
                     snapOpacity(settled, 1);
                     settled.style.transform = '';
                   } else {
@@ -1926,30 +1327,10 @@
       });
       };
 
-      const deferPlacementForBackfillExit =
-        columnMovePlan &&
-        columnMovePlan.kind === 'left-column-backfill-removal' &&
-        diff.removed.length > 0;
-
-      const startPlacement = function () {
-        if (deferPlacementForBackfillExit) {
-          return backfillExitClonePromise.then(function () {
-            runCellPlacementLoop();
-            return runEmptySlotCleanupAndFlip();
-          });
-        }
-        runCellPlacementLoop();
-        return runEmptySlotCleanupAndFlip();
-      };
-
       if (removedFadeWaiters.length > 0) {
-        return Promise.all(removedFadeWaiters).then(function () {
-          finishZonePlacementAndAnimate();
-          return startPlacement();
-        });
+        return Promise.all(removedFadeWaiters).then(runPlacementAndFlip);
       }
-      finishZonePlacementAndAnimate();
-      return startPlacement();
+      return runPlacementAndFlip();
     }
 
     return {
@@ -1978,7 +1359,6 @@
     diffSlotMaps: diffSlotMaps,
     diffVisibleSlots: diffVisibleSlots,
     detectColumnMovePlan: detectColumnMovePlan,
-    detectLeftColumnBackfillRemovalPlan: detectLeftColumnBackfillRemovalPlan,
     countVisibleOnPage: countVisibleOnPage,
     GRID_ROWS: GRID_ROWS,
     isBulkSnapshotReplace: isBulkSnapshotReplace,
