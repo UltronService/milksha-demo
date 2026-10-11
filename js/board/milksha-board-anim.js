@@ -352,6 +352,197 @@
     });
   }
 
+  const GRID_ROWS = 5;
+
+  /**
+   * @param {Array<{ id: string }>} items
+   * @param {number} page
+   * @param {number} pageSize
+   * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
+   */
+  function countVisibleOnPage(items, page, pageSize, layoutPageGrid) {
+    const cells = layoutPageGrid(items, page, pageSize);
+    let n = 0;
+    for (let i = 0; i < cells.length; i += 1) {
+      if (cells[i] && cells[i].id) {
+        n += 1;
+      }
+    }
+    return n;
+  }
+
+  /**
+   * @param {Array<{ id: string }>} prevItems
+   * @param {Array<{ id: string }>} nextItems
+   * @param {number} page
+   * @param {number} pageSize
+   * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
+   * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
+   * @returns {null | { kind: string, addedId: string, enterSlot: number, leftBottomSlot?: number, rightBottomSlot?: number, shiftSlots?: number[] }}
+   */
+  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.pageTurn || diff.removed.length > 0) {
+      return null;
+    }
+    if (diff.added.length !== 1) {
+      return null;
+    }
+    const addedId = diff.added[0];
+    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
+    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
+    const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
+    const enterSlot = nextMap.get(addedId);
+    if (enterSlot === undefined) {
+      if (prevN === 10 && nextItems.length === 11) {
+        return {
+          kind: 'right-bottom-page-two',
+          addedId: addedId,
+          enterSlot: -1,
+          rightBottomSlot: pageSize - 1,
+        };
+      }
+      return null;
+    }
+    if (nextN !== prevN + 1) {
+      if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
+        return {
+          kind: 'right-bottom-page-two',
+          addedId: addedId,
+          enterSlot: enterSlot,
+          rightBottomSlot: pageSize - 1,
+        };
+      }
+      return null;
+    }
+    if (prevN === 5 && enterSlot === GRID_ROWS) {
+      return {
+        kind: 'sixth-on-page',
+        addedId: addedId,
+        enterSlot: enterSlot,
+        leftBottomSlot: GRID_ROWS - 1,
+      };
+    }
+    if (enterSlot > GRID_ROWS && prevN >= GRID_ROWS) {
+      const shiftSlots = [];
+      for (let s = GRID_ROWS; s < enterSlot; s += 1) {
+        shiftSlots.push(s);
+      }
+      return {
+        kind: 'right-column-append',
+        addedId: addedId,
+        enterSlot: enterSlot,
+        shiftSlots: shiftSlots,
+      };
+    }
+    return null;
+  }
+
+  /**
+   * @param {Element} slotEl
+   * @param {Element} numbersLayer
+   */
+  function estimateRowPitchPx(slotEl, numbersLayer) {
+    if (!slotEl || !slotEl.getBoundingClientRect) {
+      return 72;
+    }
+    const layer = numbersLayer && numbersLayer.querySelectorAll ? numbersLayer : null;
+    const cells = layer ? layer.querySelectorAll('.milksha-num-cell') : null;
+    if (cells && cells.length >= GRID_ROWS + 1) {
+      const a = cells[GRID_ROWS - 1].getBoundingClientRect();
+      const b = cells[GRID_ROWS].getBoundingClientRect();
+      const pitch = Math.abs(b.top - a.top);
+      if (pitch > 8) {
+        return pitch;
+      }
+    }
+    const rect = slotEl.getBoundingClientRect();
+    return rect.height > 8 ? rect.height : 72;
+  }
+
+  /**
+   * @param {Element} chip
+   * @param {Element} numbersLayer
+   * @param {number} dyOut
+   * @param {number} durationMs
+   * @param {number} generation
+   * @param {() => number} getGeneration
+   * @param {(el: Element, from: number, to: number, ms: number, gen: number) => Promise<void>} runOpacityAnimFn
+   */
+  function animateColumnMoveSlideDownOut(chip, numbersLayer, dyOut, durationMs, generation, getGeneration, runOpacityAnimFn) {
+    if (!chip || !numbersLayer) {
+      return Promise.resolve();
+    }
+    detachChipFromSlotForFade(chip, numbersLayer);
+    const dy = Math.max(24, dyOut);
+    chip.style.transform = 'translate(0px, 0px)';
+    const movePromise =
+      chip.animate && durationMs > 0
+        ? new Promise(function (resolve) {
+            const anim = chip.animate(
+              [
+                { transform: 'translate(0px, 0px)', opacity: 1 },
+                { transform: 'translate(0px, ' + dy + 'px)', opacity: 0 },
+              ],
+              { duration: durationMs, easing: 'ease-in', fill: 'forwards' },
+            );
+            anim.onfinish = function () {
+              resolve();
+            };
+            anim.oncancel = function () {
+              resolve();
+            };
+          })
+        : runOpacityAnimFn(chip, 1, 0, durationMs, generation);
+    return movePromise.then(function () {
+      if (getGeneration() !== generation) {
+        return;
+      }
+      if (chip.parentNode) {
+        chip.parentNode.removeChild(chip);
+      }
+      clearMotionStyles(chip);
+    });
+  }
+
+  /**
+   * @param {Element} chip
+   * @param {number} dyIn
+   * @param {number} durationMs
+   * @param {number} generation
+   * @param {() => number} getGeneration
+   */
+  function animateColumnMoveEnterFromAbove(chip, dyIn, durationMs, generation, getGeneration) {
+    if (!chip) {
+      return Promise.resolve();
+    }
+    const dy = -Math.max(24, dyIn);
+    if (!chip.animate || durationMs <= 0) {
+      snapOpacity(chip, 1);
+      chip.style.transform = '';
+      return Promise.resolve();
+    }
+    cancelElementAnimations(chip);
+    chip.style.opacity = '1';
+    chip.style.transform = 'translate(0px, ' + dy + 'px)';
+    const anim = chip.animate(
+      [{ transform: 'translate(0px, ' + dy + 'px)' }, { transform: 'translate(0px, 0px)' }],
+      { duration: durationMs, easing: 'ease-out', fill: 'forwards' },
+    );
+    return new Promise(function (resolve) {
+      anim.onfinish = function () {
+        if (getGeneration() !== generation) {
+          resolve();
+          return;
+        }
+        chip.style.transform = '';
+        resolve();
+      };
+      anim.oncancel = function () {
+        resolve();
+      };
+    });
+  }
+
   function animateTranslate(el, dx, dy, durationMs, generation, getGeneration) {
     if (!el || !el.animate || (dx === 0 && dy === 0)) {
       el.style.transform = '';
@@ -642,6 +833,109 @@
 
       abortPageTurnLayerState(numbersLayer);
 
+      let columnMovePlan = detectColumnMovePlan(
+        prevItems,
+        items,
+        page,
+        deps.pageSize,
+        deps.layoutPageGrid,
+        diff,
+      );
+      if (
+        !columnMovePlan &&
+        page === 0 &&
+        items.length === 11 &&
+        prevItems.length === 10 &&
+        !pageTurn
+      ) {
+        columnMovePlan = {
+          kind: 'right-bottom-page-two',
+          addedId: '',
+          enterSlot: -1,
+          rightBottomSlot: deps.pageSize - 1,
+        };
+      }
+      const columnMoveEnterFromAboveIds = {};
+      const columnMoveSkipFlipIds = {};
+      let columnMoveDurationMs = opacityInMs;
+      if (columnMovePlan) {
+        columnMoveDurationMs =
+          typeof animCfg.columnMoveMs === 'number' && animCfg.columnMoveMs > 0
+            ? animCfg.columnMoveMs
+            : opacityInMs;
+        numbersLayer.setAttribute('data-column-move-anim', '1');
+        const pitch = estimateRowPitchPx(slotEls[GRID_ROWS - 1] || slotEls[0], numbersLayer);
+        if (columnMovePlan.kind === 'sixth-on-page') {
+          const lbSlot = columnMovePlan.leftBottomSlot;
+          const lbCell = deps.layoutPageGrid(prevItems, page, deps.pageSize)[lbSlot];
+          const lbId = lbCell && lbCell.id ? lbCell.id : null;
+          if (lbId && chipById[lbId]) {
+            const lbChip = chipById[lbId];
+            const lbRect = lbChip.getBoundingClientRect();
+            const layerRect = numbersLayer.getBoundingClientRect();
+            const exitClone = lbChip.cloneNode(true);
+            exitClone.removeAttribute('data-item-id');
+            exitClone.setAttribute('data-column-move-exit-clone', '1');
+            exitClone.classList.add('milksha-board-chip--layer-float');
+            exitClone.style.position = 'absolute';
+            exitClone.style.left = lbRect.left - layerRect.left + 'px';
+            exitClone.style.top = lbRect.top - layerRect.top + 'px';
+            exitClone.style.width = lbRect.width + 'px';
+            exitClone.style.height = lbRect.height + 'px';
+            exitClone.style.pointerEvents = 'none';
+            snapOpacity(exitClone, 1);
+            numbersLayer.appendChild(exitClone);
+            promises.push(
+              animateColumnMoveSlideDownOut(
+                exitClone,
+                numbersLayer,
+                pitch,
+                columnMoveDurationMs,
+                gen,
+                getGeneration,
+                runOpacityAnim,
+              ),
+            );
+          }
+          columnMoveEnterFromAboveIds[columnMovePlan.addedId] = true;
+        } else if (columnMovePlan.kind === 'right-column-append') {
+          columnMoveEnterFromAboveIds[columnMovePlan.addedId] = true;
+        } else if (columnMovePlan.kind === 'right-bottom-page-two') {
+          const rbSlot = columnMovePlan.rightBottomSlot;
+          const prevCells = deps.layoutPageGrid(prevItems, page, deps.pageSize);
+          const rbCell = prevCells[rbSlot];
+          const rbId = rbCell && rbCell.id ? rbCell.id : null;
+          if (rbId && chipById[rbId]) {
+            const rbChip = chipById[rbId];
+            const rbRect = rbChip.getBoundingClientRect();
+            const layerRectRb = numbersLayer.getBoundingClientRect();
+            const rbClone = rbChip.cloneNode(true);
+            rbClone.removeAttribute('data-item-id');
+            rbClone.setAttribute('data-column-move-exit-clone', '1');
+            rbClone.classList.add('milksha-board-chip--layer-float');
+            rbClone.style.position = 'absolute';
+            rbClone.style.left = rbRect.left - layerRectRb.left + 'px';
+            rbClone.style.top = rbRect.top - layerRectRb.top + 'px';
+            rbClone.style.width = rbRect.width + 'px';
+            rbClone.style.height = rbRect.height + 'px';
+            rbClone.style.pointerEvents = 'none';
+            snapOpacity(rbClone, 1);
+            numbersLayer.appendChild(rbClone);
+            promises.push(
+              animateColumnMoveSlideDownOut(
+                rbClone,
+                numbersLayer,
+                pitch,
+                columnMoveDurationMs,
+                gen,
+                getGeneration,
+                runOpacityAnim,
+              ),
+            );
+          }
+        }
+      }
+
       if (opts.clearAll) {
         const existing = numbersLayer.querySelectorAll('.milksha-board-chip');
         for (let c = 0; c < existing.length; c += 1) {
@@ -744,7 +1038,11 @@
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
-          if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
+          if (columnMoveEnterFromAboveIds[id]) {
+            snapOpacity(chip, 1);
+            const pitchIn = estimateRowPitchPx(slot, numbersLayer);
+            promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
+          } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
             promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
           } else {
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
@@ -754,6 +1052,9 @@
 
       const afterLayout = function () {
         diff.moved.forEach(function (mv) {
+          if (columnMoveSkipFlipIds[mv.id]) {
+            return;
+          }
           const chip = chipById[mv.id];
           if (!chip || pendingRemove.has(chip)) {
             return;
@@ -785,7 +1086,36 @@
         return new Promise(function (resolve) {
           deps.window.requestAnimationFrame(function () {
             afterLayout();
-            Promise.all(promises).then(resolve);
+            Promise.all(promises).then(function () {
+              removeOrphanLayerFloatChips(numbersLayer);
+              const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+              for (let ec = 0; ec < exitClones.length; ec += 1) {
+                const clone = exitClones[ec];
+                if (clone.parentNode) {
+                  clone.parentNode.removeChild(clone);
+                }
+              }
+              for (let si = 0; si < deps.pageSize; si += 1) {
+                const cellSettle = cells[si];
+                const slotSettle = slotEls[si];
+                if (!cellSettle || !cellSettle.id || !slotSettle) {
+                  continue;
+                }
+                const settled = slotSettle.querySelector(
+                  '.milksha-board-chip[data-item-id="' + cellSettle.id + '"]',
+                );
+                if (settled && !pendingRemove.has(settled)) {
+                  snapOpacity(settled, 1);
+                  if (!settled.classList.contains('milksha-board-chip--layer-float')) {
+                    settled.style.transform = '';
+                  }
+                }
+              }
+              if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+                numbersLayer.removeAttribute('data-column-move-anim');
+              }
+              resolve();
+            });
           });
         });
       });
@@ -816,6 +1146,9 @@
     visibleIdToSlot: visibleIdToSlot,
     diffSlotMaps: diffSlotMaps,
     diffVisibleSlots: diffVisibleSlots,
+    detectColumnMovePlan: detectColumnMovePlan,
+    countVisibleOnPage: countVisibleOnPage,
+    GRID_ROWS: GRID_ROWS,
     isBulkSnapshotReplace: isBulkSnapshotReplace,
     shouldSkipBoardAnimations: shouldSkipBoardAnimations,
     createBoardAnimator: createBoardAnimator,

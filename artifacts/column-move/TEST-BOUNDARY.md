@@ -1,6 +1,6 @@
 # 16:53 column-move animation — test boundary (owner review)
 
-**Status:** Awaiting **叫號機總監** confirmation before any red→green TDD cycles.  
+**Status:** Owner approved 2026-10-11 08:09 (Taipei); TDD in progress on `cursor/column-move-animation-a2ca`.  
 **Process:** TDD red→green; one failing test → minimum code → one vertical slice; public behaviour only; mocks only at system boundaries; refactor later.  
 **Note:** `.cursor/skills/tdd/SKILL.md` is not present in this repo at branch creation time.
 
@@ -24,7 +24,7 @@ Implementation order follows this list (one vertical slice per cycle after owner
 
 1. **`prep: left column bottom chip slides down and out when a 6th number arrives on the current page`**
 2. **`prep: 6th number enters right column top from directly above while existing right-column chips slide down one cell together`**
-3. **`prep: when the right column bottom must vacate, that chip slides down and out before the new layout holds`**
+3. **`prep and ready: when the right column bottom must vacate (overflow to page 2), that chip slides down and out before the new layout holds`**
 4. **`ready: left column bottom chip slides down and out when a 6th number arrives on the current page`**
 5. **`ready: 6th number enters right column top from directly above while existing right-column chips slide down one cell together`**
 6. **`prep and ready: column move uses transform and opacity only (no disallowed layout properties on chips during the move window)`**
