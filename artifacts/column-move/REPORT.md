@@ -1,7 +1,8 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**HEAD:** `b880208` (replace with CI-green SHA if amended)  
+**HEAD:** `b739473`  
+**PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
 ## TDD summary (boundary order)
