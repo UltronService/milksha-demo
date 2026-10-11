@@ -1,0 +1,345 @@
+{
+  "staleAudit": {
+    "pass": true,
+    "bad": [],
+    "notB": [],
+    "count": 67
+  },
+  "resources": [
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/css/milksha-board.css?v=20261011b",
+      "transferSize": 2225,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/brand-loader.js?v=20261011b",
+      "transferSize": 2742,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/css/base.css?v=20261011b",
+      "transferSize": 674,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim-config.js?v=20261011b",
+      "transferSize": 1324,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/board/today-board.js?v=20261011b",
+      "transferSize": 3430,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/board/landscape-art-layout.js?v=20261011b",
+      "transferSize": 1345,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/audio.js?v=20261011b",
+      "transferSize": 2161,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim.js?v=20261011b",
+      "transferSize": 8488,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-seq.js?v=20261011b",
+      "transferSize": 1084,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/chime-policy.js?v=20261011b",
+      "transferSize": 1229,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/milksha-demo.js?v=20261011b",
+      "transferSize": 3974,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/app.js?v=20261011b",
+      "transferSize": 1119,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/milksha-board.js?v=20261011b",
+      "transferSize": 9703,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/config/firebase.js?v=20261011b",
+      "transferSize": 1090,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firebase-sdk-bridge.js?v=20261011b",
+      "transferSize": 1592,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/paths.js?v=20261011b",
+      "transferSize": 828,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-value.js?v=20261011b",
+      "transferSize": 1213,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-realtime.js?v=20261011b",
+      "transferSize": 2758,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-settings.js?v=20261011b",
+      "transferSize": 3750,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/auth-session.js?v=20261011b",
+      "transferSize": 4009,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/config-resolve.js?v=20261011b",
+      "transferSize": 2725,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-api.js?v=20261011b",
+      "transferSize": 1695,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-sign.js?v=20261011b",
+      "transferSize": 867,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/dev-command-validation.js?v=20261011b",
+      "transferSize": 2958,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-rest.js?v=20261011b",
+      "transferSize": 1964,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-receiver-validate.js?v=20261011b",
+      "transferSize": 1568,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-poc-coord.js?v=20261011b",
+      "transferSize": 1865,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-cloud-shim.js?v=20261011b",
+      "transferSize": 3738,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-transport.js?v=20261011b",
+      "transferSize": 1240,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-transport.js?v=20261011b",
+      "transferSize": 1201,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/validate-request.js?v=20261011b",
+      "transferSize": 2189,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/create-transport.js?v=20261011b",
+      "transferSize": 710,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/device-command-time.js?v=20261011b",
+      "transferSize": 1270,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-runtime.js?v=20261011b",
+      "transferSize": 10765,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-boot.js?v=20261011b",
+      "transferSize": 5046,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/controller/controller.css?v=20261011b",
+      "transferSize": 2175,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/config/firebase.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/paths.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/board/today-board.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-value.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-seq.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-settings.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/controller-secrets.js?v=20261011b",
+      "transferSize": 796,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/config-resolve.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/vendor/qrcode-generator.js?v=20261011b",
+      "transferSize": 12639,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/auth-session.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/vendor/md5.min.js?v=20261011b",
+      "transferSize": 1884,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/milksha-md5.js?v=20261011b",
+      "transferSize": 687,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/milksha-pos-sign.js?v=20261011b",
+      "transferSize": 1684,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/milksha-pos-wire.js?v=20261011b",
+      "transferSize": 1094,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/dev-command-validation.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/json-raw.js?v=20261011b",
+      "transferSize": 1305,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/controller-command-errors.js?v=20261011b",
+      "transferSize": 2200,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-refresh-after-command.js?v=20261011b",
+      "transferSize": 821,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-api.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-rest.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-receiver-validate.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-poc-coord.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-cloud-shim.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-transport.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-transport.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/transport/create-transport.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/validate-request.js?v=20261011b",
+      "transferSize": 0,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/controller/store-list.js?v=20261011b",
+      "transferSize": 2646,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/controller/store-simulation-host.js?v=20261011b",
+      "transferSize": 2393,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/controller/store-simulation.js?v=20261011b",
+      "transferSize": 4158,
+      "v": "20261011b"
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/controller/controller-app.js?v=20261011b",
+      "transferSize": 16161,
+      "v": "20261011b"
+    }
+  ]
+}
