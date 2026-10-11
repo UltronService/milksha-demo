@@ -13,6 +13,7 @@ import {
   resolveSiteRoot,
 } from './lib/github-pages-site-route.mjs';
 import { CONTROLLER_BOARD_ONLINE_WAIT_JS } from './lib/controller-board-online.mjs';
+import { pushTicketViaControllerUi } from '../artifacts/pr53-live/controller-explicit-push.mjs';
 async function expandControllerZone(page, zoneId) {
   await page.evaluate((id) => {
     const section = document.getElementById(id);
@@ -186,11 +187,7 @@ async function runInstrumentedSend(browser, label, siteRoot, ticketNo, opts) {
       (res) => res.url().includes('devCommand') && res.request().method() === 'POST',
       { timeout: 90000 },
     ),
-    (async () => {
-      await ctrl.fill('#fld-no', ticketNo);
-      await ctrl.selectOption('#fld-status', 'ready');
-      await ctrl.click('#btn-add-ticket');
-    })(),
+    pushTicketViaControllerUi(ctrl, 'ready', ticketNo),
   ]).then(([res]) => res);
   const devCommandResponseAt = Date.now();
   let devCommandBody = {};
@@ -321,9 +318,7 @@ async function runOfflineConsistency(browser, siteRoot) {
   await ctrl.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${STORE_A}`);
   await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
   await expandControllerZone(ctrl, 'sec-pos');
-  await ctrl.fill('#fld-no', ticketNo);
-  await ctrl.selectOption('#fld-status', 'ready');
-  await ctrl.click('#btn-add-ticket');
+  await pushTicketViaControllerUi(ctrl, 'ready', ticketNo);
   await board.waitForSelector(`.milksha-ready .milksha-num`, { hasText: ticketNo, timeout: 15000 });
   const before = ticketNo;
   await ctx.setOffline(true);
@@ -346,9 +341,7 @@ async function runStoreIsolation(browser, siteRoot) {
   await ctrlA.goto(`${GITHUB_PAGES_BASE}/controller/?mode=cloud&store=${STORE_A}`);
   await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 90000 });
   await expandControllerZone(ctrlA, 'sec-pos');
-  await ctrlA.fill('#fld-no', markerNo);
-  await ctrlA.selectOption('#fld-status', 'ready');
-  await ctrlA.click('#btn-add-ticket');
+  await pushTicketViaControllerUi(ctrlA, 'ready', markerNo);
   await boardA.waitForSelector('.milksha-ready .milksha-num', { hasText: markerNo, timeout: 15000 });
   await ctxA.close();
   const ctxB = await browser.newContext();

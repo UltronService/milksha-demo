@@ -8,6 +8,11 @@ import { teardownLiveCloudSession } from '../../tests/e2e/live-cloud-teardown.mj
 import { expandControllerZone } from '../../tests/e2e/harness.mjs';
 import { DIAG_INIT_SCRIPT, drainDiagRound } from './diag-instrumentation.mjs';
 import { scoreSettledFrame } from './score-settled-frame.mjs';
+import {
+  addTicketExplicit,
+  pushTicketViaControllerUi,
+  installPushNumbersLogger,
+} from './controller-explicit-push.mjs';
 
 const CYCLES = Number(process.env.PR53_LIVE_CYCLES || 30);
 
@@ -22,9 +27,10 @@ function publicUrls(store = LIVE_CLOUD_STORE_ID, device = LIVE_CLOUD_BOARD_DEVIC
   };
 }
 
-async function installRealCloudRoutes(ctx, siteRoot) {
+async function installRealCloudRoutes(ctx, siteRoot, pushLog = []) {
   const pubJs = await ensurePublicFirebaseJs();
   await installGithubPagesSiteRoute(ctx, siteRoot);
+  await installPushNumbersLogger(ctx, pushLog);
   await ctx.route('**/config/firebase.js*', async (route) => {
     await route.fulfill({
       status: 200,
@@ -77,25 +83,11 @@ async function clearNow(ctrl, board) {
 }
 
 async function fireTicket(ctrl, status, no) {
-  await expandZone(ctrl, 'sec-pos');
-  await ctrl.selectOption('[data-testid="fld-status"]', status);
-  await ctrl.fill('[data-testid="fld-no"]', no);
-  await ctrl.click('[data-testid="btn-add-ticket"]');
+  await pushTicketViaControllerUi(ctrl, status, no);
 }
 
 async function addTicket(ctrl, board, status, no, zone) {
-  const t0 = Date.now();
-  await fireTicket(ctrl, status, no);
-  const zn = zone || (status === 'ready' ? 'ready' : 'prep');
-  await board
-    .waitForFunction(
-      ({ z, n }) =>
-        [...document.querySelectorAll(`.milksha-zone.${z} .milksha-num`)].some((el) => el.textContent.trim() === n),
-      { z: zn, n: no },
-      { timeout: 15000 },
-    )
-    .catch(() => {});
-  return Date.now() - t0;
+  return addTicketExplicit(ctrl, board, status, no, zone);
 }
 
 async function sampleDomFrame(board) {
@@ -117,11 +109,12 @@ async function sampleDomFrame(board) {
  * @param {{ w: number, h: number; tag: string }} vp
  * @param {string} commitSha
  */
-export async function runRealCloudPageTurn(siteRoot, vp, commitSha) {
+export async function runRealCloudPageTurn(siteRoot, vp, commitSha, opts = {}) {
+  const pushLog = opts.pushLog || [];
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
   ctx.setDefaultTimeout(180000);
-  await installRealCloudRoutes(ctx, siteRoot);
+  await installRealCloudRoutes(ctx, siteRoot, pushLog);
   const board = await ctx.newPage();
   const ctrl = await ctx.newPage();
   await waitOnline(board, ctrl);
@@ -248,6 +241,7 @@ export async function runRealCloudPageTurn(siteRoot, vp, commitSha) {
     store: LIVE_CLOUD_STORE_ID,
     viewport: `${vp.w}x${vp.h}`,
     cycles: CYCLES,
+    pushLog,
     qaSetMismatchEvents,
     slotMismatchEvents,
     lastPageTenOldEvents,
@@ -324,4 +318,5 @@ export {
   fireTicket,
   addTicket,
   publicUrls,
+  installPushNumbersLogger,
 };

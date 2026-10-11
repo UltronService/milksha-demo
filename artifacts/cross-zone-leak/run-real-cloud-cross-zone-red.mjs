@@ -18,7 +18,6 @@ import {
 import { teardownLiveCloudSession } from '../../tests/e2e/live-cloud-teardown.mjs';
 import { expandControllerZone } from '../../tests/e2e/harness.mjs';
 import {
-  installHypothesis0Capture,
   readController7112,
   lookup7112InApplyLog,
   summarizeHypothesis0,
@@ -75,12 +74,13 @@ async function main() {
   /** @type {Array<object>} */
   const hypothesis0CycleRows = [];
   const capturedH0Cycles = new Set();
+  /** @type {Array<{ preparing: string[], ready: string[], seq: number | null }>} */
+  const pushLog = [];
   try {
     const browser = await chromium.launch({ headless: true });
     const ctx = await browser.newContext({ viewport: VP });
     ctx.setDefaultTimeout(180000);
-    const netLog = await installHypothesis0Capture(ctx);
-    await installRealCloudRoutes(ctx, dir);
+    await installRealCloudRoutes(ctx, dir, pushLog);
     const board = await ctx.newPage();
     const ctrl = await ctx.newPage();
     await waitOnline(board, ctrl);
@@ -92,7 +92,7 @@ async function main() {
       await addTicket(ctrl, board, 'ready', String(8100 + i), 'ready');
     }
     for (let c = 0; c < CYCLES; c += 1) {
-      cyclePushStartIdx = netLog.devCommands.length;
+      cyclePushStartIdx = pushLog.length;
       cycleApplyStartIdx = await board.evaluate(
         () => window.__pr53Diag?.applyPayloadCalls?.length ?? 0,
       );
@@ -131,7 +131,7 @@ async function main() {
             const leak7112 = x.number === '7112' && x.zone === 'ready';
             if (leak7112 && c >= 27 && c <= 29 && !capturedH0Cycles.has(c)) {
               capturedH0Cycles.add(c);
-              const push = lastPushNumbersSince(netLog.devCommands, cyclePushStartIdx);
+              const push = lastPushNumbersSince(pushLog, cyclePushStartIdx);
               const firestore = await readFirestoreTodayBoard(ctrl);
               const lastApply = await board.evaluate(() => window.__pr53Diag?.lastAppliedPayload ?? null);
               const triplet = {
@@ -155,16 +155,16 @@ async function main() {
               const controller = await readController7112(ctrl);
               hypothesis0Verdict = summarizeHypothesis0({
                 apply7112: lookup7112InApplyLog(allApply),
-                devCommands: netLog.devCommands,
-                todayBoardReads: netLog.todayBoardReads,
+                devCommands: pushLog.map((p) => ({ ...p, type: 'push_numbers' })),
+                todayBoardReads: [],
                 controller,
                 frame: evidence,
               });
               hypothesis0Verdict.cycle = c;
               hypothesis0Verdict.tMs = tMs;
               hypothesis0Verdict.applyJustBeforeLeak = applySinceCycle.slice(-3);
-              hypothesis0Verdict.pushNumbersWith7112 = netLog.devCommands.filter(
-                (d) => d.type === 'push_numbers' && (d.has7112InReady || d.has7112InPreparing),
+              hypothesis0Verdict.pushNumbersWith7112 = pushLog.filter(
+                (d) => d.ready?.includes('7112') || d.preparing?.includes('7112'),
               );
               hypothesis0Verdict.cycleTable = hypothesis0CycleRows;
             }
@@ -180,7 +180,7 @@ async function main() {
         if (has7112Ready) {
           capturedH0Cycles.add(c);
           const evidence = await readFrameEvidence(board);
-          const push = lastPushNumbersSince(netLog.devCommands, cyclePushStartIdx);
+          const push = lastPushNumbersSince(pushLog, cyclePushStartIdx);
           const firestore = await readFirestoreTodayBoard(ctrl);
           const lastApply = await board.evaluate(() => window.__pr53Diag?.lastAppliedPayload ?? null);
           const triplet = {

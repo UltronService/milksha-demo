@@ -61,13 +61,13 @@ export function lastPushNumbersSince(devCommands, sinceIdx) {
   const slice = devCommands.slice(sinceIdx);
   for (let i = slice.length - 1; i >= 0; i -= 1) {
     const row = slice[i];
-    if (row && row.type === 'push_numbers') {
+    if (row && (row.type === 'push_numbers' || row.preparing || row.ready)) {
       return row;
     }
   }
   for (let j = devCommands.length - 1; j >= 0; j -= 1) {
     const row = devCommands[j];
-    if (row && row.type === 'push_numbers') {
+    if (row && (row.type === 'push_numbers' || row.preparing || row.ready)) {
       return row;
     }
   }

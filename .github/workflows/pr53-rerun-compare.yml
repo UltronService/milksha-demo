@@ -1,0 +1,49 @@
+name: PR53 rerun compare (fixed harness)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/cross-zone-leak-diagnose
+    paths:
+      - 'artifacts/pr53-live/controller-explicit-push.mjs'
+      - 'artifacts/cross-zone-leak/run-pr53-rerun-compare.mjs'
+      - '.github/workflows/pr53-rerun-compare.yml'
+
+concurrency:
+  group: live-cloud-zz-qa-ci-store
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
+      - name: Run 30-round before/after (1080 + 4K)
+        run: node artifacts/cross-zone-leak/run-pr53-rerun-compare.mjs
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          PR53_BEFORE_SHA: '4146812'
+          PR53_AFTER_SHA: '38cf72d'
+          PR53_LIVE_CYCLES: '30'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr53-rerun-compare
+          path: |
+            artifacts/cross-zone-leak/RERUN-53-COMPARE.md
+            artifacts/cross-zone-leak/pr53-rerun-compare-table.json
+            artifacts/cross-zone-leak/pr53-rerun-*.json
+          retention-days: 14

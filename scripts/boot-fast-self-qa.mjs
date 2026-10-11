@@ -14,6 +14,7 @@ import {
   resolveSiteRoot,
 } from './lib/github-pages-site-route.mjs';
 import { CONTROLLER_BOARD_ONLINE_WAIT_JS } from './lib/controller-board-online.mjs';
+import { pushTicketViaControllerUi } from '../artifacts/pr53-live/controller-explicit-push.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ART = join(ROOT, 'artifacts', 'boot-fast-self-qa');
@@ -262,9 +263,7 @@ async function runBootRound(browser, versionKey, siteRoot, browserName, roundInd
       body.hidden = false;
     }
   });
-  await ctrl.fill('#fld-no', ticketNo);
-  await ctrl.selectOption('#fld-status', 'ready');
-  await ctrl.click('#btn-add-ticket');
+  await pushTicketViaControllerUi(ctrl, 'ready', ticketNo);
   await board.waitForSelector('.milksha-ready .milksha-num', { hasText: ticketNo, timeout: 45000 });
   const sendToDisplayMs = Date.now() - buttonPressedAt;
 
