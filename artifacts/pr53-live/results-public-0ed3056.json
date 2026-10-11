@@ -1,0 +1,1043 @@
+{
+  "pass": false,
+  "sha": "0ed3056",
+  "assetVersion": "20261011c",
+  "deploy": {
+    "deployMs": 1791738330000,
+    "deployTaipei": "2026-10-12 01:05:30 Taipei",
+    "sha": "0ed3056",
+    "pagesDeployOk": true,
+    "pagesLastModifiedUtc": "Sun, 11 Oct 2026 17:05:30 GMT",
+    "waitUntilTaipei": "2026-10-12 01:15:30 Taipei"
+  },
+  "staleCache": {
+    "pass": true,
+    "versions": [
+      "20261011c"
+    ],
+    "bad": [],
+    "oldB": [],
+    "count": 49
+  },
+  "staleVList": [
+    {
+      "url": "css/milksha-board.css?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/brand-loader.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "css/base.css?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/audio.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/board/landscape-art-layout.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/board/today-board.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/board/milksha-board-anim.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/board/milksha-board-anim-config.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/receiver/chime-policy.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/board-seq.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/milksha-board.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/milksha-demo.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/app.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "config/firebase.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/paths.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/firebase-sdk-bridge.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/firestore-realtime.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/firestore-value.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/auth-session.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/config-resolve.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/cloud-settings.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/dev-command-validation.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/pos-sign.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/cloud-api.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/pos-receiver-validate.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/firestore-rest.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/local-poc-coord.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/local-cloud-shim.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/local-transport.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/create-transport.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/firestore-transport.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/receiver/device-command-time.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/receiver/cloud-boot.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/receiver/cloud-runtime.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/receiver/validate-request.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "controller/controller.css?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/controller-secrets.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/vendor/qrcode-generator.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/vendor/md5.min.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/milksha-md5.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/milksha-pos-wire.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/milksha-pos-sign.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/board-refresh-after-command.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/json-raw.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "js/transport/controller-command-errors.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "controller/store-simulation.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "controller/store-list.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "controller/store-simulation-host.js?v=20261011c",
+      "v": "20261011c"
+    },
+    {
+      "url": "controller/controller-app.js?v=20261011c",
+      "v": "20261011c"
+    }
+  ],
+  "mainFlows": [
+    {
+      "tag": "fresh-1080",
+      "resolution": "1920x1080",
+      "indicator": {
+        "prep": {
+          "ok": true,
+          "text": "1/2"
+        },
+        "ready": {
+          "ok": true,
+          "text": "1/2"
+        }
+      },
+      "page": {
+        "prep": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "5110",
+            "5109",
+            "5108",
+            "5107",
+            "5106",
+            "5105",
+            "5104",
+            "5103",
+            "5102",
+            "5101"
+          ]
+        },
+        "ready": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "6110",
+            "6109",
+            "6108",
+            "6107",
+            "6106",
+            "6105",
+            "6104",
+            "6103",
+            "6102",
+            "6101"
+          ]
+        }
+      },
+      "integrity": {
+        "multi": 0,
+        "ghost": 0,
+        "orderBad": 0
+      },
+      "latencies": [
+        649,
+        683,
+        684,
+        584,
+        700,
+        583,
+        650,
+        635,
+        765,
+        566,
+        535,
+        15223,
+        841,
+        501,
+        750,
+        600,
+        583,
+        668,
+        566,
+        600,
+        783,
+        683
+      ],
+      "latOver3": [
+        15223
+      ],
+      "versions": [
+        "20261011c"
+      ]
+    },
+    {
+      "tag": "legacy-1080",
+      "resolution": "1920x1080",
+      "indicator": {
+        "prep": {
+          "ok": true,
+          "text": "1/2"
+        },
+        "ready": {
+          "ok": true,
+          "text": "2/2"
+        }
+      },
+      "page": {
+        "prep": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "5110",
+            "5109",
+            "5108",
+            "5107",
+            "5106",
+            "5105",
+            "5104",
+            "5103",
+            "5102",
+            "5101"
+          ]
+        },
+        "ready": {
+          "indicator": "2/2",
+          "page": 1,
+          "pages": 2,
+          "nums": [
+            "6110",
+            "6109",
+            "6108",
+            "6107",
+            "6106",
+            "6105",
+            "6104",
+            "6103",
+            "6102",
+            "6101"
+          ]
+        }
+      },
+      "integrity": {
+        "multi": 0,
+        "ghost": 0,
+        "orderBad": 0
+      },
+      "latencies": [
+        637,
+        600,
+        567,
+        400,
+        667,
+        599,
+        551,
+        567,
+        600,
+        883,
+        584,
+        15241,
+        774,
+        583,
+        550,
+        567,
+        667,
+        650,
+        551,
+        567,
+        581,
+        752
+      ],
+      "latOver3": [
+        15241
+      ],
+      "versions": [
+        "20261011c"
+      ]
+    },
+    {
+      "tag": "fresh-4k",
+      "resolution": "3840x2160",
+      "indicator": {
+        "prep": {
+          "ok": true,
+          "text": "1/2"
+        },
+        "ready": {
+          "ok": true,
+          "text": "1/2"
+        }
+      },
+      "page": {
+        "prep": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "5110",
+            "5109",
+            "5108",
+            "5107",
+            "5106",
+            "5105",
+            "5104",
+            "5103",
+            "5102",
+            "5101"
+          ]
+        },
+        "ready": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "6110",
+            "6109",
+            "6108",
+            "6107",
+            "6106",
+            "6105",
+            "6104",
+            "6103",
+            "6102",
+            "6101"
+          ]
+        }
+      },
+      "integrity": {
+        "multi": 0,
+        "ghost": 0,
+        "orderBad": 0
+      },
+      "latencies": [
+        618,
+        667,
+        651,
+        666,
+        550,
+        567,
+        666,
+        650,
+        865,
+        684,
+        551,
+        15240,
+        592,
+        650,
+        650,
+        666,
+        651,
+        418,
+        565,
+        650,
+        650,
+        867
+      ],
+      "latOver3": [
+        15240
+      ],
+      "versions": [
+        "20261011c"
+      ]
+    },
+    {
+      "tag": "legacy-4k",
+      "resolution": "3840x2160",
+      "indicator": {
+        "prep": {
+          "ok": true,
+          "text": "1/2"
+        },
+        "ready": {
+          "ok": true,
+          "text": "1/2"
+        }
+      },
+      "page": {
+        "prep": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "5110",
+            "5109",
+            "5108",
+            "5107",
+            "5106",
+            "5105",
+            "5104",
+            "5103",
+            "5102",
+            "5101"
+          ]
+        },
+        "ready": {
+          "indicator": "1/2",
+          "page": 0,
+          "pages": 2,
+          "nums": [
+            "6110",
+            "6109",
+            "6108",
+            "6107",
+            "6106",
+            "6105",
+            "6104",
+            "6103",
+            "6102",
+            "6101"
+          ]
+        }
+      },
+      "integrity": {
+        "multi": 0,
+        "ghost": 0,
+        "orderBad": 0
+      },
+      "latencies": [
+        602,
+        550,
+        634,
+        633,
+        633,
+        635,
+        1132,
+        632,
+        819,
+        616,
+        534,
+        15239,
+        560,
+        649,
+        635,
+        648,
+        533,
+        651,
+        533,
+        650,
+        633,
+        851
+      ],
+      "latOver3": [
+        15239
+      ],
+      "versions": [
+        "20261011c"
+      ]
+    }
+  ],
+  "pageTurnDesync": {
+    "1080": {
+      "pass": false,
+      "cycles": 10,
+      "pageMismatch": [
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        }
+      ],
+      "missingOver3s": [
+        {
+          "cycle": 0,
+          "num": "7200",
+          "sentAt": 1791740619362,
+          "appearMs": null
+        },
+        {
+          "cycle": 1,
+          "num": "7201",
+          "sentAt": 1791740634984,
+          "appearMs": null
+        },
+        {
+          "cycle": 6,
+          "num": "7206",
+          "sentAt": 1791740703452,
+          "appearMs": null
+        },
+        {
+          "cycle": 7,
+          "num": "7207",
+          "sentAt": 1791740719060,
+          "appearMs": null
+        },
+        {
+          "cycle": 9,
+          "num": "7209",
+          "sentAt": 1791740747827,
+          "appearMs": null
+        }
+      ],
+      "midFrames": [
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "right_to_left_refill": 6,
+            "blank_during_page_turn": 22
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "right_to_left_refill": 6,
+            "blank_during_page_turn": 12
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "right_to_left_refill": 6,
+            "blank_during_page_turn": 12
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "right_to_left_refill": 6,
+            "blank_during_page_turn": 12
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "right_to_left_refill": 6,
+            "blank_during_page_turn": 22
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        }
+      ],
+      "indFadeOk": true,
+      "midNewCount": 0,
+      "midKnownCounts": {
+        "right_to_left_refill": 30,
+        "blank_during_page_turn": 80
+      },
+      "midFrameSamples": 170
+    },
+    "4k": {
+      "pass": false,
+      "cycles": 10,
+      "pageMismatch": [
+        {
+          "cycle": 0,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 0,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 0,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 0,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 1,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        },
+        {
+          "cycle": 7,
+          "zone": "ready",
+          "indicator": "2/2",
+          "expected": [
+            "8101",
+            "8100"
+          ],
+          "visible": [
+            "8101",
+            "7112"
+          ]
+        }
+      ],
+      "missingOver3s": [
+        {
+          "cycle": 0,
+          "num": "7200",
+          "sentAt": 1791740840702,
+          "appearMs": null
+        },
+        {
+          "cycle": 6,
+          "num": "7206",
+          "sentAt": 1791740924340,
+          "appearMs": null
+        },
+        {
+          "cycle": 9,
+          "num": "7209",
+          "sentAt": 1791740968663,
+          "appearMs": null
+        }
+      ],
+      "midFrames": [
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "blank_during_page_turn": 30,
+            "right_to_left_refill": 6
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "blank_during_page_turn": 19,
+            "right_to_left_refill": 6
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "blank_during_page_turn": 19,
+            "right_to_left_refill": 6
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "blank_during_page_turn": 19,
+            "right_to_left_refill": 6
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {
+            "blank_during_page_turn": 30,
+            "right_to_left_refill": 6
+          },
+          "frameCount": 17,
+          "medianMs": 50
+        },
+        {
+          "newIssues": [],
+          "knownCounts": {},
+          "frameCount": 17,
+          "medianMs": 50
+        }
+      ],
+      "indFadeOk": true,
+      "midNewCount": 0,
+      "midKnownCounts": {
+        "blank_during_page_turn": 117,
+        "right_to_left_refill": 30
+      },
+      "midFrameSamples": 170
+    }
+  }
+}
