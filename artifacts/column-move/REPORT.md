@@ -1,7 +1,7 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**HEAD:** `b739473`  
+**HEAD:** `REPLACE_AFTER_PUSH`  
 **PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
@@ -40,7 +40,7 @@ npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10 pass
 
 ## CI
 
-- Pending GitHub Actions on push of `b880208` (update run URL below when green).
+- Run (queued/pending): https://github.com/UltronService/milksha-demo/actions/runs/38101988291
 
 ## Contact sheets
 
