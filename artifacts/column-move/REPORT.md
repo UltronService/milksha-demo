@@ -1,7 +1,8 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**HEAD:** `REPLACE_AFTER_PUSH`  
+**Base:** `main` @ `f9d0513` (#43 merged 2026-10-11 08:15 Taipei) — branch rebased onto this tip  
+**HEAD:** `bc8f7f0` (update after push if amended)  
 **PR:** https://github.com/UltronService/milksha-demo/pull/46 (draft)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
@@ -24,23 +25,21 @@
 
 - Isolated helpers in `js/board/milksha-board-anim.js`: `detectColumnMovePlan`, `animateColumnMoveSlideDownOut`, `animateColumnMoveEnterFromAbove` (no edits to ready-pulse / fade-in paths).
 - Exit motion uses **layer clones** so in-cell chips stay intact (#39 one-chip-per-cell).
-- Post-move settle snaps in-slot chips to opacity 1 and removes float clones.
+- Post-move settle runs **only when `columnMovePlan` is active** (`a0c5ce3` — avoids clearing ready 1.3× pulse transforms on every sync).
 - Config: `columnMoveMs` (default 300) in `milksha-board-anim-config.js` (`animColumnMove` URL param).
 - **Stores:** local fake-cloud e2e only; no `zz-qa-store-a`.
 
-## Local verification
+## Local verification (post-rebase on `f9d0513`)
 
 ```text
-npm test          → 187 pass
-npm run test:e2e  → 195 pass, 2 fail, 4 skipped (43.8m log: artifacts/column-move/full-e2e.log)
-  FAIL board-ready-scale-overlap-grid.spec.mjs (9991 @ 1920)
-  FAIL guest-clock.spec.mjs ring overlay fit widest 4-digit
-npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10 pass
+npm test → 195 pass
+npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10 pass (pre-rebase run; re-run after push if needed)
 ```
 
 ## CI
 
-- Run (queued/pending): https://github.com/UltronService/milksha-demo/actions/runs/38101988291
+- Pre-rebase failure (ready pulse 4K): https://github.com/UltronService/milksha-demo/actions/runs/38101999641 — fixed in `a0c5ce3`.
+- Post-rebase run: pending after `git push --force-with-lease` of rebased branch.
 
 ## Contact sheets
 
