@@ -1093,6 +1093,8 @@
         }
       }
 
+      const fadeRemovedInPlace = diff.added.length === 0;
+
       for (let ri = 0; ri < deps.pageSize; ri += 1) {
         const slotReconcile = slotEls[ri];
         const cellReconcile = cells[ri];
@@ -1105,7 +1107,8 @@
             if (slotChipId && movedIdSet[slotChipId]) {
               continue;
             }
-            const fadeOpts = slotChipId && removedIdSet[slotChipId] ? { cssInPlace: true } : undefined;
+            const fadeOpts =
+              slotChipId && removedIdSet[slotChipId] && fadeRemovedInPlace ? { cssInPlace: true } : undefined;
             const fadeP = scheduleChipFadeOutRemove(
               slotChip,
               numbersLayer,
@@ -1115,7 +1118,7 @@
               pendingRemove,
               fadeOpts,
             );
-            if (fadeP && slotChipId && removedIdSet[slotChipId]) {
+            if (fadeP && fadeRemovedInPlace && slotChipId && removedIdSet[slotChipId]) {
               removedFadeWaiters.push(fadeP);
             }
           }
@@ -1127,10 +1130,16 @@
         if (!chip || pendingRemove.has(chip)) {
           return;
         }
-        const fadeP = scheduleChipFadeOutRemove(chip, numbersLayer, gen, opacityInMs, promises, pendingRemove, {
-          cssInPlace: true,
-        });
-        if (fadeP) {
+        const fadeP = scheduleChipFadeOutRemove(
+          chip,
+          numbersLayer,
+          gen,
+          opacityInMs,
+          promises,
+          pendingRemove,
+          fadeRemovedInPlace ? { cssInPlace: true } : undefined,
+        );
+        if (fadeP && fadeRemovedInPlace) {
           removedFadeWaiters.push(fadeP);
         }
       });

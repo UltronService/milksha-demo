@@ -12,7 +12,7 @@
 | Sync | Clear stuck `visibility` / `transition`; `data-fade-out` respected in FLIP + orphan cleanup |
 | Column move (#46 on main) | Unchanged path; rb exit clone hidden via `snapOpacity(0)` before clone |
 
-**Asset:** `20261011r`
+**Asset:** `20261011s` (merged with main @ `0ed3056` page-turn #53)
 
 ## Verify locally
 
