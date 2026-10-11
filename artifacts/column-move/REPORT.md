@@ -1,47 +1,42 @@
 # Column-move animation — delivery report
 
 **Branch:** `cursor/column-move-animation-a2ca`  
-**Base:** `main` @ `9846953` (#44 ready fade / transparency fix) atop #43 `f9d0513`  
-**HEAD:** _(see tip after push)_  
-**PR:** https://github.com/UltronService/milksha-demo/pull/46  
+**Base:** `main` @ `9846953` (#44) + CI concurrency split from `origin/main`  
+**HEAD:** `66e04ef`  
+**PR:** https://github.com/UltronService/milksha-demo/pull/46 (ready for review)  
 **Boundary:** `artifacts/column-move/TEST-BOUNDARY.md` (owner approved 2026-10-11 08:09; item 3 = prep **and** ready)
 
 ## TDD summary (boundary order)
 
 | # | Behaviour | Evidence |
 |---|-----------|----------|
-| 1 | Prep: left column bottom slides down/out on 6th | `tests/e2e/board-column-move.spec.mjs` + exit clone motion samples |
-| 2 | Prep: 6th enters right top from above | e2e motion samples via `chipMotionSampleForNumber` |
-| 3 | **Prep and ready:** right bottom vacates (page-2 overflow) | e2e tests 3 (both zones) |
+| 1 | Prep: left column bottom slides down/out on 6th | `tests/e2e/board-column-move.spec.mjs` |
+| 2 | Prep: 6th enters right top from above | e2e + `chipMotionSampleForNumber` |
+| 3 | **Prep and ready:** right bottom vacates (page-2 overflow) | e2e test 3 |
 | 4–5 | Ready: mirror of 1–2 | e2e tests 4–5 |
 | 6 | Transform + opacity only during move window | e2e test 6 |
-| 7 | Cell integrity during column move (#39) | `sampleIntegrityDuringUpdate` |
-| 8 | Settled numbers match layout queue / `layoutPageGrid` | e2e test 8 + `layoutQueueNumbers` |
-| 9–10 | 1080p / 4K contact sheets | `artifacts/column-move/screenshots/column-move-prep-1080p.png`, `column-move-prep-4k.png` |
+| 7 | Cell integrity during column move (#39) | integrity sampling |
+| 8 | Settled numbers match layout | e2e test 8 |
+| 9–10 | 1080p / 4K contact sheets | `artifacts/column-move/screenshots/` |
 
-**Unit:** `tests/column-move-plan.test.js`; **#44 regression:** `tests/board-ready-fade-regression.test.js` (203 tests in `npm test`).
+**Unit:** `tests/column-move-plan.test.js`; **#44:** `tests/board-ready-fade-regression.test.js`, `board-ready-fade-*.spec.mjs`.
 
-## Implementation notes
+## Merge / coexistence with #44
 
-- Isolated column-move helpers in `js/board/milksha-board-anim.js` (no edits to `animateReadyPulse` / ready-pulse timing).
-- Merged with **#44**: `snapOpacity` on cancel + moved-chip slot reconcile (`movedIdSet`) preserved alongside column-move paths.
-- Sixth-on-page: visible count **5→6** (newest-first #43).
-- Column-move settle: opacity on hold chips; clear **transform** only on enter-from-above chips (does not reset ready 1.3× pulse on unrelated cells).
-- Config: `columnMoveMs` (default 300) in `milksha-board-anim-config.js`.
-- **Stores:** local fake-cloud e2e only; no `zz-qa-store-a`.
+- `git merge origin/main` @ `9846953`: auto-merge kept **#44** (`snapOpacity` on cancel, `movedIdSet` slot reconcile) and column-move helpers.
+- Column-move hold/settle uses `ensureVisibleOpacity` so sibling **ready pulse WAAPI** is not cancelled during column-move (#44 regression safe).
 
-## Local verification (`5f6f8cd`)
+## Local verification (`26d2b91`)
 
 ```text
-npm test → 203 pass (includes board-ready-fade-regression.test.js)
-npx playwright test tests/e2e/board-column-move.spec.mjs → 10/10
-npx playwright test tests/e2e/board-ready-fade-multi-apply.spec.mjs tests/e2e/board-ready-fade-pulse-cancel.spec.mjs → pass
-npx playwright test tests/e2e/board-cell-peak-simulation.spec.mjs → pass
+npm test → 203 pass
+column-move + board-ready-fade-* + full board-ready-scale-overlap-grid → pass
+board-cell-peak-simulation → pass (see prior run in session)
 ```
 
 ## CI
 
-- **Green:** https://github.com/UltronService/milksha-demo/actions/runs/38112772401 (`5f6f8cd`, full `npm test` + `test:e2e` including live-cloud fade).
+- **Green (split workflow, both jobs):** https://github.com/UltronService/milksha-demo/actions/runs/38119632474 — `66e04ef` (`npm test`, 207 non–live-cloud e2e, live-cloud fade + simulation).
 
 ## Contact sheets
 
