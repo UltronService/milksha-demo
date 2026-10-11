@@ -1,0 +1,67 @@
+{
+  "gitRef": "4146812",
+  "label": "ship-final",
+  "ranAt": "2026-10-11T15:04:30.724Z",
+  "scenarios": [
+    {
+      "name": "Reverse backfill prep 1080p",
+      "pass": false,
+      "frameCount": 34,
+      "creamHitCount": 0,
+      "creamBottomCount": 0,
+      "focusBackfillBottomCount": 0,
+      "titleHitCount": 0,
+      "overlapFrameCount": 3,
+      "diagonalFrameCount": 0,
+      "maxDiagonalPx": 0
+    },
+    {
+      "name": "Reverse backfill ready 1080p",
+      "pass": false,
+      "frameCount": 35,
+      "creamHitCount": 0,
+      "creamBottomCount": 0,
+      "focusBackfillBottomCount": 0,
+      "titleHitCount": 0,
+      "overlapFrameCount": 3,
+      "diagonalFrameCount": 1,
+      "maxDiagonalPx": 593.7737042965631
+    },
+    {
+      "name": "Reverse backfill prep 4K",
+      "pass": false,
+      "frameCount": 35,
+      "creamHitCount": 9,
+      "creamBottomCount": 3,
+      "focusBackfillBottomCount": 0,
+      "titleHitCount": 0,
+      "overlapFrameCount": 3,
+      "diagonalFrameCount": 0,
+      "maxDiagonalPx": 0
+    },
+    {
+      "name": "Left column overflow prep 1080p",
+      "pass": false,
+      "frameCount": 31,
+      "creamHitCount": 1,
+      "creamBottomCount": 0,
+      "focusBackfillBottomCount": 0,
+      "titleHitCount": 1,
+      "overlapFrameCount": 4,
+      "diagonalFrameCount": 0,
+      "maxDiagonalPx": 0
+    },
+    {
+      "name": "Left column overflow ready pulse 1080p",
+      "pass": false,
+      "frameCount": 61,
+      "creamHitCount": 1,
+      "creamBottomCount": 0,
+      "focusBackfillBottomCount": 0,
+      "titleHitCount": 1,
+      "overlapFrameCount": 5,
+      "diagonalFrameCount": 0,
+      "maxDiagonalPx": 0
+    }
+  ]
+}

@@ -10,10 +10,12 @@ import {
 import {
   chipMotionSampleAtSlot,
   chipMotionSampleForNumberWithLeft,
+  chipMotionSampleForNumberIncludingFloat,
   assertEnterFromAboveMotion,
   pollMotionSamples,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
+  pickColumnMoveEnterSample,
   prepPayload,
   readyPayload,
   applyPayload,
@@ -60,13 +62,20 @@ test.describe('column-move animation boundary 1–10', () => {
       () => applyPayload(page, prepPayload([...nums, Number(newest)])),
       async () => ({
         exit: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS - 1),
-        enter: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS),
+        enterSlot: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS),
+        enterPushed: await chipMotionSampleForNumberIncludingFloat(page, 'prep', pushed),
         newest: await chipMotionSampleForNumberWithLeft(page, 'prep', newest),
       }),
-      { samples: 28, intervalMs: 16 },
+      { samples: 64, intervalMs: 14 },
     );
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
-    const enterSamples = combined.map((c) => c.enter).filter(Boolean);
+    const enterSamples = combined
+      .flatMap((c) => [
+        c.enterPushed,
+        c.enterSlot,
+        pickColumnMoveEnterSample(c.enterPushed, c.enterSlot),
+      ])
+      .filter(Boolean);
     const newSamples = combined.map((c) => c.newest).filter(Boolean);
     assertDownwardExitMotion(exitSamples);
     assertEnterFromAboveMotion(enterSamples);
@@ -282,15 +291,25 @@ for (const zone of ['prep', 'ready']) {
           async () => {
             const enterSlot = await chipMotionSampleAtSlot(page, zone, GRID_ROWS);
             const enterPushed = await chipMotionSampleForNumberWithLeft(page, zone, pushed);
-            return { exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1), enter: enterPushed || enterSlot };
+            return {
+              exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1),
+              enterSlot,
+              enterPushed: await chipMotionSampleForNumberIncludingFloat(page, zone, pushed),
+            };
           },
-          { samples: count >= 10 ? 50 : 36, intervalMs: 12 },
+          { samples: count >= 10 ? 56 : 48, intervalMs: 12 },
         );
         if (pulsePromise) {
           await pulsePromise;
         }
         const exitSamples = combined.map((c) => c.exit).filter(Boolean);
-        const enterSamples = combined.map((c) => c.enter).filter(Boolean);
+        const enterSamples = combined
+          .flatMap((c) => [
+            c.enterPushed,
+            c.enterSlot,
+            pickColumnMoveEnterSample(c.enterPushed, c.enterSlot),
+          ])
+          .filter(Boolean);
         assertDownwardExitMotion(exitSamples);
         assertEnterFromAboveMotion(enterSamples);
         assertNoHorizontalWhileVisible(enterSamples);

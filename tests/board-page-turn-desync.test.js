@@ -221,3 +221,98 @@ test('syncZone pageTurn: stale DOM after cancelled turn hard-rebuilds target pag
   }
   assert.ok(blob.indexOf('4120') >= 0, 'target page 0 must show newest 4120 after stale DOM page turn');
 });
+
+test('syncZone pageTurn: dual DOM mismatch hard-rebuilds without starting page-turn fade', async function () {
+  const Anim = loadAnimModule();
+  const pageSize = 10;
+  const doc = {
+    createElement: function (tag) {
+      return makeEl(tag, tag === 'div' ? 'milksha-board-chip' : '');
+    },
+  };
+  const win = {
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    performance: {
+      now: function () {
+        return 0;
+      },
+    },
+  };
+  const animator = Anim.createBoardAnimator({
+    document: doc,
+    window: win,
+    pageSize: pageSize,
+    layoutPageGrid: layoutPageGrid,
+    pageCountForItems: function () {
+      return 2;
+    },
+  });
+  const { zone, layer } = buildZone(pageSize);
+  const items = [];
+  for (let i = 0; i < 15; i += 1) {
+    items.push({ id: 'store:' + (5000 + i), number: String(5000 + i) });
+  }
+  await animator.syncZone(zone, 'prep', items, 1, {
+    prevItems: items,
+    prevPage: 0,
+    pageTurn: true,
+  });
+  assert.notEqual(layer.getAttribute('data-page-turn-anim'), '1');
+  const firstId = items[pageSize].id;
+  const chip = layer.querySelector('.milksha-board-chip[data-item-id]');
+  assert.equal(chip && chip.getAttribute('data-item-id'), firstId);
+});
+
+test('syncZone pageTurn: domShowsPrevPage false skips fade and rebuilds target page', async function () {
+  const Anim = loadAnimModule();
+  const pageSize = 10;
+  const doc = {
+    createElement: function (tag) {
+      return makeEl(tag, tag === 'div' ? 'milksha-board-chip' : '');
+    },
+  };
+  const win = {
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    performance: {
+      now: function () {
+        return 0;
+      },
+    },
+  };
+  const animator = Anim.createBoardAnimator({
+    document: doc,
+    window: win,
+    pageSize: pageSize,
+    layoutPageGrid: layoutPageGrid,
+    pageCountForItems: function () {
+      return 2;
+    },
+  });
+  const { zone, layer } = buildZone(pageSize);
+  const items = [];
+  for (let i = 0; i < 15; i += 1) {
+    items.push({ id: 'store:' + (5000 + i), number: String(5000 + i) });
+  }
+  for (let s = 0; s < pageSize; s += 1) {
+    const it = items[pageSize + s];
+    if (it) {
+      seedChip(layer, s, it.id, it.number);
+    }
+  }
+  await animator.syncZone(zone, 'prep', items, 1, {
+    prevItems: items,
+    prevPage: 0,
+    pageTurn: true,
+  });
+  assert.notEqual(layer.getAttribute('data-page-turn-anim'), '1');
+  const chip = layer.querySelector('.milksha-board-chip[data-item-id]');
+  assert.equal(chip && chip.getAttribute('data-item-id'), items[pageSize].id);
+});

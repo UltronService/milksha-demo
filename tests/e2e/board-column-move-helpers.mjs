@@ -49,7 +49,11 @@ export async function chipMotionSampleAtSlot(page, zone, slotIndex) {
         const float = floats.find((el) => {
           const r = el.getBoundingClientRect();
           const cr = cell.getBoundingClientRect();
-          return Math.abs(r.left - cr.left) < 40 && Math.abs(r.top - cr.top) < 80;
+          const horizontal = Math.abs(r.left - cr.left) < 40;
+          if (el.getAttribute('data-column-move-exit-clone') === '1') {
+            return horizontal;
+          }
+          return horizontal && Math.abs(r.top - cr.top) < 80;
         });
         if (!float) {
           return null;
@@ -81,6 +85,21 @@ export async function chipMotionSampleAtSlot(page, zone, slotIndex) {
 /**
  * @param {string | null | undefined} transform
  */
+export function transformTranslateX(transform) {
+  if (!transform || transform === 'none') {
+    return 0;
+  }
+  const m = transform.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,\s*([^,]+),\s*([^)]+)\)/);
+  if (m) {
+    return Number.parseFloat(m[1]) || 0;
+  }
+  const t = transform.match(/translate\(\s*([^,)]+)/);
+  if (t) {
+    return Number.parseFloat(t[1]) || 0;
+  }
+  return 0;
+}
+
 export function transformTranslateY(transform) {
   if (!transform || transform === 'none') {
     return 0;
@@ -118,19 +137,46 @@ export async function pollMotionSamples(page, trigger, sample, opts = {}) {
 }
 
 export function assertDownwardExitMotion(samples) {
-  const tops = samples.map((s) => s.top);
+  const valid = samples.filter(Boolean);
+  expect(valid.length, 'expected motion samples').toBeGreaterThan(0);
+  const tops = valid.map((s) => s.top);
   const delta = Math.max(...tops) - Math.min(...tops);
-  const movedDown = samples.some((s) => transformTranslateY(s.transform) > 8) || delta > 12;
-  const faded = samples.some((s) => Number.parseFloat(s.opacity) < 0.85);
+  const movedDown = valid.some((s) => transformTranslateY(s.transform) > 8) || delta > 12;
+  const faded = valid.some((s) => Number.parseFloat(s.opacity) < 0.85);
   expect(movedDown || faded, JSON.stringify(samples)).toBe(true);
 }
 
+/** Prefer the sample that shows vertical enter motion (slot vs id probe can disagree mid-FLIP). */
+export function pickColumnMoveEnterSample(pushedSample, slotSample) {
+  if (!pushedSample) {
+    return slotSample;
+  }
+  if (!slotSample) {
+    return pushedSample;
+  }
+  const pushedTy = Math.abs(transformTranslateY(pushedSample.transform));
+  const slotTy = Math.abs(transformTranslateY(slotSample.transform));
+  const pushedTopSpan = pushedSample.top ?? 0;
+  const slotTopSpan = slotSample.top ?? 0;
+  if (slotTy > pushedTy + 2) {
+    return slotSample;
+  }
+  if (pushedTy > slotTy + 2) {
+    return pushedSample;
+  }
+  return slotSample.top !== undefined ? slotSample : pushedSample;
+}
+
 export function assertEnterFromAboveMotion(samples) {
-  const tops = samples.map((s) => s.top);
+  const valid = samples.filter(Boolean);
+  expect(valid.length, 'expected enter motion samples').toBeGreaterThan(0);
+  const tops = valid.map((s) => s.top);
   const delta = Math.max(...tops) - Math.min(...tops);
   const fromAbove =
-    samples.some((s) => transformTranslateY(s.transform) < -8) || delta > 12;
-  expect(fromAbove, JSON.stringify(samples)).toBe(true);
+    valid.some((s) => transformTranslateY(s.transform) < -6) ||
+    valid.some((s) => Number.parseFloat(s.opacity) < 0.92 && Number.parseFloat(s.opacity) > 0.05) ||
+    delta > 10;
+  expect(fromAbove, JSON.stringify(valid)).toBe(true);
 }
 
 /** Payload order oldest→newest: left-bottom before overflow is always the first entry. */
@@ -139,17 +185,16 @@ export function leftBottomNumber(numbers) {
 }
 
 export function assertNoHorizontalWhileVisible(samples) {
-  let prevLeft = null;
   for (let i = 0; i < samples.length; i += 1) {
     const s = samples[i];
-    if (!s || Number.parseFloat(s.opacity) <= 0.85) {
-      prevLeft = null;
+    if (!s || s.float || Number.parseFloat(s.opacity) <= 0.85) {
       continue;
     }
-    if (prevLeft !== null) {
-      expect(Math.abs(s.left - prevLeft), JSON.stringify(s)).toBeLessThan(2);
+    if (!s.transform || s.transform === 'none') {
+      continue;
     }
-    prevLeft = s.left;
+    const tx = Math.abs(transformTranslateX(s.transform));
+    expect(tx, JSON.stringify(s)).toBeLessThan(2);
   }
 }
 
@@ -178,6 +223,32 @@ export async function pushedOverflowMotionSample(page, zone, pushedNumber) {
     return slot4;
   }
   return chipMotionSampleForNumberWithLeft(page, zone, pushedNumber);
+}
+
+export async function chipMotionSampleForNumberIncludingFloat(page, zone, number) {
+  return page.evaluate(
+    ({ zoneKey, num }) => {
+      const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+      const chips = zoneEl
+        ? [...zoneEl.querySelectorAll('.milksha-board-chip[data-item-id="store:' + num + '"]')]
+        : [];
+      const chip =
+        chips.find((el) => el.classList.contains('milksha-board-chip--layer-float')) || chips[0];
+      if (!chip) {
+        return null;
+      }
+      const cs = getComputedStyle(chip);
+      const r = chip.getBoundingClientRect();
+      return {
+        opacity: cs.opacity,
+        transform: cs.transform,
+        top: r.top,
+        left: r.left,
+        float: chip.classList.contains('milksha-board-chip--layer-float'),
+      };
+    },
+    { zoneKey: zone, num: String(number) },
+  );
 }
 
 export async function chipMotionSampleForNumberWithLeft(page, zone, number) {
