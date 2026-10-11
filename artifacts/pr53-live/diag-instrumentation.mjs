@@ -33,6 +33,27 @@ export const DIAG_INIT_SCRIPT = () => {
             }
           }
         }
+        const prepNums = [];
+        const readyNums = [];
+        if (Array.isArray(list)) {
+          for (const it of list) {
+            if (!it || it.number == null) {
+              continue;
+            }
+            const st = it.source_type ? String(it.source_type) : '';
+            if (st.includes('OK') || st === 'ready') {
+              readyNums.push(String(it.number));
+            } else {
+              prepNums.push(String(it.number));
+            }
+          }
+        }
+        window.__pr53Diag.lastAppliedPayload = {
+          t: Date.now(),
+          preparing: prepNums,
+          ready: readyNums,
+          item7112,
+        };
         window.__pr53Diag.applyPayloadCalls.push({
           t: Date.now(),
           len: Array.isArray(list) ? list.length : 0,
@@ -40,6 +61,8 @@ export const DIAG_INIT_SCRIPT = () => {
           ready,
           silent: Boolean(opts && opts.silent),
           item7112,
+          preparingNumbers: prepNums,
+          readyNumbers: readyNums,
         });
         return orig(list, opts);
       };

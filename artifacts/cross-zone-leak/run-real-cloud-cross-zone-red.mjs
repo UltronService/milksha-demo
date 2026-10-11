@@ -23,6 +23,12 @@ import {
   lookup7112InApplyLog,
   summarizeHypothesis0,
 } from './hypothesis0-capture.mjs';
+import {
+  readFirestoreTodayBoard,
+  lastPushNumbersSince,
+  classifyLeakRow,
+  renderHypothesis0Markdown,
+} from './hypothesis0-cycle-table.mjs';
 
 async function expandClear(ctrl, board) {
   await expandControllerZone(ctrl, 'sec-special');
@@ -62,8 +68,12 @@ async function main() {
   const allViolations = [];
   const failingFrames = [];
   let cycleApplyStartIdx = 0;
+  let cyclePushStartIdx = 0;
   /** @type {ReturnType<typeof summarizeHypothesis0> & { cycle?: number } | null} */
   let hypothesis0Verdict = null;
+  /** @type {Array<object>} */
+  const hypothesis0CycleRows = [];
+  const capturedH0Cycles = new Set();
   try {
     const browser = await chromium.launch({ headless: true });
     const ctx = await browser.newContext({ viewport: VP });
@@ -81,6 +91,7 @@ async function main() {
       await addTicket(ctrl, board, 'ready', String(8100 + i), 'ready');
     }
     for (let c = 0; c < CYCLES; c += 1) {
+      cyclePushStartIdx = netLog.devCommands.length;
       cycleApplyStartIdx = await board.evaluate(
         () => window.__pr53Diag?.applyPayloadCalls?.length ?? 0,
       );
@@ -116,7 +127,29 @@ async function main() {
             if (failingFrames.length < 15) {
               failingFrames.push(row);
             }
-            if (!hypothesis0Verdict && v.violations.some((x) => x.number === '7112')) {
+            const leak7112 = x.number === '7112' && x.zone === 'ready';
+            if (leak7112 && c >= 27 && c <= 29 && !capturedH0Cycles.has(c)) {
+              capturedH0Cycles.add(c);
+              const push = lastPushNumbersSince(netLog.devCommands, cyclePushStartIdx);
+              const firestore = await readFirestoreTodayBoard(ctrl);
+              const lastApply = await board.evaluate(() => window.__pr53Diag?.lastAppliedPayload ?? null);
+              const triplet = {
+                cycle: c,
+                tMs,
+                push: push
+                  ? { preparing: push.preparing || [], ready: push.ready || [] }
+                  : { preparing: [], ready: [] },
+                firestore,
+                board: {
+                  snapshot: evidence.snapshot,
+                  slots: evidence.slots,
+                },
+                apply7112: lastApply?.item7112 || lookup7112InApplyLog(applySinceCycle).slice(-1)[0]?.item7112,
+              };
+              triplet.abc = classifyLeakRow(triplet);
+              hypothesis0CycleRows.push(triplet);
+            }
+            if (!hypothesis0Verdict && v.violations.some((z) => z.number === '7112')) {
               const allApply = await board.evaluate(() => window.__pr53Diag?.applyPayloadCalls ?? []);
               const controller = await readController7112(ctrl);
               hypothesis0Verdict = summarizeHypothesis0({
@@ -132,6 +165,7 @@ async function main() {
               hypothesis0Verdict.pushNumbersWith7112 = netLog.devCommands.filter(
                 (d) => d.type === 'push_numbers' && (d.has7112InReady || d.has7112InPreparing),
               );
+              hypothesis0Verdict.cycleTable = hypothesis0CycleRows;
             }
           }
         }
@@ -167,6 +201,15 @@ async function main() {
     join(ART, 'REAL-CLOUD-RED-RUN.md'),
     `# Real-cloud RED run\n\n- red: ${out.red}\n- unique violations: ${out.uniqueViolationCount}\n- events: ${out.violationEvents}\n`,
   );
+  if (hypothesis0CycleRows.length > 0) {
+    writeFileSync(join(ART, 'hypothesis0-cycle-table.json'), JSON.stringify(hypothesis0CycleRows, null, 2));
+    writeFileSync(
+      join(ART, 'hypothesis0-cycle-table.md'),
+      renderHypothesis0Markdown(hypothesis0CycleRows, `store=${out.store} sha=${SHA}`),
+    );
+    const { spawnSync } = await import('node:child_process');
+    spawnSync('node', [join(ART, 'merge-hypothesis0-into-md.mjs')], { stdio: 'inherit' });
+  }
   if (hypothesis0Verdict) {
     writeFileSync(join(ART, 'hypothesis0-verdict.json'), JSON.stringify(hypothesis0Verdict, null, 2));
   }
