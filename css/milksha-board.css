@@ -127,9 +127,9 @@
 
 .milksha-board.milksha-board--landscape-art .milksha-pg-indicator--art {
   position: absolute;
-  z-index: 3;
-  right: auto;
-  bottom: auto;
+  z-index: 5;
+  transform: translate(-100%, -100%);
+  transform-origin: 100% 100%;
 }
 
 .milksha-board * {
@@ -262,15 +262,24 @@
 
 .milksha-pg-indicator {
   position: absolute;
-  right: 14px;
-  bottom: 10px;
-  z-index: 2;
+  right: var(--milksha-pg-ind-inset, 16px);
+  bottom: var(--milksha-pg-ind-inset, 16px);
+  z-index: 5;
   text-align: right;
-  font-size: 18px;
+  font-family: Arial, Arimo, sans-serif;
+  font-size: var(--milksha-pg-ind-font, 28px);
   font-weight: 400;
-  color: rgba(34, 34, 34, 0.38);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: rgba(34, 34, 34, 0.55);
   letter-spacing: 0.06em;
   pointer-events: none;
+  background: none;
+  border: none;
+}
+
+.milksha-cream-grid.milksha-zone-numbers {
+  position: relative;
 }
 
 .milksha-demo-handle {
