@@ -183,6 +183,7 @@
     if (!el) {
       return;
     }
+    el.style.visibility = 'visible';
     el.style.opacity = '1';
   }
 
@@ -598,17 +599,28 @@
     if (!chip) {
       return null;
     }
-    const creamEl = chip.closest('.milksha-cream');
-    if (creamEl) {
-      return creamEl.getBoundingClientRect();
-    }
     let zone = chip.closest('.milksha-zone');
     if (!zone) {
       const layer = chip.closest('.milksha-zone-numbers');
       zone = layer ? layer.closest('.milksha-zone') : null;
     }
-    const art = deps.window.QMS && deps.window.QMS.Board && deps.window.QMS.Board.LandscapeArtLayout;
-    const canvas = deps.document.getElementById('milksha-board-canvas');
+    if (zone) {
+      const creamEl = zone.querySelector('.milksha-cream');
+      if (creamEl) {
+        const r = creamEl.getBoundingClientRect();
+        return {
+          left: r.left,
+          top: r.top,
+          right: r.right,
+          bottom: r.bottom,
+          scale: 1,
+        };
+      }
+    }
+    const win = typeof window !== 'undefined' ? window : globalThis;
+    const doc = win.document;
+    const art = win.QMS && win.QMS.Board && win.QMS.Board.LandscapeArtLayout;
+    const canvas = doc && doc.getElementById('milksha-board-canvas');
     if (!zone || !art || !canvas) {
       return null;
     }
@@ -622,7 +634,28 @@
       top: cRect.top + cream.top * scale,
       right: cRect.left + (cream.left + cream.width) * scale,
       bottom: cRect.top + (cream.top + cream.height) * scale,
+      scale: scale,
     };
+  }
+
+  const CREAM_EDGE_SLACK_PX = 1;
+
+  function chipAtRestOverflowsCream(chip) {
+    const creamR = viewportCreamRectForChip(chip);
+    if (!creamR || !chip) {
+      return false;
+    }
+    const prevTransform = chip.style.transform;
+    chip.style.transform = 'translate(0px, 0px)';
+    const chipR = chip.getBoundingClientRect();
+    chip.style.transform = prevTransform;
+    const pad = CREAM_EDGE_SLACK_PX;
+    return (
+      chipR.left < creamR.left + pad ||
+      chipR.top < creamR.top + pad ||
+      chipR.right > creamR.right - pad ||
+      chipR.bottom > creamR.bottom - pad
+    );
   }
 
   function capSlideUpOutDyPx(chip, dyOut) {
@@ -637,10 +670,25 @@
     chip.style.transform = 'translate(0px, 0px)';
     const chipR = chip.getBoundingClientRect();
     chip.style.transform = prevTransform;
-    const slackTop = chipR.top - creamR.top;
+    let slackTop = chipR.top - creamR.top;
     if (slackTop <= 0) {
       return 0;
     }
+    const win = typeof window !== 'undefined' ? window : globalThis;
+    const doc = win.document;
+    const art = win.QMS && win.QMS.Board && win.QMS.Board.LandscapeArtLayout;
+    const canvas = doc && doc.getElementById('milksha-board-canvas');
+    if (art && canvas) {
+      const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+      const scale = m ? Number(m[1]) : 1;
+      const cRect = canvas.getBoundingClientRect();
+      const titleGuardVpY = cRect.top + art.TITLE_GUARD_MAX_Y * scale;
+      const titleSlack = chipR.top - titleGuardVpY;
+      if (titleSlack < slackTop) {
+        slackTop = Math.max(0, titleSlack);
+      }
+    }
+    slackTop = Math.max(0, slackTop - CREAM_EDGE_SLACK_PX);
     return Math.min(dyOut, slackTop);
   }
 
@@ -660,7 +708,8 @@
     if (slackBottom <= 0) {
       return 0;
     }
-    return Math.min(dyIn, slackBottom);
+    const slack = Math.max(0, slackBottom - CREAM_EDGE_SLACK_PX);
+    return Math.min(dyIn, slack);
   }
 
   function animateColumnMoveSlideUpOut(chip, numbersLayer, dyOut, durationMs, generation, getGeneration, runOpacityAnimFn) {
@@ -668,10 +717,17 @@
       return Promise.resolve();
     }
     detachChipFromSlotForFade(chip, numbersLayer);
-    const dy = -Math.max(24, dyOut);
+    let dyMag = 0;
+    if (!chipAtRestOverflowsCream(chip)) {
+      dyMag = Math.max(24, dyOut);
+      dyMag = capSlideUpOutDyPx(chip, dyMag);
+    }
+    const dy = dyMag > 0 ? -dyMag : 0;
     chip.style.transform = 'translate(0px, 0px)';
     const movePromise =
-      chip.animate && durationMs > 0
+      dy === 0
+        ? runOpacityAnimFn(chip, 1, 0, durationMs, generation)
+        : chip.animate && durationMs > 0
         ? new Promise(function (resolve) {
             const anim = chip.animate(
               [
@@ -745,24 +801,39 @@
    * @param {number} generation
    * @param {() => number} getGeneration
    */
-  function animateColumnMoveEnterFromBelow(chip, dyIn, durationMs, generation, getGeneration) {
+  function animateColumnMoveEnterFromBelow(chip, dyIn, durationMs, generation, getGeneration, opts) {
     if (!chip) {
       return Promise.resolve();
     }
+    const clampBackfillCream = Boolean(opts && opts.clampBackfillCream);
     chip.style.visibility = 'visible';
-    const dy = Math.max(24, capEnterFromBelowDyPx(chip, dyIn));
-    if (!chip.animate || durationMs <= 0) {
-      snapOpacity(chip, 1);
+    let dy;
+    if (clampBackfillCream) {
+      dy = capEnterFromBelowDyPx(chip, dyIn);
+    } else {
+      dy = Math.max(24, dyIn);
+    }
+    if (dy <= 0 || !chip.animate || durationMs <= 0) {
       chip.style.transform = '';
+      snapOpacity(chip, 1);
       return Promise.resolve();
     }
     cancelElementAnimations(chip);
-    chip.style.opacity = '1';
     chip.style.transform = 'translate(0px, ' + dy + 'px)';
-    const anim = chip.animate(
-      [{ transform: 'translate(0px, ' + dy + 'px)' }, { transform: 'translate(0px, 0px)' }],
-      { duration: durationMs, easing: 'ease-out', fill: 'forwards' },
-    );
+    const fromFrame = { transform: 'translate(0px, ' + dy + 'px)' };
+    const toFrame = { transform: 'translate(0px, 0px)' };
+    if (clampBackfillCream) {
+      fromFrame.opacity = 0;
+      toFrame.opacity = 1;
+      chip.style.opacity = '0';
+    } else {
+      chip.style.opacity = '1';
+    }
+    const anim = chip.animate([fromFrame, toFrame], {
+      duration: durationMs,
+      easing: 'ease-out',
+      fill: 'forwards',
+    });
     return new Promise(function (resolve) {
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
@@ -770,6 +841,7 @@
           return;
         }
         chip.style.transform = '';
+        snapOpacity(chip, 1);
         resolve();
       };
       anim.oncancel = function () {
@@ -1241,6 +1313,7 @@
               exitClone.style.width = rtRect.width + 'px';
               exitClone.style.height = rtRect.height + 'px';
               exitClone.style.pointerEvents = 'none';
+              exitClone.style.visibility = 'visible';
               snapOpacity(exitClone, 1);
               numbersLayer.appendChild(exitClone);
               promises.push(
@@ -1470,6 +1543,7 @@
             exitClone.style.width = rtRect.width + 'px';
             exitClone.style.height = rtRect.height + 'px';
             exitClone.style.pointerEvents = 'none';
+            exitClone.style.visibility = 'visible';
             snapOpacity(exitClone, 1);
             numbersLayer.appendChild(exitClone);
             snapOpacity(rtChip, 0);
@@ -1528,7 +1602,9 @@
               deferredBackfillEnterFromBelow = { chip: chip, pitch: pitchBelow };
             } else {
               promises.push(
-                animateColumnMoveEnterFromBelow(chip, pitchBelow, columnMoveDurationMs, gen, getGeneration),
+                animateColumnMoveEnterFromBelow(chip, pitchBelow, columnMoveDurationMs, gen, getGeneration, {
+                  clampBackfillCream: true,
+                }),
               );
             }
           } else if (pageTwoFadeInIds[id]) {
@@ -1563,7 +1639,11 @@
             if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal' && id === columnMovePlan.backfillId) {
               deferredBackfillEnterFromBelow = { chip: chip, pitch: pitchInBelow };
             } else {
-              promises.push(animateColumnMoveEnterFromBelow(chip, pitchInBelow, columnMoveDurationMs, gen, getGeneration));
+              promises.push(
+                animateColumnMoveEnterFromBelow(chip, pitchInBelow, columnMoveDurationMs, gen, getGeneration, {
+                  clampBackfillCream: true,
+                }),
+              );
             }
           } else if (pageTwoFadeInIds[id]) {
             scheduleChipCssFadeIn(chip, opacityInMs, promises);
@@ -1604,22 +1684,18 @@
             ensureVisibleOpacity(holdChip);
           }
         }
-        const leftBottomSlot = GRID_ROWS - 1;
-        const vacateLeftBottomMoves = [];
-        if (columnMovePlan && columnMovePlan.kind === 'left-column-backfill-removal') {
-          for (let vmi = 0; vmi < diff.moved.length; vmi += 1) {
-            const vm = diff.moved[vmi];
-            if (vm.from === leftBottomSlot && vm.to === leftBottomSlot - 1) {
-              vacateLeftBottomMoves.push(vm);
-            }
-          }
-        }
-        const vacateIdSet = {};
-        for (let vi = 0; vi < vacateLeftBottomMoves.length; vi += 1) {
-          vacateIdSet[vacateLeftBottomMoves[vi].id] = true;
-        }
-
         const runMovedFlips = function () {
+          /** @type {Promise<void>[]} */
+          const backfillFlipPromises = [];
+          const pendingBackfillEnter =
+            columnMovePlan &&
+            columnMovePlan.kind === 'left-column-backfill-removal' &&
+            deferredBackfillEnterFromBelow
+              ? deferredBackfillEnterFromBelow
+              : null;
+          if (pendingBackfillEnter) {
+            deferredBackfillEnterFromBelow = null;
+          }
           diff.moved.forEach(function (mv) {
             if (removedIdSet[mv.id]) {
               return;
@@ -1664,23 +1740,8 @@
                 snapOpacity(chip, 1);
                 chip.style.transform = '';
               });
-              if (vacateIdSet[mv.id] && deferredBackfillEnterFromBelow) {
-                const deferred = deferredBackfillEnterFromBelow;
-                deferredBackfillEnterFromBelow = null;
-                promises.push(
-                  flipPromise.then(function () {
-                    return animateColumnMoveEnterFromBelow(
-                      deferred.chip,
-                      deferred.pitch,
-                      columnMoveDurationMs,
-                      gen,
-                      getGeneration,
-                    );
-                  }),
-                );
-              } else {
-                promises.push(flipPromise);
-              }
+              backfillFlipPromises.push(flipPromise);
+              promises.push(flipPromise);
               return;
             }
             const before = rectsBefore[mv.id];
@@ -1692,7 +1753,20 @@
             const dy = before.top - after.top;
             promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
           });
-          if (deferredBackfillEnterFromBelow) {
+          if (pendingBackfillEnter) {
+            promises.push(
+              Promise.all(backfillFlipPromises).then(function () {
+                return animateColumnMoveEnterFromBelow(
+                  pendingBackfillEnter.chip,
+                  pendingBackfillEnter.pitch,
+                  columnMoveDurationMs,
+                  gen,
+                  getGeneration,
+                  { clampBackfillCream: true },
+                );
+              }),
+            );
+          } else if (deferredBackfillEnterFromBelow) {
             const deferredFallback = deferredBackfillEnterFromBelow;
             deferredBackfillEnterFromBelow = null;
             promises.push(
@@ -1702,6 +1776,7 @@
                 columnMoveDurationMs,
                 gen,
                 getGeneration,
+                { clampBackfillCream: true },
               ),
             );
           }
@@ -1758,6 +1833,7 @@
                     settledId &&
                     (columnMoveEnterFromAboveIds[settledId] || columnMoveEnterFromBelowIds[settledId])
                   ) {
+                    settled.style.visibility = 'visible';
                     snapOpacity(settled, 1);
                     settled.style.transform = '';
                   } else {

@@ -140,6 +140,90 @@ export async function assertBackfillChipStaysInCreamEveryFrame(page, zone, itemI
   expect(violations, JSON.stringify(violations.slice(0, 5))).toEqual([]);
 }
 
+/** Same cream + title-guard audit as scripts/qa-accept-run-once.mjs (tol 0). */
+export async function assertBackfillQaAuditWindow(page, durationMs, trigger) {
+  await page.evaluate(() => {
+    window.__backfillQaAuditHits = [];
+  });
+  const poll = (async () => {
+    const end = Date.now() + durationMs;
+    while (Date.now() < end) {
+      // eslint-disable-next-line no-await-in-loop
+      const hits = await page.evaluate(() => {
+        const art = window.QMS.Board.LandscapeArtLayout;
+        const canvas = document.getElementById('milksha-board-canvas');
+        if (!art || !canvas) {
+          return [];
+        }
+        const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+        const scale = m ? Number(m[1]) : 1;
+        const cRect = canvas.getBoundingClientRect();
+        function creamRectForZoneEl(zoneEl) {
+          const cream = zoneEl.querySelector('.milksha-cream');
+          if (cream) {
+            return cream.getBoundingClientRect();
+          }
+          const zk = zoneEl.classList.contains('milksha-ready') ? 'ready' : 'prep';
+          const boardCream = art.creamRectForZone(zk);
+          return {
+            left: cRect.left + boardCream.left * scale,
+            top: cRect.top + boardCream.top * scale,
+            right: cRect.left + (boardCream.left + boardCream.width) * scale,
+            bottom: cRect.top + (boardCream.top + boardCream.height) * scale,
+          };
+        }
+        function toBoard(r) {
+          return {
+            top: (r.top - cRect.top) / scale,
+          };
+        }
+        const out = [];
+        document.querySelectorAll('.milksha-board-chip').forEach((el) => {
+          const opacity = Number.parseFloat(getComputedStyle(el).opacity);
+          if (!Number.isFinite(opacity) || opacity < 0.02) {
+            return;
+          }
+          const zoneEl = el.closest('.milksha-zone');
+          if (!zoneEl) {
+            return;
+          }
+          const creamR = creamRectForZoneEl(zoneEl);
+          const vr = el.getBoundingClientRect();
+          const br = toBoard(vr);
+          const num = el.querySelector('.milksha-num')?.textContent?.trim() || '';
+          if (vr.left < creamR.left) {
+            out.push({ num, v: 'cream-left' });
+          }
+          if (vr.top < creamR.top) {
+            out.push({ num, v: 'cream-top' });
+          }
+          if (vr.right > creamR.right) {
+            out.push({ num, v: 'cream-right' });
+          }
+          if (vr.bottom > creamR.bottom) {
+            out.push({ num, v: 'cream-bottom' });
+          }
+          if (br.top < art.TITLE_GUARD_MAX_Y) {
+            out.push({ num, v: 'title-guard' });
+          }
+        });
+        return out;
+      });
+      if (hits.length) {
+        await page.evaluate((h) => {
+          window.__backfillQaAuditHits = (window.__backfillQaAuditHits || []).concat(h);
+        }, hits);
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await page.waitForTimeout(50);
+    }
+  })();
+  await trigger();
+  await poll;
+  const all = await page.evaluate(() => window.__backfillQaAuditHits || []);
+  expect(all, JSON.stringify(all.slice(0, 8))).toEqual([]);
+}
+
 export function assertEnterFromBelowMotion(samples) {
   const valid = samples.filter(Boolean);
   expect(valid.length, 'expected enter-from-below samples').toBeGreaterThan(0);

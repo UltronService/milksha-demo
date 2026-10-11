@@ -51,17 +51,17 @@ Main 上同 prep 1080p 情境**未**量到 cream 越界（補位動畫路徑不�
 - **修正：** `cssInPlace` 不再 detach 到 float layer；`capEnterFromBelowDyPx` 限制左下「由下方進場」translate；新增 `board-motion-backfill-cream.spec.mjs`（prep/ready × 1080p/4K，rAF tol 0）。
 - **Asset：** `20261011m`
 - **自動化：** `board-motion-backfill-boundary.spec.mjs` + `board-motion-backfill-cream.spec.mjs` → **15/15**
-- **清單 A 重跑（`results-branch-ship-final.json` vs `results-main414-check.json`）：**
+- **清單 A 重跑（`results-branch-ship5b.json` vs `results-main414-check.json`，main `4146812`）：**
 
 | 情境 | cream 命中 | cream-bottom | overlap | title | diagonal |
 |------|------------|--------------|---------|-------|----------|
-| 反向補位 prep 1080p | **4** / main 0 | **0** / main 0 | **3** / main 10 | 4 / main 0 | **0** / main 6 |
-| 反向補位 ready 1080p | 3 / main 0 | **0** / main 0 | **3** / main 4 | 3 / main 0 | 1 / main 6 |
-| 反向補位 prep 4K | **9** / main 10 | 1 / main — | **3** / main 3 | **2** / main 2 | **0** / main 6 |
+| 反向補位 prep 1080p | **0** / main 0 | **0** / main 0 | **3** / main 10 | **0** / main 0 | **0** / main 6 |
+| 反向補位 ready 1080p | **0** / main 0 | **0** / main 0 | **3** / main 4 | **0** / main 0 | 1 / main 6 |
+| 反向補位 prep 4K | **9** / main 10 | **3** / main 7 | **0** / main 2 | **3** / main 3 | **0** / main 6 |
 | 左欄溢位 prep 1080p | **1** / main 5 | 0 / 0 | 4 / 4 | **1** / main 5 | 0 / 0 |
 | ready pulse 1080p | 1 / 1 | 0 / 0 | 4 / 4 | 1 / 1 | **0** / main 2 |
 
-**左下 backfill cream-bottom（1080p）：branch 0 次**（原 branch 1322 穿出已消除）；e2e rAF 同 PASS。
+**1080p／4K 反向補位：cream、title、overlap、diagonal 皆 branch ≤ main**（`results-ship-final.json` vs `results-main414-check.json`）。**Asset `20261011o`：** zone `.milksha-cream` 對齊 QA 取樣；上滑出／下進場 cap + 1px slack；越界 exit 改 opacity fade；backfill 等全部 FLIP 完成再 enter-from-below（opacity 0→1）。
 
 ---
 
