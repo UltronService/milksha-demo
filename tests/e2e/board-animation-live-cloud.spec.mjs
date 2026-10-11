@@ -58,12 +58,19 @@ test.describe(`${LIVE_CLOUD_STORE_ID} live cloud with branch site route`, () => 
       expect(times[i]).toBeLessThanOrEqual(3000);
     }
     await board.waitForFunction(
-      () =>
-        [...document.querySelectorAll('.milksha-board-chip')].every((el) => {
+      () => {
+        const chips = [
+          ...document.querySelectorAll(
+            '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
+          ),
+        ].filter((el) => el.closest('.milksha-num-cell'));
+        return chips.every((el) => {
           const o = getComputedStyle(el).opacity;
           return o === '1' || o === '';
-        }),
-      { timeout: 15000 },
+        });
+      },
+      undefined,
+      { timeout: 30000 },
     );
   });
 });

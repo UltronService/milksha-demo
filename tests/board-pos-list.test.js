@@ -47,16 +47,16 @@ function loadTodayBoard() {
 test('partition mirrors POS list including ready to preparing', function () {
   const MB = loadMilkshaBoard();
   const readyOnly = MB.partitionNumberContent([
-    { source_type: 'From_Store_OK', number: '42' },
+    { source_type: 'From_Store_OK', number: '0042' },
   ]);
-  assert.equal(JSON.stringify(readyOnly.ready.map((r) => r.number)), '["42"]');
+  assert.equal(JSON.stringify(readyOnly.ready.map((r) => r.number)), '["0042"]');
   assert.equal(readyOnly.preparing.length, 0);
 
   const backToPrep = MB.partitionNumberContent([
-    { source_type: 'From_Store_Preparing', number: '42' },
+    { source_type: 'From_Store_Preparing', number: '0042' },
   ]);
   assert.equal(backToPrep.ready.length, 0);
-  assert.equal(JSON.stringify(backToPrep.preparing.map((r) => r.number)), '["42"]');
+  assert.equal(JSON.stringify(backToPrep.preparing.map((r) => r.number)), '["0042"]');
 });
 
 test('removed number reappearing in POS list is treated as present', function () {
