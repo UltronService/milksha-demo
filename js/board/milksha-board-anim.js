@@ -178,6 +178,14 @@
     el.style.opacity = String(opacity);
   }
 
+  /** Set opacity without cancelling WAAPI (e.g. ready pulse on sibling chips during column-move). */
+  function ensureVisibleOpacity(el) {
+    if (!el) {
+      return;
+    }
+    el.style.opacity = '1';
+  }
+
   /**
    * @param {Element} el
    */
@@ -1087,7 +1095,7 @@
             if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
               continue;
             }
-            snapOpacity(holdChip, 1);
+            ensureVisibleOpacity(holdChip);
           }
         }
         diff.moved.forEach(function (mv) {
@@ -1143,10 +1151,12 @@
                   if (pendingRemove.has(settled)) {
                     continue;
                   }
-                  snapOpacity(settled, 1);
                   const settledId = settled.getAttribute('data-item-id');
                   if (settledId && columnMoveEnterFromAboveIds[settledId]) {
+                    snapOpacity(settled, 1);
                     settled.style.transform = '';
+                  } else {
+                    ensureVisibleOpacity(settled);
                   }
                 }
                 if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
