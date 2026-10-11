@@ -49,7 +49,11 @@ export async function chipMotionSampleAtSlot(page, zone, slotIndex) {
         const float = floats.find((el) => {
           const r = el.getBoundingClientRect();
           const cr = cell.getBoundingClientRect();
-          return Math.abs(r.left - cr.left) < 40 && Math.abs(r.top - cr.top) < 80;
+          const horizontal = Math.abs(r.left - cr.left) < 40;
+          if (el.getAttribute('data-column-move-exit-clone') === '1') {
+            return horizontal;
+          }
+          return horizontal && Math.abs(r.top - cr.top) < 80;
         });
         if (!float) {
           return null;
@@ -118,10 +122,12 @@ export async function pollMotionSamples(page, trigger, sample, opts = {}) {
 }
 
 export function assertDownwardExitMotion(samples) {
-  const tops = samples.map((s) => s.top);
+  const valid = samples.filter(Boolean);
+  expect(valid.length, 'expected motion samples').toBeGreaterThan(0);
+  const tops = valid.map((s) => s.top);
   const delta = Math.max(...tops) - Math.min(...tops);
-  const movedDown = samples.some((s) => transformTranslateY(s.transform) > 8) || delta > 12;
-  const faded = samples.some((s) => Number.parseFloat(s.opacity) < 0.85);
+  const movedDown = valid.some((s) => transformTranslateY(s.transform) > 8) || delta > 12;
+  const faded = valid.some((s) => Number.parseFloat(s.opacity) < 0.85);
   expect(movedDown || faded, JSON.stringify(samples)).toBe(true);
 }
 
