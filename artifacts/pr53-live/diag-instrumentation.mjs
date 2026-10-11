@@ -3,6 +3,7 @@ export const DIAG_INIT_SCRIPT = () => {
   window.__pr53Diag = {
     applyPayloadCalls: [],
     receiveBoardCalls: [],
+    apply7112Traces: [],
   };
   function wrap() {
     const rt = window.QMS?.runtime;
@@ -54,7 +55,7 @@ export const DIAG_INIT_SCRIPT = () => {
           ready: readyNums,
           item7112,
         };
-        window.__pr53Diag.applyPayloadCalls.push({
+        const entry = {
           t: Date.now(),
           len: Array.isArray(list) ? list.length : 0,
           prep,
@@ -63,7 +64,28 @@ export const DIAG_INIT_SCRIPT = () => {
           item7112,
           preparingNumbers: prepNums,
           readyNumbers: readyNums,
-        });
+        };
+        window.__pr53Diag.applyPayloadCalls.push(entry);
+        if (item7112 || prepNums.includes('7112') || readyNums.includes('7112')) {
+          const items = [];
+          if (Array.isArray(list)) {
+            for (const it of list) {
+              if (!it || it.number == null) {
+                continue;
+              }
+              items.push({
+                number: String(it.number),
+                source_type: it.source_type ? String(it.source_type) : '',
+              });
+            }
+          }
+          window.__pr53Diag.apply7112Traces.push({
+            t: entry.t,
+            silent: entry.silent,
+            item7112,
+            items,
+          });
+        }
         return orig(list, opts);
       };
       rt.__pr53DiagWrapped = true;

@@ -51,6 +51,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ART = join(dirname(fileURLToPath(import.meta.url)));
 const SHA = process.env.CROSS_ZONE_SITE_SHA || '4146812';
 const CYCLES = Number(process.env.CROSS_ZONE_CYCLES || 30);
+const H0_CAPTURE = process.env.HYPOTHESIS0_CAPTURE === '1';
 const VP = { width: 1920, height: 1080 };
 
 function sleep(ms) {
@@ -197,6 +198,8 @@ async function main() {
         }
       }
     }
+    const apply7112Traces = await board.evaluate(() => window.__pr53Diag?.apply7112Traces ?? []);
+    writeFileSync(join(ART, 'hypothesis0-apply-trace.json'), JSON.stringify(apply7112Traces, null, 2));
     await teardownLiveCloudSession(ctrl, board);
     await browser.close();
   } finally {
@@ -238,7 +241,17 @@ async function main() {
   if (hypothesis0Verdict) {
     writeFileSync(join(ART, 'hypothesis0-verdict.json'), JSON.stringify(hypothesis0Verdict, null, 2));
   }
+  const captureMeta = {
+    leak: unique.length > 0,
+    hypothesis0Rows: hypothesis0CycleRows.length,
+    hasLivePushCapture: hypothesis0CycleRows.some((r) => Array.isArray(r.push?.ready)),
+    githubRunId: process.env.GITHUB_RUN_ID || '',
+  };
+  writeFileSync(join(ART, 'hypothesis0-capture-meta.json'), JSON.stringify(captureMeta, null, 2));
   console.log(JSON.stringify(out, null, 2));
+  if (H0_CAPTURE) {
+    process.exit(0);
+  }
   process.exit(unique.length > 0 ? 1 : 0);
 }
 

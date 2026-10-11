@@ -1,16 +1,20 @@
 ## Hypothesis 0 — 三欄對照（cycles 27–29）
 
-**定案：B)** 測試／腳本**未**以正常流程把 7112 從 prep 改 ready（無 `btn-one-ready`、無對 7112 下單）；`push_numbers` **意圖上** ready／preparing 皆不含 7112，但 Firestore `today_board`（與 board 收到的 snapshot apply）已把 **7112 列在 ready**；看板 DOM／`getSnapshot()` 與雲端一致 — **非看板錯分（非 C）**；請後端查 `push_numbers` 寫入／合併。來源 run [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862)；後續 run 已加 push／`readBoard` 擷取（`hypothesis0-cycle-table.json`）。
+**Verdict（信心）：B — _likely_，非 _proven_**  
+- **Proven 缺什麼：** run [38182993862](https://github.com/UltronService/milksha-demo/actions/runs/38182993862) **無** `push_numbers` HTTP 錄影、**無** leak 當下 `readBoard()`；capture run [38184430601](https://github.com/UltronService/milksha-demo/actions/runs/38184430601) **全綠**未重現。  
+- **Likely 依據：** 下表 col(2) 由 **apply 輸入 + snapshot** 推得；col(1) 由 **腳本原始碼**（無 7112 下單）+ 待 capture 之 push hook。  
+- **C 尚未排除：** 若 board 在 `partitionNumberContent` 誤分，**apply 與 snapshot 也會同時含 7112∈ready** — 要判 C 需 **Firestore/readBoard 顯示 7112=preparing 且 apply item 為 Preparing**（見 `hypothesis0-apply-trace.json` 每筆 `number`+`source_type`）。  
+- **7112 從哪來（若腳本未送）：** 可能為 **後端寫入/合併**、**上一輪 store 殘留**（38182681355 07:01–07:05 全綠後 1 分鐘即開本 run）、或 **欄位 7112 被誤送** — 需 capture 對照 push vs doc。
 
-| Cycle | (1) push_numbers 直前（preparing / ready） | (2) Firestore `today_board` | (3) `getSnapshot()` + ready DOM slots | ABC |
-| --- | --- | --- | --- | --- |
-| 27 | **腳本意圖**：prep `7100–7111`+`7200–7226`、ready `8100–8111`，**皆無 7112**（該 run 無 HTTP 錄影；見 `run-real-cloud-cross-zone-red.mjs` seed） | **7112∈ready**、prep 38 筆無 7112（leak 前 apply len=50, prep=38, ready=12；snapshot.ready 已含 7112 ⇒ `From_Store_OK`） | ready 尾端 `…8101,7112`；slots `0:8101` `1:7112` | **B** |
-| 28 | 同 27 | 同 27（ready=12 含 7112） | 同型；slots `0:8101` `1:7112` | **B** |
-| 29 | 同 27 | 同 27 | 同型；slots `0:8101` `1:7112` | **B** |
+**共用 CI store 重疊（38182993862 窗 07:06:22–07:16:57 台北）：** 見 `hypothesis0-ci-overlap.md` — **`live-cloud-zz-qa-ci-store` 與 `ci.yml` e2e-live-cloud 相同**；該窗 **僅 cross-zone-red**，e2e-live-cloud **07:16:59** 才開跑。**H0-other-writer：該窗 _unlikely_**（PR #52/#55/#59/#57 無重疊 run；repo 內 tests **無字面 7112**）。
 
-**排除 A（測試正常 prep→ready 但期望沒跟上）：** 7112 從未作為一張票送進 controller；`bumpNumberFieldAfterSend` 只在欄位顯示 7112，不會自動進 ready。若未來 push 錄影顯示 `params.ready` 含 7112，才改判 **A**（送端／期望 bug）。
+| Cycle | (1) push_numbers 直前 | (2) Firestore / apply | (3) getSnapshot + ready slots | ABC | 信心 |
+| --- | --- | --- | --- | --- | --- |
+| 27 | 腳本意圖：無 7112（**無 HTTP 錄影**） | apply：ready=12 含 7112（**推定** `From_Store_OK`）；**待 readBoard 證實** | `…8101,7112`；slots `0:8101` `1:7112` | B* | likely |
+| 28 | 同 27 | 同 27 | 同型 | B* | likely |
+| 29 | 同 27 | 同 27 | 同型 | B* | likely |
 
-**排除 C：** 若雲端 doc 為 ready，看板 `partitionNumberContent` / `applyPayload`（`js/milksha-board.js` 164–232、1148–1149）本來就會放進 `readyItems` — 與觀測一致，非「doc prep、board ready」。
+\*ABC 在 **live capture**（workflow `cross-zone-hypothesis0-capture.yml`）產出 `push`+`firestore`+`hypothesis0-apply-trace.json` 後可升級 **proven** 或改判 A/C。
 
 ---
 
