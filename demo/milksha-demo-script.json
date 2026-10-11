@@ -38,7 +38,7 @@
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P021"
+              "number": "5021"
             }
           ],
           "newsTicker_content": [],
@@ -73,15 +73,15 @@
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U512"
+              "number": "5512"
             }
           ],
           "newsTicker_content": [],
@@ -99,7 +99,7 @@
     "_note": "1002 與 P021 同時轉可取餐（兩個都要響）；新增 UDD、現場 1003",
     "_expectRing": [
       "store:1002",
-      "point:P021"
+      "point:5021"
     ],
     "request": {
       "isEncrypt": false,
@@ -117,19 +117,19 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U512"
+              "number": "5512"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D08"
+              "number": "5008"
             },
             {
               "source_type": "From_Store_Preparing",
@@ -150,7 +150,7 @@
   {
     "_note": "1001 取餐完消失（不響）；F37 轉可取餐（要響）",
     "_expectRing": [
-      "fp:F37"
+      "fp:5037"
     ],
     "request": {
       "isEncrypt": false,
@@ -164,19 +164,19 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U512"
+              "number": "5512"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D08"
+              "number": "5008"
             },
             {
               "source_type": "From_Store_Preparing",
@@ -197,8 +197,8 @@
   {
     "_note": "U512、D08 轉可取餐（要響）；1004 直接出現在可取餐（沒經過準備中，也要響）；五種來源都出現過可取餐",
     "_expectRing": [
-      "uber:U512",
-      "udd:D08",
+      "uber:5512",
+      "udd:5008",
       "store:1004"
     ],
     "request": {
@@ -213,19 +213,19 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_OK",
-              "number": "U512"
+              "number": "5512"
             },
             {
               "source_type": "From_Udd_OK",
-              "number": "D08"
+              "number": "5008"
             },
             {
               "source_type": "From_Store_Preparing",
@@ -264,19 +264,19 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_OK",
-              "number": "U512"
+              "number": "5512"
             },
             {
               "source_type": "From_Udd_OK",
-              "number": "D08"
+              "number": "5008"
             },
             {
               "source_type": "From_Store_OK",
@@ -344,59 +344,59 @@
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P022"
+              "number": "5022"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P023"
+              "number": "5023"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P024"
+              "number": "5024"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P025"
+              "number": "5025"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F38"
+              "number": "5038"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F39"
+              "number": "5039"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F40"
+              "number": "5040"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F41"
+              "number": "5041"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U513"
+              "number": "5513"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U514"
+              "number": "5514"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U515"
+              "number": "5515"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D09"
+              "number": "5009"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D10"
+              "number": "5010"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D11"
+              "number": "5011"
             }
           ],
           "newsTicker_content": [],
@@ -421,9 +421,9 @@
       "store:1010",
       "store:1011",
       "store:1012",
-      "point:P022",
-      "fp:F38",
-      "uber:U513"
+      "point:5022",
+      "fp:5038",
+      "uber:5513"
     ],
     "request": {
       "isEncrypt": false,
@@ -437,19 +437,19 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P021"
+              "number": "5021"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F37"
+              "number": "5037"
             },
             {
               "source_type": "From_UberEat_OK",
-              "number": "U512"
+              "number": "5512"
             },
             {
               "source_type": "From_Udd_OK",
-              "number": "D08"
+              "number": "5008"
             },
             {
               "source_type": "From_Store_OK",
@@ -493,15 +493,15 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P022"
+              "number": "5022"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F38"
+              "number": "5038"
             },
             {
               "source_type": "From_UberEat_OK",
-              "number": "U513"
+              "number": "5513"
             },
             {
               "source_type": "From_Store_Preparing",
@@ -529,47 +529,47 @@
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P023"
+              "number": "5023"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P024"
+              "number": "5024"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P025"
+              "number": "5025"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F39"
+              "number": "5039"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F40"
+              "number": "5040"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F41"
+              "number": "5041"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U514"
+              "number": "5514"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U515"
+              "number": "5515"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D09"
+              "number": "5009"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D10"
+              "number": "5010"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D11"
+              "number": "5011"
             }
           ],
           "newsTicker_content": [],
@@ -626,15 +626,15 @@
             },
             {
               "source_type": "From_milksha_point_OK",
-              "number": "P022"
+              "number": "5022"
             },
             {
               "source_type": "From_FoodPanda_OK",
-              "number": "F38"
+              "number": "5038"
             },
             {
               "source_type": "From_UberEat_OK",
-              "number": "U513"
+              "number": "5513"
             },
             {
               "source_type": "From_Store_Preparing",
@@ -662,47 +662,47 @@
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P023"
+              "number": "5023"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P024"
+              "number": "5024"
             },
             {
               "source_type": "From_milksha_point_Preparing",
-              "number": "P025"
+              "number": "5025"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F39"
+              "number": "5039"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F40"
+              "number": "5040"
             },
             {
               "source_type": "From_FoodPanda_Preparing",
-              "number": "F41"
+              "number": "5041"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U514"
+              "number": "5514"
             },
             {
               "source_type": "From_UberEat_Preparing",
-              "number": "U515"
+              "number": "5515"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D09"
+              "number": "5009"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D10"
+              "number": "5010"
             },
             {
               "source_type": "From_Udd_Preparing",
-              "number": "D11"
+              "number": "5011"
             }
           ],
           "newsTicker_content": [],
