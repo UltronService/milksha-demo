@@ -40,7 +40,8 @@ jobs:
           FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
       - name: Assert RED reproduced (exit 1 expected)
         run: |
-          test "${{ steps.red.outputs.exit }}" = "1" || (echo "Expected RED exit 1, got ${{ steps.red.outputs.exit }}" && exit 1)
+          test "${{ steps.red.outputs.exit }}" = "1"
+          node -e "const r=require('./artifacts/cross-zone-leak/real-cloud-red-result.json'); if(!r.red) { console.error('red flag false'); process.exit(1);}"
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4

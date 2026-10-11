@@ -1,5 +1,3 @@
-import { expectedPageSet, setsEqual } from './qa-harness-core.mjs';
-
 /**
  * Score one settled sample (indicator stable + opacity >= 0.99).
  * @param {import('@playwright/test').Page} board
@@ -102,6 +100,3 @@ export async function scoreSettledFrame(board, { prepSent, readySent, prevIndica
     { prepSent, readySent, prevIndicators },
   );
 }
-
-/** Node-side set equal for summaries */
-export { expectedPageSet, setsEqual };
