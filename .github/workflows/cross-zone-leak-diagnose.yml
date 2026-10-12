@@ -1,0 +1,52 @@
+name: Cross-zone leak RED (real cloud)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: live-cloud-zz-qa-ci-store
+  cancel-in-progress: false
+
+jobs:
+  cross-zone-red:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Install e2e platform fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
+      - name: RED real cloud cross-zone (4146812 site, 30 cycles)
+        id: red
+        run: |
+          set +e
+          node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          CROSS_ZONE_SITE_SHA: '4146812'
+          CROSS_ZONE_CYCLES: '30'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+      - name: Assert RED reproduced (exit 1 expected)
+        run: |
+          test "${{ steps.red.outputs.exit }}" = "1"
+          node -e "const r=require('./artifacts/cross-zone-leak/real-cloud-red-result.json'); if(!r.red) { console.error('red flag false'); process.exit(1);}"
+      - name: Hypothesis 0 cycle table (27-29)
+        if: always()
+        run: |
+          test -f artifacts/cross-zone-leak/hypothesis0-cycle-table.json || test -f artifacts/cross-zone-leak/HYPOTHESES.md
+          node -e "const fs=require('fs');const p='artifacts/cross-zone-leak/hypothesis0-cycle-table.json'; if(fs.existsSync(p)){const r=JSON.parse(fs.readFileSync(p)); console.log('rows',r.length);} else {console.log('use committed HYPOTHESES.md');}"
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-zone-leak
+          path: artifacts/cross-zone-leak/

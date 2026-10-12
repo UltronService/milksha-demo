@@ -1,0 +1,88 @@
+name: Hypothesis 0 capture (real cloud)
+
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: Cycles per attempt (30-60)
+        required: false
+        default: '45'
+  push:
+    branches:
+      - cursor/cross-zone-leak-diagnose
+    paths:
+      - '.github/workflows/cross-zone-hypothesis0-capture.yml'
+      - 'artifacts/cross-zone-leak/hypothesis0-capture.mjs'
+      - 'artifacts/cross-zone-leak/hypothesis0-cycle-table.mjs'
+      - 'artifacts/cross-zone-leak/merge-hypothesis0-into-md.mjs'
+      - 'artifacts/cross-zone-leak/HYPOTHESES.md'
+      - 'artifacts/pr53-live/diag-instrumentation.mjs'
+
+concurrency:
+  group: live-cloud-zz-qa-ci-store
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Install e2e platform fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
+      - name: Capture attempt 1
+        id: cap1
+        run: |
+          node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+          mkdir -p artifacts/cross-zone-leak/attempt1
+          cp artifacts/cross-zone-leak/real-cloud-red-result.json artifacts/cross-zone-leak/attempt1/
+          cp artifacts/cross-zone-leak/hypothesis0-*.json artifacts/cross-zone-leak/attempt1/ 2>/dev/null || true
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          CROSS_ZONE_SITE_SHA: '4146812'
+          CROSS_ZONE_CYCLES: ${{ inputs.cycles || '45' }}
+          HYPOTHESIS0_CAPTURE: '1'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+      - name: Capture attempt 2 (if attempt 1 green)
+        id: cap2
+        if: steps.cap1.outcome == 'success'
+        run: |
+          LEAK=$(node -e "console.log(require('./artifacts/cross-zone-leak/attempt1/real-cloud-red-result.json').red?'1':'0')")
+          if [ "$LEAK" = "1" ]; then echo "skip attempt 2 — leak on attempt 1"; exit 0; fi
+          node artifacts/cross-zone-leak/run-real-cloud-cross-zone-red.mjs
+          mkdir -p artifacts/cross-zone-leak/attempt2
+          cp artifacts/cross-zone-leak/real-cloud-red-result.json artifacts/cross-zone-leak/attempt2/
+          cp artifacts/cross-zone-leak/hypothesis0-*.json artifacts/cross-zone-leak/attempt2/ 2>/dev/null || true
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          CROSS_ZONE_SITE_SHA: '4146812'
+          CROSS_ZONE_CYCLES: ${{ inputs.cycles || '45' }}
+          HYPOTHESIS0_CAPTURE: '1'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+      - name: Summarize capture
+        if: always()
+        run: |
+          node -e "
+          const fs=require('fs');
+          const p='artifacts/cross-zone-leak';
+          const r=JSON.parse(fs.readFileSync(p+'/real-cloud-red-result.json','utf8'));
+          const t=fs.existsSync(p+'/hypothesis0-cycle-table.json')?JSON.parse(fs.readFileSync(p+'/hypothesis0-cycle-table.json')):[];
+          const tr=fs.existsSync(p+'/hypothesis0-apply-trace.json')?JSON.parse(fs.readFileSync(p+'/hypothesis0-apply-trace.json')):[];
+          console.log('red',r.red,'h0_rows',t.length,'apply7112_traces',tr.length);
+          "
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hypothesis0-capture
+          path: artifacts/cross-zone-leak/

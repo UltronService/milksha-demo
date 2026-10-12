@@ -1,0 +1,3377 @@
+[
+  {
+    "cycle": 27,
+    "tMs": 361,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "layer-float",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 10,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 27,
+    "tMs": 420,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "layer-float",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 10,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 27,
+    "tMs": 480,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "layer-float",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 10,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 27,
+    "tMs": 538,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "1/2",
+    "motionInFlight": "page-turn",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": true,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "1/4"
+      },
+      "ready": {
+        "pageTurnAnim": true,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "1/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760581946,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 310,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 374,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 432,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 492,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 549,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 606,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 663,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 28,
+    "tMs": 720,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7215",
+          "itemId": "store:7215",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7214",
+          "itemId": "store:7214",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7213",
+          "itemId": "store:7213",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7212",
+          "itemId": "store:7212",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7211",
+          "itemId": "store:7211",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7210",
+          "itemId": "store:7210",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7209",
+          "itemId": "store:7209",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7208",
+          "itemId": "store:7208",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "7207",
+          "itemId": "store:7207",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "7206",
+          "itemId": "store:7206",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760593719,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 29,
+    "tMs": 562,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 29,
+    "tMs": 621,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  },
+  {
+    "cycle": 29,
+    "tMs": 678,
+    "number": "7112",
+    "zone": "ready",
+    "slot": 1,
+    "indicator": "2/2",
+    "motionInFlight": "none",
+    "motion": {
+      "prep": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "4/4"
+      },
+      "ready": {
+        "pageTurnAnim": false,
+        "columnMoveAnim": false,
+        "numbersLayerOpacity": 1,
+        "floatChips": 0,
+        "indicator": "2/2"
+      }
+    },
+    "slots": {
+      "prep": [
+        {
+          "slot": 0,
+          "num": "7107",
+          "itemId": "store:7107",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7106",
+          "itemId": "store:7106",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "7105",
+          "itemId": "store:7105",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "7104",
+          "itemId": "store:7104",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "7103",
+          "itemId": "store:7103",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "7102",
+          "itemId": "store:7102",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "7101",
+          "itemId": "store:7101",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "7100",
+          "itemId": "store:7100",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ],
+      "ready": [
+        {
+          "slot": 0,
+          "num": "8101",
+          "itemId": "store:8101",
+          "float": false
+        },
+        {
+          "slot": 1,
+          "num": "7112",
+          "itemId": "store:7112",
+          "float": false
+        },
+        {
+          "slot": 2,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 3,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 4,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 5,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 6,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 7,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 8,
+          "num": "",
+          "itemId": "",
+          "float": false
+        },
+        {
+          "slot": 9,
+          "num": "",
+          "itemId": "",
+          "float": false
+        }
+      ]
+    },
+    "snapshot": {
+      "prep": [
+        "7225",
+        "7224",
+        "7223",
+        "7222",
+        "7221",
+        "7220",
+        "7219",
+        "7218",
+        "7217",
+        "7216",
+        "7215",
+        "7214",
+        "7213",
+        "7212",
+        "7211",
+        "7210",
+        "7209",
+        "7208",
+        "7207",
+        "7206",
+        "7205",
+        "7204",
+        "7203",
+        "7202",
+        "7201",
+        "7200",
+        "7111",
+        "7110",
+        "7109",
+        "7108",
+        "7107",
+        "7106",
+        "7105",
+        "7104",
+        "7103",
+        "7102",
+        "7101",
+        "7100"
+      ],
+      "ready": [
+        "8111",
+        "8110",
+        "8109",
+        "8108",
+        "8107",
+        "8106",
+        "8105",
+        "8104",
+        "8103",
+        "8102",
+        "8101",
+        "7112"
+      ]
+    },
+    "applyPayloadSinceCycleStart": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ],
+    "applyPayloadJustBefore": [
+      {
+        "t": 1791760605730,
+        "len": 50,
+        "prep": 38,
+        "ready": 12,
+        "silent": false
+      }
+    ]
+  }
+]
