@@ -597,6 +597,57 @@
       return page;
     }
 
+    /**
+     * @param {Array<{ id: string }>} prevItems
+     * @param {Array<{ id: string }>} nextItems
+     * @returns {boolean}
+     */
+    function zoneGainedNewItem(prevItems, nextItems) {
+      const prevIds = new Set();
+      for (let i = 0; i < prevItems.length; i += 1) {
+        prevIds.add(prevItems[i].id);
+      }
+      for (let j = 0; j < nextItems.length; j += 1) {
+        if (!prevIds.has(nextItems[j].id)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Default (no motion): viewing page 2+ and a new number lands in this zone → show page 1 and restart turn timer.
+     * @param {'prep' | 'ready'} zoneKey
+     * @param {Array<{ id: string }>} prevItems
+     * @param {Array<{ id: string }>} nextItems
+     * @param {number} now
+     */
+    function maybeJumpNoMotionZoneToPageOneOnNewItem(zoneKey, prevItems, nextItems, now) {
+      if (isBoardMotionOn()) {
+        return;
+      }
+      const items = zoneKey === 'prep' ? prepItems : readyItems;
+      const pages = pageCountForItems(items.length, PAGE_SIZE);
+      if (pages <= 1) {
+        return;
+      }
+      const currentPage = zoneKey === 'prep' ? prepPage : readyPage;
+      if (currentPage <= 0) {
+        return;
+      }
+      if (!zoneGainedNewItem(prevItems, nextItems)) {
+        return;
+      }
+      if (zoneKey === 'prep') {
+        prepPage = 0;
+        prepPageStartedAt = now;
+      } else {
+        readyPage = 0;
+        readyPageStartedAt = now;
+      }
+      scheduleZoneTimers();
+    }
+
     function isBoardMotionOn() {
       try {
         if (!win.location) {
@@ -1182,6 +1233,9 @@
 
       readyItems = nextReady;
       prepItems = nextPrep;
+
+      maybeJumpNoMotionZoneToPageOneOnNewItem('prep', prevPrepBefore, nextPrep, now);
+      maybeJumpNoMotionZoneToPageOneOnNewItem('ready', prevReadyBefore, nextReady, now);
 
       if (!silentApply && ringIds.length > 0) {
         readyPage = 0;
