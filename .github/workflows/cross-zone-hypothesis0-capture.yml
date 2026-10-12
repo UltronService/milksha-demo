@@ -12,7 +12,10 @@ on:
       - cursor/cross-zone-leak-diagnose
     paths:
       - '.github/workflows/cross-zone-hypothesis0-capture.yml'
-      - 'artifacts/cross-zone-leak/**'
+      - 'artifacts/cross-zone-leak/hypothesis0-capture.mjs'
+      - 'artifacts/cross-zone-leak/hypothesis0-cycle-table.mjs'
+      - 'artifacts/cross-zone-leak/merge-hypothesis0-into-md.mjs'
+      - 'artifacts/cross-zone-leak/HYPOTHESES.md'
       - 'artifacts/pr53-live/diag-instrumentation.mjs'
 
 concurrency:
