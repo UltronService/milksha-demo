@@ -1,0 +1,8 @@
+{
+  "qaSetMismatchEvents": 42,
+  "slotMismatchEvents": 0,
+  "lastPageTenOldEvents": 0,
+  "missingOver3sCount": 16,
+  "crossZoneRoundCount": 0,
+  "applyPayloadAvgPerRound": 1.9
+}

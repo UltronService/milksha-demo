@@ -1,0 +1,66 @@
+{
+  "anyWorse": true,
+  "table": {
+    "qaSetMismatchEvents1080": {
+      "before": 44,
+      "after": 42,
+      "verdict": "better"
+    },
+    "slotMismatchEvents1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "lastPageTenOldEvents1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "missingOver3sCount1080": {
+      "before": 17,
+      "after": 16,
+      "verdict": "better"
+    },
+    "crossZoneRoundCount1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "applyPayloadAvgPerRound1080": {
+      "before": 1.9333333333333333,
+      "after": 1.9,
+      "verdict": "better"
+    },
+    "qaSetMismatchEvents4k": {
+      "before": 46,
+      "after": 42,
+      "verdict": "better"
+    },
+    "slotMismatchEvents4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "lastPageTenOldEvents4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "missingOver3sCount4k": {
+      "before": 17,
+      "after": 17,
+      "verdict": "not fixed"
+    },
+    "crossZoneRoundCount4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "applyPayloadAvgPerRound4k": {
+      "before": 1.9,
+      "after": 1.9333333333333333,
+      "verdict": "WORSE"
+    }
+  },
+  "cycles": 30
+}

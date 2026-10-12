@@ -85,7 +85,7 @@ function renderMd(before, after, compare, results) {
   ];
   for (const [k, label] of keys) {
     lines.push(
-      `| ${label} | ${b108Val(results, before, '1080', k)} | ${a108Val(results, after, '1080', k)} | ${b108Val(results, before, '4k', k)} | ${a108Val(results, after, '4k', k)} |`,
+      `| ${label} | ${b108Val(results, before, '1080', k)} | ${b108Val(results, after, '1080', k)} | ${b108Val(results, before, '4k', k)} | ${b108Val(results, after, '4k', k)} |`,
     );
   }
   lines.push('', `anyWorse（舊表邏輯）: **${compare.anyWorse}**`, '');
