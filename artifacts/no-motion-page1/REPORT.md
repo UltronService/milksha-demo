@@ -21,7 +21,7 @@
 本地：`npm test` 219 passed。
 
 ## CI
-- Run（head `5869978`）：https://github.com/UltronService/milksha-demo/actions/runs/38201770397  
+- Run（head `b0251f9`）：https://github.com/UltronService/milksha-demo/actions/runs/38206846684  
 - `test`：pass  
 - `e2e-live-cloud`：pass  
 
