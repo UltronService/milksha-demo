@@ -272,6 +272,10 @@
       if (!t || typeof t.no !== 'string') {
         continue;
       }
+      if (typeof t.sourceType === 'string' && t.sourceType) {
+        out.push({ source_type: t.sourceType, number: t.no });
+        continue;
+      }
       if (typeof t.source_type === 'string' && t.source_type) {
         out.push({ source_type: t.source_type, number: t.no });
         continue;
