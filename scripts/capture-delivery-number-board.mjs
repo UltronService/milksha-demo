@@ -4,21 +4,28 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import vm from 'node:vm';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+const require = createRequire(import.meta.url);
+const { CLOUD_DELIVERY_SAMPLE_TICKETS } = require('../tests/fixtures/today-board-cloud-tickets.js');
 const OUT_DIR = join(ROOT, 'artifacts', 'delivery-number');
 const SITE_ROOT = '/tmp/milksha-delivery-site';
 const SUB = 'milksha-demo';
 const PORT = 8766;
 const BASE = `http://127.0.0.1:${PORT}/${SUB}/`;
 
-const DELIVERY_SAMPLE_CONTENT = [
-  { source_type: 'From_milksha_point_OK', number: '578' },
-  { source_type: 'From_UberEat_OK', number: 'C7458' },
-  { source_type: 'From_FoodPanda_OK', number: '6406' },
-  { source_type: 'From_Store_OK', number: '7112' },
-];
+function ticketsToNumberContentForCapture(tickets) {
+  const sandbox = { globalThis: {}, Date: Date, Intl: Intl };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(readFileSync(join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
+  return sandbox.QMS.Board.TodayBoard.ticketsToNumberContent(tickets);
+}
+
+const DELIVERY_SAMPLE_CONTENT = ticketsToNumberContentForCapture(CLOUD_DELIVERY_SAMPLE_TICKETS);
 
 function prepareSite() {
   const dest = join(SITE_ROOT, SUB);

@@ -22,7 +22,7 @@
 | 4 | Uber 英文轉大寫 `C7458` | ✅ |
 | 5 | 不同來源同號兩筆都顯示 | ✅ |
 | 6 | 超過 6 字元丟棄 | ✅ |
-| 7 | `tickets[].sourceType` → `number_content` | ✅ |
+| 7 | PR #22 形狀 `tickets[]`（`no`／`sourceType?`）→ 上板 | ✅ |
 | 8 | 全單元測試 `npm test`（226） | ✅ 本地 |
 | 9 | E2E（非 live-cloud） | ⏳ 見 CI |
 | 10 | 無動態版 1080p／4K 截圖 | ✅ 見下 |
@@ -40,18 +40,19 @@
 
 | Job | 連結 |
 |-----|------|
-| PR Checks | _PR 建立後填入_ |
+| PR Checks | https://github.com/UltronService/milksha-demo/pull/62/checks |
 
 ## UAT（非工程）
 
 1. 開 `index.html?mode=local&orientation=landscape`（**不要**加 `motion=on`）。
-2. 開發者工具 Console 貼上並 Enter：
+2. 開發者工具 Console 貼上並 Enter（假資料同 milksha-cloud PR #22 `today_board.tickets[]`）：
    ```javascript
-   QMS.runtime.applyPayload([
-     { source_type: 'From_milksha_point_OK', number: '578' },
-     { source_type: 'From_UberEat_OK', number: 'C7458' },
-     { source_type: 'From_FoodPanda_OK', number: '6406' },
-     { source_type: 'From_Store_OK', number: '7112' },
-   ]);
+   const tickets = [
+     { no: '578', status: 'ready', sourceType: 'From_milksha_point_OK', updatedAt: '2026-10-12T22:00:00.000Z' },
+     { no: 'C7458', status: 'ready', sourceType: 'From_UberEat_OK', updatedAt: '2026-10-12T22:00:01.000Z' },
+     { no: '6406', status: 'ready', sourceType: 'From_FoodPanda_OK', updatedAt: '2026-10-12T22:00:02.000Z' },
+     { no: '7112', status: 'ready', updatedAt: '2026-10-12T22:00:03.000Z' },
+   ];
+   QMS.runtime.applyPayload(QMS.Board.TodayBoard.ticketsToNumberContent(tickets));
    ```
 3. 右欄「可取餐」應同時看到 **578、C7458、6406、7112**，且 **6406 前沒有 #**。

@@ -7,6 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
+const { CLOUD_DELIVERY_SAMPLE_TICKETS } = require('./fixtures/today-board-cloud-tickets.js');
 
 function loadMilkshaBoard() {
   const sandbox = {
@@ -102,16 +103,28 @@ test('non-store numbers longer than six characters are dropped', function () {
   assert.equal(parts.ready.length, 0);
 });
 
-test('tickets with cloud sourceType map into number_content', function () {
+test('ticket without sourceType maps to store POS source_type', function () {
   const TB = loadTodayBoard();
   const nc = TB.ticketsToNumberContent([
     {
-      no: '578',
+      no: '7112',
       status: 'ready',
-      sourceType: 'From_milksha_point_OK',
+      updatedAt: '2026-10-12T22:00:00.000Z',
     },
   ]);
   assert.equal(nc.length, 1);
-  assert.equal(nc[0].source_type, 'From_milksha_point_OK');
-  assert.equal(nc[0].number, '578');
+  assert.equal(nc[0].source_type, 'From_Store_OK');
+  assert.equal(nc[0].number, '7112');
+});
+
+test('cloud-shaped delivery sample tickets partition to four ready numbers', function () {
+  const TB = loadTodayBoard();
+  const MB = loadMilkshaBoard();
+  MB.resetInvalidBoardNumberWarningsForTest();
+  const nc = TB.ticketsToNumberContent(CLOUD_DELIVERY_SAMPLE_TICKETS);
+  assert.equal(nc.length, 4);
+  const parts = MB.partitionNumberContent(nc);
+  assert.equal(parts.ready.length, 4);
+  const nums = parts.ready.map((r) => r.number).sort();
+  assert.equal(nums.join(','), '578,6406,7112,C7458');
 });

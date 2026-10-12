@@ -258,7 +258,7 @@
   }
 
   /**
-   * @param {Array<{ no: string, status: string, updatedAt?: string }>} tickets
+   * @param {Array<{ no: string, status: 'preparing'|'ready', sourceType?: string, updatedAt?: string }>} tickets
    * @param {{ preparingType?: string, readyType?: string }} [opts]
    * @returns {Array<{ source_type: string, number: string }>}
    */
