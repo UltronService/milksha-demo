@@ -21,7 +21,7 @@
 
 ## CI
 
-PR 建立後見下方 Actions 連結（合併前以 GitHub CI 為準）。
+CI 全綠：<https://github.com/UltronService/milksha-demo/actions/runs/38185010746>（PR [#59](https://github.com/UltronService/milksha-demo/pull/59)）
 
 ## 截圖（預設無 `motion=on`）
 
