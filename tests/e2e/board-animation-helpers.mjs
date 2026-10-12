@@ -3,7 +3,8 @@ import { urlsLocalHomePoc } from './harness.mjs';
 
 export async function openLocalBoard(page) {
   const { board } = urlsLocalHomePoc();
-  await page.goto(board);
+  const sep = board.includes('?') ? '&' : '?';
+  await page.goto(`${board}${sep}motion=on`);
   await page.waitForFunction(() => Boolean(window.QMS?.runtime?.applyPayload), undefined, {
     timeout: 25000,
   });

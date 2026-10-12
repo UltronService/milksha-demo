@@ -25,6 +25,7 @@
 | `?orientation=landscape` | 強制橫式 1920×1080 版型 |
 | `?orientation=portrait` | 強制直式 1080×1920 版型 |
 | 未指定 orientation | 依瀏覽器視窗寬高自動選橫／直 |
+| `?motion=on` | 開啟看板數字動畫（預設網址無動畫，號碼直接顯示在最終格位） |
 
 範例：
 
