@@ -3,7 +3,6 @@ import { chromium } from 'playwright';
 import { installLiveBranchCloudRoutes, GITHUB_PAGES_BASE } from './board-animation-live-setup.mjs';
 import { LIVE_CLOUD_BOARD_DEVICE, LIVE_CLOUD_STORE_ID } from './live-cloud-config.mjs';
 import { sendClearNow, teardownLiveCloudSession } from './live-cloud-teardown.mjs';
-import { expandControllerZone } from './harness.mjs';
 
 if (LIVE_CLOUD_STORE_ID === 'zz-qa-store-a') {
   throw new Error('Refusing zz-qa-store-a; use zz-qa-ci-store');
@@ -53,6 +52,59 @@ async function waitForBoardReadyCount(page, n) {
   throw new Error('board ready count did not reach ' + n);
 }
 
+async function waitForReadyNumberCount(page, displayNo, minCount) {
+  const deadline = Date.now() + 300000;
+  while (Date.now() < deadline) {
+    await syncLiveCloudBoard(page);
+    const count = await page.evaluate(function (num) {
+      const rt = window.QMS && window.QMS.runtime;
+      if (rt && rt.getSnapshot) {
+        const snap = rt.getSnapshot();
+        if (snap && Array.isArray(snap.ready)) {
+          return snap.ready.filter(function (r) {
+            return r && r.number === num;
+          }).length;
+        }
+      }
+      const nodes = document.querySelectorAll('.milksha-ready .milksha-num');
+      let n = 0;
+      for (let i = 0; i < nodes.length; i += 1) {
+        if ((nodes[i].textContent || '').trim() === num) {
+          n += 1;
+        }
+      }
+      return n;
+    }, displayNo);
+    if (count >= minCount) {
+      return;
+    }
+    await page.waitForTimeout(2500);
+  }
+  throw new Error('ready count for ' + displayNo + ' did not reach ' + minCount);
+}
+
+async function readCloudReadyTickets(ctrlPage) {
+  return ctrlPage.evaluate(async function () {
+    const transport =
+      window.__controller && window.__controller.getTransport ? window.__controller.getTransport() : null;
+    if (!transport || !transport.readBoard) {
+      return null;
+    }
+    const doc = await transport.readBoard();
+    const tickets = doc && doc.data && doc.data.tickets ? doc.data.tickets : [];
+    return tickets
+      .filter(function (t) {
+        return t && t.status === 'ready';
+      })
+      .map(function (t) {
+        return {
+          no: String(t.no),
+          sourceType: t.sourceType != null ? String(t.sourceType) : String(t.source_type || ''),
+        };
+      });
+  });
+}
+
 test.afterEach(async () => {
   try {
     await teardownLiveCloudSession(ctrl, board);
@@ -69,7 +121,7 @@ test.afterEach(async () => {
 test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live cloud)`, () => {
   test.describe.configure({ retries: 1 });
 
-  test('POS add five sources incl. store 1234 and uber 1234 as two cells', async () => {
+  test('push_numbers five sourceTypes via controller devCommand payload', async () => {
     test.setTimeout(480000);
 
     browser = await chromium.launch();
@@ -93,66 +145,84 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
     );
     await sendClearNow(ctrl);
     await board.waitForTimeout(4000);
-    await expandControllerZone(ctrl, 'sec-pos');
 
     const sends = [
       { source: 'store', no: '1234' },
       { source: 'uber', no: '1234' },
       { source: 'point', no: '091' },
-      { source: 'fp', no: '6406' },
-      { source: 'udd', no: 'AB12' },
+      { source: 'fp', no: '#6406' },
+      { source: 'udd', no: 'ab12' },
     ];
 
-    for (let i = 0; i < sends.length; i += 1) {
-      const row = sends[i];
-      await ctrl.selectOption('[data-testid="fld-source"]', row.source);
-      await ctrl.fill('[data-testid="fld-no"]', row.no);
-      await ctrl.selectOption('[data-testid="fld-status"]', 'ready');
-      await ctrl.click('[data-testid="btn-add-ticket"]');
-      await waitForBoardReadyCount(board, i + 1);
-    }
-
-    await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2);
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '091' })).toHaveCount(1);
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '6406' })).toHaveCount(1);
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12' })).toHaveCount(1);
-
-    const lastParams = await ctrl.evaluate(function () {
-      const PushParams = window.QMS.Transport.PushNumbersParams;
-      const tickets = window.__controller.getTickets();
-      const SOURCE_OPTIONS = [
-        { key: 'store', ok: 'From_Store_OK', preparing: 'From_Store_Preparing' },
-        { key: 'point', ok: 'From_milksha_point_OK', preparing: 'From_milksha_point_Preparing' },
-        { key: 'fp', ok: 'From_FoodPanda_OK', preparing: 'From_FoodPanda_Preparing' },
-        { key: 'uber', ok: 'From_UberEat_OK', preparing: 'From_UberEat_Preparing' },
-        { key: 'udd', ok: 'From_Udd_OK', preparing: 'From_Udd_Preparing' },
-      ];
-      function sourceDef(key) {
-        for (let i = 0; i < SOURCE_OPTIONS.length; i += 1) {
-          if (SOURCE_OPTIONS[i].key === key) {
-            return SOURCE_OPTIONS[i];
-          }
+    const pushResult = await ctrl.evaluate(async function (rows) {
+      const Send = window.QMS.Controller.SendNumber;
+      const DevCmd = window.QMS.Transport.DevCommandValidation;
+      const transport = window.__controller.getTransport();
+      if (!Send || !DevCmd || !transport || !transport.cloudApi) {
+        return { ok: false, reason: 'missing_apis' };
+      }
+      const ready = [];
+      for (let i = 0; i < rows.length; i += 1) {
+        const row = rows[i];
+        const validated = Send.validateQuickSendNumber(row.source, row.no);
+        if (!validated.ok) {
+          return { ok: false, reason: 'validate', step: i, message: validated.message };
         }
-        return SOURCE_OPTIONS[0];
+        const def = Send.sourceOptionForKey(row.source);
+        ready.push({ no: validated.normalized, sourceType: def.ok });
       }
-      if (!PushParams) {
-        return null;
+      const built = DevCmd.buildDevCommandRequest({
+        storeId: document.getElementById('fld-store').value.trim(),
+        deviceId: (document.getElementById('fld-device').value || 'stb-01').trim(),
+        type: 'push_numbers',
+        params: { ready: ready, preparing: [] },
+      });
+      if (!built.ok) {
+        return { ok: false, reason: 'build', message: built.message, code: built.code };
       }
-      return PushParams.ticketsToPushNumbersParams(tickets, sourceDef);
-    });
-    expect(lastParams).toBeTruthy();
-    const ready = lastParams.ready || [];
-    expect(ready.length).toBe(5);
+      try {
+        const res = await transport.cloudApi.devCommand(built.body);
+        return { ok: true, params: built.body.params, res: res };
+      } catch (e) {
+        return {
+          ok: false,
+          reason: 'devCommand',
+          message: e && e.message ? String(e.message) : 'unknown',
+          status: e && e.status ? e.status : 0,
+          response: e && e.response ? e.response : null,
+        };
+      }
+    }, sends);
+
+    expect(pushResult.ok, JSON.stringify(pushResult)).toBe(true);
+    expect(pushResult.params.ready.length).toBe(5);
     expect(
-      ready.some(function (e) {
-        return e.sourceType === 'From_UberEat_OK' && e.no === '1234';
-      }),
-    ).toBe(true);
-    expect(
-      ready.some(function (e) {
+      pushResult.params.ready.some(function (e) {
         return e.sourceType === 'From_Store_OK' && e.no === '1234';
       }),
     ).toBe(true);
+    expect(
+      pushResult.params.ready.some(function (e) {
+        return e.sourceType === 'From_UberEat_OK' && e.no === '1234';
+      }),
+    ).toBe(true);
+
+    await waitForBoardReadyCount(board, 5);
+    await waitForReadyNumberCount(board, '1234', 2);
+
+    const cloudReady = await readCloudReadyTickets(ctrl);
+    expect(cloudReady, 'cloud readBoard ready tickets').not.toBeNull();
+    const cloud1234 = (cloudReady || []).filter(function (t) {
+      return t.no === '1234';
+    });
+    expect(cloud1234.length, JSON.stringify(cloudReady)).toBeGreaterThanOrEqual(2);
+
+    await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2, {
+      timeout: 60000,
+    });
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '091' })).toHaveCount(1);
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '6406' })).toHaveCount(1);
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12' })).toHaveCount(1);
   });
 });
