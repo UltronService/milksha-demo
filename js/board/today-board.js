@@ -258,7 +258,7 @@
   }
 
   /**
-   * @param {Array<{ no: string, status: string, updatedAt?: string }>} tickets
+   * @param {Array<{ no: string, status: 'preparing'|'ready', sourceType?: string, updatedAt?: string }>} tickets
    * @param {{ preparingType?: string, readyType?: string }} [opts]
    * @returns {Array<{ source_type: string, number: string }>}
    */
@@ -270,6 +270,10 @@
     for (let i = 0; i < list.length; i += 1) {
       const t = list[i];
       if (!t || typeof t.no !== 'string') {
+        continue;
+      }
+      if (typeof t.sourceType === 'string' && t.sourceType) {
+        out.push({ source_type: t.sourceType, number: t.no });
         continue;
       }
       if (typeof t.source_type === 'string' && t.source_type) {

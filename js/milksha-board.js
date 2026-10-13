@@ -20,6 +20,9 @@
     { prefix: 'From_Udd_', key: 'udd' },
   ];
 
+  /** Cloud / POS spelling variants (e.g. QA live2 `From_UberEats_OK`). */
+  const SOURCE_TYPE_ALIASES = [{ prefix: 'From_UberEats_', key: 'uber' }];
+
   const LAYOUT_LANDSCAPE = {
     W: 1920,
     H: 1080,
@@ -76,12 +79,14 @@
    * @param {string} sourceType
    * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
    */
-  function parseSourceType(sourceType) {
-    if (!sourceType || typeof sourceType !== 'string') {
-      return null;
-    }
-    for (let i = 0; i < SOURCE_DEFS.length; i += 1) {
-      const def = SOURCE_DEFS[i];
+  /**
+   * @param {string} sourceType
+   * @param {Array<{ prefix: string, key: string }>} defs
+   * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
+   */
+  function matchSourceTypeDefs(sourceType, defs) {
+    for (let i = 0; i < defs.length; i += 1) {
+      const def = defs[i];
       if (sourceType.indexOf(def.prefix) !== 0) {
         continue;
       }
@@ -95,6 +100,30 @@
       return null;
     }
     return null;
+  }
+
+  /**
+   * @param {string} sourceType
+   * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
+   */
+  function parseSourceType(sourceType) {
+    if (!sourceType || typeof sourceType !== 'string') {
+      return null;
+    }
+    const known = matchSourceTypeDefs(sourceType, SOURCE_DEFS);
+    if (known) {
+      return known;
+    }
+    const aliased = matchSourceTypeDefs(sourceType, SOURCE_TYPE_ALIASES);
+    if (aliased) {
+      return aliased;
+    }
+    const unkMatch = sourceType.match(/^(From_.+)_(OK|Preparing)$/);
+    if (!unkMatch) {
+      return null;
+    }
+    const zone = unkMatch[2] === 'OK' ? 'ready' : 'preparing';
+    return { sourceKey: 'unk:' + unkMatch[1], zone: zone };
   }
 
   /**
@@ -125,6 +154,9 @@
   }
 
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_6 = /^\d{3,6}$/;
+  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
   /**
@@ -140,16 +172,37 @@
   }
 
   /**
-   * Board display guard — only exact four-digit strings (no JSON number coercion).
+   * Board display guard — store: 4 digits; point: 3–4 digits; others: 3–6 alnum (uppercase).
    * @param {unknown} raw
+   * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
    */
-  function normalizeBoardDisplayNumber(raw) {
+  function normalizeBoardDisplayNumber(raw, sourceKey) {
     if (typeof raw !== 'string') {
       return null;
     }
-    const trimmed = raw.trim();
-    return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
+    const key = sourceKey || 'store';
+    let working = raw;
+    if (key === 'fp') {
+      working = working.replace(/#/g, '');
+    }
+    const trimmed = working.trim();
+    if (trimmed.length > 6) {
+      return null;
+    }
+    if (key === 'store') {
+      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'point') {
+      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'fp') {
+      return BOARD_NUMBER_DIGIT_3_TO_6.test(trimmed) ? trimmed : null;
+    }
+    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
+      return null;
+    }
+    return trimmed.toUpperCase();
   }
 
   /** @param {() => void} fn — test hook */
@@ -166,8 +219,8 @@
     const preparing = [];
     const readyIds = {};
     const prepIds = {};
-    const readyNumbers = new Set();
-    const prepNumbers = new Set();
+    const readyDedupeKeys = new Set();
+    const prepDedupeKeys = new Set();
     const list = Array.isArray(numberContent) ? numberContent : [];
 
     for (let i = 0; i < list.length; i += 1) {
@@ -175,15 +228,15 @@
       if (!row || typeof row !== 'object') {
         continue;
       }
-      const normalized = normalizeBoardDisplayNumber(row.number);
+      const parsed = parseSourceType(row.source_type);
+      if (!parsed) {
+        continue;
+      }
+      const normalized = normalizeBoardDisplayNumber(row.number, parsed.sourceKey);
       if (!normalized) {
         if (row.number !== undefined) {
           warnInvalidBoardNumberOnce(row.number);
         }
-        continue;
-      }
-      const parsed = parseSourceType(row.source_type);
-      if (!parsed) {
         continue;
       }
       const entry = {
@@ -193,30 +246,30 @@
         payloadIndex: i,
       };
       if (parsed.zone === 'ready') {
-        if (readyNumbers.has(normalized)) {
+        if (readyDedupeKeys.has(entry.id)) {
           continue;
         }
         if (!readyIds[entry.id]) {
           readyIds[entry.id] = true;
-          readyNumbers.add(normalized);
+          readyDedupeKeys.add(entry.id);
           ready.push(entry);
-          if (prepNumbers.has(normalized)) {
-            prepNumbers.delete(normalized);
+          if (prepDedupeKeys.has(entry.id)) {
+            prepDedupeKeys.delete(entry.id);
             for (let pi = preparing.length - 1; pi >= 0; pi -= 1) {
-              if (preparing[pi].number === normalized) {
+              if (preparing[pi].id === entry.id) {
                 delete prepIds[preparing[pi].id];
                 preparing.splice(pi, 1);
               }
             }
           }
         }
-      } else if (!readyNumbers.has(normalized)) {
-        if (prepNumbers.has(normalized)) {
+      } else if (!readyDedupeKeys.has(entry.id)) {
+        if (prepDedupeKeys.has(entry.id)) {
           continue;
         }
         if (!prepIds[entry.id]) {
           prepIds[entry.id] = true;
-          prepNumbers.add(normalized);
+          prepDedupeKeys.add(entry.id);
           preparing.push(entry);
         }
       }
@@ -224,7 +277,7 @@
 
     const prepFiltered = [];
     for (let j = 0; j < preparing.length; j += 1) {
-      if (!readyIds[preparing[j].id] && !readyNumbers.has(preparing[j].number)) {
+      if (!readyIds[preparing[j].id]) {
         prepFiltered.push(preparing[j]);
       }
     }

@@ -1,0 +1,63 @@
+{
+  "repro": {
+    "storeId": "zz-qa-ci-store",
+    "account": "zz-qa-ci-store",
+    "merchant_id": "Milksha",
+    "target": "milkshazz-qa-ci-store",
+    "number_content": [
+      {
+        "source_type": "From_milksha_point_OK",
+        "number": "578"
+      },
+      {
+        "source_type": "From_UberEat_OK",
+        "number": "C7458"
+      },
+      {
+        "source_type": "From_FoodPanda_OK",
+        "number": "6406"
+      },
+      {
+        "source_type": "From_Store_OK",
+        "number": "7112"
+      },
+      {
+        "source_type": "From_Store_OK",
+        "number": "8888"
+      },
+      {
+        "source_type": "From_UberEat_OK",
+        "number": "8888"
+      }
+    ],
+    "endpoint": "https://asia-east1-milksha-qms-dev.cloudfunctions.net",
+    "wireTextPreview": "{\"isEncrypt\":false,\"serviceSpecialData_Json\":{\"target\":\"milkshazz-qa-ci-store\",\"data\":{\"number_content\":[{\"source_type\":\"From_milksha_point_OK\",\"number\":\"578\"},{\"source_type\":\"From_UberEat_OK\",\"number\":\"C7458\"},{\"source_type\":\"From_FoodPanda_OK\",\"number\":\"6406\"},{\"source_type\":\"From_Store_OK\",\"number\":\"7112\"},{\"source_type\":\"From_Store_OK\",\"number\":\"8888\"},{\"source_type\":\"From_UberEat_OK\",\"number\":\"8888\"}],\"newsTicker_content\":[],\"newsTickerSpeed\":0}},\"merchant_id\":\"Milksha\",\"account\":\"zz-qa-ci-…",
+    "wireTextLength": 673,
+    "posSignSecretUsed": "<REDACTED>",
+    "clientThrown": null,
+    "cloudApiParsed": {
+      "merchant_id": "Milksha",
+      "account": "zz-qa-ci-store",
+      "isOK": false,
+      "information": "{\"isSuccess\":false,\"information\":\"叫號資料格式錯誤\"}",
+      "reslut": {
+        "CallingNumberMasterResponse": {
+          "result": "{\"isSuccess\":false,\"information\":\"叫號資料格式錯誤\"}",
+          "statusCode": "200"
+        }
+      },
+      "resultMd5": "ecf397c689d595b6f6761b8020ef048d",
+      "reesultMd5_ServerSignature": "dev-placeholder-server-signature",
+      "isEncrypted": false
+    }
+  },
+  "http": [
+    {
+      "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver",
+      "method": "POST",
+      "status": 200,
+      "bodyText": "{\"merchant_id\":\"Milksha\",\"account\":\"zz-qa-ci-store\",\"isOK\":false,\"information\":\"{\\\"isSuccess\\\":false,\\\"information\\\":\\\"叫號資料格式錯誤\\\"}\",\"reslut\":{\"CallingNumberMasterResponse\":{\"result\":\"{\\\"isSuccess\\\":false,\\\"information\\\":\\\"叫號資料格式錯誤\\\"}\",\"statusCode\":\"200\"}},\"resultMd5\":\"ecf397c689d595b6f6761b8020ef048d\",\"reesultMd5_ServerSignature\":\"dev-placeholder-server-signature\",\"isEncrypted\":false}"
+    }
+  ],
+  "httpLogCount": 5
+}
