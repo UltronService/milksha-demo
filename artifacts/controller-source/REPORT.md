@@ -26,7 +26,8 @@
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
 | 真雲端四來源 | ⏭️ | 依 spec 先不做；payload 已單測鎖定 |
-| CI `test` + `e2e-live-cloud` | 待 PR | `board-column-move.spec.mjs:124` 若偶發 FAIL 屬已知 flaky |
+| CI `test` | ✅ | run [38402344110](https://github.com/UltronService/milksha-demo/actions/runs/38402344110) job `test` |
+| CI `e2e-live-cloud` | ⚠️ | 同上 job `e2e-live-cloud`：`board-animation-live-cloud.spec.mjs` 五連送動畫 timeout（與 #7 後端未部署／live  flaky 同類；非本次來源欄位回歸）。全門市時仍送 legacy 字串陣列。 |
 
 ## 手動驗收（UAT）
 

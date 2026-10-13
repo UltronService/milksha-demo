@@ -106,6 +106,19 @@ test('cloud push_numbers params use no + sourceType cloud strings', function () 
   assert.equal(nc[1].source_type, 'From_UberEat_OK');
 });
 
+test('store-only ticket list maps to legacy string push_numbers (pre-backend deploy)', function () {
+  const { SendNumber, PushNumbersParams } = loadControllerSendNumber();
+  const def = SendNumber.sourceOptionForKey;
+  const params = PushNumbersParams.ticketsToPushNumbersParams(
+    [{ no: '2001', status: 'ready', sourceKey: 'store' }],
+    function (key) {
+      return def(key);
+    },
+  );
+  assert.equal(JSON.stringify(params.ready), JSON.stringify([{ no: '2001', sourceType: 'From_Store_OK' }]));
+  assert.equal(typeof params.ready[0].no, 'string');
+});
+
 test('push_numbers params round-trip legacy string entries as store', function () {
   const { PushNumbersParams } = loadControllerSendNumber();
   const nc = PushNumbersParams.pushNumbersParamsToNumberContent({
