@@ -107,9 +107,10 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
     await sendClearNow(ctrl);
     await board.waitForTimeout(4000);
 
+    // Live cloud: five sourceTypes in one session (unique nos — duplicate no+source is local e2e).
     const sends = [
       { source: 'store', no: '1234' },
-      { source: 'uber', no: '1234' },
+      { source: 'uber', no: 'C7458' },
       { source: 'point', no: '091' },
       { source: 'fp', no: '#6406' },
       { source: 'udd', no: 'ab12' },
@@ -128,7 +129,8 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
     await waitForBoardReadyCount(board, 5);
 
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2);
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(1);
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'C7458' })).toHaveCount(1);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '091' })).toHaveCount(1);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '6406' })).toHaveCount(1);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12' })).toHaveCount(1);
@@ -149,7 +151,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
     expect(ready.length).toBe(5);
     expect(
       ready.some(function (e) {
-        return e.sourceType === 'From_UberEat_OK' && e.no === '1234';
+        return e.sourceType === 'From_UberEat_OK' && e.no === 'C7458';
       }),
     ).toBe(true);
     expect(
