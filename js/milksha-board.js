@@ -20,6 +20,9 @@
     { prefix: 'From_Udd_', key: 'udd' },
   ];
 
+  /** Cloud / POS spelling variants (e.g. QA live2 `From_UberEats_OK`). */
+  const SOURCE_TYPE_ALIASES = [{ prefix: 'From_UberEats_', key: 'uber' }];
+
   const LAYOUT_LANDSCAPE = {
     W: 1920,
     H: 1080,
@@ -76,12 +79,14 @@
    * @param {string} sourceType
    * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
    */
-  function parseSourceType(sourceType) {
-    if (!sourceType || typeof sourceType !== 'string') {
-      return null;
-    }
-    for (let i = 0; i < SOURCE_DEFS.length; i += 1) {
-      const def = SOURCE_DEFS[i];
+  /**
+   * @param {string} sourceType
+   * @param {Array<{ prefix: string, key: string }>} defs
+   * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
+   */
+  function matchSourceTypeDefs(sourceType, defs) {
+    for (let i = 0; i < defs.length; i += 1) {
+      const def = defs[i];
       if (sourceType.indexOf(def.prefix) !== 0) {
         continue;
       }
@@ -95,6 +100,30 @@
       return null;
     }
     return null;
+  }
+
+  /**
+   * @param {string} sourceType
+   * @returns {{ sourceKey: string, zone: 'ready' | 'preparing' } | null}
+   */
+  function parseSourceType(sourceType) {
+    if (!sourceType || typeof sourceType !== 'string') {
+      return null;
+    }
+    const known = matchSourceTypeDefs(sourceType, SOURCE_DEFS);
+    if (known) {
+      return known;
+    }
+    const aliased = matchSourceTypeDefs(sourceType, SOURCE_TYPE_ALIASES);
+    if (aliased) {
+      return aliased;
+    }
+    const unkMatch = sourceType.match(/^(From_.+)_(OK|Preparing)$/);
+    if (!unkMatch) {
+      return null;
+    }
+    const zone = unkMatch[2] === 'OK' ? 'ready' : 'preparing';
+    return { sourceKey: 'unk:' + unkMatch[1], zone: zone };
   }
 
   /**
@@ -125,7 +154,9 @@
   }
 
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_ALNUM_1_TO_6 = /^[A-Za-z0-9]{1,6}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_6 = /^\d{3,6}$/;
+  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
   /**
@@ -141,7 +172,7 @@
   }
 
   /**
-   * Board display guard — store: exact four digits; other sources: 1–6 alnum (uppercase).
+   * Board display guard — store: 4 digits; point: 3–4 digits; others: 3–6 alnum (uppercase).
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
@@ -156,10 +187,19 @@
       working = working.replace(/#/g, '');
     }
     const trimmed = working.trim();
+    if (trimmed.length > 6) {
+      return null;
+    }
     if (key === 'store') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
-    if (!BOARD_NUMBER_ALNUM_1_TO_6.test(trimmed)) {
+    if (key === 'point') {
+      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'fp') {
+      return BOARD_NUMBER_DIGIT_3_TO_6.test(trimmed) ? trimmed : null;
+    }
+    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
       return null;
     }
     return trimmed.toUpperCase();
