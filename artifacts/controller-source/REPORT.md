@@ -1,8 +1,8 @@
 # 控制端「選來源送號」REPORT
 
 - **分支：** `cursor/controller-source-667f`
-- **資產版本：** `20261013b`
-- **真雲端店：** 僅 `zz-qa-ci-store`（本次 #7 僅單元測試 mock，未跑 live cloud）
+- **資產版本：** `20261013c`
+- **真雲端店：** 僅 `zz-qa-ci-store`（#7 `e2e-live-cloud` 單次 batch `push_numbers`）
 
 ## 紅→綠（TDD）
 
@@ -25,9 +25,9 @@
 | e2e 快速送號回歸 | ✅ | `home-board-quick-send-one.spec.mjs` |
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
-| 真雲端五來源 5 格 | 待 CI | `controller-source-live-cloud.spec.mjs`（五來源唯一號；**同號 1234 門市+Uber 兩格**見本機 `controller-source-quick-send.spec.mjs`） |
-| CI `test` | ✅ | [38418806349](https://github.com/UltronService/milksha-demo/actions/runs/38418806349) job `test` |
-| CI `e2e-live-cloud` | ⚠️ 重試中 | 同上：`controller-source-live-cloud` 控制端已有 5 票但看板同步慢；已加 `triggerDevicePoll`／輪詢 |
+| 真雲端五來源 5 格 + 1234×2 | 待 CI | `controller-source-live-cloud.spec.mjs`（batch devCommand，非 POS 逐步） |
+| CI `test` | ✅ | 239 tests |
+| CI `e2e-live-cloud` | 待 CI | 上一版 POS 逐步：5 格但 1234 僅 1 格 → 改 batch |
 
 ## 手動驗收（UAT）
 
