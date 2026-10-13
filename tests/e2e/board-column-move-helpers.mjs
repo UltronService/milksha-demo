@@ -97,6 +97,135 @@ export function transformTranslateY(transform) {
 }
 
 /**
+ * Apply payload and sample motion in the same browser turn sequence (avoids parallel poll race).
+ * @param {import('@playwright/test').Page} page
+ * @param {Array<Record<string, string>>} payloadRows
+ * @param {{ kind: 'slot', zone: 'prep' | 'ready', slotIndex: number } | { kind: 'enterExit', zone: 'prep' | 'ready', pushedNumber: string, exitSlotIndex?: number, enterSlotIndex?: number } | { kind: 'enterExitNewest', zone: 'prep' | 'ready', pushedNumber: string, newest: string, exitSlotIndex?: number, enterSlotIndex?: number }} layout
+ * @param {{ samples?: number, intervalMs?: number, postPayloadRaf?: 'none' | 'double' }} [opts]
+ */
+export async function pollMotionSamplesInPage(page, payloadRows, layout, opts = {}) {
+  const sampleCount = opts.samples ?? 28;
+  const intervalMs = opts.intervalMs ?? 16;
+  const postPayloadRaf = opts.postPayloadRaf ?? 'double';
+  return page.evaluate(
+    async ({ rows, layout: layoutArg, sampleCount: count, gap, rafMode }) => {
+      function chipMotionSampleAtSlot(zoneKey, idx) {
+        const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+        if (!zoneEl) {
+          return null;
+        }
+        const cells = [...zoneEl.querySelectorAll('.milksha-num-cell')];
+        const cell = cells[idx];
+        if (!cell) {
+          return null;
+        }
+        const chip = cell.querySelector('.milksha-board-chip:not(.milksha-board-chip--layer-float)');
+        if (!chip) {
+          const floats = [...zoneEl.querySelectorAll('.milksha-board-chip--layer-float')];
+          const float = floats.find((el) => {
+            const r = el.getBoundingClientRect();
+            const cr = cell.getBoundingClientRect();
+            return Math.abs(r.left - cr.left) < 40 && Math.abs(r.top - cr.top) < 80;
+          });
+          if (!float) {
+            return null;
+          }
+          const cs = getComputedStyle(float);
+          const fr = float.getBoundingClientRect();
+          return {
+            opacity: cs.opacity,
+            transform: cs.transform,
+            top: fr.top,
+            left: fr.left,
+            float: true,
+          };
+        }
+        const cs = getComputedStyle(chip);
+        const cr = chip.getBoundingClientRect();
+        return {
+          opacity: cs.opacity,
+          transform: cs.transform,
+          top: cr.top,
+          left: cr.left,
+          float: false,
+        };
+      }
+
+      function chipMotionSampleForNumber(zoneKey, num) {
+        const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
+        const chip = zoneEl?.querySelector('.milksha-board-chip[data-item-id="store:' + num + '"]');
+        if (!chip || chip.classList.contains('milksha-board-chip--layer-float')) {
+          return null;
+        }
+        const cs = getComputedStyle(chip);
+        const r = chip.getBoundingClientRect();
+        return {
+          opacity: cs.opacity,
+          transform: cs.transform,
+          top: r.top,
+          left: r.left,
+          float: false,
+        };
+      }
+
+      window.QMS.runtime.applyPayload(rows);
+      if (rafMode === 'double') {
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+          });
+        });
+      }
+      const out = [];
+      for (let i = 0; i < count; i += 1) {
+        if (layoutArg.kind === 'slot') {
+          out.push(chipMotionSampleAtSlot(layoutArg.zone, layoutArg.slotIndex));
+        } else if (layoutArg.kind === 'enterExit') {
+          const enter =
+            chipMotionSampleForNumber(layoutArg.zone, layoutArg.pushedNumber) ||
+            chipMotionSampleAtSlot(layoutArg.zone, layoutArg.enterSlotIndex);
+          out.push({
+            exit: chipMotionSampleAtSlot(layoutArg.zone, layoutArg.exitSlotIndex),
+            enter,
+          });
+        } else {
+          const enter =
+            chipMotionSampleForNumber(layoutArg.zone, layoutArg.pushedNumber) ||
+            chipMotionSampleAtSlot(layoutArg.zone, layoutArg.enterSlotIndex);
+          out.push({
+            exit: chipMotionSampleAtSlot(layoutArg.zone, layoutArg.exitSlotIndex),
+            enter,
+            newest: chipMotionSampleForNumber(layoutArg.zone, layoutArg.newest),
+          });
+        }
+        if (i < count - 1) {
+          await new Promise((resolve) => {
+            setTimeout(resolve, gap);
+          });
+        }
+      }
+      return out;
+    },
+    {
+      rows: payloadRows,
+      layout: {
+        kind: layout.kind,
+        zone: layout.zone,
+        slotIndex: layout.kind === 'slot' ? layout.slotIndex : undefined,
+        exitSlotIndex: layout.exitSlotIndex ?? GRID_ROWS - 1,
+        enterSlotIndex: layout.enterSlotIndex ?? GRID_ROWS,
+        pushedNumber: layout.pushedNumber,
+        newest: layout.newest,
+      },
+      sampleCount,
+      gap: intervalMs,
+      rafMode: postPayloadRaf,
+    },
+  );
+}
+
+/**
+ * Node-side poll after trigger (for triggers that must run in Node, e.g. pulse hooks).
  * @param {import('@playwright/test').Page} page
  * @param {() => Promise<void>} trigger
  * @param {() => Promise<object | null>} sample
@@ -105,15 +234,14 @@ export function transformTranslateY(transform) {
 export async function pollMotionSamples(page, trigger, sample, opts = {}) {
   const samples = opts.samples ?? 20;
   const intervalMs = opts.intervalMs ?? 16;
+  await trigger();
   const out = [];
-  const poll = (async () => {
-    for (let i = 0; i < samples; i += 1) {
-      out.push(await sample());
+  for (let i = 0; i < samples; i += 1) {
+    out.push(await sample());
+    if (i < samples - 1) {
       await page.waitForTimeout(intervalMs);
     }
-  })();
-  await trigger();
-  await poll;
+  }
   return out;
 }
 

@@ -8,10 +8,8 @@ import {
   sampleIntegrityDuringUpdate,
 } from './board-animation-helpers.mjs';
 import {
-  chipMotionSampleAtSlot,
-  chipMotionSampleForNumberWithLeft,
   assertEnterFromAboveMotion,
-  pollMotionSamples,
+  pollMotionSamplesInPage,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
   prepPayload,
@@ -37,10 +35,10 @@ test.describe('column-move animation boundary 1–10', () => {
     const nums = sequentialNumbers(6201, 5);
     await applyPayload(page, prepPayload(nums));
     await page.waitForTimeout(400);
-    const samples = await pollMotionSamples(
+    const samples = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, prepPayload([...nums, nums[nums.length - 1] + 1])),
-      () => chipMotionSampleAtSlot(page, 'prep', GRID_ROWS - 1),
+      prepPayload([...nums, nums[nums.length - 1] + 1]),
+      { kind: 'slot', zone: 'prep', slotIndex: GRID_ROWS - 1 },
       { samples: 22, intervalMs: 16 },
     );
     assertDownwardExitMotion(samples);
@@ -55,14 +53,10 @@ test.describe('column-move animation boundary 1–10', () => {
     const newest = String(nums[nums.length - 1] + 1);
     await applyPayload(page, prepPayload(nums));
     await page.waitForTimeout(400);
-    const combined = await pollMotionSamples(
+    const combined = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, prepPayload([...nums, Number(newest)])),
-      async () => ({
-        exit: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS - 1),
-        enter: await chipMotionSampleAtSlot(page, 'prep', GRID_ROWS),
-        newest: await chipMotionSampleForNumberWithLeft(page, 'prep', newest),
-      }),
+      prepPayload([...nums, Number(newest)]),
+      { kind: 'enterExitNewest', zone: 'prep', pushedNumber: pushed, newest },
       { samples: 28, intervalMs: 16 },
     );
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
@@ -81,10 +75,10 @@ test.describe('column-move animation boundary 1–10', () => {
     const prepTen = sequentialNumbers(6401, 10);
     await applyPayload(page, prepPayload(prepTen));
     await page.waitForTimeout(400);
-    const prepSamples = await pollMotionSamples(
+    const prepSamples = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, prepPayload([...prepTen, 6411])),
-      () => chipMotionSampleAtSlot(page, 'prep', 9),
+      prepPayload([...prepTen, 6411]),
+      { kind: 'slot', zone: 'prep', slotIndex: 9 },
       { samples: 22, intervalMs: 16 },
     );
     assertDownwardExitMotion(prepSamples);
@@ -94,10 +88,10 @@ test.describe('column-move animation boundary 1–10', () => {
     const readyTen = sequentialNumbers(6501, 10);
     await applyPayload(page, readyPayload(readyTen));
     await page.waitForTimeout(400);
-    const readySamples = await pollMotionSamples(
+    const readySamples = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, readyPayload([...readyTen, 6511])),
-      () => chipMotionSampleAtSlot(page, 'ready', 9),
+      readyPayload([...readyTen, 6511]),
+      { kind: 'slot', zone: 'ready', slotIndex: 9 },
       { samples: 22, intervalMs: 16 },
     );
     assertDownwardExitMotion(readySamples);
@@ -110,10 +104,10 @@ test.describe('column-move animation boundary 1–10', () => {
     const nums = sequentialNumbers(6601, 5);
     await applyPayload(page, readyPayload(nums));
     await page.waitForTimeout(400);
-    const samples = await pollMotionSamples(
+    const samples = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, readyPayload([...nums, nums[nums.length - 1] + 1])),
-      () => chipMotionSampleAtSlot(page, 'ready', GRID_ROWS - 1),
+      readyPayload([...nums, nums[nums.length - 1] + 1]),
+      { kind: 'slot', zone: 'ready', slotIndex: GRID_ROWS - 1 },
       { samples: 22, intervalMs: 16 },
     );
     assertDownwardExitMotion(samples);
@@ -128,14 +122,11 @@ test.describe('column-move animation boundary 1–10', () => {
     const newest = String(nums[nums.length - 1] + 1);
     await applyPayload(page, readyPayload(nums));
     await page.waitForTimeout(400);
-    const combined = await pollMotionSamples(
+    const combined = await pollMotionSamplesInPage(
       page,
-      () => applyPayload(page, readyPayload([...nums, Number(newest)])),
-      async () => ({
-        exit: await chipMotionSampleAtSlot(page, 'ready', GRID_ROWS - 1),
-        enter: await chipMotionSampleAtSlot(page, 'ready', GRID_ROWS),
-      }),
-      { samples: 28, intervalMs: 16 },
+      readyPayload([...nums, Number(newest)]),
+      { kind: 'enterExit', zone: 'ready', pushedNumber: pushed },
+      { samples: 28, intervalMs: 16, postPayloadRaf: 'none' },
     );
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
@@ -261,33 +252,18 @@ for (const zone of ['prep', 'ready']) {
         await applyPayload(page, payloadFn(prev));
         await page.waitForTimeout(350);
         const newest = String(next[next.length - 1]);
-        let applyHook = null;
-        const pulsePromise =
-          zone === 'ready'
-            ? (async () => {
-                await new Promise((resolve) => {
-                  applyHook = resolve;
-                });
-                await assertReadyPulseOnNumber(page, newest);
-              })()
-            : null;
-        const combined = await pollMotionSamples(
+        const combined = await pollMotionSamplesInPage(
           page,
-          async () => {
-            await applyPayload(page, payloadFn(next));
-            if (applyHook) {
-              applyHook();
-            }
+          payloadFn(next),
+          { kind: 'enterExit', zone, pushedNumber: pushed },
+          {
+            samples: count >= 10 ? 50 : 36,
+            intervalMs: 12,
+            postPayloadRaf: zone === 'ready' ? 'none' : 'double',
           },
-          async () => {
-            const enterSlot = await chipMotionSampleAtSlot(page, zone, GRID_ROWS);
-            const enterPushed = await chipMotionSampleForNumberWithLeft(page, zone, pushed);
-            return { exit: await chipMotionSampleAtSlot(page, zone, GRID_ROWS - 1), enter: enterPushed || enterSlot };
-          },
-          { samples: count >= 10 ? 50 : 36, intervalMs: 12 },
         );
-        if (pulsePromise) {
-          await pulsePromise;
+        if (zone === 'ready') {
+          await assertReadyPulseOnNumber(page, newest);
         }
         const exitSamples = combined.map((c) => c.exit).filter(Boolean);
         const enterSamples = combined.map((c) => c.enter).filter(Boolean);
