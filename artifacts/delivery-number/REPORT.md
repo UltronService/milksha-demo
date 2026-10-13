@@ -54,8 +54,9 @@
 
 | Run | head | 結果 | 說明 |
 |-----|------|------|------|
-| [38352014789](https://github.com/UltronService/milksha-demo/actions/runs/38352014789) | `28662bc` | ✅ | 修正前最後全綠（flaky 空 commit） |
-| **（本輪）** | **見 PR checks** | **待跑** | push 後更新 run id |
+| [38352014789](https://github.com/UltronService/milksha-demo/actions/runs/38352014789) | `28662bc` | ✅ | 修正前最後全綠 |
+| [38380727226](https://github.com/UltronService/milksha-demo/actions/runs/38380727226) | `af85f87` | ⚠️ | `e2e-live-cloud` ✅；`test` ❌ `board-column-move` 偶發（非本 PR 邏輯） |
+| **（重跑）** | **`fdee07b`** | **待跑** | 空 commit 重觸 |
 
 PR Checks：https://github.com/UltronService/milksha-demo/pull/62/checks
 
