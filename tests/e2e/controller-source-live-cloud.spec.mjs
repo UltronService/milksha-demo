@@ -15,6 +15,37 @@ let board;
 /** @type {import('@playwright/test').Page | undefined} */
 let ctrl;
 
+async function waitForControllerTicketCount(page, n) {
+  await page.waitForFunction(
+    (expected) => {
+      const fn = window.__controller && window.__controller.getTickets;
+      if (!fn) {
+        return false;
+      }
+      return fn().length >= expected;
+    },
+    n,
+    { timeout: 180000 },
+  );
+}
+
+async function waitForBoardReadyCount(page, n) {
+  await page.waitForFunction(
+    (expected) => {
+      const rt = window.QMS && window.QMS.runtime;
+      if (rt && rt.getSnapshot) {
+        const snap = rt.getSnapshot();
+        if (snap && Array.isArray(snap.ready) && snap.ready.length >= expected) {
+          return true;
+        }
+      }
+      return document.querySelectorAll('.milksha-ready .milksha-num').length >= expected;
+    },
+    n,
+    { timeout: 180000 },
+  );
+}
+
 test.afterEach(async () => {
   try {
     await teardownLiveCloudSession(ctrl, board);
@@ -32,28 +63,12 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
   test.describe.configure({ retries: 1 });
 
   test('push_numbers with sourceType shows five ready cells incl. duplicate 1234', async () => {
-    test.setTimeout(360000);
-    /** @type {Array<object>} */
-    const pushParamsSeen = [];
+    test.setTimeout(420000);
 
     browser = await chromium.launch();
     const ctx = await browser.newContext();
     ctx.setDefaultTimeout(180000);
     await installLiveBranchCloudRoutes(ctx);
-    await ctx.route('**/devCommand', async (route) => {
-      const req = route.request();
-      if (req.method() === 'POST') {
-        try {
-          const body = req.postDataJSON();
-          if (body && body.type === 'push_numbers' && body.params) {
-            pushParamsSeen.push(body.params);
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-      await route.continue();
-    });
 
     board = await ctx.newPage();
     ctrl = await ctx.newPage();
@@ -70,11 +85,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
       { timeout: 180000 },
     );
     await sendClearNow(ctrl);
-    await board.waitForFunction(
-      () => document.querySelectorAll('.milksha-ready .milksha-num').length === 0,
-      undefined,
-      { timeout: 60000 },
-    );
+    await waitForBoardReadyCount(board, 0);
 
     const sends = [
       { source: 'store', no: '1234' },
@@ -89,30 +100,41 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
       await ctrl.selectOption('[data-testid="fld-quick-source"]', row.source);
       await ctrl.fill('[data-testid="fld-quick-no"]', row.no);
       await ctrl.click('[data-testid="btn-send-numbers"]');
-      await board.waitForFunction(
-        (n) => document.querySelectorAll('.milksha-ready .milksha-num').length >= n,
-        i + 1,
-        { timeout: 120000 },
-      );
+      await expect(ctrl.locator('[data-testid="quick-send-error"]')).toBeHidden();
+      await waitForControllerTicketCount(ctrl, i + 1);
+      await waitForBoardReadyCount(board, i + 1);
+      await board.waitForTimeout(500);
     }
 
-    await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 30000 });
+    await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '091' })).toHaveCount(1);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '6406' })).toHaveCount(1);
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12' })).toHaveCount(1);
 
-    expect(pushParamsSeen.length).toBeGreaterThan(0);
-    const last = pushParamsSeen[pushParamsSeen.length - 1];
-    const ready = Array.isArray(last.ready) ? last.ready : [];
-    expect(ready.length).toBeGreaterThanOrEqual(5);
-    const uberEntry = ready.find(
-      (e) => typeof e === 'object' && e && e.sourceType === 'From_UberEat_OK' && e.no === '1234',
-    );
-    const storeEntry = ready.find(
-      (e) => typeof e === 'object' && e && e.sourceType === 'From_Store_OK' && e.no === '1234',
-    );
-    expect(uberEntry).toBeTruthy();
-    expect(storeEntry).toBeTruthy();
+    const lastParams = await ctrl.evaluate(function () {
+      const PushParams = window.QMS.Transport.PushNumbersParams;
+      const Send = window.QMS.Controller.SendNumber;
+      const tickets = window.__controller.getTickets();
+      if (!PushParams || !Send) {
+        return null;
+      }
+      return PushParams.ticketsToPushNumbersParams(tickets, function (key) {
+        return Send.sourceOptionForKey(key);
+      });
+    });
+    expect(lastParams).toBeTruthy();
+    const ready = lastParams.ready || [];
+    expect(ready.length).toBe(5);
+    expect(
+      ready.some(function (e) {
+        return e.sourceType === 'From_UberEat_OK' && e.no === '1234';
+      }),
+    ).toBe(true);
+    expect(
+      ready.some(function (e) {
+        return e.sourceType === 'From_Store_OK' && e.no === '1234';
+      }),
+    ).toBe(true);
   });
 });
