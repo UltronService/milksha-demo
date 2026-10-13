@@ -29,21 +29,41 @@ async function waitForControllerTicketCount(page, n) {
   );
 }
 
+async function syncLiveCloudBoard(page) {
+  await page.evaluate(async function () {
+    const rc = window.receiverCloud;
+    if (!rc) {
+      return;
+    }
+    if (rc.triggerDevicePoll) {
+      await rc.triggerDevicePoll();
+    }
+    if (rc.triggerBoardPoll) {
+      await rc.triggerBoardPoll({ force: true });
+    }
+  });
+}
+
 async function waitForBoardReadyCount(page, n) {
-  await page.waitForFunction(
-    (expected) => {
+  const deadline = Date.now() + 240000;
+  while (Date.now() < deadline) {
+    await syncLiveCloudBoard(page);
+    const count = await page.evaluate(function () {
       const rt = window.QMS && window.QMS.runtime;
       if (rt && rt.getSnapshot) {
         const snap = rt.getSnapshot();
-        if (snap && Array.isArray(snap.ready) && snap.ready.length >= expected) {
-          return true;
+        if (snap && Array.isArray(snap.ready)) {
+          return snap.ready.length;
         }
       }
-      return document.querySelectorAll('.milksha-ready .milksha-num').length >= expected;
-    },
-    n,
-    { timeout: 180000 },
-  );
+      return document.querySelectorAll('.milksha-ready .milksha-num').length;
+    });
+    if (count >= n) {
+      return;
+    }
+    await page.waitForTimeout(2000);
+  }
+  throw new Error('board ready count did not reach ' + n);
 }
 
 test.afterEach(async () => {

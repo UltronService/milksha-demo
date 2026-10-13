@@ -26,7 +26,8 @@
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
 | 真雲端五來源 5 格 | 待 CI | `controller-source-live-cloud.spec.mjs`；後端 milksha-cloud PR #23（0577cff）已收 `{ no, sourceType }` |
-| CI `test` + `e2e-live-cloud` | 待最新 push | 見 PR #64 Actions |
+| CI `test` | ✅ | [38418806349](https://github.com/UltronService/milksha-demo/actions/runs/38418806349) job `test` |
+| CI `e2e-live-cloud` | ⚠️ 重試中 | 同上：`controller-source-live-cloud` 控制端已有 5 票但看板同步慢；已加 `triggerDevicePoll`／輪詢 |
 
 ## 手動驗收（UAT）
 
