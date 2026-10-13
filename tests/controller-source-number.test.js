@@ -118,6 +118,16 @@ test('store-only ticket list still emits { no, sourceType } for push_numbers', f
   assert.equal(JSON.stringify(params.ready), JSON.stringify([{ no: '2001', sourceType: 'From_Store_OK' }]));
 });
 
+test('push_numbers object entry accepts source_type alias', function () {
+  const { PushNumbersParams } = loadControllerSendNumber();
+  const nc = PushNumbersParams.pushNumbersParamsToNumberContent({
+    ready: [{ no: 'C7458', source_type: 'From_UberEat_OK' }],
+    preparing: [],
+  });
+  assert.equal(nc.length, 1);
+  assert.equal(nc[0].source_type, 'From_UberEat_OK');
+});
+
 test('push_numbers params round-trip legacy string entries as store', function () {
   const { PushNumbersParams } = loadControllerSendNumber();
   const nc = PushNumbersParams.pushNumbersParamsToNumberContent({

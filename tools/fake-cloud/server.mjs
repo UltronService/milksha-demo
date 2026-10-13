@@ -221,7 +221,10 @@ function pushEntryToRow(entry, zone) {
   }
   if (!entry || typeof entry !== 'object') return null;
   const no = entry.no != null ? String(entry.no).trim() : '';
-  const sourceType = entry.sourceType != null ? String(entry.sourceType).trim() : '';
+  let sourceType = entry.sourceType != null ? String(entry.sourceType).trim() : '';
+  if (!sourceType && entry.source_type != null) {
+    sourceType = String(entry.source_type).trim();
+  }
   if (!no || !sourceType) return null;
   return {
     no,

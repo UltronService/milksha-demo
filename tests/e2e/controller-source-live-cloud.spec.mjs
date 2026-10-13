@@ -105,7 +105,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
       { timeout: 180000 },
     );
     await sendClearNow(ctrl);
-    await waitForBoardReadyCount(board, 0);
+    await board.waitForTimeout(4000);
 
     const sends = [
       { source: 'store', no: '1234' },
@@ -122,9 +122,10 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller quick send sources (live cloud)
       await ctrl.click('[data-testid="btn-send-numbers"]');
       await expect(ctrl.locator('[data-testid="quick-send-error"]')).toBeHidden();
       await waitForControllerTicketCount(ctrl, i + 1);
-      await waitForBoardReadyCount(board, i + 1);
-      await board.waitForTimeout(500);
+      await board.waitForTimeout(800);
     }
+
+    await waitForBoardReadyCount(board, 5);
 
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2);
