@@ -25,9 +25,8 @@
 | e2e 快速送號回歸 | ✅ | `home-board-quick-send-one.spec.mjs` |
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
-| 真雲端五來源 5 格 + 1234×2 | 待 CI | `controller-source-live-cloud.spec.mjs`（batch devCommand，非 POS 逐步） |
-| CI `test` | ✅ | 239 tests |
-| CI `e2e-live-cloud` | 待 CI | 上一版 POS 逐步：5 格但 1234 僅 1 格 → 改 batch |
+| 真雲端五來源 5 格 + 1234×2 | ✅ | `controller-source-live-cloud.spec.mjs`（batch devCommand） |
+| CI 全綠（`b04f686`） | ✅ | [38443009729](https://github.com/UltronService/milksha-demo/actions/runs/38443009729) |
 
 ## 手動驗收（UAT）
 
