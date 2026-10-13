@@ -14,7 +14,7 @@
 | 4 | Uber／Udd 4–6 英數大寫 | `c7458` FAIL | PASS |
 | 5 | foodpanda 4–6 位、去 `#` | `#6406` FAIL | PASS |
 | 6 | 不符不送、紅字 | e2e 無 `#quick-send-error` FAIL | `controller-source-quick-send.spec.mjs` invalid case PASS |
-| 7 | 雲端 push_numbers `{ no, sourceType }` | devCommand 只收字串 FAIL | `controller-source-number.test.js` + `dev-command-validation.test.js` push_numbers case PASS |
+| 7 | 雲端 push_numbers `{ no, sourceType }` | devCommand 只收字串 FAIL | 單測 PASS；真雲端 `controller-source-live-cloud.spec.mjs`（zz-qa-ci-store，測完 clear_now） |
 | 8 | 本機兩格（1234 門市 + 1234 Uber） | e2e count≠2 FAIL | `controller-source-quick-send.spec.mjs` PASS |
 
 ## 通過／不通過
@@ -25,9 +25,8 @@
 | e2e 快速送號回歸 | ✅ | `home-board-quick-send-one.spec.mjs` |
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
-| 真雲端四來源 | ⏭️ | 依 spec 先不做；payload 已單測鎖定 |
-| CI `test` | ✅ | run [38402344110](https://github.com/UltronService/milksha-demo/actions/runs/38402344110) job `test` |
-| CI `e2e-live-cloud` | ⚠️ | 同上 job `e2e-live-cloud`：`board-animation-live-cloud.spec.mjs` 五連送動畫 timeout（與 #7 後端未部署／live  flaky 同類；非本次來源欄位回歸）。全門市時仍送 legacy 字串陣列。 |
+| 真雲端五來源 5 格 | 待 CI | `controller-source-live-cloud.spec.mjs`；後端 milksha-cloud PR #23（0577cff）已收 `{ no, sourceType }` |
+| CI `test` + `e2e-live-cloud` | 待最新 push | 見 PR #64 Actions |
 
 ## 手動驗收（UAT）
 

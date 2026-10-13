@@ -54,6 +54,7 @@ jobs:
           npx playwright test
           tests/e2e/board-animation-live-cloud.spec.mjs
           tests/e2e/controller-simulation-live-cloud.spec.mjs
+          tests/e2e/controller-source-live-cloud.spec.mjs
         env:
           LIVE_CLOUD_STORE_ID: zz-qa-ci-store
           MILKSHA_E2E_ARTIFACTS: ${{ runner.temp }}/milksha-e2e-artifacts

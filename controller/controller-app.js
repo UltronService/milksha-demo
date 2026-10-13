@@ -936,11 +936,8 @@
   }
 
   function ticketsToPushParams() {
-    const allStoreSource = tickets.every(function (t) {
-      return (t.sourceKey || 'store') === 'store';
-    });
     const PushParams = window.QMS.Transport && window.QMS.Transport.PushNumbersParams;
-    if (PushParams && PushParams.ticketsToPushNumbersParams && !allStoreSource) {
+    if (PushParams && PushParams.ticketsToPushNumbersParams) {
       return PushParams.ticketsToPushNumbersParams(tickets, sourceDef);
     }
     const ready = [];
