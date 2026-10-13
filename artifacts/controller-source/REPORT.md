@@ -1,8 +1,17 @@
 # 控制端「選來源送號」REPORT
 
 - **分支：** `cursor/controller-source-667f`
+- **PR：** [#64](https://github.com/UltronService/milksha-demo/pull/64)（ready for review）
 - **資產版本：** `20261013c`
-- **真雲端店：** 僅 `zz-qa-ci-store`（#7 `e2e-live-cloud` 單次 batch `push_numbers`）
+- **真雲端店：** 僅 `zz-qa-ci-store`
+
+## Skip（負責人 10/14 06:18）
+
+| 測試 | 狀態 | 原因 |
+|------|------|------|
+| `tests/e2e/controller-source-live-cloud.spec.mjs` › `push_numbers five sourceTypes via controller devCommand payload` | **skip** | 負責人 10/14 決定暫不處理「clear_now 後再 push_numbers」真雲端情境，之後再說 |
+
+其餘 e2e／單元判定未放寬。
 
 ## 紅→綠（TDD）
 
@@ -14,19 +23,19 @@
 | 4 | Uber／Udd 4–6 英數大寫 | `c7458` FAIL | PASS |
 | 5 | foodpanda 4–6 位、去 `#` | `#6406` FAIL | PASS |
 | 6 | 不符不送、紅字 | e2e 無 `#quick-send-error` FAIL | `controller-source-quick-send.spec.mjs` invalid case PASS |
-| 7 | 雲端 push_numbers `{ no, sourceType }` | devCommand 只收字串 FAIL | 單測 PASS；真雲端 `controller-source-live-cloud.spec.mjs`（zz-qa-ci-store，測完 clear_now） |
+| 7 | 雲端 push_numbers `{ no, sourceType }` | devCommand 只收字串 FAIL | 單元 PASS；真雲端 spec **skip**（見上） |
 | 8 | 本機兩格（1234 門市 + 1234 Uber） | e2e count≠2 FAIL | `controller-source-quick-send.spec.mjs` PASS |
 
 ## 通過／不通過
 
 | 檢查 | 結果 | 備註 |
 |------|------|------|
-| 單元 `npm test`（237） | ✅ | 含 `controller-source-number.test.js` |
+| 單元 `npm test` | ✅ | 239 tests |
 | e2e 快速送號回歸 | ✅ | `home-board-quick-send-one.spec.mjs` |
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
-| 真雲端五來源 5 格 + 1234×2 | ✅ | `controller-source-live-cloud.spec.mjs`（batch devCommand） |
-| CI 全綠（`b04f686`） | ✅ | [38443009729](https://github.com/UltronService/milksha-demo/actions/runs/38443009729) |
+| 真雲端 clear_now→push_numbers | ⏭ skip | `controller-source-live-cloud.spec.mjs` |
+| CI | 見下方 head | `test` + `e2e-live-cloud` |
 
 ## 手動驗收（UAT）
 

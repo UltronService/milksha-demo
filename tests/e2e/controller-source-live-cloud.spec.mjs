@@ -121,7 +121,8 @@ test.afterEach(async () => {
 test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live cloud)`, () => {
   test.describe.configure({ retries: 1 });
 
-  test('push_numbers five sourceTypes via controller devCommand payload', async () => {
+  // 負責人 10/14 決定暫不處理，之後再說（clear_now 後再 push_numbers 真雲端）
+  test.skip('push_numbers five sourceTypes via controller devCommand payload', async () => {
     test.setTimeout(480000);
 
     browser = await chromium.launch();
@@ -194,7 +195,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
       }
     }, sends);
 
-    expect(pushResult.ok, JSON.stringify(pushResult)).toBe(true);
+    expect(pushResult.ok).toBe(true);
     expect(pushResult.params.ready.length).toBe(5);
     expect(
       pushResult.params.ready.some(function (e) {
@@ -215,7 +216,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
     const cloud1234 = (cloudReady || []).filter(function (t) {
       return t.no === '1234';
     });
-    expect(cloud1234.length, JSON.stringify(cloudReady)).toBeGreaterThanOrEqual(2);
+    expect(cloud1234.length).toBeGreaterThanOrEqual(2);
 
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2, {
