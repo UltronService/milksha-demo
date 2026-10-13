@@ -119,6 +119,58 @@
     return { ok: true, list: list };
   }
 
+  const SOURCE_TYPE_PUSH_RE = /^From_[A-Za-z0-9_]+_(OK|Preparing)$/;
+
+  function normalizePushNumbersEntry(entry, label) {
+    if (typeof entry === 'string' || typeof entry === 'number') {
+      const no = String(entry).trim();
+      if (!no) {
+        return invalidCommandParams(label + ' 不可含空白號碼');
+      }
+      if (no.length > 32) {
+        return invalidCommandParams(label + ' 單號過長');
+      }
+      return { ok: true, entry: no };
+    }
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      return invalidCommandParams(label + ' 項目格式錯誤');
+    }
+    const keys = Object.keys(entry);
+    if (keys.length !== 2 || keys.indexOf('no') < 0 || keys.indexOf('sourceType') < 0) {
+      return invalidCommandParams(label + ' 項目須為 { no, sourceType }');
+    }
+    const no = String(entry.no == null ? '' : entry.no).trim();
+    const sourceType = String(entry.sourceType == null ? '' : entry.sourceType).trim();
+    if (!no) {
+      return invalidCommandParams(label + ' 不可含空白號碼');
+    }
+    if (no.length > 32) {
+      return invalidCommandParams(label + ' 單號過長');
+    }
+    if (!SOURCE_TYPE_PUSH_RE.test(sourceType)) {
+      return invalidCommandParams(label + ' sourceType 格式不正確');
+    }
+    return { ok: true, entry: { no: no, sourceType: sourceType } };
+  }
+
+  function normalizePushNumbersList(value, label) {
+    if (value === undefined || value === null) {
+      return { ok: true, list: [] };
+    }
+    if (!Array.isArray(value)) {
+      return invalidCommandParams(label + ' 必須為陣列');
+    }
+    const list = [];
+    for (let i = 0; i < value.length; i += 1) {
+      const norm = normalizePushNumbersEntry(value[i], label);
+      if (!norm.ok) {
+        return norm;
+      }
+      list.push(norm.entry);
+    }
+    return { ok: true, list: list };
+  }
+
   function normalizeParams(type, params) {
     const allowed = COMMAND_PARAM_KEYS[type];
     if (!allowed) {
@@ -133,11 +185,11 @@
     }
     const out = {};
     if (type === 'push_numbers') {
-      const readyNorm = normalizeStringNumberList(raw.ready, 'ready');
+      const readyNorm = normalizePushNumbersList(raw.ready, 'ready');
       if (!readyNorm.ok) {
         return readyNorm;
       }
-      const prepNorm = normalizeStringNumberList(raw.preparing, 'preparing');
+      const prepNorm = normalizePushNumbersList(raw.preparing, 'preparing');
       if (!prepNorm.ok) {
         return prepNorm;
       }

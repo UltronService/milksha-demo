@@ -1256,15 +1256,20 @@
         applyNumberContent([], applySeq, { silent: true, boardUpdatedAt });
         noteAppliedCloudBoardUpdatedAt(boardUpdatedAt);
       } else if (type === 'push_numbers') {
-        const ready = Array.isArray(params.ready) ? params.ready : [];
-        const preparing = Array.isArray(params.preparing) ? params.preparing : [];
-        const nc = [];
-        ready.forEach(function (no) {
-          nc.push({ source_type: 'From_Store_OK', number: String(no) });
-        });
-        preparing.forEach(function (no) {
-          nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
-        });
+        const PushParams = QMS.Transport && QMS.Transport.PushNumbersParams;
+        const nc = PushParams
+          ? PushParams.pushNumbersParamsToNumberContent(params)
+          : [];
+        if (!PushParams) {
+          const ready = Array.isArray(params.ready) ? params.ready : [];
+          const preparing = Array.isArray(params.preparing) ? params.preparing : [];
+          ready.forEach(function (no) {
+            nc.push({ source_type: 'From_Store_OK', number: String(no) });
+          });
+          preparing.forEach(function (no) {
+            nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
+          });
+        }
         const seq = await resolveCommandBoardSeq(cmd, deviceData);
         applyNumberContent(nc, seq, { silent: false });
         try {

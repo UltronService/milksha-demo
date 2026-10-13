@@ -46,6 +46,15 @@ test('devCommand validation matches fake-cloud module', async function () {
     { storeId: 's120030', deviceId: 'stb-01', type: 'restore', params: { delayMs: 1 } },
     { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 60001 } },
     { storeId: 's120030', deviceId: 'stb-01', type: 'slow', params: { delayMs: 1.5 } },
+    {
+      storeId: 's120030',
+      deviceId: 'stb-01',
+      type: 'push_numbers',
+      params: {
+        ready: [{ no: '1234', sourceType: 'From_Store_OK' }],
+        preparing: [{ no: '091', sourceType: 'From_milksha_point_Preparing' }],
+      },
+    },
   ];
   for (const c of cases) {
     const b = browser.buildDevCommandRequest(c);
