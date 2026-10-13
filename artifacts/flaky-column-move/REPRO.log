@@ -1,0 +1,7 @@
+# Local repro (main cf59d1c, 2026-10-13)
+
+30x grep "5 ready:": pass=25 fail=5 (16.7%)
+20x playwright no tmux: pass=17 fail=3 (15%)
+30x grep "2 prep:": pass=30 fail=0 (0%)
+20x stress-ng --cpu 2: pass=16 fail=4 (20%)
+poll-order-experiment (tmux web-server): parallelPass=1/20 sequentialPass=17/20
