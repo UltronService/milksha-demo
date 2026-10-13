@@ -1,75 +1,58 @@
-# posReceiver「叫號資料格式錯誤」— 結構化除錯（僅假設，未修後端／控制端）
+# posReceiver「叫號資料格式錯誤」— 已查明（測試腳本簽章問題）
 
-> 店別：**`zz-qa-ci-store`**（勿用 `zz-qa-store-a`）  
-> 機密：`<REDACTED>`  
-> 測後已 **`clear_now` 清空**該店。
+> **結論：** 後端日誌為 **`signature_invalid`**（在校驗號碼前即拒絕）。**不是**看板第二道過濾，**不是**雲端 business 規則拒絕 578／外送號。  
+> **根因：** 本 repo 探測腳本送出的 POS 包 **簽章無效**（`merchant_id` 大小寫、`posSignSecret`、canonical 字串與 wire 內 `timeStmp`／Md5 須一致）。  
+> **店別：** `zz-qa-ci-store`（勿用 `zz-qa-store-a`）。機密 **`<REDACTED>`**。
 
-## 錯誤來源（看板 vs 雲端）
+## 後端對照（已確認）
 
-| 層級 | 結果 |
-|------|------|
-| 看板端送出前 | **未拒絕**（控制端完成簽名並 POST；無 client throw） |
-| HTTP | **`POST posReceiver` → 200 OK** |
-| 雲端回應本體 | **`isOK: false`**，`information` 內嵌 JSON：`isSuccess:false`, **`information":"叫號資料格式錯誤"`**（`CallingNumberMasterResponse.statusCode` 字串 `"200"` 為內層 POS 包裝，非 HTTP 失敗） |
+| 時間（後端紀錄） | 店 | 後端判定 |
+|------------------|-----|----------|
+| 10/12 23:21:18 | zz-qa-ci-store | **signature_invalid** |
+| 10/13 12:09:50 | zz-qa-ci-store | **signature_invalid** |
+| 10/13 12:10:26 | zz-qa-ci-store | **signature_invalid** |
 
-**結論：** 訊息由 **雲端／POS 接收鏈** 回傳，**不是**看板 `partitionNumberContent` 第二道過濾。
+HTTP 仍可能 **200**，body 內 **`isOK: false`** 且 `information` 嵌 JSON 文案 **「叫號資料格式錯誤」** — 為 **POS 包裝用語**，與後端內部 **簽章失敗** 一致，勿當成號碼格式問題。
+
+## 腳本哪裡送錯
+
+| 項目 | 錯誤送法（探測當時） | 應為 |
+|------|----------------------|------|
+| `merchant_id` | 小寫 `milksha`（來自 demo `Validate` 店別表） | **`Milksha`**（後端成功紀錄用大寫 M） |
+| `posSignSecret` | GitHub Pages `config/firebase.js` 占位 **`fake-…`**（35 字元） | dev 真實 POS 簽章金鑰（**`<REDACTED>`**，勿 commit） |
+| 簽章 canonical | `merchant_id\|account\|timeStmp\|serviceSpecialData_Json_Md5Hash` | 須與 **實際 POST wire** 內四欄 **逐字相同**（`MilkshaPosWire.signPosWire` 已保 inner JSON 與 Md5 一致） |
+
+**已修（僅測試腳本，未改功能程式）：** `scripts/repro-posreceiver-format-error.mjs`、`scripts/live-cloud-pos-screenshot.mjs` 固定 `merchant_id: 'Milksha'`；可選 **`MILKSHA_POS_SIGN_SECRET`** 注入覆寫 Pages 占位金鑰。
 
 ## 可重現命令
 
 ```bash
+# 本機須設定 dev POS 簽章金鑰（勿寫進 repo）
+export MILKSHA_POS_SIGN_SECRET='<REDACTED>'
+
 cd /path/to/milksha-demo
 LIVE_CLOUD_STORE_ID=zz-qa-ci-store node scripts/repro-posreceiver-format-error.mjs
+# 可選：簽章 OK 後截 1080p
+LIVE_CLOUD_STORE_ID=zz-qa-ci-store node scripts/live-cloud-pos-screenshot.mjs
 ```
 
-- 腳本會：連真雲 `milksha-qms-dev`、對 **`zz-qa-ci-store`** 組 PR #22 假資料 → **`number_content`** → **`posReceiver`** 簽名 POST → 寫 `artifacts/delivery-number/format-error-repro.json` → **`clear_now`**。
-- **端點：** `https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`  
-- **Auth：** 請求帶 Pages 內建 Firebase 設定（apiKey / posSignSecret 等皆 **`<REDACTED>`**；見 repo `config/firebase.js` 或 GitHub Pages 覆寫）。
+- **端點：** `POST https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`  
+- **範例 `number_content`（PR #22 轉換後）：** 578 迷點、`C7458` Uber、`6406` 熊貓、`7112` 門市、同號 `8888` 門市＋Uber（見 `tests/fixtures/today-board-cloud-tickets.js`）。  
+- **測後：** 腳本會 **`clear_now`** 清空 `zz-qa-ci-store`。
 
-### 本次送出的完整 `number_content`（邏輯內容）
+## 看板 vs 雲端（釐清）
 
-由 `tests/fixtures/today-board-cloud-tickets.js` ＋ 同號不同來源兩筆，經 **分支** `ticketsToNumberContent` 轉換：
+| 層 | 行為 |
+|----|------|
+| 看板端 | 未攔截；腳本在瀏覽器內簽完即 POST |
+| HTTP | 200 |
+| 雲端（簽章錯時） | **`signature_invalid`** → 對外常顯 **叫號資料格式錯誤** |
 
-```json
-[
-  { "source_type": "From_milksha_point_OK", "number": "578" },
-  { "source_type": "From_UberEat_OK", "number": "C7458" },
-  { "source_type": "From_FoodPanda_OK", "number": "6406" },
-  { "source_type": "From_Store_OK", "number": "7112" },
-  { "source_type": "From_Store_OK", "number": "8888" },
-  { "source_type": "From_UberEat_OK", "number": "8888" }
-]
-```
+## 與 `push_numbers` 的關係
 
-外層 POS 包（摘要）：`merchant_id: milksha`，`account: zz-qa-ci-store`，`serviceSpecialData_Json.target: milkshazz-qa-ci-store`，`isEncrypt: false`，另含 `timeStmp`／`signature`／`serviceSpecialData_Json_Md5Hash`（**`<REDACTED>`**）。
+- 控制端雲端 **`push_numbers`** **不收** 迷點 `578` 等 — **核准行為**（非本議題 bug）。  
+- 外送／迷點 **真雲端驗收** 由 **QA 依 POS 格式直打雲端**（總監路線）；勿改控制端。
 
-### HTTP 快照（2026-10-13 UTC 重跑）
+## CI run `38269937500`
 
-| 項目 | 值 |
-|------|-----|
-| URL | `https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver` |
-| Method | POST |
-| **HTTP status** | **200** |
-| Body（摘要） | `isOK:false`, `information:"{\"isSuccess\":false,\"information\":\"叫號資料格式錯誤\"}"` |
-
-完整機器可讀：`artifacts/delivery-number/format-error-repro.json`
-
-## 可驗證假設（可能性由高到低）
-
-1. **入口 A／`posReceiver` 仍只接受舊版門市 `number_content` 規則**（例如每列必為門市四碼、`source_type` 組合不在白名單），PR #22 的 **`today_board.tickets[]` + `sourceType`** 尚未接到此 HTTP 入口。  
-   - *驗證：* 後端查同一 payload 的 validator 日誌；或只送一筆 `From_Store_OK`/`7112` 對照（預期成功）。
-
-2. **QA 應走 POS 正式格式直打雲端**（總監路線），而非 demo 控制端組的 legacy `number_content` 多來源整包；目前 repro 故意模擬「整包 `number_content`」以對齊舊 Tammy 路徑。  
-   - *驗證：* 用 POS 規格書 wire 格式送同一組號，看是否仍 格式錯誤。
-
-3. **同批內重複鍵**（兩筆 `8888` 不同 `source_type`）在 **接收端** 尚未支援，整批拒絕。  
-   - *驗證：* 去掉兩筆 `8888` 或只留一筆再 POST，比對 `isOK`。
-
-4. **迷點／外送列與門市混在同一 `number_content` 時，雲端 schema 版本未開**（feature flag／店別設定）。  
-   - *驗證：* 僅送單一來源一筆（578 only / C7458 only）分四次試。
-
-5. **`target`／`account`／簽名欄位與 payload 不一致導致進錯 validator 分支**（機率較低；HTTP 200 且訊息為「格式」而非簽名錯）。  
-   - *驗證：* 後端對照 `zz-qa-ci-store` 白名單與 target 對照表。
-
-## 與 CI 失敗 run `38269937500` 的關係
-
-- 該 run **與本錯誤無關**：`test` job 失敗為 e2e **`board-column-move.spec.mjs`** 動畫時序偶發（換欄 enter-from-above 未取樣到 transform）；**`e2e-live-cloud` 仍綠**。本地重跑同一 case **通過** → 屬偶發，非 posReceiver。
+與簽章無關：`board-column-move.spec.mjs` 換欄動畫 **偶發** 未取樣到 enter-from-above；`e2e-live-cloud` 仍綠。本地重跑該 case 可過。

@@ -26,6 +26,8 @@ function ticketsToNumberContentNode(tickets) {
 }
 
 const STORE = 'zz-qa-ci-store';
+/** Backend POS sign expects this casing (see FORMAT-ERROR.md). Test scripts only. */
+const POS_MERCHANT_ID = 'Milksha';
 const OUT = join(__dirname, '..', 'artifacts', 'delivery-number', 'format-error-repro.json');
 
 const COLLISION_TICKETS = [
@@ -49,6 +51,13 @@ async function main() {
   const ctx = await browser.newContext();
   ctx.setDefaultTimeout(180000);
   await installLiveBranchCloudRoutes(ctx);
+  const posSecret = process.env.MILKSHA_POS_SIGN_SECRET || '';
+  if (posSecret) {
+    await ctx.addInitScript((secret) => {
+      const cfg = window.MILKSHA_FIREBASE_CONFIG || {};
+      window.MILKSHA_FIREBASE_CONFIG = Object.assign({}, cfg, { posSignSecret: secret });
+    }, posSecret);
+  }
   const ctrl = await ctx.newPage();
   const board = await ctx.newPage();
 
@@ -83,7 +92,8 @@ async function main() {
 
   const numberContent = ticketsToNumberContentNode(COLLISION_TICKETS);
 
-  const repro = await ctrl.evaluate(async (nc) => {
+  const repro = await ctrl.evaluate(
+    async ({ nc, merchantId }) => {
     const Validate = window.QMS.Receiver.Validate;
     const PosSign = window.QMS.Transport.MilkshaPosSign;
     const transport = window.__controller.getTransport();
@@ -94,7 +104,7 @@ async function main() {
         target: Validate.milkshaTargetForAccount(store.account),
         data: { number_content: nc, newsTicker_content: [], newsTickerSpeed: 0 },
       },
-      merchant_id: store.merchant_id,
+      merchant_id: merchantId,
       account: store.account,
     };
     const secret = (window.MILKSHA_FIREBASE_CONFIG || {}).posSignSecret || '<REDACTED>';
@@ -128,7 +138,7 @@ async function main() {
     return {
       storeId: 'zz-qa-ci-store',
       account: store.account,
-      merchant_id: store.merchant_id,
+      merchant_id: merchantId,
       target: body.serviceSpecialData_Json.target,
       number_content: nc,
       endpoint: String(endpointTemplate).replace(/\/$/, ''),
@@ -138,7 +148,9 @@ async function main() {
       clientThrown,
       cloudApiParsed: parsed,
     };
-  }, numberContent);
+  },
+    { nc: numberContent, merchantId: POS_MERCHANT_ID },
+  );
 
   await sendClearNow(ctrl);
   await board.waitForTimeout(2000);

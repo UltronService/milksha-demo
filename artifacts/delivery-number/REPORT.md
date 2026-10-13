@@ -43,7 +43,7 @@
 | [38269937500](https://github.com/UltronService/milksha-demo/actions/runs/38269937500) | `d64e2b9` | ❌→重跑 | `test` e2e **`board-column-move`** 換欄動畫偶發；`e2e-live-cloud` ✅；見 `FORMAT-ERROR.md` |
 | PR Checks | 最新 head | ⏳ | https://github.com/UltronService/milksha-demo/pull/62/checks |
 
-posReceiver 格式錯誤除錯：**`artifacts/delivery-number/FORMAT-ERROR.md`**
+posReceiver 探測：**`artifacts/delivery-number/FORMAT-ERROR.md`**（已查明：`signature_invalid`／腳本 `merchant_id`+金鑰；真雲端截圖需 `MILKSHA_POS_SIGN_SECRET`，本 CI VM 未配置）
 
 ## 無動態版本地截圖（578／C7458／6406／7112）
 
