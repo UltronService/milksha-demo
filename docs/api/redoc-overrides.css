@@ -1,0 +1,65 @@
+/* Milksha API docs — Redoc layout polish (desktop) */
+
+.redoc-wrap {
+  font-feature-settings: "kern" 1;
+}
+
+/* Markdown tables in description */
+.redoc-wrap table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.redoc-wrap table th,
+.redoc-wrap table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.redoc-wrap table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.redoc-wrap table tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* Code blocks: horizontal scroll, no clipping */
+.redoc-wrap pre,
+.redoc-wrap .redoc-json code,
+.redoc-wrap [class*="code"] pre {
+  overflow-x: auto !important;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.redoc-wrap pre code {
+  white-space: pre !important;
+  word-break: normal;
+  display: block;
+  min-width: min-content;
+}
+
+.redoc-wrap p code,
+.redoc-wrap li code,
+.redoc-wrap td code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Right panel curl / sample JSON */
+.redoc-wrap .react-tabs__tab-panel pre {
+  overflow-x: auto !important;
+}
+
+.redoc-wrap .api-content pre {
+  overflow-x: auto !important;
+}
