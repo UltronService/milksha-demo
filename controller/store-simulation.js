@@ -9,6 +9,21 @@
 
   const SOURCE_KEYS = ['store', 'point', 'fp', 'uber', 'udd'];
 
+  /** Sum ≈ 1 — store majority; remainder split across delivery / 你訂 sources. */
+  const SOURCE_PICK_WEIGHTS = {
+    store: 0.7,
+    point: 0.075,
+    fp: 0.075,
+    uber: 0.075,
+    udd: 0.075,
+  };
+
+  const ALNUM_POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_6 = /^\d{3,6}$/;
+  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
+
   const MODE_TIMING = {
     normal: {
       arrivalMeanMs: 20000,
@@ -39,12 +54,115 @@
   }
 
   /**
+   * @param {string} sourceKey
+   * @param {string} no
+   * @returns {string}
+   */
+  function ticketCompositeKey(sourceKey, no) {
+    return String(sourceKey || 'store') + ':' + String(no);
+  }
+
+  /**
+   * Mirrors `normalizeBoardDisplayNumber` when MilkshaBoard is not loaded (Node tests).
+   * @param {unknown} raw
+   * @param {string} sourceKey
+   * @returns {string | null}
+   */
+  function normalizeSimNumber(raw, sourceKey) {
+    const MB = root.QMS && root.QMS.MilkshaBoard;
+    if (MB && typeof MB.normalizeBoardDisplayNumber === 'function') {
+      return MB.normalizeBoardDisplayNumber(typeof raw === 'string' ? raw : String(raw == null ? '' : raw), sourceKey);
+    }
+    if (typeof raw !== 'string') {
+      return null;
+    }
+    const key = sourceKey || 'store';
+    let working = raw;
+    if (key === 'fp') {
+      working = working.replace(/#/g, '');
+    }
+    const trimmed = working.trim();
+    if (trimmed.length > 6) {
+      return null;
+    }
+    if (key === 'store') {
+      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'point') {
+      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'fp') {
+      if (!BOARD_NUMBER_DIGIT_3_TO_6.test(trimmed) || trimmed.length < 4) {
+        return null;
+      }
+      return trimmed;
+    }
+    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed) || trimmed.length < 4) {
+      return null;
+    }
+    return trimmed.toUpperCase();
+  }
+
+  /**
    * @param {() => number} rng
    * @returns {string}
    */
   function pickSourceKey(rng) {
-    const idx = Math.floor(rng() * SOURCE_KEYS.length);
-    return SOURCE_KEYS[Math.min(SOURCE_KEYS.length - 1, Math.max(0, idx))];
+    const r = rng();
+    let acc = 0;
+    for (let i = 0; i < SOURCE_KEYS.length; i += 1) {
+      const key = SOURCE_KEYS[i];
+      acc += SOURCE_PICK_WEIGHTS[key] != null ? SOURCE_PICK_WEIGHTS[key] : 0;
+      if (r < acc) {
+        return key;
+      }
+    }
+    return SOURCE_KEYS[0];
+  }
+
+  /**
+   * @param {number} length
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomDigitString(length, rng) {
+    let s = '';
+    for (let i = 0; i < length; i += 1) {
+      s += String(Math.floor(rng() * 10));
+    }
+    return s;
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomPointNumber(rng) {
+    const len = rng() < 0.5 ? 3 : 4;
+    const digits = randomDigitString(len, rng);
+    return len === 3 ? digits.padStart(3, '0').slice(-3) : digits.padStart(4, '0').slice(-4);
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomFpNumber(rng) {
+    const len = 4 + Math.floor(rng() * 3);
+    return randomDigitString(len, rng);
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomAlnumNumber(rng) {
+    const len = 4 + Math.floor(rng() * 3);
+    let s = '';
+    for (let i = 0; i < len; i += 1) {
+      s += ALNUM_POOL.charAt(Math.floor(rng() * ALNUM_POOL.length));
+    }
+    return s.toUpperCase();
   }
 
   /**
@@ -75,6 +193,10 @@
   function maxNumericTicketNo(tickets) {
     let max = 0;
     (tickets || []).forEach(function (t) {
+      const sk = t && t.sourceKey ? t.sourceKey : 'store';
+      if (sk !== 'store') {
+        return;
+      }
       const n = parseOrderNo(t.no);
       if (n > max) {
         max = n;
@@ -112,13 +234,50 @@
       candidate = wrapOrderCounter(candidate);
     }
     let guard = 0;
-    while (usedOnBoard.has(formatOrderNo(candidate)) && guard < ORDER_NO_MAX + 10) {
+    while (usedOnBoard.has(ticketCompositeKey('store', formatOrderNo(candidate))) && guard < ORDER_NO_MAX + 10) {
       guard += 1;
       candidate += 1;
       candidate = wrapOrderCounter(candidate);
     }
     state.lastIssuedNumber = candidate;
     return formatOrderNo(candidate);
+  }
+
+  /**
+   * @param {string} sourceKey
+   * @param {SimulationState} state
+   * @param {Set<string>} usedOnBoard — composite keys `sourceKey:no`
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function allocateNumberForSource(sourceKey, state, usedOnBoard, rng) {
+    const key = sourceKey || 'store';
+    if (key === 'store') {
+      return allocateNextNumber(state, usedOnBoard, rng);
+    }
+    let guard = 0;
+    while (guard < 400) {
+      guard += 1;
+      let raw;
+      if (key === 'point') {
+        raw = randomPointNumber(rng);
+      } else if (key === 'fp') {
+        raw = randomFpNumber(rng);
+      } else if (key === 'uber' || key === 'udd') {
+        raw = randomAlnumNumber(rng);
+      } else {
+        raw = allocateNextNumber(state, usedOnBoard, rng);
+      }
+      const normalized = normalizeSimNumber(raw, key);
+      if (!normalized) {
+        continue;
+      }
+      const composite = ticketCompositeKey(key, normalized);
+      if (!usedOnBoard.has(composite)) {
+        return normalized;
+      }
+    }
+    return allocateNextNumber(state, usedOnBoard, rng);
   }
 
   /**
@@ -130,7 +289,7 @@
     const set = new Set();
     (records || []).forEach(function (rec) {
       if (nowMs < rec.removeAtMs) {
-        set.add(rec.no);
+        set.add(ticketCompositeKey(rec.sourceKey, rec.no));
       }
     });
     return set;
@@ -250,14 +409,15 @@
     while (state.running && nowMs >= state.nextNewOrderAtMs && guard < RECONCILE_ORDER_GUARD) {
       guard += 1;
       const used = activeNumbersOnBoard(state.records, nowMs);
-      const no = allocateNextNumber(state, used, rng);
-      used.add(no);
+      const sourceKey = pickSourceKey(rng);
+      const no = allocateNumberForSource(sourceKey, state, used, rng);
+      used.add(ticketCompositeKey(sourceKey, no));
       const prepMs = jitteredMs(timing.prepMeanMs, rng);
       const pickupMs = jitteredMs(timing.pickupMeanMs, rng);
       const enteredAtMs = state.nextNewOrderAtMs;
       state.records.push({
         no: no,
-        sourceKey: pickSourceKey(rng),
+        sourceKey: sourceKey,
         enteredAtMs: enteredAtMs,
         readyAtMs: enteredAtMs + prepMs,
         removeAtMs: enteredAtMs + prepMs + pickupMs,
@@ -343,7 +503,11 @@
       const res = reconcileSimulation(state, now, rng);
       if (state.records.length > beforeOrders) {
         for (let ri = beforeOrders; ri < state.records.length; ri += 1) {
-          const n = parseOrderNo(state.records[ri].no);
+          const rec = state.records[ri];
+          if (rec.sourceKey !== 'store') {
+            continue;
+          }
+          const n = parseOrderNo(rec.no);
           orderCount += 1;
           if (prevIssued > 0) {
             let expected = prevIssued + 1;
@@ -449,31 +613,35 @@
    */
   function validateTicketsForBoardPush(tickets) {
     const list = Array.isArray(tickets) ? tickets : [];
-    const fourDigit = /^\d{4}$/;
-    const seen = new Set();
     const ready = new Set();
     const prep = new Set();
     for (let i = 0; i < list.length; i += 1) {
       const row = list[i];
-      const no = String(row && row.no != null ? row.no : '').trim();
-      if (!fourDigit.test(no)) {
-        return { ok: false, reason: 'not-four-digit', no: no };
+      const sourceKey = String(row && row.sourceKey != null ? row.sourceKey : 'store');
+      const rawNo = String(row && row.no != null ? row.no : '').trim();
+      const no = normalizeSimNumber(rawNo, sourceKey);
+      if (!no) {
+        return { ok: false, reason: 'invalid-number', no: rawNo, sourceKey: sourceKey };
       }
-      if (seen.has(no)) {
-        return { ok: false, reason: 'duplicate-in-list', no: no };
-      }
-      seen.add(no);
+      const id = ticketCompositeKey(sourceKey, no);
       const status = String(row.status || '');
       if (status === 'ready') {
-        ready.add(no);
-      } else {
-        prep.add(no);
+        if (ready.has(id)) {
+          return { ok: false, reason: 'duplicate-in-list', no: no, sourceKey: sourceKey };
+        }
+        if (prep.has(id)) {
+          return { ok: false, reason: 'same-ticket-prep-and-ready', no: no, sourceKey: sourceKey };
+        }
+        ready.add(id);
+        continue;
       }
-    }
-    for (const n of prep) {
-      if (ready.has(n)) {
-        return { ok: false, reason: 'same-number-prep-and-ready', no: n };
+      if (prep.has(id)) {
+        return { ok: false, reason: 'duplicate-in-list', no: no, sourceKey: sourceKey };
       }
+      if (ready.has(id)) {
+        return { ok: false, reason: 'same-ticket-prep-and-ready', no: no, sourceKey: sourceKey };
+      }
+      prep.add(id);
     }
     if (list.length > 50) {
       return { ok: false, reason: 'list-over-50', no: String(list.length) };
@@ -483,12 +651,16 @@
 
   QMS.Controller.StoreSimulation = {
     SOURCE_KEYS: SOURCE_KEYS,
+    SOURCE_PICK_WEIGHTS: SOURCE_PICK_WEIGHTS,
     MODE_TIMING: MODE_TIMING,
     ORDER_NO_MIN: ORDER_NO_MIN,
     ORDER_NO_MAX: ORDER_NO_MAX,
     ALLOWED_PROJECT_ID: ALLOWED_PROJECT_ID,
     jitteredMs: jitteredMs,
     pickSourceKey: pickSourceKey,
+    ticketCompositeKey: ticketCompositeKey,
+    normalizeSimNumber: normalizeSimNumber,
+    allocateNumberForSource: allocateNumberForSource,
     formatOrderNo: formatOrderNo,
     parseOrderNo: parseOrderNo,
     maxNumericTicketNo: maxNumericTicketNo,

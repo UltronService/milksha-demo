@@ -8,6 +8,27 @@ const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
 
+function loadMilkshaBoard() {
+  const sandbox = {
+    console: console,
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    clearInterval: clearInterval,
+    setInterval: setInterval,
+    Date: Date,
+    JSON: JSON,
+    requestAnimationFrame: function (fn) {
+      fn();
+    },
+  };
+  sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
+  return sandbox.QMS.MilkshaBoard;
+}
+
 function loadSimulation() {
   const sandbox = { console: console, setTimeout: setTimeout, clearTimeout: clearTimeout };
   sandbox.globalThis = sandbox;
@@ -18,6 +39,22 @@ function loadSimulation() {
     Sim: sandbox.QMS.Controller.StoreSimulation,
     Host: sandbox.QMS.Controller.StoreSimulationHost,
   };
+}
+
+function sourceNumberPattern(sourceKey) {
+  if (sourceKey === 'store') {
+    return /^\d{4}$/;
+  }
+  if (sourceKey === 'point') {
+    return /^\d{3,4}$/;
+  }
+  if (sourceKey === 'fp') {
+    return /^\d{4,6}$/;
+  }
+  if (sourceKey === 'uber' || sourceKey === 'udd') {
+    return /^[A-Z0-9]{4,6}$/;
+  }
+  return /^.+$/;
 }
 
 function mulberry32(seed) {
@@ -32,22 +69,43 @@ function mulberry32(seed) {
 
 test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
   const { Sim } = loadSimulation();
-  assert.equal(Sim.validateTicketsForBoardPush([{ no: '0001', status: 'preparing' }]).ok, true);
-  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready' }]).ok, false);
+  assert.equal(
+    Sim.validateTicketsForBoardPush([{ no: '0001', status: 'preparing', sourceKey: 'store' }]).ok,
+    true,
+  );
+  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready', sourceKey: 'store' }]).ok, false);
   assert.equal(
     Sim.validateTicketsForBoardPush([
-      { no: '0001', status: 'preparing' },
-      { no: '0001', status: 'ready' },
+      { no: '0001', status: 'preparing', sourceKey: 'store' },
+      { no: '0001', status: 'preparing', sourceKey: 'store' },
     ]).reason,
     'duplicate-in-list',
   );
   assert.equal(
     Sim.validateTicketsForBoardPush([
-      { no: '0002', status: 'preparing' },
-      { no: '0002', status: 'ready' },
+      { no: '0001', status: 'preparing', sourceKey: 'store' },
+      { no: '0001', status: 'ready', sourceKey: 'store' },
     ]).reason,
-    'duplicate-in-list',
+    'same-ticket-prep-and-ready',
   );
+  assert.equal(
+    Sim.validateTicketsForBoardPush([
+      { no: '0002', status: 'preparing', sourceKey: 'store' },
+      { no: '0002', status: 'ready', sourceKey: 'store' },
+    ]).reason,
+    'same-ticket-prep-and-ready',
+  );
+});
+
+test('validateTicketsForBoardPush allows same number on different sources', function () {
+  const { Sim } = loadSimulation();
+  const check = Sim.validateTicketsForBoardPush([
+    { no: '1234', status: 'preparing', sourceKey: 'store' },
+    { no: '1234', status: 'ready', sourceKey: 'uber' },
+    { no: 'C7458', status: 'preparing', sourceKey: 'uber' },
+    { no: '091', status: 'ready', sourceKey: 'point' },
+  ]);
+  assert.equal(check.ok, true);
 });
 
 test('recordsToTickets output always passes validateTicketsForBoardPush', function () {
@@ -63,12 +121,12 @@ test('recordsToTickets output always passes validateTicketsForBoardPush', functi
   }
 });
 
-test('10k reconcile steps: validateTicketsForBoardPush always ok, prep and ready disjoint', function () {
+test('10k reconcile steps: validateTicketsForBoardPush always ok, prep and ready disjoint per source+no', function () {
   const { Sim } = loadSimulation();
+  const MB = loadMilkshaBoard();
   const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
   const rng = mulberry32(4242);
   Sim.startOrSwitchSimulation(state, 'peak', 1_000_000, [], rng);
-  const fourDigit = /^\d{4}$/;
   for (let t = 0; t < 10000; t += 1) {
     Sim.reconcileSimulation(state, 1_000_000 + t * 500, rng);
     const now = 1_000_000 + t * 500;
@@ -77,17 +135,25 @@ test('10k reconcile steps: validateTicketsForBoardPush always ok, prep and ready
     assert.equal(check.ok, true, JSON.stringify({ t, check }));
     const ready = new Set();
     const prep = new Set();
+    const batchIds = new Set();
     for (let i = 0; i < tickets.length; i += 1) {
-      const no = tickets[i].no;
-      assert.match(no, fourDigit);
-      assert.notEqual(no, '0000');
-      assert.ok(parseInt(no, 10) >= 1);
-      if (tickets[i].status === 'ready') {
-        assert.ok(!prep.has(no), 'overlap prep/ready ' + no);
-        ready.add(no);
+      const row = tickets[i];
+      const sk = row.sourceKey || 'store';
+      assert.match(row.no, sourceNumberPattern(sk));
+      assert.equal(MB.normalizeBoardDisplayNumber(row.no, sk), row.no);
+      const id = sk + ':' + row.no;
+      assert.ok(!batchIds.has(id), 'duplicate source+no in batch ' + id);
+      batchIds.add(id);
+      if (sk === 'store') {
+        assert.notEqual(row.no, '0000');
+        assert.ok(parseInt(row.no, 10) >= 1);
+      }
+      if (row.status === 'ready') {
+        assert.ok(!prep.has(id), 'overlap prep/ready ' + id);
+        ready.add(id);
       } else {
-        assert.ok(!ready.has(no), 'overlap ready/prep ' + no);
-        prep.add(no);
+        assert.ok(!ready.has(id), 'overlap ready/prep ' + id);
+        prep.add(id);
       }
     }
   }
@@ -108,7 +174,7 @@ test('wrap 9999 to 0001 without colliding with on-board numbers', function () {
   });
   assert.equal(nWrap, '0001');
   const state2 = Sim.createSimulationState({ lastIssuedNumber: 9999 });
-  const n2 = Sim.allocateNextNumber(state2, new Set(['0001']), function () {
+  const n2 = Sim.allocateNextNumber(state2, new Set(['store:0001']), function () {
     return 0.99;
   });
   assert.equal(n2, '0002');
@@ -125,14 +191,14 @@ test('jittered intervals stay within 50%-150% of mean', function () {
   }
 });
 
-test('allocate skips without duplicating on-board numbers and wraps at 9999', function () {
+test('allocate skips without duplicating on-board store tickets and wraps at 9999', function () {
   const { Sim } = loadSimulation();
   const state = Sim.createSimulationState({ lastIssuedNumber: 9998 });
-  const used = new Set(['9999', '0001']);
+  const used = new Set(['store:9999', 'store:0001']);
   const no = Sim.allocateNextNumber(state, used, function () {
     return 0.99;
   });
-  assert.ok(!used.has(no));
+  assert.ok(!used.has('store:' + no));
   const wrapState = Sim.createSimulationState({ lastIssuedNumber: 9999 });
   const noWrap = Sim.allocateNextNumber(wrapState, new Set(), function () {
     return 0.5;
@@ -140,14 +206,36 @@ test('allocate skips without duplicating on-board numbers and wraps at 9999', fu
   assert.equal(noWrap, '0001');
 });
 
-test('all five sources appear over many picks', function () {
+test('pickSourceKey is weighted toward store', function () {
   const { Sim } = loadSimulation();
-  const seen = new Set();
-  const rng = mulberry32(7);
-  for (let i = 0; i < 80; i += 1) {
-    seen.add(Sim.pickSourceKey(rng));
+  const rng = mulberry32(20261014);
+  let storeHits = 0;
+  const n = 4000;
+  for (let i = 0; i < n; i += 1) {
+    if (Sim.pickSourceKey(rng) === 'store') {
+      storeHits += 1;
+    }
   }
-  assert.equal(seen.size, Sim.SOURCE_KEYS.length);
+  const ratio = storeHits / n;
+  assert.ok(ratio > 0.55, 'store ratio ' + ratio);
+  assert.ok(ratio < 0.85, 'store ratio ' + ratio);
+});
+
+test('all five sources appear over many reconcile steps (normal and peak)', function () {
+  const { Sim } = loadSimulation();
+  for (const mode of ['normal', 'peak']) {
+    const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
+    const rng = mulberry32(mode === 'normal' ? 11 : 12);
+    Sim.startOrSwitchSimulation(state, mode, 1_000_000, [], rng);
+    const seen = new Set();
+    for (let t = 0; t < 800; t += 1) {
+      Sim.reconcileSimulation(state, 1_000_000 + t * 12000, rng);
+      state.records.forEach(function (rec) {
+        seen.add(rec.sourceKey);
+      });
+    }
+    assert.equal(seen.size, Sim.SOURCE_KEYS.length, mode + ' missing sources: ' + JSON.stringify([...seen]));
+  }
 });
 
 test('ready order can differ from arrival order', function () {
