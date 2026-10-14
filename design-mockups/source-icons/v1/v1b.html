@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>Source icons mockup V1b</title>
+  <link rel="stylesheet" href="../../../css/milksha-board.css">
+  <style>
+    * {
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    body.mockup-v1b {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background: url("../../../assets/milksha-board-bg-1007.jpg") center / 100% 100% no-repeat;
+      font-family: "Noto Sans CJK TC", "Noto Sans TC", "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+      --milksha-num-color: #222222;
+      --mockup-cell-pl: 14px;
+      --mockup-cell-pr: 6px;
+      --mockup-icon-h: 68px;
+      --mockup-slot-w: 68px;
+      --mockup-icon-gap: 16px;
+      --mockup-num-size: 86px;
+      --mockup-row-scale: 0.74;
+    }
+
+    .mockup-zone {
+      position: absolute;
+      width: 798px;
+      height: 638px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(5, 1fr);
+      padding: 6px;
+      gap: 6px;
+    }
+
+    .mockup-zone--prep {
+      left: 101px;
+      top: 341px;
+    }
+
+    .mockup-zone--ready {
+      left: 1021px;
+      top: 341px;
+    }
+
+    .mockup-cell {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-width: 0;
+      padding-left: var(--mockup-cell-pl);
+      padding-right: var(--mockup-cell-pr);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .mockup-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--mockup-icon-gap);
+      min-width: 0;
+      transform: scale(var(--mockup-row-scale));
+      transform-origin: left center;
+    }
+
+    .mockup-icon-slot {
+      flex: none;
+      width: var(--mockup-slot-w);
+      height: var(--mockup-icon-h);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .mockup-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .mockup-icon--square {
+      width: var(--mockup-icon-h);
+      height: var(--mockup-icon-h);
+    }
+
+    .mockup-icon--foodpanda {
+      padding: 8px;
+    }
+
+    .mockup-icon img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .mockup-num {
+      font-family: Arial, Arimo, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+      font-size: var(--mockup-num-size);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: var(--milksha-num-color);
+      white-space: nowrap;
+      flex: none;
+    }
+  </style>
+</head>
+<body class="mockup-v1b">
+  <div class="mockup-zone mockup-zone--prep" aria-label="準備中">
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">2214</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/ubereats.png" alt="" width="68" height="68"></span></div><span class="mockup-num">A7K2Q</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/nidin-app.png" alt="" width="68" height="68"></span></div><span class="mockup-num">087</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square mockup-icon--foodpanda"><img src="../assets/foodpanda.png" alt="" width="52" height="52"></span></div><span class="mockup-num">583920</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">3105</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/nidin-app.png" alt="" width="68" height="68"></span></div><span class="mockup-num">0412</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/ubereats.png" alt="" width="68" height="68"></span></div><span class="mockup-num">9XQ4MZ</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square mockup-icon--foodpanda"><img src="../assets/foodpanda.png" alt="" width="52" height="52"></span></div><span class="mockup-num">7731</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">2215</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/nidin-app.png" alt="" width="68" height="68"></span></div><span class="mockup-num">0096</span></div></div>
+  </div>
+
+  <div class="mockup-zone mockup-zone--ready" aria-label="請取餐">
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square mockup-icon--foodpanda"><img src="../assets/foodpanda.png" alt="" width="52" height="52"></span></div><span class="mockup-num">481725</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">2216</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/ubereats.png" alt="" width="68" height="68"></span></div><span class="mockup-num">B3R8</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/nidin-app.png" alt="" width="68" height="68"></span></div><span class="mockup-num">0413</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">2217</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square mockup-icon--foodpanda"><img src="../assets/foodpanda.png" alt="" width="52" height="52"></span></div><span class="mockup-num">902114</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/ubereats.png" alt="" width="68" height="68"></span></div><span class="mockup-num">K5T7W2</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square"><img src="../assets/nidin-app.png" alt="" width="68" height="68"></span></div><span class="mockup-num">095</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot" aria-hidden="true"></div><span class="mockup-num">2218</span></div></div>
+    <div class="mockup-cell"><div class="mockup-row"><div class="mockup-icon-slot"><span class="mockup-icon mockup-icon--square mockup-icon--foodpanda"><img src="../assets/foodpanda.png" alt="" width="52" height="52"></span></div><span class="mockup-num">660138</span></div></div>
+  </div>
+</body>
+</html>

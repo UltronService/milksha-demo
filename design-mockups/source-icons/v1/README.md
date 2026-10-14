@@ -32,6 +32,12 @@ foodpanda 在 68×68 盒內加 **8px** padding。迷點以 `object-fit: contain`
 
 與 `nidin.png` 同識別（藍字 + 粉點）；適合 4K。
 
+## V1b（你訂 App 方圖）
+
+與 V1 相同，但迷點改用 **`nidin-app.png`**（512×512 方圖）。三來源 icon 皆 **68×68**；槽寬改為 **68**（正方形，槽內靠右、gap **16**）。六碼縮放等其餘與 V1 相同。
+
+- `v1b.html` / `v1b.png`（**1920×1080**）
+
 ## 產出
 
 - `v1.html` / `v1.png`（**1920×1080**）
@@ -42,4 +48,8 @@ google-chrome --headless=new --disable-gpu --no-sandbox \
   --user-data-dir=/tmp/chrome-v1-shot \
   --window-size=1920,1080 --screenshot=v1.png --hide-scrollbars \
   "file://$(pwd)/v1.html"
+google-chrome --headless=new --disable-gpu --no-sandbox \
+  --user-data-dir=/tmp/chrome-v1b-shot \
+  --window-size=1920,1080 --screenshot=v1b.png --hide-scrollbars \
+  "file://$(pwd)/v1b.html"
 ```
