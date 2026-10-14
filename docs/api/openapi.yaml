@@ -5,41 +5,50 @@ info:
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
+  x-logo:
+    url: assets/logo.svg
+    altText: 迷客夏 Milksha
+    href: https://ultronservice.github.io/milksha-demo/
+    backgroundColor: "#fafafa"
   description: |
     ## 對接步驟
 
-    1. **開啟試點看板**  
-       請門市先開啟叫號螢幕（瀏覽器看板）。  
-       試點門市 **`c030020`** 看板網址：  
+    1. **開啟試點看板**
+       請門市先開啟叫號螢幕（瀏覽器看板）。
+       試點門市 `c030020` 看板網址：
+
        `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
 
-    2. **送第一筆 Request**  
-       - 方法：`POST`  
-       - URL：`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`  
-       - Header：`Content-Type: application/json`  
-       - `account` 填 **`c030020`**。  
-       - `serviceSpecialData_Json.target` 填 **`milkshac030020`**（=`milksha` + 店號）。  
-       - 試點店測試期間 **`signature` 可不帶**（送空字串 `""` 即可）。  
+    2. **送第一筆 Request**
+       - 方法：`POST`
+       - URL：
+
+       ```
+       https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
+       ```
+
+       - Header：`Content-Type: application/json`
+       - `account` 填 `c030020`。
+       - `serviceSpecialData_Json.target` 填 `milkshac030020`（=`milksha` + 店號）。
+       - 試點店測試期間 `signature` **可不帶**（送空字串 `""` 即可）。
        - 仍須正確計算 `timeStmp` 與 `serviceSpecialData_Json_Md5Hash`（見下方欄位說明）。
 
        **curl 範例（請將 `<MD5>` 換成您對嵌入 JSON 算出的 MD5）：**
 
        ```bash
-       curl -sS -X POST 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver' \
-         -H 'Content-Type: application/json' \
-         -d '{"isEncrypt":false,"serviceSpecialData_Json":{"target":"milkshac030020","data":{"number_content":[{"source_type":"From_Store_Preparing","number":"1234"},{"source_type":"From_Store_OK","number":"5678"}],"newsTicker_content":[],"newsTickerSpeed":0}},"merchant_id":"Milksha","account":"c030020","timeStmp":"2026-10-14-15-30-00:0123","serviceSpecialData_Json_Md5Hash":"<MD5>","signature":""}'
+       curl -sS -X POST 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver' -H 'Content-Type: application/json' -d '{"isEncrypt":false,"serviceSpecialData_Json":{"target":"milkshac030020","data":{"number_content":[{"source_type":"From_Store_Preparing","number":"1234"},{"source_type":"From_Store_OK","number":"5678"}],"newsTicker_content":[],"newsTickerSpeed":0}},"merchant_id":"Milksha","account":"c030020","timeStmp":"2026-10-14-15-30-00:0123","serviceSpecialData_Json_Md5Hash":"<MD5>","signature":""}'
        ```
 
-    3. **檢查 Response**  
-       - HTTP 狀態碼**永遠是 200**。  
-       - 外層 **`isOK: true`** 表示 Request **已被伺服端受理並處理完畢**（含驗證失敗）。  
-       - **`isOK` 不代表號碼已上板**；是否顯示請看內層 **`isSuccess`**。  
-       - 將 **`information`**（或 `reslut.CallingNumberMasterResponse.result`）當 **JSON 字串**解析。  
-       - 內層 **`isSuccess: true`** → 號碼已顯示；**`false`** → 未顯示，原因在內層 **`information`** 文字。
+    3. **檢查 Response**
+       - HTTP 狀態碼永遠是 **200**。
+       - 外層 `isOK: true` 表示 Request **已被伺服端受理並處理完畢**（含驗證失敗）。
+       - `isOK` **不代表號碼已上板**；是否顯示請看內層 `isSuccess`。
+       - 將 `information`（或 `reslut.CallingNumberMasterResponse.result`）當 **JSON 字串**解析。
+       - 內層 `isSuccess: true` → 號碼已顯示；`false` → 未顯示，原因在內層 `information` 文字。
 
     4. **常見錯誤與處理**
 
-       下列三種訊息：**`isOK: true` 且內層 `isSuccess: false`**（文案不變）。
+       下列三種訊息：`isOK: true` 且內層 `isSuccess: false`（文案不變）。
 
        | 內層 information | isOK | isSuccess | 建議處理 |
        |------------------|------|-----------|----------|
@@ -47,9 +56,9 @@ info:
        | 目標叫號機尚未連線 | true | false | 看板未開或未連線；請先開啟試點看板網址再重送。 |
        | 找不到目標叫號機 | true | false | 檢查 `target` 是否為 `milksha` + `account`（例 `milkshac030020`）。 |
        | 叫號資料格式錯誤 | true | false | 檢查 JSON 結構、`source_type`、號碼規則、Md5 是否對「嵌入的」子 JSON 原文計算、簽章與時間戳。 |
-       | Md5Hash 不符 | 對 HTTP body 內嵌的 `serviceSpecialData_Json` **原始文字**重算 MD5，勿改 key 順序或空白。 |
-       | timeStmp 格式錯誤 / timeStmp 已過期 | 使用台北時間格式；與伺服器時間差勿超過 10 分鐘。 |
-       | 簽章錯誤 | 非試點測試期時須帶 HMAC；金鑰由迷客夏提供（`<REDACTED>`）。 |
+       | Md5Hash 不符 | — | false | 對 HTTP body 內嵌的 `serviceSpecialData_Json` **原始文字**重算 MD5，勿改 key 順序或空白。 |
+       | timeStmp 格式錯誤 / timeStmp 已過期 | — | false | 使用台北時間格式；與伺服器時間差勿超過 10 分鐘。 |
+       | 簽章錯誤 | — | false | 非試點測試期時須帶 HMAC；金鑰由迷客夏提供（`<REDACTED>`）。 |
 
     ---
 
@@ -59,11 +68,13 @@ info:
     未出現在本批的號碼會從看板移除。  
     `number_content: []` 表示清空。
 
-    **試點門市：** `account` = **`c030020`**，`target` = **`milkshac030020`**。
+    **試點門市：** `account` = `c030020`，`target` = `milkshac030020`。
 
     **簽章：** `Base64(HMAC-SHA256(金鑰, merchant_id|account|timeStmp|Md5Hash))`。  
     金鑰由迷客夏提供，文件以 `<REDACTED>` 表示。  
     **試點店測試期間可不帶** `signature`（空字串即可）。
+
+    [下載 OpenAPI 規格（openapi.yaml）](./openapi.yaml)
 
 servers:
   - url: https://asia-east1-milksha-qms-dev.cloudfunctions.net
@@ -74,12 +85,14 @@ security: []
 paths:
   /posReceiver:
     post:
+      tags:
+        - posReceiver
       operationId: posReceiver
       summary: 推送整批叫號資料到指定門市看板
       description: |
         - HTTP 狀態碼一律為 **200**（含驗證失敗）。
-        - **`isOK: true`**：Request 已處理完畢；**`isSuccess`**（內層 JSON）才表示號碼是否顯示。
-        - 「找不到目標叫號機」「目標叫號機尚未連線」「叫號資料格式錯誤」皆為 **`isOK: true` + `isSuccess: false`**。
+        - `isOK: true`：Request 已處理完畢；`isSuccess`（內層 JSON）才表示號碼是否顯示。
+        - 「找不到目標叫號機」「目標叫號機尚未連線」「叫號資料格式錯誤」皆為 `isOK: true` + `isSuccess: false`。
         - `target` 必須等於 `'milksha' + account`（試點：`milkshac030020`）。
         - 試點店測試期間 `signature` 可不帶；其餘門市須帶有效 HMAC。
       requestBody:
@@ -340,6 +353,11 @@ components:
 tags:
   - name: posReceiver
     description: POS 整批推送
+
+x-tagGroups:
+  - name: 叫號推送
+    tags:
+      - posReceiver
 
 x-response-messages:
   description: |

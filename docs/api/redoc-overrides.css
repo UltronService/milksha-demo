@@ -1,0 +1,125 @@
+/* Milksha API docs — Redoc layout polish (desktop) */
+
+.redoc-wrap {
+  font-feature-settings: "kern" 1;
+}
+
+/* Brand: sidebar logo area + active nav */
+.redoc-wrap .menu-content a.active {
+  color: #3d4a1f !important;
+  border-color: #6b8c2e !important;
+}
+
+.redoc-wrap h1,
+.redoc-wrap h2 {
+  border-bottom-color: #6b8c2e !important;
+}
+
+.redoc-wrap a {
+  color: #6b8c2e;
+}
+
+/* Markdown tables in API intro description only (not schema tables) */
+.redoc-wrap .api-info table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.redoc-wrap .api-info table th,
+.redoc-wrap .api-info table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.redoc-wrap .api-info table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.redoc-wrap .api-info table tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* Code blocks & long URLs: single line, horizontal scroll */
+.redoc-wrap pre {
+  overflow-x: scroll !important;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.redoc-wrap pre,
+.redoc-wrap pre code,
+.redoc-wrap pre code span {
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.redoc-wrap pre code {
+  display: block;
+  min-width: max-content;
+}
+
+.redoc-wrap .api-info li code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.redoc-wrap .api-info td code {
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Intro markdown only: inline code stays on one line (short tokens) */
+.redoc-wrap .api-info p > code:only-child,
+.redoc-wrap .api-info li p > code:only-child,
+.redoc-wrap .api-info .redoc-markdown p > code:only-child,
+.redoc-wrap .api-info .redoc-markdown li p > code:only-child {
+  display: block !important;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* info.description renders in api-info on Redoc 2.x */
+.redoc-wrap .api-info pre code {
+  white-space: pre !important;
+}
+
+/* Schema tables: wrap descriptions inside the middle column */
+.redoc-wrap table:not(.api-info table) td {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.redoc-wrap table:not(.api-info table) td code {
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.redoc-wrap .react-tabs__tab-panel pre,
+.redoc-wrap .api-content pre {
+  overflow-x: auto !important;
+}
+
+/* Right panel request samples */
+.redoc-wrap [class*="kULlgi"] pre,
+.redoc-wrap [class*="kULlgi"] code {
+  white-space: pre !important;
+  word-break: normal !important;
+}
