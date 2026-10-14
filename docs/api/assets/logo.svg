@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="240" height="48" viewBox="0 0 240 48" role="img" aria-label="迷客夏 Milksha">
-  <text x="0" y="36" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif" font-size="32" font-weight="700" fill="#333">迷客夏 Milksha</text>
+  <rect x="0" y="6" width="6" height="36" rx="2" fill="#6b8c2e" />
+  <text x="14" y="36" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif" font-size="28" font-weight="700" fill="#3d4a1f">迷客夏</text>
+  <text x="108" y="36" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="600" fill="#6b8c2e">Milksha</text>
 </svg>
