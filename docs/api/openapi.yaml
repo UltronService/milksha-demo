@@ -1,0 +1,308 @@
+openapi: 3.0.3
+info:
+  title: 迷客夏 POS 叫號推送 API（posReceiver）
+  version: "1.0.0"
+  license:
+    name: Proprietary
+    url: https://ultronservice.github.io/milksha-demo/docs/api/
+  description: |
+    達鈦 POS（Milksha POS）對 **milksha-qms-dev 測試環境** 推送整批叫號名單的 HTTP API。
+
+    **行為依據：** UltronService/milksha-cloud `main` 提交 `15367f1`（`posReceiver`、`validatePosRequest`、票券正規化、PR #24/#25 測試環境簽章略過）。
+
+    **整批覆寫：** 每次 Request 的 `number_content` 為該門市看板上的**完整**名單；未出現在本批的號碼會從看板移除。`number_content: []` 表示清空。
+
+    **簽章金鑰：** 正式店別由迷客夏提供；文件與範例一律以 `<REDACTED>` 表示，請勿寫入版本庫。
+
+    **測試看板（milksha-demo Pages）：**
+    - 試點門市 `c030020`：`https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
+    - 後端 QA 店 `zz-qa-backend`：`https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-backend`
+
+servers:
+  - url: https://asia-east1-milksha-qms-dev.cloudfunctions.net
+    description: 測試環境（Cloud Functions asia-east1）
+
+security: []
+
+paths:
+  /posReceiver:
+    post:
+      operationId: posReceiver
+      summary: 推送整批叫號資料到指定門市看板
+      description: |
+        - **HTTP 狀態碼一律為 200**（含驗證失敗）。
+        - 請先解析 Response 的 `isOK`，再解析 `information` / `reslut.CallingNumberMasterResponse.result` 內的 JSON 字串，讀取 `isSuccess` 與 `information`。
+        - `target` 必須等於字面量 `'milksha' + account`（例：`account=c030020` → `target=milkshac030020`）。
+        - **測試環境簽章略過（PR #24/#25）：** `account` 符合 `zz-qa-*` 或為 `c030020` 時，可省略 `signature`（仍須送合法 `timeStmp` 與 `serviceSpecialData_Json_Md5Hash`）。
+        - 其他店別須送有效 HMAC 簽章，否則內層通常回 `叫號資料格式錯誤`。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PosReceiverRequest"
+            examples:
+              successShape:
+                summary: 成功形狀（須有效簽章或測試略過店）
+                value:
+                  isEncrypt: false
+                  serviceSpecialData_Json:
+                    target: milkshazz-qa-backend
+                    data:
+                      number_content:
+                        - source_type: From_Store_Preparing
+                          number: "1234"
+                        - source_type: From_Store_OK
+                          number: "5678"
+                      newsTicker_content: []
+                      newsTickerSpeed: 0
+                  merchant_id: Milksha
+                  account: zz-qa-backend
+                  timeStmp: "2026-10-14-15-30-00:0123"
+                  serviceSpecialData_Json_Md5Hash: "<MD5 of embedded serviceSpecialData_Json UTF-8 text>"
+                  signature: "<REDACTED>"
+              clearBoard:
+                summary: 清空看板
+                value:
+                  isEncrypt: false
+                  serviceSpecialData_Json:
+                    target: milkshazz-qa-backend
+                    data:
+                      number_content: []
+                      newsTicker_content: []
+                      newsTickerSpeed: 0
+                  merchant_id: Milksha
+                  account: zz-qa-backend
+                  timeStmp: "2026-10-14-15-31-00:0456"
+                  serviceSpecialData_Json_Md5Hash: "<MD5>"
+                  signature: ""
+      responses:
+        "200":
+          description: 永遠回 200；業務成敗看 body。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PosReceiverResponse"
+              examples:
+                displaySuccess:
+                  summary: 成功寫入看板
+                  value:
+                    merchant_id: Milksha
+                    account: zz-qa-backend
+                    isOK: true
+                    information: '{"isSuccess":true,"information":"資料顯示成功"}'
+                    reslut:
+                      CallingNumberMasterResponse:
+                        result: '{"isSuccess":true,"information":"資料顯示成功"}'
+                        statusCode: "200"
+                    resultMd5: "<hex>"
+                    reesultMd5_ServerSignature: "<server signature>"
+                    isEncrypted: false
+                boxOffline:
+                  summary: 看板未連線（驗證通過但未寫入）
+                  value:
+                    merchant_id: Milksha
+                    account: zz-qa-backend
+                    isOK: false
+                    information: '{"isSuccess":false,"information":"目標叫號機尚未連線"}'
+                    reslut:
+                      CallingNumberMasterResponse:
+                        result: '{"isSuccess":false,"information":"目標叫號機尚未連線"}'
+                        statusCode: "200"
+                    resultMd5: "<hex>"
+                    reesultMd5_ServerSignature: dev-placeholder-server-signature
+                    isEncrypted: false
+                formatError:
+                  summary: 驗證失敗（POS 外包裝常見）
+                  value:
+                    merchant_id: Milksha
+                    account: zz-qa-backend
+                    isOK: false
+                    information: '{"isSuccess":false,"information":"叫號資料格式錯誤"}'
+                    reslut:
+                      CallingNumberMasterResponse:
+                        result: '{"isSuccess":false,"information":"叫號資料格式錯誤"}'
+                        statusCode: "200"
+                    resultMd5: ecf397c689d595b6f6761b8020ef048d
+                    reesultMd5_ServerSignature: dev-placeholder-server-signature
+                    isEncrypted: false
+
+components:
+  schemas:
+    PosReceiverRequest:
+      type: object
+      required:
+        - serviceSpecialData_Json
+        - merchant_id
+        - account
+        - timeStmp
+        - serviceSpecialData_Json_Md5Hash
+        - signature
+      properties:
+        isEncrypt:
+          type: boolean
+          description: 是否加密；目前固定 `false`。
+          example: false
+        serviceSpecialData_Json:
+          $ref: "#/components/schemas/ServiceSpecialDataJson"
+        merchant_id:
+          type: string
+          description: 商戶代碼；測試環境送 `Milksha`（大小寫須與簽章 canonical 一致）。
+          example: Milksha
+        account:
+          type: string
+          description: 門市帳號（店號），與 milksha-demo URL 參數 `store` 相同。
+          example: c030020
+        timeStmp:
+          type: string
+          description: |
+            台北時間戳：`YYYY-MM-DD-HH-mm-ss:XXXX`。
+            冒號後為毫秒，**左側補 0 至 4 位**（0–999 有效；1–4 位數字，值 0–9999，>999 時毫秒取 `mod 1000`）。
+            與伺服器時間差超過 **10 分鐘** 拒絕；允許約 **60 秒** 未來時間。
+          example: "2026-10-14-15-30-00:0123"
+        serviceSpecialData_Json_Md5Hash:
+          type: string
+          description: |
+            `serviceSpecialData_Json` 在 HTTP body 內嵌 JSON 文字的 **UTF-8 MD5 十六進位小寫**。
+            必須對「線路上收到的子 JSON 逐字節相同」的文字計算（不可先 parse 再 stringify，除非與嵌入文字一致）。
+          example: 8f4e7936a314a6b84af58116b272d0fe
+        signature:
+          type: string
+          description: |
+            `Base64( HMAC-SHA256( key, canonical ) )`。
+            canonical：`{merchant_id}|{account}|{timeStmp}|{serviceSpecialData_Json_Md5Hash}`（字面 pipe，無空白）。
+            測試環境 `zz-qa-*` 與 `c030020` 可送空字串略過；其餘店別必填 `<REDACTED>` 金鑰簽章。
+          example: "<REDACTED>"
+
+    ServiceSpecialDataJson:
+      type: object
+      required:
+        - target
+        - data
+      properties:
+        target:
+          type: string
+          description: 目標叫號機；必須等於 `'milksha' + account`。
+          example: milkshac030020
+        data:
+          type: object
+          required:
+            - number_content
+          properties:
+            number_content:
+              type: array
+              description: 整批叫號清單（全量覆寫）。
+              items:
+                $ref: "#/components/schemas/NumberContentItem"
+            newsTicker_content:
+              type: array
+              items:
+                type: string
+              description: 跑馬燈文字；迷客夏看板目前不使用，可送 `[]`。
+            newsTickerSpeed:
+              type: number
+              description: 跑馬燈速度；可送 `0`。
+              example: 0
+
+    NumberContentItem:
+      type: object
+      required:
+        - source_type
+        - number
+      properties:
+        source_type:
+          type: string
+          description: |
+            訂單來源＋狀態，**完整字串比對**。允許值共 10 種：
+            `From_Store_Preparing` / `From_Store_OK`、
+            `From_milksha_point_Preparing` / `From_milksha_point_OK`、
+            `From_FoodPanda_Preparing` / `From_FoodPanda_OK`、
+            `From_UberEat_Preparing` / `From_UberEat_OK`、
+            `From_Udd_Preparing` / `From_Udd_OK`。
+            `*_Preparing` → 準備中；`*_OK` → 可取餐。
+          example: From_Store_OK
+        number:
+          type: string
+          description: |
+            顯示號碼，**必須為 JSON 字串**（不可送數字型別）。
+
+            後端 `validatePosRequest` 正規化規則（五來源）：
+            - **門市（Store）：** 恰好 4 位數字。
+            - **迷點（milksha point）：** 3–4 位數字；保留前導 0（例 `091`）。
+            - **Uber Eats：** 4–6 位英數字；儲存為大寫（例 `c7458` → `C7458`）。
+            - **foodpanda：** 4–6 位數字；移除 `#` 後比對（`#6406` 與 `6406` 視為同一號）。
+            - **Udd：** 同 Uber Eats（4–6 位英數字、大寫）。
+            - 任一來源正規化後長度 **不得超過 6** 字元。
+            - **重複：** 同一 `source_type`（來源通道）＋同一正規化 `number` 只保留一筆；**不同來源**可同號並存（例門市 `8888` 與 Uber `8888`）。
+          example: "1488"
+
+    PosReceiverResponse:
+      type: object
+      properties:
+        merchant_id:
+          type: string
+          example: Milksha
+        account:
+          type: string
+          example: c030020
+        isOK:
+          type: boolean
+          description: POS 層：API 是否完成處理（非「是否上板成功」）。
+        information:
+          type: string
+          description: JSON 字串；解析後見 `InnerCallingResult`。
+        reslut:
+          type: object
+          description: 拼字固定為 `reslut`，不可改。
+          properties:
+            CallingNumberMasterResponse:
+              type: object
+              properties:
+                result:
+                  type: string
+                  description: 與 `information` 相同結構的 JSON 字串。
+                statusCode:
+                  type: string
+                  example: "200"
+        resultMd5:
+          type: string
+        reesultMd5_ServerSignature:
+          type: string
+          description: 拼字固定為 `reesultMd5_ServerSignature`。
+        isEncrypted:
+          type: boolean
+
+  examples: {}
+
+tags:
+  - name: posReceiver
+    description: 入口 A — POS 整批推送
+
+x-response-messages:
+  description: |
+    ## 內層 `information` 訊息（`isSuccess` / `information`）
+
+    | information | isSuccess | 時機 |
+    |-------------|-----------|------|
+    | 資料顯示成功 | true | 驗證通過、看板在線，已覆寫 `today_board`。 |
+    | 目標叫號機尚未連線 | false | 驗證通過，但該店看板裝置未在線；**不寫看板**。 |
+    | 找不到目標叫號機 | false | `target` ≠ `'milksha' + account`，或找不到對應門市／裝置映射。 |
+    | 叫號資料格式錯誤 | false | JSON 結構錯誤、缺欄位、無效 `source_type`、號碼不符來源規則、重複鍵、簽章／Md5／時間等驗證失敗時，**POS 外包裝常統一回此文案**（實測含錯誤 target、過期 timeStmp、無效簽章）。 |
+    | Md5Hash 不符 | false | 嵌入 `serviceSpecialData_Json` 文字與 `serviceSpecialData_Json_Md5Hash` 不一致。 |
+    | timeStmp 格式錯誤 | false | `timeStmp` 不符合格式。 |
+    | timeStmp 已過期 | false | 與伺服器時間差 > 10 分鐘或超過允許的未來偏移。 |
+    | 簽章錯誤 | false | HMAC 與 `signature` 不符（非略過店）。 |
+    | 入口 A 未啟用 | false | 雲端關閉 posReceiver 入口 A。 |
+
+    **判讀順序：** HTTP 200 → `isOK` → 解析 JSON 字串 → `isSuccess` + `information`。
+
+x-live-verification:
+  environment: milksha-qms-dev
+  store: zz-qa-backend
+  verified:
+    - "正確 target、空名單、無簽章 → 內層「目標叫號機尚未連線」（看板未開）。"
+    - "錯誤 target / 過期 timeStmp / 錯誤 Md5 / 無效 JSON → 內層「叫號資料格式錯誤」。"
+    - "店別 zz-qa-backend 略過簽章（空 signature）。"
+  notVerified:
+    - "「資料顯示成功」（需看板在線；未對 zz-qa-backend 送含號碼之寫入測試）。"
+    - "各來源號碼邊界拒絕（離線時多數請求未到寫板階段，僅驗證通過至「尚未連線」）。"
