@@ -638,17 +638,10 @@
     document.getElementById('status-heartbeat-at').textContent = lastHeartbeatAt || '—';
   }
 
+  const CloudTicketReadback = window.QMS.Controller.CloudTicketReadback;
+
   function ticketSourceKey(t) {
-    if (t.sourceKey) {
-      return t.sourceKey;
-    }
-    if (t.source_type) {
-      const parsed = Validate.parseSourceType(t.source_type);
-      if (parsed) {
-        return parsed.sourceKey;
-      }
-    }
-    return 'store';
+    return CloudTicketReadback.ticketSourceKeyFromCloudTicket(t, Validate.parseSourceType);
   }
 
   function usedOrderNumbers() {
@@ -1208,15 +1201,10 @@
         tickClock();
         return;
       }
-      tickets = (doc.data.tickets || []).map(function (t) {
-        return {
-          no: t.no,
-          status: t.status,
-          sourceKey: ticketSourceKey(t),
-          source_type: t.source_type,
-          updatedAt: t.updatedAt || new Date().toISOString(),
-        };
-      });
+      tickets = CloudTicketReadback.mapCloudBoardTicketsToLocal(
+        doc.data.tickets || [],
+        Validate.parseSourceType,
+      );
       lastBoardSeq = Number(doc.data.seq) || lastBoardSeq;
       window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
       renderTicketLists(doc.data);
