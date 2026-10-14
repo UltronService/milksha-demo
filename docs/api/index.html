@@ -12,11 +12,11 @@
       body {
         margin: 0;
         padding: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       .top-bar {
         box-sizing: border-box;
         padding: 0.75rem 1rem;
-        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
         font-size: 0.9rem;
         background: #0f172a;
         color: #e2e8f0;
@@ -25,17 +25,126 @@
       .top-bar a {
         color: #7dd3fc;
       }
+      .onboard {
+        box-sizing: border-box;
+        padding: 1rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+        line-height: 1.55;
+        color: #0f172a;
+      }
+      .onboard h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.15rem;
+      }
+      .onboard ol {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      .onboard li {
+        margin-bottom: 0.65rem;
+      }
+      .onboard code,
+      .onboard pre {
+        font-size: 0.82rem;
+      }
+      .onboard pre {
+        overflow-x: auto;
+        padding: 0.65rem;
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 6px;
+      }
+      .onboard a {
+        word-break: break-all;
+      }
+      .onboard table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+      .onboard th,
+      .onboard td {
+        border: 1px solid #cbd5e1;
+        padding: 0.4rem 0.5rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      .onboard th {
+        background: #e2e8f0;
+      }
     </style>
   </head>
   <body>
     <div class="top-bar">
-      迷客夏 POS · 測試環境 API 文件 · OpenAPI
+      迷客夏 POS · posReceiver API
       <a href="./openapi.yaml">openapi.yaml</a>
     </div>
+    <section class="onboard" id="onboard">
+      <h2>對接步驟</h2>
+      <ol>
+        <li>
+          <strong>開啟試點看板。</strong>
+          試點店號 <code>c030020</code>（target <code>milkshac030020</code>）。<br />
+          看板網址：
+          <a href="https://ultronservice.github.io/milksha-demo/?mode=cloud&amp;store=c030020"
+            >https://ultronservice.github.io/milksha-demo/?mode=cloud&amp;store=c030020</a
+          >
+        </li>
+        <li>
+          <strong>送第一筆 POST。</strong>
+          URL：<code>https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver</code>。
+          試點店測試期間 <code>signature</code> 可不帶。
+          <pre>curl -sS -X POST 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver' \
+  -H 'Content-Type: application/json' \
+  -d '{"isEncrypt":false,"serviceSpecialData_Json":{"target":"milkshac030020","data":{"number_content":[{"source_type":"From_Store_Preparing","number":"1234"},{"source_type":"From_Store_OK","number":"5678"}],"newsTicker_content":[],"newsTickerSpeed":0}},"merchant_id":"Milksha","account":"c030020","timeStmp":"2026-10-14-15-30-00:0123","serviceSpecialData_Json_Md5Hash":"&lt;MD5&gt;","signature":""}'</pre>
+        </li>
+        <li>
+          <strong>檢查 Response。</strong>
+          HTTP 永遠 200。先看 <code>isOK</code>。
+          再解析 <code>information</code> JSON 字串內的 <code>isSuccess</code> 與 <code>information</code>。
+        </li>
+        <li>
+          <strong>常見錯誤。</strong>
+          <table>
+            <thead>
+              <tr>
+                <th>訊息</th>
+                <th>處理</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>目標叫號機尚未連線</td>
+                <td>先開看板網址再重送。</td>
+              </tr>
+              <tr>
+                <td>找不到目標叫號機</td>
+                <td>確認 target = milksha + account。</td>
+              </tr>
+              <tr>
+                <td>叫號資料格式錯誤</td>
+                <td>查欄位、號碼規則、Md5、timeStmp、簽章。</td>
+              </tr>
+              <tr>
+                <td>資料顯示成功</td>
+                <td>目視看板是否更新。</td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+      </ol>
+    </section>
     <div id="redoc-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/redoc@2.4.0/bundles/redoc.standalone.js"></script>
     <script>
-      Redoc.init("./openapi.yaml", { scrollYOffset: 48, hideDownloadButton: false }, document.getElementById("redoc-container"));
+      Redoc.init(
+        "./openapi.yaml",
+        { scrollYOffset: 48, hideDownloadButton: false, expandResponses: "200" },
+        document.getElementById("redoc-container"),
+      );
     </script>
   </body>
 </html>
