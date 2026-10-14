@@ -103,11 +103,13 @@
         </li>
         <li>
           <strong>檢查 Response。</strong>
-          HTTP 永遠 200。先看 <code>isOK</code>。
-          再解析 <code>information</code> JSON 字串內的 <code>isSuccess</code> 與 <code>information</code>。
+          HTTP 永遠 200。
+          <code>isOK: true</code> 表示 Request 已被受理並處理完畢（不代表上板）。
+          解析 <code>information</code> JSON 字串，以 <code>isSuccess</code> 判斷號碼是否顯示。
         </li>
         <li>
           <strong>常見錯誤。</strong>
+          下列失敗皆為 <code>isOK: true</code>、內層 <code>isSuccess: false</code>（文案不變）。
           <table>
             <thead>
               <tr>
@@ -130,7 +132,7 @@
               </tr>
               <tr>
                 <td>資料顯示成功</td>
-                <td>目視看板是否更新。</td>
+                <td><code>isSuccess: true</code>；目視看板是否更新。</td>
               </tr>
             </tbody>
           </table>
