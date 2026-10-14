@@ -227,15 +227,20 @@
           channel({ type: 'board', storeId: sid });
         } else if (cmdBody.type === 'push_numbers') {
           const params = cmdBody.params || {};
-          const ready = Array.isArray(params.ready) ? params.ready : [];
-          const preparing = Array.isArray(params.preparing) ? params.preparing : [];
-          const nc = [];
-          ready.forEach(function (no) {
-            nc.push({ source_type: 'From_Store_OK', number: String(no) });
-          });
-          preparing.forEach(function (no) {
-            nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
-          });
+          const PushParams = QMS.Transport && QMS.Transport.PushNumbersParams;
+          const nc = PushParams
+            ? PushParams.pushNumbersParamsToNumberContent(params)
+            : [];
+          if (!PushParams) {
+            const ready = Array.isArray(params.ready) ? params.ready : [];
+            const preparing = Array.isArray(params.preparing) ? params.preparing : [];
+            ready.forEach(function (no) {
+              nc.push({ source_type: 'From_Store_OK', number: String(no) });
+            });
+            preparing.forEach(function (no) {
+              nc.push({ source_type: 'From_Store_Preparing', number: String(no) });
+            });
+          }
           const tickets = TodayBoard.numberContentToTickets(nc);
           boardSeq = nextSeq();
           const board = TodayBoard.buildTodayBoard(sid, boardSeq, tickets, 'A');

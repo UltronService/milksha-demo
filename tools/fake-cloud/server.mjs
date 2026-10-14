@@ -207,26 +207,44 @@ function numberToTickets(nc) {
   }));
 }
 
+function pushEntryToRow(entry, zone) {
+  const defaultReady = 'From_Store_OK';
+  const defaultPrep = 'From_Store_Preparing';
+  if (typeof entry === 'string' || typeof entry === 'number') {
+    const no = String(entry).trim();
+    if (!no) return null;
+    return {
+      no,
+      status: zone === 'ready' ? 'ready' : 'preparing',
+      source_type: zone === 'ready' ? defaultReady : defaultPrep,
+    };
+  }
+  if (!entry || typeof entry !== 'object') return null;
+  const no = entry.no != null ? String(entry.no).trim() : '';
+  let sourceType = entry.sourceType != null ? String(entry.sourceType).trim() : '';
+  if (!sourceType && entry.source_type != null) {
+    sourceType = String(entry.source_type).trim();
+  }
+  if (!no || !sourceType) return null;
+  return {
+    no,
+    status: zone === 'ready' ? 'ready' : 'preparing',
+    source_type: sourceType,
+  };
+}
+
 function pushParamsToTickets(params) {
   const now = new Date().toISOString();
   const tickets = [];
   const ready = params && Array.isArray(params.ready) ? params.ready : [];
   const preparing = params && Array.isArray(params.preparing) ? params.preparing : [];
-  for (const no of ready) {
-    tickets.push({
-      no: String(no),
-      status: 'ready',
-      updatedAt: now,
-      source_type: 'From_Store_OK',
-    });
+  for (const entry of ready) {
+    const row = pushEntryToRow(entry, 'ready');
+    if (row) tickets.push({ ...row, updatedAt: now });
   }
-  for (const no of preparing) {
-    tickets.push({
-      no: String(no),
-      status: 'preparing',
-      updatedAt: now,
-      source_type: 'From_Store_Preparing',
-    });
+  for (const entry of preparing) {
+    const row = pushEntryToRow(entry, 'preparing');
+    if (row) tickets.push({ ...row, updatedAt: now });
   }
   return tickets;
 }

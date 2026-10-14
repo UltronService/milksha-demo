@@ -74,7 +74,32 @@ export function validateDeviceId(deviceId) {
   return { ok: true, deviceId: id };
 }
 
-function normalizeStringNumberList(value) {
+const SOURCE_TYPE_PUSH_RE = /^From_[A-Za-z0-9_]+_(OK|Preparing)$/;
+
+function normalizePushNumbersEntry(entry) {
+  if (typeof entry === 'string' || typeof entry === 'number') {
+    const no = String(entry).trim();
+    if (!no || no.length > 32) {
+      return invalidCommandParams('invalid params');
+    }
+    return { ok: true, entry: no };
+  }
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+    return invalidCommandParams('invalid params');
+  }
+  const keys = Object.keys(entry);
+  if (keys.length !== 2 || !keys.includes('no') || !keys.includes('sourceType')) {
+    return invalidCommandParams('invalid params');
+  }
+  const no = String(entry.no ?? '').trim();
+  const sourceType = String(entry.sourceType ?? '').trim();
+  if (!no || no.length > 32 || !SOURCE_TYPE_PUSH_RE.test(sourceType)) {
+    return invalidCommandParams('invalid params');
+  }
+  return { ok: true, entry: { no, sourceType } };
+}
+
+function normalizePushNumbersList(value) {
   if (value === undefined || value === null) {
     return { ok: true, list: [] };
   }
@@ -83,11 +108,9 @@ function normalizeStringNumberList(value) {
   }
   const list = [];
   for (const item of value) {
-    const s = String(item == null ? '' : item).trim();
-    if (!s || s.length > 32) {
-      return invalidCommandParams('invalid params');
-    }
-    list.push(s);
+    const norm = normalizePushNumbersEntry(item);
+    if (!norm.ok) return norm;
+    list.push(norm.entry);
   }
   return { ok: true, list };
 }
@@ -106,9 +129,9 @@ function normalizeParams(type, params) {
   }
   const out = {};
   if (type === 'push_numbers') {
-    const readyNorm = normalizeStringNumberList(raw.ready);
+    const readyNorm = normalizePushNumbersList(raw.ready);
     if (!readyNorm.ok) return readyNorm;
-    const prepNorm = normalizeStringNumberList(raw.preparing);
+    const prepNorm = normalizePushNumbersList(raw.preparing);
     if (!prepNorm.ok) return prepNorm;
     out.ready = readyNorm.list;
     out.preparing = prepNorm.list;
