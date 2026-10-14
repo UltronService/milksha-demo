@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.2.0"
+  version: "1.3.0"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -12,6 +12,10 @@ info:
     backgroundColor: "#fafafa"
   description: |
     ## 對接步驟
+
+    > **⚠️ 測試環境 URL（非正式上線）**  
+    > 目前文件中的 URL（`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`）**並非正式環境**，僅供上線前測試。  
+    > 待測試沒有問題後，會再提供正式環境的 URL。
 
     1. **開啟試點看板**
        請門市先開啟叫號螢幕（瀏覽器看板）。
@@ -59,6 +63,243 @@ info:
        | Md5Hash 不符 | — | false | 對 HTTP body 內嵌的 `serviceSpecialData_Json` **原始文字**重算 MD5，勿改 key 順序或空白。 |
        | timeStmp 格式錯誤 / timeStmp 已過期 | — | false | 使用台北時間格式；與伺服器時間差勿超過 10 分鐘。 |
        | 簽章錯誤 | — | false | 非試點測試期時須帶 HMAC；金鑰由迷客夏提供（`<REDACTED>`）。 |
+
+    ## 一鍵試打（Python，免手算 MD5）
+
+    > **⚠️ 測試環境 URL（非正式上線）**  
+    > 目前文件中的 URL（`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`）**並非正式環境**，僅供上線前測試。  
+    > 待測試沒有問題後，會再提供正式環境的 URL。
+
+    若您剛接這支 API，curl 範例裡的 `<MD5>` 與固定 `timeStmp` 容易卡住。  
+    下面是一支 **Python 3.9+** 腳本（只用標準函式庫），會自動產生時間、算 MD5、送出 Request。
+
+    ### 開始前準備
+
+    1. 確認已安裝 **Python 3.9 或更新版**（Python：用來跑腳本的程式）。
+       - macOS / Linux 終端機：`python3 --version`
+       - Windows 命令提示字元或 PowerShell：`py --version`
+    2. 若顯示找不到指令，或版本低於 3.9：到 [python.org](https://www.python.org/downloads/) 下載安裝。  
+       Windows 安裝時請勾選 **Add python.exe to PATH**（把 python 加入 PATH 環境變數）。
+
+    ### 操作步驟
+
+    1. 在任意資料夾新增檔案 `pos_receiver_test.py`。
+    2. 將下方 **整段** Python 程式複製貼上（不要只貼一半）。
+    3. 打開檔案最上方 **`只改這裡`** 區塊。一般只需改：
+       - `STORE`：店號（對應 JSON 的 `account`）。
+       - 後端 QA 自測請改 `STORE = "zz-qa-backend"`（勿對真實門市亂送）。
+       - `SIGNATURE`：試點／QA 測試期維持 `""` 即可。
+    4. 開啟終端機，**cd** 進入 `pos_receiver_test.py` 所在資料夾。
+    5. 執行：
+       - macOS / Linux：`python3 pos_receiver_test.py`
+       - Windows：`py pos_receiver_test.py`
+
+    ```python
+    #!/usr/bin/env python3
+    # posReceiver 一鍵試打：自動算 MD5 與 timeStmp，POST 到測試環境。
+
+    import hashlib
+    import json
+    import sys
+    import urllib.error
+    import urllib.request
+    from datetime import datetime, timedelta, timezone
+    from typing import Optional, Tuple
+
+    # ========== 只改這裡 ==========
+    STORE = "c030020"  # 店號（account）。後端 QA 自測可改 "zz-qa-backend"
+    MERCHANT_ID = "Milksha"
+    # 以下為測試環境 URL，非正式上線；正式 URL 待測試通過後由迷客夏另行提供。
+    POS_RECEIVER_URL = (
+        "https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver"
+    )
+    SIGNATURE = ""  # 簽章（signature）：試點／QA 測試期可留空字串 ""
+    # ==============================
+
+    TAIPEI = timezone(timedelta(hours=8))
+
+
+    def format_time_stmp(now: Optional[datetime] = None) -> str:
+        # 伺服器只接受「現在」附近 10 分鐘內的 timeStmp，不可用 curl 範例裡的固定時間。
+        if now is None:
+            now = datetime.now(timezone.utc)
+        elif now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        local = now.astimezone(TAIPEI)
+        ms4 = str(int(now.timestamp() * 1000) % 1000).zfill(4)
+        return (
+            f"{local.year:04d}-{local.month:02d}-{local.day:02d}-"
+            f"{local.hour:02d}-{local.minute:02d}-{local.second:02d}:{ms4}"
+        )
+
+
+    def build_inner_json(store: str) -> dict:
+        # target = "milksha" + 店號；必須與 account 對得上，否則「找不到目標叫號機」。
+        return {
+            "target": "milksha" + store,
+            "data": {
+                "number_content": [
+                    {"source_type": "From_Store_Preparing", "number": "1234"},
+                    {"source_type": "From_Store_OK", "number": "5678"},
+                ],
+                "newsTicker_content": [],
+                "newsTickerSpeed": 0,
+            },
+        }
+
+
+    def md5_hex_utf8(text: str) -> str:
+        # MD5（雜湊）：後端會對 HTTP body 裡 serviceSpecialData_Json 的「原始 JSON 文字」重算。
+        # 若您先 json.dumps 再手改空白或 key 順序，雜湊就對不上 → Md5Hash 不符。
+        return hashlib.md5(text.encode("utf-8")).hexdigest()
+
+
+    def build_wire_text(
+        inner_text: str,
+        md5_hash: str,
+        merchant_id: str,
+        account: str,
+        time_stmp: str,
+        signature: str,
+    ) -> str:
+        # 用字串拼接把 inner_text 原樣嵌進 body，避免整包 json.dumps 改變內層格式。
+        return (
+            '{"isEncrypt":false,"serviceSpecialData_Json":'
+            + inner_text
+            + ',"merchant_id":'
+            + json.dumps(merchant_id)
+            + ',"account":'
+            + json.dumps(account)
+            + ',"timeStmp":'
+            + json.dumps(time_stmp)
+            + ',"serviceSpecialData_Json_Md5Hash":'
+            + json.dumps(md5_hash)
+            + ',"signature":'
+            + json.dumps(signature)
+            + "}"
+        )
+
+
+    def post_json(url: str, wire_text: str) -> Tuple[int, str]:
+        req = urllib.request.Request(
+            url,
+            data=wire_text.encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return resp.status, resp.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            return exc.code, body
+
+
+    def main() -> int:
+        print("=== posReceiver 一鍵試打 ===")
+        print(f"[1/5] 店號 account / target 前綴 milksha → {STORE}")
+
+        time_stmp = format_time_stmp()
+        print(f"[2/5] 新 timeStmp（台北時間，10 分鐘內有效）→ {time_stmp}")
+
+        inner_obj = build_inner_json(STORE)
+        # separators 去掉空白，與 POS / curl 範例一致。
+        inner_text = json.dumps(inner_obj, separators=(",", ":"), ensure_ascii=False)
+        print("[3/5] 內層 JSON 字串（MD5 必須對「這一整串」計算）→")
+        print(inner_text)
+
+        md5_hash = md5_hex_utf8(inner_text)
+        print(f"[4/5] serviceSpecialData_Json_Md5Hash → {md5_hash}")
+
+        wire_text = build_wire_text(
+            inner_text,
+            md5_hash,
+            MERCHANT_ID,
+            STORE,
+            time_stmp,
+            SIGNATURE,
+        )
+        print(f"[5/5] POST {POS_RECEIVER_URL}")
+
+        try:
+            status, raw = post_json(POS_RECEIVER_URL, wire_text)
+        except urllib.error.URLError as exc:
+            print("HTTP 狀態: （連線失敗）")
+            print(f"錯誤: {exc.reason}")
+            return 1
+
+        print(f"HTTP 狀態: {status}")
+        print("外層 Response 原文:")
+        print(raw)
+
+        try:
+            outer = json.loads(raw)
+        except json.JSONDecodeError:
+            print("無法解析外層 JSON。")
+            return 1
+
+        is_ok = outer.get("isOK")
+        print(f"外層 isOK → {is_ok}")
+
+        info_raw = outer.get("information", "")
+        try:
+            inner = json.loads(info_raw) if isinstance(info_raw, str) else info_raw
+        except json.JSONDecodeError:
+            print(f"information 不是 JSON 字串 → {info_raw!r}")
+            return 1 if not is_ok else 0
+
+        is_success = inner.get("isSuccess")
+        info_msg = inner.get("information", "")
+        print(f"內層 isSuccess → {is_success}")
+        print(f"內層 information → {info_msg}")
+        return 0
+
+
+    if __name__ == "__main__":
+        sys.exit(main())
+    ```
+
+    ### 成功時你會看到（範例）
+
+    內層 `information` 可能是 **`資料顯示成功`** 或 **`目標叫號機尚未連線`**（看板沒開時）；兩者都代表 Request 已被伺服器接受。
+
+    ```
+    === posReceiver 一鍵試打 ===
+    [1/5] 店號 account / target 前綴 milksha → zz-qa-backend
+    [2/5] 新 timeStmp（台北時間，10 分鐘內有效）→ 2026-10-15-00-06-07:0365
+    [3/5] 內層 JSON 字串（MD5 必須對「這一整串」計算）→
+    {"target":"milkshazz-qa-backend","data":{"number_content":[...],"newsTicker_content":[],"newsTickerSpeed":0}}
+    [4/5] serviceSpecialData_Json_Md5Hash → 16c1adfdb1cf2216dd81de535acde1eb
+    [5/5] POST https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
+    HTTP 狀態: 200
+    外層 isOK → True
+    內層 isSuccess → True
+    內層 information → 資料顯示成功
+    ```
+
+    若為 **`資料顯示成功`**，可到看板網址目視確認號碼是否更新（QA 店號範例：  
+    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-backend`）。
+
+    ### 出錯怎麼辦
+
+    先看終端機最後幾行的 **內層 information**（或外層 `information` 解 JSON 後的 `information` 欄位）。  
+    下列文案與 **milksha-cloud / posReceiver** 後端一致（HTTP 狀態碼通常仍為 **200**）。
+
+    | 錯誤訊息 | 常見原因 | 怎麼改 |
+    |----------|----------|--------|
+    | Md5Hash 不符 | MD5 不是對「即將送出的」內層 JSON **同一串字**計算；或送出前又改了 JSON。 | 用本腳本；不要手改 `inner_text` 或 body。 |
+    | timeStmp 格式錯誤 | 時間字串不符合 `YYYY-MM-DD-HH-mm-ss:XXXX`。 | 用腳本自動產生；勿複製舊範例時間。 |
+    | timeStmp 已過期 | 時間與伺服器相差超過 10 分鐘。 | 重新執行腳本產生新時間。 |
+    | 找不到目標叫號機 | `target` 不是 `milksha` + `account`（店號打錯）。 | 檢查 `STORE` 與 `target` 是否為 `milksha` + 店號。 |
+    | 目標叫號機尚未連線 | 看板網頁未開或未連上雲端。 | 先開看板 URL 再重跑；不影響「Request 已受理」。 |
+    | 叫號資料格式錯誤 | JSON 結構或 `source_type`、號碼格式不符。 | 對照 OpenAPI 範例；先勿改 `number_content` 測通再改。 |
+    | 簽章錯誤 | 非免簽期卻留空或 HMAC 算錯。 | 向迷客夏取得金鑰（`<REDACTED>`）並正確簽章；QA 測試可留空。 |
+    | 終端機：`python3` / `py` 找不到 | 未安裝 Python 或未加入 PATH。 | 安裝 Python 3.9+ 並重開終端機。 |
+    | `URLError` / SSL / 連線逾時 | 公司防火牆、無網路、DNS 問題。 | 換網路或請 IT 放行 `*.cloudfunctions.net`。 |
+
+    - **跑法：** `python3 pos_receiver_test.py`（Windows 可用 `py pos_receiver_test.py`）。
+    - **成功：** 外層 `isOK: true`，且內層 `isSuccess: true` 並顯示 **`資料顯示成功`**（或 `false` + **`目標叫號機尚未連線`** 亦表示已送達伺服器）；再到看板 URL 目視確認。
+    - **整批覆寫：** 每次送出的 `number_content` 就是看板上的**完整名單**；`number_content: []` 會**清空**看板。
 
     ---
 
