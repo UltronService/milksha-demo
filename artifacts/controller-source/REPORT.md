@@ -35,7 +35,7 @@
 | e2e 背景分頁 | ✅ | `home-board-background-tab.spec.mjs` |
 | e2e 來源雙格 | ✅ | `controller-source-quick-send.spec.mjs` |
 | 真雲端 clear_now→push_numbers | ⏭ skip | `controller-source-live-cloud.spec.mjs` |
-| CI（head `4ea0afe`） | ✅ | [38480983112](https://github.com/UltronService/milksha-demo/actions/runs/38480983112) |
+| CI（head `4d314b9`） | ✅ | [38484711807](https://github.com/UltronService/milksha-demo/actions/runs/38484711807) |
 
 ## 手動驗收（UAT）
 
