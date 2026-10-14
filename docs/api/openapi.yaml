@@ -21,7 +21,12 @@ info:
 
     2. **送第一筆 Request**
        - 方法：`POST`
-       - URL：`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`
+       - URL：
+
+       ```
+       https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
+       ```
+
        - Header：`Content-Type: application/json`
        - `account` 填 `c030020`。
        - `serviceSpecialData_Json.target` 填 `milkshac030020`（=`milksha` + 店號）。

@@ -68,17 +68,37 @@
   min-width: max-content;
 }
 
-.redoc-wrap .api-info p,
-.redoc-wrap .api-info li {
-  overflow-x: auto;
+.redoc-wrap .api-info li code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
-.redoc-wrap .api-info p code,
-.redoc-wrap .api-info li code,
 .redoc-wrap .api-info td code {
   white-space: pre !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
+}
+
+/* Intro markdown only: inline code stays on one line (short tokens) */
+.redoc-wrap .api-info p > code:only-child,
+.redoc-wrap .api-info li p > code:only-child,
+.redoc-wrap .api-info .redoc-markdown p > code:only-child,
+.redoc-wrap .api-info .redoc-markdown li p > code:only-child {
+  display: block !important;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* info.description renders in api-info on Redoc 2.x */
+.redoc-wrap .api-info pre code {
+  white-space: pre !important;
 }
 
 /* Schema tables: wrap descriptions inside the middle column */
