@@ -19,21 +19,8 @@
   color: #6b8c2e;
 }
 
-/* Hide empty sticky right panel; samples fill it when present */
-.redoc-wrap .sc-dExYaf:empty {
-  display: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-  flex: 0 0 0 !important;
-}
-
-/* Markdown tables in description */
-.redoc-wrap table {
+/* Markdown tables in API intro description only (not schema tables) */
+.redoc-wrap .api-info table {
   display: table;
   width: 100%;
   border-collapse: collapse;
@@ -42,21 +29,21 @@
   line-height: 1.45;
 }
 
-.redoc-wrap table th,
-.redoc-wrap table td {
+.redoc-wrap .api-info table th,
+.redoc-wrap .api-info table td {
   border: 1px solid #e2e8f0;
   padding: 0.55rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 
-.redoc-wrap table th {
+.redoc-wrap .api-info table th {
   background: #f1f5f9;
   font-weight: 600;
   color: #0f172a;
 }
 
-.redoc-wrap table tr:nth-child(even) td {
+.redoc-wrap .api-info table tr:nth-child(even) td {
   background: #fafafa;
 }
 
@@ -81,17 +68,28 @@
   min-width: max-content;
 }
 
-.redoc-wrap p,
-.redoc-wrap li {
+.redoc-wrap .api-info p,
+.redoc-wrap .api-info li {
   overflow-x: auto;
 }
 
-.redoc-wrap p code,
-.redoc-wrap li code,
-.redoc-wrap td code {
+.redoc-wrap .api-info p code,
+.redoc-wrap .api-info li code,
+.redoc-wrap .api-info td code {
   white-space: pre !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
+}
+
+/* Schema tables: wrap descriptions inside the middle column */
+.redoc-wrap table:not(.api-info table) td {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.redoc-wrap table:not(.api-info table) td code {
+  white-space: normal !important;
+  word-break: break-word !important;
 }
 
 .redoc-wrap .react-tabs__tab-panel pre,
