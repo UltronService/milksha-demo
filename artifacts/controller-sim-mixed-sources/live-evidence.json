@@ -1,0 +1,99 @@
+{
+  "store": "zz-qa-ci-store",
+  "runMs": 240000,
+  "at": "2026-10-14T16:32:28.036Z",
+  "controllerTickets": {
+    "total": 21,
+    "bySource": {
+      "point": 3,
+      "store": 15,
+      "uber": 1,
+      "fp": 1,
+      "udd": 1
+    },
+    "sample": [
+      {
+        "no": "0462",
+        "status": "ready",
+        "sourceKey": "point"
+      },
+      {
+        "no": "0028",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0029",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0030",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0031",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0032",
+        "status": "preparing",
+        "sourceKey": "store"
+      },
+      {
+        "no": "F1D2VU",
+        "status": "preparing",
+        "sourceKey": "uber"
+      },
+      {
+        "no": "0033",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0034",
+        "status": "preparing",
+        "sourceKey": "store"
+      },
+      {
+        "no": "0035",
+        "status": "ready",
+        "sourceKey": "store"
+      },
+      {
+        "no": "845",
+        "status": "preparing",
+        "sourceKey": "point"
+      },
+      {
+        "no": "703041",
+        "status": "preparing",
+        "sourceKey": "fp"
+      }
+    ]
+  },
+  "boardNumbers": {
+    "prep": [
+      "0032"
+    ],
+    "ready": [
+      "0029",
+      "0030",
+      "0033",
+      "0028",
+      "0031",
+      "0462",
+      "DRKLX"
+    ]
+  },
+  "boardClasses": {
+    "hasStore": true,
+    "hasPoint": false,
+    "hasFp": false,
+    "hasDeliveryAlnum": true,
+    "total": 8
+  },
+  "ok": true
+}
