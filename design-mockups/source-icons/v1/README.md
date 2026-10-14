@@ -26,7 +26,7 @@ foodpanda 在 68×68 盒內加 **8px** padding。迷點以 `object-fit: contain`
 
 1. `.mockup-cell`：`justify-content: flex-start` + `padding-left: 14px`。
 2. 每格必有 **130px 寬 icon 槽**；門市槽空白，號碼從「槽右緣 + 16px」開始，與有 icon 的格垂直對齊。
-3. 橫排結構：`[槽 130][gap 16][號碼]`；Uber／foodpanda 正方形在槽內水平置中。
+3. 橫排結構：`[槽 130][gap 16][號碼]`；各來源 icon 在槽內**靠右對齊**，icon 右緣貼槽右緣，與號碼間視覺間距固定 **16px**。
 
 ## nidin.svg
 
