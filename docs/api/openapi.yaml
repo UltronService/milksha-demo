@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.0"
+  version: "1.4.1"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -23,6 +23,7 @@ info:
 
     1. 開啟試點看板
        請門市先開啟叫號螢幕（瀏覽器看板）。
+       看板網頁在瀏覽器開著即視為在線；號碼送出後通常幾秒內會出現在畫面上。
        試點門市 `c030020` 看板網址：
 
        `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
@@ -38,6 +39,8 @@ info:
        - Header：`Content-Type: application/json`
        - `account` 填 `c030020`。
        - `serviceSpecialData_Json.target` 填 `milkshac030020`（=`milksha` + 店號）。
+       - 外送平台 `source_type` 須與規格完全一致；Uber Eats 為單數 `From_UberEat_Preparing` / `From_UberEat_OK`（不是 `UberEats`）。
+       - 每次 Request 的 `number_content` 為看板完整名單（整批覆寫）；多來源混送範例見下方 OpenAPI Request 範例「試點多來源混送」。
        - `timeStmp` 須為台北時間格式，且與伺服器時間相差在 10 分鐘內（見下方欄位說明）。
        - `serviceSpecialData_Json_Md5Hash` 與 `signature` 為選填，可省略或留空；伺服器不驗證。
 
@@ -62,8 +65,8 @@ info:
        |------------------|------|-----------|----------|
        | 資料顯示成功 | true | true | 正常；請目視看板是否更新。 |
        | 目標叫號機尚未連線 | true | false | 看板未開或未連線；請先開啟試點看板網址再重送。 |
-       | 找不到目標叫號機 | true | false | 檢查 `target` 是否為 `milksha` + `account`（例 `milkshac030020`）。 |
-       | 叫號資料格式錯誤 | true | false | 檢查 JSON 結構、`source_type`、號碼規則與 `timeStmp`。 |
+       | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔；請確認店號是否已開通叫號（試點為 `c030020`）。 |
+       | 叫號資料格式錯誤 | true | false | JSON、`source_type`、號碼規則、`timeStmp`，或 `target` 不等於 `milksha` + `account`（例打錯 target 亦回此文案，而非「找不到目標叫號機」）。 |
        | timeStmp 格式錯誤 / timeStmp 已過期 | — | false | 使用台北時間格式；與伺服器時間差勿超過 10 分鐘。 |
 
     ## 一鍵試打（Python）
@@ -317,6 +320,30 @@ paths:
                   merchant_id: Milksha
                   account: c030020
                   timeStmp: "2026-10-14-15-30-00:0123"
+              mixedSourcesPilot:
+                summary: 試點多來源混送（整批名單範例）
+                description: |
+                  每次 POST 須送出看板上的完整 `number_content`（整批覆寫）；
+                  未出現在本批的號碼會從看板移除。以下為試點 `c030020` 欄位格式參考。
+                value:
+                  isEncrypt: false
+                  serviceSpecialData_Json:
+                    target: milkshac030020
+                    data:
+                      number_content:
+                        - source_type: From_Store_OK
+                          number: "1234"
+                        - source_type: From_UberEat_OK
+                          number: "C7458"
+                        - source_type: From_FoodPanda_OK
+                          number: "#6407"
+                        - source_type: From_milksha_point_Preparing
+                          number: "091"
+                      newsTicker_content: []
+                      newsTickerSpeed: 0
+                  merchant_id: Milksha
+                  account: c030020
+                  timeStmp: "2026-10-14-15-32-00:0789"
               clearBoard:
                 summary: 清空看板
                 value:
@@ -562,8 +589,8 @@ x-response-messages:
     |-------------|-----------|----------------|------|
     | 資料顯示成功 | true | true | 驗證通過、看板在線，已更新顯示。 |
     | 目標叫號機尚未連線 | true | false | 驗證通過，看板未連線；不更新畫面。 |
-    | 找不到目標叫號機 | true | false | `target` 不等於 `milksha` + `account`。 |
-    | 叫號資料格式錯誤 | true | false | 結構、來源、號碼或 timeStmp 等驗證失敗。 |
+    | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔。 |
+    | 叫號資料格式錯誤 | true | false | 結構、來源、號碼、timeStmp 等驗證失敗，或 `target` 不等於 `milksha` + `account`。 |
     | timeStmp 格式錯誤 | — | false | timeStmp 格式不符。 |
     | timeStmp 已過期 | — | false | 與伺服器時間差過大。 |
     | 入口 A 未啟用 | — | false | 接收端暫停此入口。 |
