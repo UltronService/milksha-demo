@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>迷客夏 · 來源 icon 版面 mockup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Arimo:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="source-icons.css" />
+  </head>
+  <body class="source-icons-mockup">
+    <div id="mockup-board" class="source-icons-mockup__board" role="img" aria-label="來源 icon 全板 mockup"></div>
+    <script src="source-icons-data.js"></script>
+    <script src="source-icons-render.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var board = document.getElementById('mockup-board');
+        if (!board || !window.MilkshaSourceIconRender) {
+          return;
+        }
+        var paint = function () {
+          window.MilkshaSourceIconRender.renderFullBoard(board);
+        };
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(paint);
+          return;
+        }
+        paint();
+      });
+    </script>
+  </body>
+</html>
