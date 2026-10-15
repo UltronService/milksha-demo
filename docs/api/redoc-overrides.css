@@ -49,10 +49,20 @@
 
 /* Code blocks & long URLs: single line, horizontal scroll */
 .redoc-wrap pre {
-  overflow-x: scroll !important;
+  overflow-x: auto !important;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+  padding-bottom: 0.35rem;
+}
+
+.redoc-wrap .api-info pre::-webkit-scrollbar {
+  height: 10px;
+}
+
+.redoc-wrap .api-info pre::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 5px;
 }
 
 .redoc-wrap pre,
