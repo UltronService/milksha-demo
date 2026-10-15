@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.2"
+  version: "1.4.3"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -521,15 +521,14 @@ components:
           description: |
             顯示號碼，必須為 JSON 字串（不可送數字型別）。
 
-            五來源號碼規則：
-            - 門市：恰好 4 位數字。
-            - 迷點：3–4 位數字；保留前導 0（例 `091`）。
-            - Uber Eats：4–6 位英數字；儲存為大寫（例 `c7458` → `C7458`）。
-            - foodpanda：4–6 位數字；移除 `#` 後比對（`#6406` 與 `6406` 視為同一號）。
-            - Udd：同 Uber Eats。
-            - 正規化後長度不得超過 6 字元。
-            - 同一 `source_type` + 同一正規化號碼只保留一筆；不同來源可同號並存。
-          example: "1488"
+            五來源號碼規則（v1.4.3；不符格式者拒收，內層 `isSuccess: false`、訊息「叫號資料格式錯誤」）：
+            - 門市：恰好 4 位數字（例 `1488`）。
+            - 迷點：恰好 3 位數字；保留前導 0（例 `007`、`091`）。
+            - Uber Eats：恰好 5 位十六進位字元 `0-9A-F`；儲存與顯示為大寫（例 `BFBEF`；送 `bfbef` 亦視為 `BFBEF`）。
+            - foodpanda：必須為 `#` 加恰好 4 位數字；`#` 保留顯示（例 `#6405`；不可只送 `6405`）。
+            - Udd：同 Uber Eats（恰好 5 位十六進位大寫）。
+            - 同一 `source_type` + 同一正規化號碼只保留一筆（例同來源重送 `DDDDD` 與 `ddddd` 視為重複）；不同來源可同號並存。
+          example: "007"
 
     PosReceiverResponse:
       type: object
