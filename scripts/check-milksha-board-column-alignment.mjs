@@ -10,6 +10,8 @@ import { createServer } from 'node:http';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TOL_PX = 1;
+const CREAM_BOUNDS_TOL_PX = 1;
+const PR74_BASELINE_TOL_PX = 2;
 
 /** Four sources, varying number widths (5-char Uber, hash fp, point, store). */
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
@@ -68,6 +70,133 @@ function ephemeralPort() {
 /**
  * @returns {Promise<{ ok: boolean, tolPx: number, zones: object, failures: string[] }>}
  */
+/**
+ * @returns {Promise<{ ok: boolean, violations: object[], failures: string[] }>}
+ */
+export async function runCreamColumnBoundsCheck(options) {
+  const opts = options || {};
+  const payload = opts.payload || buildFullBoardMixedPayload();
+  const { siteRoot, base, port } = prepareSite();
+  const server = await startServer(siteRoot, port);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await page.evaluate((rows) => {
+    const off = document.getElementById('milksha-cloud-offline');
+    if (off) {
+      off.hidden = true;
+    }
+    window.QMS.runtime.applyPayload(rows, { silent: true });
+  }, payload);
+  await page.waitForSelector('.milksha-prep .milksha-board-chip');
+  await page.waitForFunction(() => {
+    for (const img of document.querySelectorAll('.milksha-board-icon')) {
+      if (!img.complete || img.naturalWidth === 0) {
+        return false;
+      }
+    }
+    return document.querySelectorAll('.milksha-board-icon').length >= 4;
+  });
+
+  const result = await page.evaluate(function (tol) {
+    const art = window.QMS.Board.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    const cRect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
+    const m = canvas && canvas.style.transform ? canvas.style.transform.match(/scale\(([^)]+)\)/) : null;
+    const scale = m ? Number(m[1]) : 1;
+
+    function boardRect(el) {
+      const r = el.getBoundingClientRect();
+      return {
+        left: (r.left - cRect.left) / scale,
+        top: (r.top - cRect.top) / scale,
+        right: (r.right - cRect.left) / scale,
+        bottom: (r.bottom - cRect.top) / scale,
+        width: r.width / scale,
+        height: r.height / scale,
+      };
+    }
+
+    const violations = [];
+    ['prep', 'ready'].forEach(function (zoneKey) {
+      const innerCols = art.columnInnerRectsBoard(zoneKey);
+      const cream = art.creamRectForZone(zoneKey);
+      const creamBox = {
+        left: cream.left,
+        top: cream.top,
+        right: cream.left + cream.width - 1,
+        bottom: cream.top + cream.height - 1,
+      };
+      const cells = Array.from(document.querySelectorAll('.milksha-zone.' + zoneKey + ' .milksha-num-cell'));
+      cells.forEach(function (cell, index) {
+        const chip = cell.querySelector('.milksha-board-chip');
+        const num = cell.querySelector('.milksha-num');
+        if (!chip || !num || !num.textContent) {
+          return;
+        }
+        const col = index < 5 ? 0 : 1;
+        const band = innerCols[col];
+        const parts = [
+          { kind: 'chip', el: chip },
+          { kind: 'num', el: num },
+        ];
+        const iconBox = chip.querySelector('.milksha-board-icon-box');
+        if (iconBox) {
+          parts.push({ kind: 'iconBox', el: iconBox });
+        }
+        parts.forEach(function (part) {
+          const r = boardRect(part.el);
+          if (
+            r.left < band.left - tol ||
+            r.right > band.right + tol ||
+            r.top < creamBox.top - tol ||
+            r.bottom > creamBox.bottom + tol
+          ) {
+            violations.push({
+              zone: zoneKey,
+              index: index,
+              number: num.textContent.trim(),
+              kind: part.kind,
+              rect: r,
+              band: band,
+              cream: creamBox,
+            });
+          }
+        });
+      });
+    });
+    return { ok: violations.length === 0, tolPx: tol, violations: violations };
+  }, CREAM_BOUNDS_TOL_PX);
+
+  await browser.close();
+  await new Promise(function (r) {
+    server.close(function () {
+      r(undefined);
+    });
+  });
+  const failures = result.violations.map(function (v) {
+    return (
+      v.zone +
+      ' i' +
+      v.index +
+      ' ' +
+      v.number +
+      ' ' +
+      v.kind +
+      ' overflow band L' +
+      v.band.left +
+      ' R' +
+      v.band.right +
+      ' got L' +
+      v.rect.left.toFixed(1) +
+      ' R' +
+      v.rect.right.toFixed(1)
+    );
+  });
+  return { ok: result.ok, tolPx: CREAM_BOUNDS_TOL_PX, violations: result.violations, failures: failures };
+}
+
 export async function runColumnAlignmentCheck(options) {
   const opts = options || {};
   const payload = opts.payload || ALIGNMENT_SAMPLE_PAYLOAD;
@@ -304,4 +433,138 @@ export function buildFullBoardMixedPayload() {
     return { source_type: prefix[r.sourceKey] + 'OK', number: r.no };
   });
   return prep.concat(ready);
+}
+
+/** 10+10 stress: widest valid labels (Uber WWWWWW, foodpanda #99999 / #999999). */
+export function buildWorstCaseStressPayload() {
+  const prepNos = [
+    { sourceKey: 'uber', no: 'WWWWWW' },
+    { sourceKey: 'fp', no: '#99999' },
+    { sourceKey: 'uber', no: 'BFBEF' },
+    { sourceKey: 'fp', no: '#99888' },
+    { sourceKey: 'uber', no: 'AAAAAA' },
+    { sourceKey: 'fp', no: '#99777' },
+    { sourceKey: 'store', no: '9999' },
+    { sourceKey: 'point', no: '9999' },
+    { sourceKey: 'uber', no: 'CCCCCC' },
+    { sourceKey: 'fp', no: '#99666' },
+  ];
+  const readyNos = [
+    { sourceKey: 'uber', no: 'ZZZZZZ' },
+    { sourceKey: 'fp', no: '#88888' },
+    { sourceKey: 'store', no: '8888' },
+    { sourceKey: 'point', no: '8888' },
+    { sourceKey: 'uber', no: 'DDDDDD' },
+    { sourceKey: 'fp', no: '#66666' },
+    { sourceKey: 'store', no: '7777' },
+    { sourceKey: 'point', no: '7777' },
+    { sourceKey: 'uber', no: 'EEEEEE' },
+    { sourceKey: 'fp', no: '#55555' },
+  ];
+  const prefix = {
+    store: 'From_Store_',
+    point: 'From_milksha_point_',
+    fp: 'From_FoodPanda_',
+    uber: 'From_UberEat_',
+  };
+  const prep = prepNos.map(function (r) {
+    return { source_type: prefix[r.sourceKey] + 'Preparing', number: r.no };
+  });
+  const ready = readyNos.map(function (r) {
+    return { source_type: prefix[r.sourceKey] + 'OK', number: r.no };
+  });
+  return prep.concat(ready);
+}
+
+/**
+ * Measure board coords vs PR #74 preview anchor math (icon slot + num @ 1.2F).
+ */
+export async function measurePr74BaselineCoords(options) {
+  const opts = options || {};
+  const payload = opts.payload || ALIGNMENT_SAMPLE_PAYLOAD;
+  const fontPx = opts.fontPx || 64;
+  const { siteRoot, base, port } = prepareSite();
+  const server = await startServer(siteRoot, port);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await page.evaluate((rows) => {
+    document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
+    window.QMS.runtime.applyPayload(rows, { silent: true });
+  }, payload);
+  await page.waitForSelector('.milksha-prep .milksha-board-chip');
+
+  const rows = await page.evaluate(function (fontPxLocal) {
+    const art = window.QMS.Board.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    const cRect = canvas.getBoundingClientRect();
+    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+    const scale = m ? Number(m[1]) : 1;
+    function boardLeft(el) {
+      return (el.getBoundingClientRect().left - cRect.left) / scale;
+    }
+    const out = [];
+    ['prep', 'ready'].forEach(function (zoneKey) {
+      const inners = art.columnInnerRectsBoard(zoneKey);
+      const cells = Array.from(document.querySelectorAll('.milksha-zone.' + zoneKey + ' .milksha-num-cell'));
+      cells.forEach(function (cell, index) {
+        const chip = cell.querySelector('.milksha-board-chip');
+        const num = cell.querySelector('.milksha-num');
+        const slot = cell.querySelector('.milksha-board-icon-slot');
+        if (!chip || !num || !num.textContent) {
+          return;
+        }
+        const col = index < 5 ? 0 : 1;
+        const expectedIconLeft = inners[col].left;
+        const expectedNumLeft = expectedIconLeft + fontPxLocal * 1.2;
+        const iconBox = chip.querySelector('.milksha-board-icon-box');
+        out.push({
+          zone: zoneKey,
+          index: index,
+          number: num.textContent.trim(),
+          iconSlotLeft: slot ? Math.round(boardLeft(slot) * 100) / 100 : null,
+          iconBoxLeft: iconBox ? Math.round(boardLeft(iconBox) * 100) / 100 : null,
+          numLeft: Math.round(boardLeft(num) * 100) / 100,
+          expectedIconSlotLeft: expectedIconLeft,
+          expectedNumLeft: expectedNumLeft,
+        });
+      });
+    });
+    return out;
+  }, fontPx);
+
+  await browser.close();
+  await new Promise(function (r) {
+    server.close(function () {
+      r(undefined);
+    });
+  });
+  return rows;
+}
+
+export async function runPr74BaselineCheck(options) {
+  const opts = options || {};
+  const tol = opts.tolPx ?? PR74_BASELINE_TOL_PX;
+  const rows = await measurePr74BaselineCoords(opts);
+  const failures = [];
+  rows.forEach(function (row) {
+    if (row.iconSlotLeft != null && Math.abs(row.iconSlotLeft - row.expectedIconSlotLeft) > tol) {
+      failures.push(
+        row.zone +
+          ' i' +
+          row.index +
+          ' iconSlotLeft ' +
+          row.iconSlotLeft +
+          ' expected ' +
+          row.expectedIconSlotLeft,
+      );
+    }
+    if (Math.abs(row.numLeft - row.expectedNumLeft) > tol) {
+      failures.push(
+        row.zone + ' i' + row.index + ' numLeft ' + row.numLeft + ' expected ' + row.expectedNumLeft,
+      );
+    }
+  });
+  return { ok: failures.length === 0, tolPx: tol, rows: rows, failures: failures };
 }

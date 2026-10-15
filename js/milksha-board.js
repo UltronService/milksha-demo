@@ -1037,8 +1037,8 @@
       z += '</div>';
       z += '<div class="milksha-art-numbers milksha-zone-numbers">';
       for (let i = 0; i < PAGE_SIZE; i += 1) {
-        const center = art.cellCenterBoard(zoneKey, i);
-        const pos = art.cellPositionInZone(x, center);
+        const anchor = art.cellAnchorBoard(zoneKey, i);
+        const pos = art.cellPositionInZoneFromAnchor(x, anchor);
         const cell = cells[i];
         z +=
           '<div class="milksha-num-cell" style="left:' +

@@ -1,0 +1,31 @@
+{
+  "fontPx": 64,
+  "columnBandWidthPx": 382,
+  "ok": false,
+  "violations": [
+    {
+      "zone": "ready",
+      "index": 8,
+      "number": "WWWWWW",
+      "kind": "num",
+      "rect": {
+        "left": 1501.296875,
+        "top": 737.65625,
+        "right": 1871.421875,
+        "bottom": 801.65625,
+        "width": 370.125,
+        "height": 64
+      },
+      "band": {
+        "left": 1424.5,
+        "right": 1807
+      },
+      "cream": {
+        "left": 1020,
+        "top": 341,
+        "right": 1819,
+        "bottom": 978
+      }
+    }
+  ]
+}

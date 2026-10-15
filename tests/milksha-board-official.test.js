@@ -90,6 +90,51 @@ test('PR #74: same column number and icon-box left edges within 1px', async func
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
+test('PR #74: chip, number, and icon box stay inside cream column bands', async function () {
+  const { runCreamColumnBoundsCheck, buildFullBoardMixedPayload } = await import(
+    '../scripts/check-milksha-board-column-alignment.mjs'
+  );
+  const result = await runCreamColumnBoundsCheck({ payload: buildFullBoardMixedPayload() });
+  assert.equal(result.ok, true, result.failures.join('\n'));
+});
+
+test('PR #74: icon slot and number left match 64px preview anchors', async function () {
+  const { runPr74BaselineCheck } = await import('../scripts/check-milksha-board-column-alignment.mjs');
+  const result = await runPr74BaselineCheck({ fontPx: 64 });
+  assert.equal(result.ok, true, result.failures.join('\n'));
+});
+
+test('PR #74 worst-case 6-char stress: report overflow without shrinking font', async function () {
+  const fs = require('node:fs');
+  const { runCreamColumnBoundsCheck, buildWorstCaseStressPayload } = await import(
+    '../scripts/check-milksha-board-column-alignment.mjs'
+  );
+  const result = await runCreamColumnBoundsCheck({ payload: buildWorstCaseStressPayload() });
+  const reportPath = path.join(ROOT, 'artifacts', 'milksha-official-board', 'worst-case-64px-overflow-report.json');
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(
+    reportPath,
+    JSON.stringify(
+      {
+        fontPx: 64,
+        columnBandWidthPx: 382,
+        ok: result.ok,
+        violations: result.violations,
+      },
+      null,
+      2,
+    ),
+  );
+  if (!result.ok) {
+    assert.fail(
+      '64px 最寬 6 字仍超出 cream 欄寬（未縮字）；詳見 ' +
+        reportPath +
+        ' 與 WORST_CASE_OVERFLOW_REPORT\n' +
+        result.failures.join('\n'),
+    );
+  }
+});
+
 test('production board @ 1920×1080: 64px font, icons, foodpanda #6405', async function () {
   const { runOfficialBoardLayoutCheck } = await import('../scripts/check-milksha-board-official-layout.mjs');
   const result = await runOfficialBoardLayoutCheck();

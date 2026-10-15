@@ -6,11 +6,15 @@
 
   const QMS = (root.QMS = root.QMS || {});
 
-  const PREP_CREAM = { left: 101, top: 341, width: 798, height: 639 };
-  const READY_CREAM = { left: 1021, top: 341, width: 798, height: 638 };
+  const PREP_CREAM = { left: 101, top: 341, width: 799, height: 639 };
+  const READY_CREAM = { left: 1020, top: 341, width: 800, height: 638 };
 
   const NUM_FONT_PX = 64;
   const TITLE_GUARD_MAX_Y = 330;
+
+  /** PR #74 mockup cream pixel edges (source-icons-cream-bounds.json). */
+  const CREAM_EDGE_INSET_PX = 12;
+  const COLUMN_MID_GAP_PX = 10;
 
   /** Column center X (board coords), averaged from reference art per zone. */
   const PREP_COL_CX = [331.15, 727.91];
@@ -52,8 +56,49 @@
     return { cx: cols[col], cy: ROW_CY[row] };
   }
 
+  /**
+   * Inner column band inside cream (PR #74 UI/UX preview).
+   * @param {'prep' | 'ready'} zone
+   * @returns {Array<{ left: number, right: number }>}
+   */
+  function columnInnerRectsBoard(zone) {
+    const cream = creamRectForZone(zone);
+    const creamRight = cream.left + cream.width - 1;
+    const midX = (cream.left + creamRight) / 2;
+    const halfGap = COLUMN_MID_GAP_PX / 2;
+    return [
+      { left: cream.left + CREAM_EDGE_INSET_PX, right: midX - halfGap },
+      { left: midX + halfGap, right: creamRight - CREAM_EDGE_INSET_PX },
+    ];
+  }
+
+  /**
+   * Art-grid anchor: icon slot left edge + row center Y (matches PR #74 64px preview).
+   * @param {'prep' | 'ready'} zone
+   * @param {number} gridIndex
+   * @returns {{ iconSlotLeft: number, cy: number, columnInner: { left: number, right: number } }}
+   */
+  function cellAnchorBoard(zone, gridIndex) {
+    const col = gridIndex < 5 ? 0 : 1;
+    const row = gridIndex < 5 ? gridIndex : gridIndex - 5;
+    const inner = columnInnerRectsBoard(zone);
+    return {
+      iconSlotLeft: inner[col].left,
+      cy: ROW_CY[row],
+      columnInner: inner[col],
+    };
+  }
+
   function cellPositionInZone(zoneLeft, center) {
     return { left: center.cx - zoneLeft, top: center.cy };
+  }
+
+  /**
+   * @param {number} zoneLeft
+   * @param {{ iconSlotLeft: number, cy: number }} anchor
+   */
+  function cellPositionInZoneFromAnchor(zoneLeft, anchor) {
+    return { left: anchor.iconSlotLeft - zoneLeft, top: anchor.cy };
   }
 
   QMS.Board = QMS.Board || {};
@@ -71,9 +116,14 @@
     INK_METRIC_TOL_RATIO: INK_METRIC_TOL_RATIO,
     COL_X_TOL_PX: COL_X_TOL_PX,
     ROW_PITCH_TOL_PX: ROW_PITCH_TOL_PX,
+    CREAM_EDGE_INSET_PX: CREAM_EDGE_INSET_PX,
+    COLUMN_MID_GAP_PX: COLUMN_MID_GAP_PX,
     creamRectForZone: creamRectForZone,
     colCentersForZone: colCentersForZone,
+    columnInnerRectsBoard: columnInnerRectsBoard,
     cellCenterBoard: cellCenterBoard,
+    cellAnchorBoard: cellAnchorBoard,
     cellPositionInZone: cellPositionInZone,
+    cellPositionInZoneFromAnchor: cellPositionInZoneFromAnchor,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
