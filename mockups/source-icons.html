@@ -2,36 +2,36 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1920, height=1080" />
-    <title>迷客夏 · 來源 icon 版面 mockup</title>
+    <base href="../" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>迷客夏 · 來源 icon mockup（live board）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Arimo:wght@400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="source-icons.css" />
+    <link rel="stylesheet" href="css/base.css?v=20261014a" />
+    <link rel="stylesheet" href="css/milksha-board.css?v=20261014a" />
+    <link rel="stylesheet" href="mockups/source-icons-overlay.css" />
   </head>
-  <body class="source-icons-mockup">
-    <div id="mockup-board" class="source-icons-mockup__board" role="img" aria-label="來源 icon 全板 mockup"></div>
-    <script src="source-icons-data.js"></script>
-    <script src="source-icons-measure.js"></script>
-    <script src="source-icons-render.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        var board = document.getElementById('mockup-board');
-        if (!board || !window.MilkshaSourceIconRender) {
-          return;
-        }
-        var paint = function () {
-          window.MilkshaSourceIconRender.renderFullBoard(board);
-        };
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(paint);
-          return;
-        }
-        paint();
-      });
-    </script>
+  <body>
+    <div id="board-root"></div>
+    <script src="js/brand-loader.js?v=20261014a"></script>
+    <script src="js/audio.js?v=20261014a"></script>
+    <script src="js/board/today-board.js?v=20261014a"></script>
+    <script src="js/board/landscape-art-layout.js?v=20261014a"></script>
+    <script src="js/board/milksha-board-anim-config.js?v=20261014a"></script>
+    <script src="js/board/milksha-board-anim.js?v=20261014a"></script>
+    <script src="js/transport/board-seq.js?v=20261014a"></script>
+    <script src="js/receiver/chime-policy.js?v=20261014a"></script>
+    <script src="js/milksha-board.js?v=20261014a"></script>
+    <script src="mockups/source-icons-data.js"></script>
+    <script src="mockups/source-icons-measure.js"></script>
+    <script src="mockups/source-icons-overlay.js"></script>
+    <script src="mockups/source-icons-live-boot.js"></script>
   </body>
 </html>

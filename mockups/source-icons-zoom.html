@@ -2,6 +2,7 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
+    <base href="../" />
     <meta name="viewport" content="width=1920, height=1080" />
     <title>迷客夏 · 來源 icon 特寫 mockup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -10,31 +11,81 @@
       href="https://fonts.googleapis.com/css2?family=Arimo:wght@400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="source-icons.css" />
+    <link rel="stylesheet" href="css/milksha-board.css?v=20261014a" />
+    <link rel="stylesheet" href="mockups/source-icons-overlay.css" />
+    <style>
+      body.source-icons-zoom-page {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        background: #fffbe6;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 32px 48px;
+        padding: 72px 96px;
+        box-sizing: border-box;
+      }
+      .source-icons-zoom-page__panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+      }
+      .source-icons-zoom-page__label {
+        font-family: Arial, sans-serif;
+        font-size: 26px;
+        color: rgba(34, 34, 34, 0.55);
+      }
+      .source-icons-zoom-page__chip {
+        --milksha-num-font: 81px;
+      }
+    </style>
   </head>
-  <body>
-    <div
-      id="mockup-zoom"
-      class="source-icons-zoom"
-      role="img"
-      aria-label="各來源一筆號碼特寫"
-    ></div>
-    <script src="source-icons-data.js"></script>
-    <script src="source-icons-render.js"></script>
+  <body class="source-icons-live-mockup source-icons-zoom-page">
+    <div id="mockup-zoom"></div>
+    <script src="mockups/source-icons-data.js"></script>
+    <script src="mockups/source-icons-overlay.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
+        var data = window.MilkshaSourceIconMockup;
         var root = document.getElementById('mockup-zoom');
-        if (!root || !window.MilkshaSourceIconRender) {
+        if (!data || !root) {
           return;
         }
-        var paint = function () {
-          window.MilkshaSourceIconRender.renderZoomPanel(root);
-        };
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(paint);
-          return;
-        }
-        paint();
+        root.style.display = 'contents';
+        data.ZOOM_SAMPLES.forEach(function (sample) {
+          var panel = document.createElement('div');
+          panel.className = 'source-icons-zoom-page__panel';
+          var label = document.createElement('div');
+          label.className = 'source-icons-zoom-page__label';
+          label.textContent = sample.label;
+          panel.appendChild(label);
+          var chip = document.createElement('div');
+          chip.className = 'source-icons-zoom-page__chip milksha-zone prep';
+          var row = document.createElement('div');
+          row.className = 'milksha-board-chip milksha-board-chip--with-icon';
+          var slot = document.createElement('div');
+          slot.className = 'source-icons-live__icon-slot';
+          if (sample.source !== 'store') {
+            var img = document.createElement('img');
+            img.className =
+              'source-icons-live__icon ' +
+              (sample.source === 'point'
+                ? 'source-icons-live__icon--nidin'
+                : 'source-icons-live__icon--square');
+            img.src = 'assets/source-icons/' + (sample.source === 'point' ? 'nidin' : sample.source === 'uber' ? 'ubereats' : 'foodpanda') + '.png';
+            slot.appendChild(img);
+          }
+          row.appendChild(slot);
+          var num = document.createElement('span');
+          num.className = 'milksha-num';
+          num.textContent = sample.number;
+          row.appendChild(num);
+          chip.appendChild(row);
+          panel.appendChild(chip);
+          root.appendChild(panel);
+        });
       });
     </script>
   </body>

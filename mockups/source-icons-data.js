@@ -89,6 +89,46 @@
     ];
   }
 
+  const SOURCE_PREFIX = {
+    store: 'From_Store',
+    point: 'From_milksha_point',
+    uber: 'From_UberEat',
+    fp: 'From_FoodPanda',
+  };
+
+  /**
+   * @param {MockSourceKey} source
+   * @param {'preparing' | 'ready'} status
+   * @returns {string}
+   */
+  function sourceTypeFor(source, status) {
+    const prefix = SOURCE_PREFIX[source];
+    if (!prefix) {
+      return 'From_Store_' + (status === 'ready' ? 'OK' : 'Preparing');
+    }
+    return prefix + (status === 'ready' ? '_OK' : '_Preparing');
+  }
+
+  /**
+   * @returns {Array<{ source_type: string, number: string }>}
+   */
+  function buildPayload() {
+    const out = [];
+    PREP_SAMPLES.forEach(function (row) {
+      out.push({
+        source_type: sourceTypeFor(row.source, 'preparing'),
+        number: row.number,
+      });
+    });
+    READY_SAMPLES.forEach(function (row) {
+      out.push({
+        source_type: sourceTypeFor(row.source, 'ready'),
+        number: row.number,
+      });
+    });
+    return out;
+  }
+
   root.MilkshaSourceIconMockup = {
     CREAM_PIXEL: CREAM_PIXEL,
     ROW_CY: ROW_CY,
@@ -104,5 +144,7 @@
       const row = gridIndex < 5 ? gridIndex : gridIndex - 5;
       return { cy: ROW_CY[row], col: col, row: row };
     },
+    buildPayload: buildPayload,
+    sourceTypeFor: sourceTypeFor,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
