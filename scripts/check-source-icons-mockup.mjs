@@ -272,6 +272,183 @@ export async function runLayoutCheck(options) {
         metrics.readyChipScale = boardRoot.dataset.readyChipScale;
       }
 
+      const MB = window.QMS && window.QMS.MilkshaBoard ? window.QMS.MilkshaBoard : null;
+      const mockData = window.MilkshaSourceIconMockup;
+      const numberRules = {
+        rendering: 'production-milksha-board.js',
+        pageSize: MB ? MB.PAGE_SIZE : null,
+        gridCols: MB ? MB.GRID_COLS : null,
+        gridRows: MB ? MB.GRID_ROWS : null,
+        productionReadyPulseScale: boardRoot
+          ? Number.parseFloat(boardRoot.dataset.productionReadyPulseScale || '1.3')
+          : 1.3,
+        productionStaticReadyToPrepFontRatio: 1,
+        readyPulseNote:
+          '請取餐 1.3× = readyScale pulse on new numbers (MilkshaBoardAnimConfig), not a larger static CSS font.',
+      };
+      metrics.numberRules = numberRules;
+
+      if (!MB || !mockData || typeof mockData.buildPayload !== 'function') {
+        issues.push('numberRules: MilkshaBoard or mock payload missing');
+      } else {
+        if (MB.PAGE_SIZE !== 10 || MB.GRID_COLS !== 2 || MB.GRID_ROWS !== 5) {
+          issues.push('numberRules: unexpected live PAGE_SIZE/GRID');
+        }
+
+        const payload = mockData.buildPayload();
+        const parts = MB.partitionNumberContent(payload);
+        if (parts.ready.length !== 10 || parts.preparing.length !== 10) {
+          issues.push(
+            'numberRules: expected 10 ready + 10 prep after partition, got ' +
+              parts.ready.length +
+              '+' +
+              parts.preparing.length,
+          );
+        }
+
+        const tieTime = 1;
+        const readySorted = parts.ready.slice().sort(function (a, b) {
+          return MB.compareNewestFirst(
+            { readyAt: tieTime, payloadIndex: a.payloadIndex },
+            { readyAt: tieTime, payloadIndex: b.payloadIndex },
+            'readyAt',
+          );
+        });
+        const prepSorted = parts.preparing.slice().sort(function (a, b) {
+          return MB.compareNewestFirst(
+            { firstSeenAt: tieTime, payloadIndex: a.payloadIndex },
+            { firstSeenAt: tieTime, payloadIndex: b.payloadIndex },
+            'firstSeenAt',
+          );
+        });
+        const readyCells = MB.layoutPageGrid(readySorted, 0, MB.PAGE_SIZE);
+        const prepCells = MB.layoutPageGrid(prepSorted, 0, MB.PAGE_SIZE);
+
+        /**
+         * @param {'prep' | 'ready'} zoneKey
+         * @param {Array<{ number: string } | null>} expectedCells
+         */
+        function assertZoneGrid(zoneKey, expectedCells) {
+          const zone = document.querySelector('.milksha-zone.' + zoneKey);
+          if (!zone) {
+            issues.push(zoneKey + ': zone missing for grid check');
+            return;
+          }
+          const domCells = zone.querySelectorAll('.milksha-num-cell');
+          if (domCells.length !== MB.PAGE_SIZE) {
+            issues.push(zoneKey + ': expected ' + MB.PAGE_SIZE + ' cells, got ' + domCells.length);
+            return;
+          }
+          for (let gi = 0; gi < MB.PAGE_SIZE; gi += 1) {
+            const expected = expectedCells[gi];
+            const chip = domCells[gi].querySelector('.milksha-board-chip');
+            const numEl = chip && chip.querySelector('.milksha-num');
+            const shown = numEl ? numEl.textContent : '';
+            const expNum = expected && expected.number ? expected.number : '';
+            if (shown !== expNum) {
+              issues.push(
+                zoneKey + ' grid[' +
+                  gi +
+                  '] expected ' +
+                  expNum +
+                  ' got ' +
+                  shown,
+              );
+            }
+          }
+        }
+
+        assertZoneGrid('ready', readyCells);
+        assertZoneGrid('prep', prepCells);
+
+        const fontsInPrep = [];
+        const fontsInReady = [];
+        document.querySelectorAll('.milksha-zone.prep .milksha-num').forEach(function (el) {
+          fontsInPrep.push(Number.parseFloat(getComputedStyle(el).fontSize));
+        });
+        document.querySelectorAll('.milksha-zone.ready .milksha-num').forEach(function (el) {
+          fontsInReady.push(Number.parseFloat(getComputedStyle(el).fontSize));
+        });
+
+        function assertUniformFont(fonts, zoneKey) {
+          if (fonts.length === 0) {
+            issues.push(zoneKey + ': no numbers for font uniformity');
+            return;
+          }
+          const first = fonts[0];
+          for (let fi = 1; fi < fonts.length; fi += 1) {
+            if (Math.abs(fonts[fi] - first) > limits.liveFontTol) {
+              issues.push(zoneKey + ': inconsistent font within zone');
+              break;
+            }
+          }
+        }
+        assertUniformFont(fontsInPrep, 'prep');
+        assertUniformFont(fontsInReady, 'ready');
+
+        document.querySelectorAll('.milksha-num').forEach(function (numEl) {
+          const style = getComputedStyle(numEl);
+          const weight = style.fontWeight;
+          const family = style.fontFamily.toLowerCase();
+          if (weight !== '400' && weight !== 'normal') {
+            issues.push('font-weight not 400: ' + weight);
+          }
+          if (family.indexOf('arial') < 0 && family.indexOf('arimo') < 0) {
+            issues.push('font-family missing Arial/Arimo: ' + style.fontFamily);
+          }
+        });
+
+        document.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+          const id = chip.getAttribute('data-item-id') || '';
+          const sourceKey = id.indexOf(':') > 0 ? id.slice(0, id.indexOf(':')) : 'store';
+          const num = id.indexOf(':') > 0 ? id.slice(id.indexOf(':') + 1) : '';
+          const normalized = MB.normalizeBoardDisplayNumber(num, sourceKey);
+          if (!normalized) {
+            issues.push('invalid displayed number id=' + id);
+          }
+          if (sourceKey === 'store' && chip.querySelector('.source-icons-live__icon')) {
+            issues.push('store number must not have icon: ' + id);
+          }
+        });
+      }
+
+      const liveArtFont2 = art && art.NUM_FONT_PX ? art.NUM_FONT_PX : 81;
+      const prepApplied = boardRoot
+        ? Number.parseFloat(boardRoot.dataset.mockupPrepAppliedFontPx || String(liveArtFont2))
+        : prepFont;
+      const readyApplied = boardRoot
+        ? Number.parseFloat(boardRoot.dataset.mockupReadyAppliedFontPx || String(liveArtFont2))
+        : readyFont;
+      const prepShrink = boardRoot
+        ? Number.parseFloat(boardRoot.dataset.mockupPrepFontShrinkPx || '0')
+        : Math.max(0, liveArtFont2 - prepApplied);
+      const readyShrink = boardRoot
+        ? Number.parseFloat(boardRoot.dataset.mockupReadyFontShrinkPx || '0')
+        : Math.max(0, liveArtFont2 - readyApplied);
+      const fitStrategy = boardRoot ? boardRoot.dataset.mockupIconFitStrategy || 'chip-scale' : 'chip-scale';
+
+      metrics.iconFitAdaptation = {
+        strategy: fitStrategy,
+        liveBoardBaseFontPx: liveArtFont2,
+        mockupPrepAppliedFontPx: prepApplied,
+        mockupReadyAppliedFontPx: readyApplied,
+        prepFontShrinkFromLivePx: prepShrink,
+        readyFontShrinkFromLivePx: readyShrink,
+        prepChipScale: boardRoot ? boardRoot.dataset.prepChipScale : null,
+        readyChipScale: boardRoot ? boardRoot.dataset.readyChipScale : null,
+        reportedExplicitly: true,
+      };
+
+      if (prepShrink > limits.liveFontTol || readyShrink > limits.liveFontTol) {
+        issues.push(
+          'mockup shrank CSS font from live (prep -' +
+            prepShrink +
+            'px ready -' +
+            readyShrink +
+            'px) — owner requires explicit report before doing so',
+        );
+      }
+
       return { ok: issues.length === 0, issues: issues, metrics: metrics };
     },
     {

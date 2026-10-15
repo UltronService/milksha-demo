@@ -30,6 +30,26 @@
     "readyComputedFontPx": 81,
     "readyToPrepFontRatio": 1,
     "prepChipScale": "0.7865168803670156",
-    "readyChipScale": "0.7819703129794415"
+    "readyChipScale": "0.7819703129794415",
+    "numberRules": {
+      "rendering": "production-milksha-board.js",
+      "pageSize": 10,
+      "gridCols": 2,
+      "gridRows": 5,
+      "productionReadyPulseScale": 1.3,
+      "productionStaticReadyToPrepFontRatio": 1,
+      "readyPulseNote": "請取餐 1.3× = readyScale pulse on new numbers (MilkshaBoardAnimConfig), not a larger static CSS font."
+    },
+    "iconFitAdaptation": {
+      "strategy": "chip-scale",
+      "liveBoardBaseFontPx": 81,
+      "mockupPrepAppliedFontPx": 81,
+      "mockupReadyAppliedFontPx": 81,
+      "prepFontShrinkFromLivePx": 0,
+      "readyFontShrinkFromLivePx": 0,
+      "prepChipScale": "0.7865168803670156",
+      "readyChipScale": "0.7819703129794415",
+      "reportedExplicitly": true
+    }
   }
 }

@@ -146,12 +146,36 @@
 
     const art = root.QMS && root.QMS.Board && root.QMS.Board.LandscapeArtLayout;
     const liveFontPx = art && art.NUM_FONT_PX ? art.NUM_FONT_PX : 81;
+    const prepNumEl = prepZone && prepZone.querySelector('.milksha-num');
+    const readyNumEl = readyZone && readyZone.querySelector('.milksha-num');
+    const prepAppliedFontPx = prepNumEl
+      ? Number.parseFloat(root.getComputedStyle(prepNumEl).fontSize)
+      : liveFontPx;
+    const readyAppliedFontPx = readyNumEl
+      ? Number.parseFloat(root.getComputedStyle(readyNumEl).fontSize)
+      : liveFontPx;
+    const prepShrinkPx = Math.max(0, liveFontPx - prepAppliedFontPx);
+    const readyShrinkPx = Math.max(0, liveFontPx - readyAppliedFontPx);
+
+    let readyPulseScale = 1.3;
+    const animCfg =
+      root.QMS && root.QMS.MilkshaBoardAnimConfig && root.QMS.MilkshaBoardAnimConfig.getEffectiveReadyScale;
+    if (typeof animCfg === 'function') {
+      readyPulseScale = animCfg().effective;
+    }
 
     boardRoot.dataset.mockupLayoutReady = 'true';
     boardRoot.dataset.mockupMode = 'icons';
     boardRoot.dataset.liveNumFontPx = String(liveFontPx);
+    boardRoot.dataset.mockupPrepAppliedFontPx = String(prepAppliedFontPx);
+    boardRoot.dataset.mockupReadyAppliedFontPx = String(readyAppliedFontPx);
+    boardRoot.dataset.mockupPrepFontShrinkPx = String(prepShrinkPx);
+    boardRoot.dataset.mockupReadyFontShrinkPx = String(readyShrinkPx);
+    boardRoot.dataset.mockupIconFitStrategy =
+      prepShrinkPx > 0.5 || readyShrinkPx > 0.5 ? 'font-shrink' : 'chip-scale';
     boardRoot.dataset.prepChipScale = String(prepScale);
     boardRoot.dataset.readyChipScale = String(readyScale);
+    boardRoot.dataset.productionReadyPulseScale = String(readyPulseScale);
   }
 
   root.MilkshaSourceIconsLiveOverlay = {

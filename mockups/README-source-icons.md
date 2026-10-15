@@ -20,13 +20,29 @@
 | `mockups/source-icons-overlay.js` / `.css` | 僅 mockup 注入與 chip 縮放 |
 | `assets/source-icons/*.png` | 客戶官方 icon |
 
-## 字級 vs live
+## 號碼規則（一律走 production）
+
+| 規則 | 實作來源 |
+|------|----------|
+| Arial Regular **400** | `css/milksha-board.css` → `.milksha-num` |
+| 2 欄 × 5 列、每頁 10 筆 | `MilkshaBoard.PAGE_SIZE` / `layoutPageGrid` |
+| 最新左上、先填左欄再右欄 | `layoutPageGrid` + `compareNewestFirst` 排序 |
+| 號碼格式（門市 4 碼、迷點 3–4 碼保留前導 0、Uber 3–6 英數大寫、熊貓 3–6 數字無 #、最長 6） | `normalizeBoardDisplayNumber` |
+| 門市無 icon | overlay 略過 `store` |
+| **請取餐 1.3×** | **`readyScale` 新號 pulse**（`MilkshaBoardAnimConfig`，預設 1.3），**不是**常駐 CSS 字級；靜態字級兩區皆 **81px** |
+
+Mock 資料經 `buildPayload()` → `applyPayload()` → `partitionNumberContent()`，**不**在 mock 內重寫排版或格式。
+
+## 字級 vs live（含 icon 時如何縮）
 
 | 項目 | live 看板 | mockup |
 |------|-----------|--------|
-| `--milksha-num-font` | **81px**（`LandscapeArtLayout.NUM_FONT_PX`） | **81px**（未改） |
-| 請取餐／準備中字級比 | 1:1 | 1:1 |
-| 含 icon 整列縮放 | — | prep **~0.79×**、ready **~0.78×**（`--source-icons-chip-scale`，全區一致） |
+| `--milksha-num-font` | **81px** | **81px**（`prepFontShrinkFromLivePx` / `readyFontShrinkFromLivePx` = **0**） |
+| 請取餐／準備中 **靜態**字級比 | 1:1 | 1:1 |
+| 請取餐 **pulse** 峰值 | **1.3×** transform | 同 production（mock 靜態截圖不播 pulse） |
+| 為塞下 icon + 6 字 | — | **整列 chip `scale`**（見 `layout-check.json` → `iconFitAdaptation`），**不**偷偷改 CSS 字級 |
+
+若未來必須改小字級才能 fit，腳本會 fail 並在 `iconFitAdaptation` 寫明 shrink 像素；目前策略為 `chip-scale`。
 
 ## QA
 

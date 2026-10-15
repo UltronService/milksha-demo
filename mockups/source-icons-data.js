@@ -21,6 +21,12 @@
 
   /** @typedef {'store' | 'point' | 'uber' | 'fp'} MockSourceKey */
 
+  /**
+   * Sample rows (mock only). After `partitionNumberContent` + live sort, the **last** row in each
+   * array is the newest and appears at grid index 0 (top-left); fill order uses production
+   * `layoutPageGrid` (left column rows 0–4, then right column).
+   */
+
   /** @type {Array<{ source: MockSourceKey, number: string }>} */
   const PREP_SAMPLES = [
     { source: 'store', number: '1985' },
