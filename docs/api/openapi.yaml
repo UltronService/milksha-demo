@@ -41,6 +41,7 @@ info:
        - `serviceSpecialData_Json.target` 填 `milkshac030020`（=`milksha` + 店號）。
        - 外送平台 `source_type` 須與規格完全一致；Uber Eats 為單數 `From_UberEat_Preparing` / `From_UberEat_OK`（不是 `UberEats`）。
        - 每次 Request 的 `number_content` 為看板完整名單（整批覆寫）；多來源混送範例見下方 OpenAPI Request 範例「試點多來源混送」。
+       - 同號同來源若已在看板「請取餐」（`*_OK`），再送「準備中」（`*_Preparing`）時看板不退回，仍顯示請取餐；伺服器仍回「資料顯示成功」。
        - `timeStmp` 須為台北時間格式，且與伺服器時間相差在 10 分鐘內（見下方欄位說明）。
        - `serviceSpecialData_Json_Md5Hash` 與 `signature` 為選填，可省略或留空；伺服器不驗證。
 
@@ -482,7 +483,9 @@ components:
           properties:
             number_content:
               type: array
-              description: 整批叫號清單（全量覆寫）。
+              description: |
+                整批叫號清單（全量覆寫）。
+                同號同來源已由 `*_OK` 顯示在「請取餐」後，再送 `*_Preparing` 不會退回準備中；伺服器仍回「資料顯示成功」。
               items:
                 $ref: "#/components/schemas/NumberContentItem"
             newsTicker_content:
@@ -510,7 +513,8 @@ components:
             `From_FoodPanda_Preparing` / `From_FoodPanda_OK`、
             `From_UberEat_Preparing` / `From_UberEat_OK`、
             `From_Udd_Preparing` / `From_Udd_OK`。
-            `*_Preparing` → 準備中；`*_OK` → 可取餐。
+            `*_Preparing` → 準備中；`*_OK` → 可取餐（請取餐）。
+            同號同來源已為 `*_OK` 時，再送 `*_Preparing` 看板維持請取餐，不回退。
           example: From_Store_OK
         number:
           type: string
