@@ -63,6 +63,16 @@
   }
 
   /**
+   * @param {Document} doc
+   * @returns {HTMLDivElement}
+   */
+  function createIconBox(doc) {
+    const box = doc.createElement('div');
+    box.className = 'source-icons-live__icon-box';
+    return box;
+  }
+
+  /**
    * @param {HTMLElement} boardRoot
    */
   function applyFoodpandaMockDisplay(boardRoot) {
@@ -107,7 +117,9 @@
         chip.classList.add('milksha-board-chip--with-icon');
         const icon = createIconEl(doc, sourceKey);
         if (icon) {
-          slot.appendChild(icon);
+          const box = createIconBox(doc);
+          box.appendChild(icon);
+          slot.appendChild(box);
         }
       }
       chip.insertBefore(slot, num);

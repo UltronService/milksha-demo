@@ -185,10 +185,8 @@ async function main() {
     uiuxSpec: {
       slotWidth: '1.0F',
       gap: '0.2F',
-      fpUberHeight: '0.8F',
-      fpWidth: '1.02×height',
-      nidinHeight: '0.5F proportional',
-      nidinAsset: 'assets/source-icons/nidin.png',
+      iconBox: '0.8F × 0.8F (S×S, object-fit contain, centered)',
+      slotOverflow: 'visible',
       storeEmptySlot: true,
     },
     maxFontReport: JSON.parse(

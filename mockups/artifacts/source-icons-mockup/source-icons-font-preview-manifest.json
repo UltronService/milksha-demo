@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-10-15T11:40:10.771Z",
+  "capturedAtUtc": "2026-10-15T12:02:45.052Z",
   "viewportLogical": "1920x1080",
   "deviceScaleFactor": 2,
   "pngPixelSize": "3840x2160",
@@ -11,10 +11,8 @@
   "uiuxSpec": {
     "slotWidth": "1.0F",
     "gap": "0.2F",
-    "fpUberHeight": "0.8F",
-    "fpWidth": "1.02×height",
-    "nidinHeight": "0.5F proportional",
-    "nidinAsset": "assets/source-icons/nidin.png",
+    "iconBox": "0.8F × 0.8F (S×S, object-fit contain, centered)",
+    "slotOverflow": "visible",
     "storeEmptySlot": true
   },
   "maxFontReport": {
@@ -56,7 +54,7 @@
   "files": [
     {
       "name": "source-icons-font-preview-81px-1920x1080.png",
-      "sha256": "1bdc4a16d819a34d861ec150fcd3fdc04624e572872d0ac9ad24040517766aa2",
+      "sha256": "d0494090fdde5727589d3f6517ad4221d321c6b3fdac1c34095898a5166b8e2b",
       "fontPx": "81",
       "overflowCount": "0",
       "numLeftDeltaPx": "0.0031250000000113687",
@@ -64,7 +62,7 @@
     },
     {
       "name": "source-icons-font-preview-72px-1920x1080.png",
-      "sha256": "47aa95f68ad81c220587bfe25262ec27443eeab803d5c203f66bac867282fc2d",
+      "sha256": "270eb3260549738a813772fbf8276865529e5c8cc418b7509c47f0f8d9151aed",
       "fontPx": "72",
       "overflowCount": "0",
       "numLeftDeltaPx": "0.014062500000022737",
@@ -72,7 +70,7 @@
     },
     {
       "name": "source-icons-font-preview-68px-1920x1080.png",
-      "sha256": "e60e5ad875c1e2dedfb3da596f382e9bf3d2d776d3cae211c243ccfcf19561e9",
+      "sha256": "563aada9a6d31cd923cec05652ecf097003dcb5103a2fb0d995f9c057043e8c6",
       "fontPx": "68",
       "overflowCount": "0",
       "numLeftDeltaPx": "0.00937500000009095",
@@ -80,7 +78,7 @@
     },
     {
       "name": "source-icons-font-preview-64px-1920x1080.png",
-      "sha256": "3f4464bd4d74fc9ad1c3f0564a9318beeff3cf87b404db587deb3e6f0bea7398",
+      "sha256": "4479635b7777f70bdf2cdf4f47556cc39ddf82babca9518b7b81e877843ac335",
       "fontPx": "64",
       "overflowCount": "0",
       "numLeftDeltaPx": "0.004687500000045475",
@@ -88,7 +86,7 @@
     },
     {
       "name": "source-icons-font-preview-compare-72-68-64px-1920x1080.png",
-      "sha256": "de9c8b72ae35cb47725859cfae30717480272d477573c34ca077d1139676a9fb",
+      "sha256": "84527f68e5638ba4abf57a04539d7f9afa5c1b179d8311dd60c69a05bf88eb4c",
       "compareSizes": "72,68,64"
     }
   ]
