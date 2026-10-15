@@ -59,6 +59,27 @@ test('Uber Eats: exactly 5 hex digits, uppercase', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('A2C9EF', 'uber'), null);
 });
 
+test('Udd: same as Uber Eats — exactly 5 hex, uppercase normalize', function () {
+  const MB = loadMilkshaBoard();
+  assert.equal(MB.normalizeBoardDisplayNumber('bfbef', 'udd'), 'BFBEF');
+  assert.equal(MB.normalizeBoardDisplayNumber('BFBEF', 'udd'), 'BFBEF');
+  assert.equal(MB.normalizeBoardDisplayNumber('AB12', 'udd'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('GGGGG', 'udd'), null);
+});
+
+test('Udd partition drops AB12 and keeps lowercase hex normalized', function () {
+  const MB = loadMilkshaBoard();
+  MB.resetInvalidBoardNumberWarningsForTest();
+  const parts = MB.partitionNumberContent([
+    { source_type: 'From_Udd_OK', number: 'AB12' },
+    { source_type: 'From_Udd_Preparing', number: 'bfbef' },
+  ]);
+  assert.equal(parts.ready.length, 0);
+  assert.equal(parts.preparing.length, 1);
+  assert.equal(parts.preparing[0].number, 'BFBEF');
+  assert.equal(parts.preparing[0].sourceKey, 'udd');
+});
+
 test('foodpanda: hash + exactly 4 digits only', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
@@ -75,6 +96,59 @@ test('你訂 point: exactly 3 digits with leading zeros', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
   assert.equal(MB.normalizeBoardDisplayNumber('8888', 'point'), null);
   assert.equal(MB.normalizeBoardDisplayNumber('88', 'point'), null);
+});
+
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const CLOUD_SOURCE_PATTERNS = {
+  store: /^\d{4}$/,
+  point: /^\d{3}$/,
+  fp: /^#\d{4}$/,
+  uber: /^[0-9A-F]{5}$/,
+  udd: /^[0-9A-F]{5}$/,
+};
+
+test('~1000 simulated numbers per source pass cloud display rules', function () {
+  const MB = loadMilkshaBoard();
+  const hexPool = '0123456789ABCDEF';
+  const rng = mulberry32(20261015);
+  const perSource = 1000;
+
+  for (let i = 0; i < perSource; i += 1) {
+    const storeNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
+    assert.equal(MB.normalizeBoardDisplayNumber(storeNo, 'store'), storeNo);
+    assert.match(storeNo, CLOUD_SOURCE_PATTERNS.store);
+
+    const pointNo = String(Math.floor(rng() * 1000)).padStart(3, '0');
+    assert.equal(MB.normalizeBoardDisplayNumber(pointNo, 'point'), pointNo);
+    assert.match(pointNo, CLOUD_SOURCE_PATTERNS.point);
+
+    let uber = '';
+    for (let h = 0; h < 5; h += 1) {
+      uber += hexPool.charAt(Math.floor(rng() * hexPool.length));
+    }
+    const uberNorm = MB.normalizeBoardDisplayNumber(uber.toLowerCase(), 'uber');
+    assert.match(uberNorm, CLOUD_SOURCE_PATTERNS.uber);
+
+    let udd = '';
+    for (let h = 0; h < 5; h += 1) {
+      udd += hexPool.charAt(Math.floor(rng() * hexPool.length));
+    }
+    const uddNorm = MB.normalizeBoardDisplayNumber(udd.toLowerCase(), 'udd');
+    assert.match(uddNorm, CLOUD_SOURCE_PATTERNS.udd);
+
+    const fpNo = '#' + String(Math.floor(rng() * 10000)).padStart(4, '0');
+    assert.equal(MB.normalizeBoardDisplayNumber(fpNo, 'fp'), fpNo);
+    assert.match(fpNo, CLOUD_SOURCE_PATTERNS.fp);
+  }
 });
 
 test('duplicate is same source + normalized number only', function () {

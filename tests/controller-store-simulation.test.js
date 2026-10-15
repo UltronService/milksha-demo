@@ -55,7 +55,7 @@ function sourceNumberPattern(sourceKey) {
     return /^[0-9A-F]{5}$/;
   }
   if (sourceKey === 'udd') {
-    return /^[A-Z0-9]{4,6}$/;
+    return /^[0-9A-F]{5}$/;
   }
   return /^.+$/;
 }
@@ -69,6 +69,24 @@ function mulberry32(seed) {
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+test('allocateNumberForSource: 1000 draws per non-store source match cloud hex/fp/point rules', function () {
+  const { Sim } = loadSimulation();
+  const MB = loadMilkshaBoard();
+  const rng = mulberry32(20261015);
+  const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
+  const used = new Set();
+  const sources = ['point', 'fp', 'uber', 'udd'];
+  for (let s = 0; s < sources.length; s += 1) {
+    const sk = sources[s];
+    for (let i = 0; i < 1000; i += 1) {
+      const no = Sim.allocateNumberForSource(sk, state, used, rng);
+      assert.match(no, sourceNumberPattern(sk));
+      assert.equal(MB.normalizeBoardDisplayNumber(no, sk), no);
+      used.add(Sim.ticketCompositeKey(sk, no));
+    }
+  }
+});
 
 test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
   const { Sim } = loadSimulation();
