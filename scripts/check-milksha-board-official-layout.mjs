@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Production board @ 1920×1080: 64px font, icons in S×S (S=0.8F), object-fit contain.
+ * Production board @ 1920×1080: 70px font, 54px icon box, object-fit contain.
  */
 import { chromium } from 'playwright';
 import { cpSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FONT_PX = 64;
+const FONT_PX = 70;
 const ICON_BOX_FACTOR = 0.8;
 const SAMPLE_PAYLOAD = [
   { source_type: 'From_Store_Preparing', number: '2217' },
@@ -100,9 +100,8 @@ export async function runOfficialBoardLayoutCheck() {
     });
     document.querySelectorAll('.milksha-board-icon-box').forEach(function (box) {
       const w = box.getBoundingClientRect().width;
-      const expected = expectedFont * (54 / 64);
-      if (Math.abs(w - expected) > 1.5) {
-        failures.push('icon box width ' + w + ' expected ~' + expected);
+      if (Math.abs(w - 54) > 1.5) {
+        failures.push('icon box width ' + w + ' expected 54px');
       }
     });
     document.querySelectorAll('.milksha-board-icon').forEach(function (img) {

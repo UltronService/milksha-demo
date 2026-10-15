@@ -9,7 +9,7 @@
   const PREP_CREAM = { left: 101, top: 341, width: 799, height: 639 };
   const READY_CREAM = { left: 1020, top: 341, width: 800, height: 638 };
 
-  const NUM_FONT_PX = 64;
+  const NUM_FONT_PX = 70;
   const TITLE_GUARD_MAX_Y = 330;
 
   /** Milksha UI ref @ 1920: icon box left = cream.left + offset; right ink inset 91px. */

@@ -92,7 +92,7 @@ test('duplicate is same source + normalized number only', function () {
   assert.ok(parts.ready.some((r) => r.id === 'uber:BBBBB'));
 });
 
-test('widest compliant stress payload stays inside cream bands @ 64px', async function () {
+test('widest compliant stress payload stays inside cream bands @ 70px', async function () {
   const { runCreamColumnBoundsCheck, buildWorstCaseStressPayload } = await import(
     '../scripts/check-milksha-board-column-alignment.mjs'
   );

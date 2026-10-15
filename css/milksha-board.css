@@ -94,9 +94,9 @@
 }
 
 .milksha-board.milksha-board--landscape-art {
-  --milksha-icon-slot-w: calc(var(--milksha-num-font) * 54 / 64);
-  --milksha-icon-box: calc(var(--milksha-num-font) * 54 / 64);
-  --milksha-icon-gap: calc(var(--milksha-num-font) * 14 / 64);
+  --milksha-icon-slot-w: 54px;
+  --milksha-icon-box: 54px;
+  --milksha-icon-gap: 14px;
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-ztitle {

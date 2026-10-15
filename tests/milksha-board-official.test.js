@@ -7,7 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
-const OFFICIAL_NUM_FONT_PX = 64;
+const OFFICIAL_NUM_FONT_PX = 70;
 
 function loadBoardStack() {
   const sandbox = {
@@ -44,7 +44,7 @@ function loadBoardStack() {
   };
 }
 
-test('landscape art baseline uses 64px number font for both zones', function () {
+test('landscape art baseline uses 70px number font for both zones', function () {
   const { art } = loadBoardStack();
   assert.equal(art.NUM_FONT_PX, OFFICIAL_NUM_FONT_PX);
 });
@@ -91,9 +91,9 @@ test('PR #74: chip, number, and icon box stay inside cream column bands', async 
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('PR #74: icon slot and number left match 64px preview anchors', async function () {
+test('PR #74: icon slot and number left match 70px preview anchors', async function () {
   const { runPr74BaselineCheck } = await import('../scripts/check-milksha-board-column-alignment.mjs');
-  const result = await runPr74BaselineCheck({ fontPx: 64 });
+  const result = await runPr74BaselineCheck({ fontPx: 70 });
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
@@ -105,10 +105,10 @@ test('PR #74 widest compliant stress: all chips inside cream bands', async funct
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('production board @ 1920×1080: 64px Arial Regular, icons, foodpanda #6405', async function () {
+test('production board @ 1920×1080: 70px Arial Regular, icons, foodpanda #6405', async function () {
   const { runOfficialBoardLayoutCheck } = await import('../scripts/check-milksha-board-official-layout.mjs');
   const result = await runOfficialBoardLayoutCheck();
-  assert.equal(result.fontPx, 64);
+  assert.equal(result.fontPx, 70);
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
