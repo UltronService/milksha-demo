@@ -59,24 +59,26 @@ test('Uber Eats: exactly 5 hex digits, uppercase', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('A2C9EF', 'uber'), null);
 });
 
-test('Udd: same as Uber Eats — exactly 5 hex, uppercase normalize', function () {
+test('Udd: same as store — exactly 4 digits', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('bfbef', 'udd'), 'BFBEF');
-  assert.equal(MB.normalizeBoardDisplayNumber('BFBEF', 'udd'), 'BFBEF');
+  assert.equal(MB.normalizeBoardDisplayNumber('1234', 'udd'), '1234');
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'udd'), '0912');
+  assert.equal(MB.normalizeBoardDisplayNumber('BFBEF', 'udd'), null);
   assert.equal(MB.normalizeBoardDisplayNumber('AB12', 'udd'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('GGGGG', 'udd'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('123', 'udd'), null);
 });
 
-test('Udd partition drops AB12 and keeps lowercase hex normalized', function () {
+test('Udd partition drops BFBEF and AB12, accepts 1234', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
-    { source_type: 'From_Udd_OK', number: 'AB12' },
-    { source_type: 'From_Udd_Preparing', number: 'bfbef' },
+    { source_type: 'From_Udd_OK', number: 'BFBEF' },
+    { source_type: 'From_Udd_Preparing', number: 'AB12' },
+    { source_type: 'From_Udd_Preparing', number: '1234' },
   ]);
   assert.equal(parts.ready.length, 0);
   assert.equal(parts.preparing.length, 1);
-  assert.equal(parts.preparing[0].number, 'BFBEF');
+  assert.equal(parts.preparing[0].number, '1234');
   assert.equal(parts.preparing[0].sourceKey, 'udd');
 });
 
@@ -113,7 +115,7 @@ const CLOUD_SOURCE_PATTERNS = {
   point: /^\d{3}$/,
   fp: /^#\d{4}$/,
   uber: /^[0-9A-F]{5}$/,
-  udd: /^[0-9A-F]{5}$/,
+  udd: /^\d{4}$/,
 };
 
 test('~1000 simulated numbers per source pass cloud display rules', function () {
@@ -138,12 +140,9 @@ test('~1000 simulated numbers per source pass cloud display rules', function () 
     const uberNorm = MB.normalizeBoardDisplayNumber(uber.toLowerCase(), 'uber');
     assert.match(uberNorm, CLOUD_SOURCE_PATTERNS.uber);
 
-    let udd = '';
-    for (let h = 0; h < 5; h += 1) {
-      udd += hexPool.charAt(Math.floor(rng() * hexPool.length));
-    }
-    const uddNorm = MB.normalizeBoardDisplayNumber(udd.toLowerCase(), 'udd');
-    assert.match(uddNorm, CLOUD_SOURCE_PATTERNS.udd);
+    const uddNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
+    assert.equal(MB.normalizeBoardDisplayNumber(uddNo, 'udd'), uddNo);
+    assert.match(uddNo, CLOUD_SOURCE_PATTERNS.udd);
 
     const fpNo = '#' + String(Math.floor(rng() * 10000)).padStart(4, '0');
     assert.equal(MB.normalizeBoardDisplayNumber(fpNo, 'fp'), fpNo);

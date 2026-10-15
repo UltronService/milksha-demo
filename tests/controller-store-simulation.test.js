@@ -55,7 +55,7 @@ function sourceNumberPattern(sourceKey) {
     return /^[0-9A-F]{5}$/;
   }
   if (sourceKey === 'udd') {
-    return /^[0-9A-F]{5}$/;
+    return /^\d{4}$/;
   }
   return /^.+$/;
 }
@@ -70,7 +70,7 @@ function mulberry32(seed) {
   };
 }
 
-test('allocateNumberForSource: 1000 draws per non-store source match cloud hex/fp/point rules', function () {
+test('allocateNumberForSource: ~1000 draws per non-store source match cloud rules (udd = 4 digits)', function () {
   const { Sim } = loadSimulation();
   const MB = loadMilkshaBoard();
   const rng = mulberry32(20261015);
