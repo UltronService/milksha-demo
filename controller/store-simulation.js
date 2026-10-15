@@ -78,7 +78,7 @@
     }
     const key = sourceKey || 'store';
     const trimmed = typeof raw === 'string' ? raw.trim() : String(raw == null ? '' : raw).trim();
-    if (key === 'store') {
+    if (key === 'store' || key === 'udd') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {
@@ -87,7 +87,7 @@
     if (key === 'fp') {
       return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
     }
-    if (key === 'uber' || key === 'udd') {
+    if (key === 'uber') {
       if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
         return null;
       }
@@ -255,7 +255,7 @@
       } else if (key === 'uber') {
         raw = randomUberHexNumber(rng);
       } else if (key === 'udd') {
-        raw = randomUberHexNumber(rng);
+        raw = randomDigitString(4, rng);
       } else {
         raw = allocateNextNumber(state, usedOnBoard, rng);
       }
