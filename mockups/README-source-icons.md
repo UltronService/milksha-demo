@@ -17,13 +17,24 @@
 - 迷點（你訂 wordmark）：以 **高度** 對齊方形 icon 視覺重量。
 - Uber / foodpanda：58×58 槽，`object-fit: contain`，透明底、不 recolor。
 - 號碼：**Arial Regular 400**，準備中 81px；請取餐列 **1.3×**（與 live `readyScale` 預設一致）。
-- 六碼 + icon：列寬超過格線時等比縮小，避免溢出。
+- 六碼 + icon：該區**統一** `--mockup-zone-display-scale`（請取餐先 1.3×，全區等比縮到最寬列可放進欄寬）；**禁止**單格縮放
+- 欄位：依 cream 內緣 + 中縫 gap 切兩欄，號碼左對齊、118px icon 槽在左
+
+## 邊界自動檢查
+
+```bash
+node scripts/check-source-icons-mockup.mjs
+```
+
+產出 `mockups/artifacts/source-icons-mockup/layout-check.json`（cream 內、欄間 gap、icon–數字 gap、同區 scale 一致）。
 
 ## 截圖
 
 ```bash
 node scripts/capture-source-icons-mockup.mjs
 ```
+
+（會先跑 layout check，失敗不截圖）
 
 產出：`mockups/artifacts/source-icons-mockup/*.png`
 
