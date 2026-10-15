@@ -28,38 +28,43 @@
    */
 
   /** @type {Array<{ source: MockSourceKey, number: string }>} */
+  /** Worst-case labels for max-font math (UI/UX preview). */
+  const WORST_ICON_PLUS_FIVE = 'BFBEF';
+  const FP_WORST_HASH_SIX = '#999999';
+
+  /** Log-shaped samples (Uber 5 碼 16 進位、熊貓 #6407 等；最長 5 字不含 #）。 */
   const PREP_SAMPLES = [
     { source: 'store', number: '1985' },
-    { source: 'uber', number: 'A7K2Q9' },
+    { source: 'uber', number: 'BFBEF' },
     { source: 'point', number: '087' },
-    { source: 'fp', number: '640609' },
+    { source: 'fp', number: '6407' },
     { source: 'store', number: '3105' },
     { source: 'point', number: '0412' },
-    { source: 'uber', number: 'C7458' },
-    { source: 'fp', number: '583920' },
+    { source: 'uber', number: 'A2C9E' },
+    { source: 'fp', number: '5821' },
     { source: 'store', number: '1861' },
     { source: 'point', number: '0096' },
   ];
 
   /** @type {Array<{ source: MockSourceKey, number: string }>} */
   const READY_SAMPLES = [
-    { source: 'fp', number: '902114' },
+    { source: 'fp', number: '9021' },
     { source: 'store', number: '2216' },
-    { source: 'uber', number: 'K5T7W2' },
+    { source: 'uber', number: 'D4E8A' },
     { source: 'point', number: '095' },
     { source: 'store', number: '2217' },
-    { source: 'fp', number: '660138' },
-    { source: 'uber', number: 'B3R8M9' },
+    { source: 'fp', number: '6601' },
+    { source: 'uber', number: 'E3F4A' },
     { source: 'point', number: '0041' },
     { source: 'store', number: '2218' },
-    { source: 'fp', number: '481725' },
+    { source: 'fp', number: '4817' },
   ];
 
   const ZOOM_SAMPLES = [
-    { source: 'store', number: '1985', label: '門市（無 icon）' },
-    { source: 'point', number: '0412', label: '迷點 / 你訂' },
-    { source: 'uber', number: 'A7K2Q9', label: 'Uber Eats' },
-    { source: 'fp', number: '640609', label: 'foodpanda (#640609)' },
+    { source: 'store', number: '1985', label: '門市（1.0F 空格）' },
+    { source: 'point', number: '0412', label: '你訂 nidin.png' },
+    { source: 'uber', number: 'BFBEF', label: 'Uber Eats 5 碼' },
+    { source: 'fp', number: '6407', label: 'foodpanda #6407' },
   ];
 
   /**
@@ -95,8 +100,8 @@
     ];
   }
 
-  /** Owner mock spec: show `#` + up to 6 digits (production still strips `#` today). */
-  const FP_WORST_CASE_DISPLAY = '#999999';
+  /** Owner mock spec: show `#` + digits (production still strips `#` today). */
+  const FP_WORST_CASE_DISPLAY = FP_WORST_HASH_SIX;
 
   /**
    * @param {string} digits — payload / board id digits (no `#`)
@@ -165,6 +170,8 @@
     buildPayload: buildPayload,
     sourceTypeFor: sourceTypeFor,
     FP_WORST_CASE_DISPLAY: FP_WORST_CASE_DISPLAY,
+    WORST_ICON_PLUS_FIVE: WORST_ICON_PLUS_FIVE,
+    FP_WORST_HASH_SIX: FP_WORST_HASH_SIX,
     formatFoodpandaMockDisplay: formatFoodpandaMockDisplay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

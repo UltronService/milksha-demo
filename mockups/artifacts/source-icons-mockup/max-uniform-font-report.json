@@ -1,147 +1,57 @@
 {
   "viewport": "1920x1080",
-  "assumptions": {
-    "uniformFontPerZone": true,
-    "noChipScale": true,
-    "fontFamily": "Arial 400",
-    "iconMetricsFrom": "mockups/source-icons-overlay.css (58/81 cap height, slot 1.32×, gap 6/81)",
-    "columnWidthsPx": {
-      "prep": [
-        376.27,
-        376.27
-      ],
-      "ready": [
-        376.7625,
-        376.7625
-      ]
+  "layout": "UI/UX slot 1.0F + gap 0.2F + number; store empty slot; icons not in width math",
+  "liveProductionFontPx": 81,
+  "atLive81px": {
+    "prep": {
+      "ok": true
     },
-    "readyToPrepTargetRatio": 1.3,
-    "liveProductionFontPx": 81
-  },
-  "atLiveProduction81px": {
-    "prepAllSamplesFit": false,
-    "prepFirstFailure": {
-      "ok": false,
-      "index": 1,
-      "source": "uber",
-      "text": "A7K2Q9",
-      "width": 388.7621484375,
-      "maxW": 376.27
-    },
-    "readyAllSamplesFitAt81": false,
-    "readyFirstFailureAt81": {
-      "ok": false,
-      "index": 0,
-      "source": "fp",
-      "text": "#902114",
-      "width": 391.88666015625,
-      "maxW": 376.7625
-    },
-    "readyAllSamplesFitAt81x1_3": false,
-    "readyFirstFailureAt106_3": {
-      "ok": false,
-      "index": 0,
-      "source": "fp",
-      "text": "#902114",
-      "width": 509.440548828125,
-      "maxW": 376.7625
-    },
-    "widestIconRowAt81px": {
-      "text": "WMWMWM",
-      "width": 514.33587890625
+    "ready": {
+      "ok": true
     }
   },
-  "maxUniformFontPx": {
-    "prepOnly_actualSamples": {
-      "fontPx": 76.57421875,
+  "maxUniformFontPx_bothZonesSame": {
+    "actualLogShapedSamples": {
+      "fontPx": 85.078125,
       "bindingAtMax": {
+        "zone": "prep",
         "ok": false,
-        "index": 3,
-        "source": "fp",
-        "text": "#640609",
-        "width": 376.3372047706887,
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
         "maxW": 376.27
       }
     },
-    "readyOnly_actualSamples": {
-      "fontPx": 76.7001953125,
+    "worstCase_iconPlus5Chars": {
+      "fontPx": 85.078125,
       "bindingAtMax": {
+        "zone": "prep",
         "ok": false,
-        "index": 5,
-        "source": "fp",
-        "text": "#660138",
-        "width": 376.9522408492477,
-        "maxW": 376.7625
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
+        "maxW": 376.27
       }
     },
-    "joint_actualSamples_readyEqPrepTimes1_3": {
-      "prepFontPx": 58.98046875,
-      "readyFontPx": 76.674609375,
+    "worstCase_iconPlusHash999999": {
+      "fontPx": 73.875,
       "bindingAtMax": {
-        "zone": "ready",
+        "zone": "prep",
         "ok": false,
-        "index": 5,
-        "source": "fp",
-        "text": "#660138",
-        "width": 376.86909250217013,
-        "maxW": 376.7625
-      }
-    },
-    "joint_worstCase_iconPlusHash999999": {
-      "prepFontPx": 58.98046875,
-      "readyFontPx": 76.674609375,
-      "bindingAtMax": {
-        "zone": "ready",
-        "ok": false,
-        "index": 0,
-        "source": "fp",
+        "index": 1,
         "text": "#999999",
-        "width": 376.86909250217013,
-        "maxW": 376.7625
-      }
-    },
-    "joint_worstCase_iconPlus999999_noHash": {
-      "prepFontPx": 66.5390625,
-      "readyFontPx": 86.50078125,
-      "bindingAtMax": {
-        "zone": "ready",
-        "ok": false,
-        "index": 0,
-        "source": "fp",
-        "text": "999999",
-        "width": 376.9606505262587,
-        "maxW": 376.7625
+        "width": 376.428173828125,
+        "maxW": 376.27
       }
     }
   },
   "deltaFromLive81px": {
-    "prepOnly_actualSamples": {
-      "maxPx": 76.57421875,
-      "deltaPx": 4.42578125
-    },
-    "readyOnly_actualSamples": {
-      "maxPx": 76.7001953125,
-      "deltaPx": 4.2998046875
-    },
-    "joint_actualSamples": {
-      "prepMaxPx": 58.98046875,
-      "readyMaxPx": 76.674609375,
-      "prepDeltaFrom81": 22.01953125,
-      "readyDeltaFrom81": 4.325390624999997,
-      "readyDeltaFrom81x1_3Target": 28.625390624999994
-    },
-    "joint_worstHash": {
-      "prepMaxPx": 58.98046875,
-      "readyMaxPx": 76.674609375,
-      "prepDeltaFrom81": 22.01953125,
-      "readyDeltaFrom81": 4.325390624999997
-    },
-    "joint_worstNoHash": {
-      "prepMaxPx": 66.5390625,
-      "readyMaxPx": 86.50078125,
-      "prepDeltaFrom81": 14.4609375,
-      "readyDeltaFrom81": -5.500781250000003
-    }
+    "actualSamples": -4.078125,
+    "iconPlus5": -4.078125,
+    "iconPlusHash6": 7.125
   },
-  "currentMockupNote": "Existing mock uses chip-scale ~0.77 while CSS font stays 81px, so icon rows look smaller than store — not uniform visual size."
+  "previewBRecommendation": {
+    "useFontPx": 85.078125,
+    "skipSeparateBIfGte81": true
+  }
 }

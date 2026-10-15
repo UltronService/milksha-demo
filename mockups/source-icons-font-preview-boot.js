@@ -24,7 +24,7 @@
     if (!QMS || typeof QMS.loadSiteBrand !== 'function' || typeof QMS.bootMilkshaBoard !== 'function') {
       return;
     }
-    document.body.classList.add('source-icons-font-preview', 'source-icons-live-mockup');
+    document.body.classList.add('source-icons-font-preview', 'source-icons-uiux-preview');
 
     const opts = previewOptions();
     const legend = document.getElementById('font-preview-legend');
@@ -33,9 +33,9 @@
         '<strong>' +
         opts.label +
         '</strong><br/>' +
-        '1920×1080 · 兩區同字級 <strong>' +
+        '1920×1080 @2x · 兩區同字級 <strong>' +
         opts.fontPx +
-        'px</strong> · 無 chip-scale · 熊貓含 #<br/>' +
+        'px</strong> · UI/UX slot 1.0F gap 0.2F · 熊貓 #<br/>' +
         '背景 <code>assets/milksha-board-bg-1007.jpg</code> · 正式看板號碼排版';
     }
 
@@ -62,7 +62,16 @@
         if (typeof root.MilkshaSourceIconsFontPreviewOverlay !== 'object') {
           throw new Error('MilkshaSourceIconsFontPreviewOverlay missing');
         }
-        const overflows = root.MilkshaSourceIconsFontPreviewOverlay.apply(rootEl, opts);
+        const result = root.MilkshaSourceIconsFontPreviewOverlay.apply(rootEl, opts);
+        const overflows = result.overflows;
+        const acc = result.acceptance;
+        if (legend && acc) {
+          legend.innerHTML +=
+            '<br/>號碼左緣 Δ≈' +
+            acc.maxNumLeftDeltaPx.toFixed(2) +
+            'px · gap 0.2F 偏差列數 ' +
+            acc.gapErrors;
+        }
         if (legend && overflows.length > 0) {
           legend.innerHTML +=
             '<br/><span style="color:#c62828">溢出 ' +
@@ -71,7 +80,7 @@
             overflows.slice(0, 6).join(' · ') +
             (overflows.length > 6 ? ' …' : '');
         } else if (legend && opts.markOverflow) {
-          legend.innerHTML += '<br/>cream 內：全部列未標溢出';
+          legend.innerHTML += '<br/>欄寬：全部列未標溢出';
         }
       })
       .catch(function (err) {

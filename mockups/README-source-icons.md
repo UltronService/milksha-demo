@@ -55,6 +55,19 @@ Mock 資料經 `buildPayload()` → `applyPayload()` → `partitionNumberContent
 
 Agent Store 最新全板／特寫：`artifacts/source-icons-full-board.png`、`source-icons-zoom-crop.png`（commit **0d48c1e**，見 `source-icons-manifest.json`）。
 
+## 字級比較預覽（1920×1080，無 chip-scale）
+
+| 檔 | 字級 |
+|----|------|
+| `source-icons-font-preview.html?fontPx=81` | A) 81px，溢出紅框 |
+| `source-icons-font-preview.html?fontPx=76.57421875` | B) 兩區同字級 max fit ≈76.57px |
+
+```bash
+node scripts/capture-source-icons-font-previews.mjs
+```
+
+Agent Store：`source-icons-font-preview-81px-1920x1080.png`、`source-icons-font-preview-maxfit-1920x1080.png`（見 `source-icons-font-preview-manifest.json`）。
+
 ## QA
 
 ```bash

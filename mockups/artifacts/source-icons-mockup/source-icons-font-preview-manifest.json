@@ -1,30 +1,61 @@
 {
-  "capturedAtUtc": "2026-10-15T02:49:09.826Z",
-  "viewport": "1920x1080",
-  "rules": {
-    "background": "assets/milksha-board-bg-1007.jpg",
-    "productionBoardNumbers": true,
-    "noChipScale": true,
-    "uniformFontBothZones": true,
-    "foodpandaHashPrefix": true,
-    "icons": "equal cap height, object-fit contain (nidin 183×91, fp 800×782, uber 800×800)"
+  "capturedAtUtc": "2026-10-15T02:52:39.563Z",
+  "viewportLogical": "1920x1080",
+  "deviceScaleFactor": 2,
+  "pngPixelSize": "3840x2160",
+  "uiuxSpec": {
+    "slotWidth": "1.0F",
+    "gap": "0.2F",
+    "fpUberHeight": "0.8F",
+    "fpWidth": "1.02×height",
+    "nidinHeight": "0.5F proportional",
+    "nidinAsset": "assets/source-icons/nidin.png",
+    "storeEmptySlot": true
   },
+  "maxFontReport": {
+    "actualLogShapedSamples": {
+      "fontPx": 85.078125,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
+        "maxW": 376.27
+      }
+    },
+    "worstCase_iconPlus5Chars": {
+      "fontPx": 85.078125,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
+        "maxW": 376.27
+      }
+    },
+    "worstCase_iconPlusHash999999": {
+      "fontPx": 73.875,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "#999999",
+        "width": 376.428173828125,
+        "maxW": 376.27
+      }
+    }
+  },
+  "bNote": "B skipped: icon+5-char max uniform font 85.078125px >= 81px; only A delivered.",
   "files": [
     {
       "name": "source-icons-font-preview-81px-1920x1080.png",
-      "repoPath": "mockups/artifacts/source-icons-mockup/source-icons-font-preview-81px-1920x1080.png",
-      "sha256": "da27e0b1c99566df094bdbb0dd2ee3e7c1703d3e42027a3d5f97342f01fc824a",
+      "sha256": "5149015f9fd628b39b5c6cdf41c2dd323b59ffb3515bac794bd267bb4dbaed85",
       "fontPx": "81",
-      "overflowCount": "8",
-      "description": "A) 正式看板字級 81px"
-    },
-    {
-      "name": "source-icons-font-preview-maxfit-1920x1080.png",
-      "repoPath": "mockups/artifacts/source-icons-mockup/source-icons-font-preview-maxfit-1920x1080.png",
-      "sha256": "6161e2df8ea665969dfcc8a339e1a05e16aea996cdd34e55d4eb6d4d6b9d36ea",
-      "fontPx": "76.57421875",
       "overflowCount": "0",
-      "description": "B) 兩區同字級最大可 fit ≈76.57px"
+      "numLeftDeltaPx": "0.0031250000000113687",
+      "gapErrors": "0"
     }
   ]
 }
