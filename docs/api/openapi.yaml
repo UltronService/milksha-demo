@@ -521,13 +521,17 @@ components:
           description: |
             顯示號碼，必須為 JSON 字串（不可送數字型別）。
 
-            五來源號碼規則（v1.4.3；不符格式者拒收，內層 `isSuccess: false`、訊息「叫號資料格式錯誤」）：
+            五來源號碼規則（v1.4.3）：
             - 門市：恰好 4 位數字（例 `1488`）。
             - 迷點：恰好 3 位數字；保留前導 0（例 `007`、`091`）。
             - Uber Eats：恰好 5 位十六進位字元 `0-9A-F`；儲存與顯示為大寫（例 `BFBEF`；送 `bfbef` 亦視為 `BFBEF`）。
             - foodpanda：必須為 `#` 加恰好 4 位數字；`#` 保留顯示（例 `#6405`；不可只送 `6405`）。
             - Udd：同 Uber Eats（恰好 5 位十六進位大寫）。
             - 同一 `source_type` + 同一正規化號碼只保留一筆（例同來源重送 `DDDDD` 與 `ddddd` 視為重複）；不同來源可同號並存。
+
+            **不合規單筆號碼（雲端已部署實測）：**  
+            `number_content` 中某一筆 `number` 不符上列規則時，**該筆捨棄、不上板**；同一次 Request 內其餘合規號碼仍照常顯示。  
+            此情境下回應仍為 HTTP **200**、外層 **`isOK: true`**、內層 **`isSuccess: true`**、訊息 **「資料顯示成功」**（**不**會因混送不合規號碼而改回「叫號資料格式錯誤」或 `isSuccess: false`）。
           example: "007"
 
     PosReceiverResponse:
@@ -590,10 +594,10 @@ x-response-messages:
 
     | information | 外層 isOK | 內層 isSuccess | 時機 |
     |-------------|-----------|----------------|------|
-    | 資料顯示成功 | true | true | 驗證通過、看板在線，已更新顯示。 |
+    | 資料顯示成功 | true | true | 看板在線且 Request 已受理；合規號碼已更新顯示（不合規單筆號碼已捨棄不上板，仍回此訊息）。 |
     | 目標叫號機尚未連線 | true | false | 驗證通過，看板未連線；不更新畫面。 |
     | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔。 |
-    | 叫號資料格式錯誤 | true | false | 結構、來源、號碼、timeStmp 等驗證失敗，或 `target` 不等於 `milksha` + `account`。 |
+    | 叫號資料格式錯誤 | true | false | 整包 Request 結構或必填欄位錯誤、`source_type` 不合法、timeStmp 等整包驗證失敗，或 `target` 不等於 `milksha` + `account`（**單筆 `number` 不合規不屬此項**，見 `number` 欄）。 |
     | timeStmp 格式錯誤 | — | false | timeStmp 格式不符。 |
     | timeStmp 已過期 | — | false | 與伺服器時間差過大。 |
     | 入口 A 未啟用 | — | false | 接收端暫停此入口。 |
