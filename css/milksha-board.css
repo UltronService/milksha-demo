@@ -93,6 +93,12 @@
   background: transparent;
 }
 
+.milksha-board.milksha-board--landscape-art {
+  --milksha-icon-slot-w: calc(var(--milksha-num-font) * 54 / 64);
+  --milksha-icon-box: calc(var(--milksha-num-font) * 54 / 64);
+  --milksha-icon-gap: calc(var(--milksha-num-font) * 14 / 64);
+}
+
 .milksha-board.milksha-board--landscape-art .milksha-ztitle {
   visibility: hidden;
 }
@@ -134,6 +140,7 @@
 .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-num {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+  font-weight: 700;
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-pg-indicator--art {

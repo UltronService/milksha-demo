@@ -85,9 +85,20 @@ export async function runOfficialBoardLayoutCheck() {
       failures.push('--milksha-num-font expected ' + expectedFont + 'px got ' + fontVar);
     }
     document.querySelectorAll('.milksha-num').forEach(function (el) {
-      const fs = parseFloat(getComputedStyle(el).fontSize);
+      const cs = getComputedStyle(el);
+      const fs = parseFloat(cs.fontSize);
       if (Math.abs(fs - expectedFont) > 0.5) {
         failures.push('font-size ' + fs + ' on ' + el.textContent);
+      }
+      if (cs.fontWeight !== '700' && cs.fontWeight !== 'bold') {
+        failures.push('font-weight ' + cs.fontWeight + ' on ' + el.textContent);
+      }
+    });
+    document.querySelectorAll('.milksha-board-icon-box').forEach(function (box) {
+      const w = box.getBoundingClientRect().width;
+      const expected = expectedFont * (54 / 64);
+      if (Math.abs(w - expected) > 1.5) {
+        failures.push('icon box width ' + w + ' expected ~' + expected);
       }
     });
     document.querySelectorAll('.milksha-board-icon').forEach(function (img) {

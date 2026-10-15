@@ -1,31 +1,7 @@
 {
   "fontPx": 64,
   "columnBandWidthPx": 382,
-  "ok": false,
-  "violations": [
-    {
-      "zone": "prep",
-      "index": 9,
-      "number": "WWWWWW",
-      "kind": "num",
-      "rect": {
-        "left": 581.796875,
-        "top": 848.0625,
-        "right": 951.921875,
-        "bottom": 912.0625,
-        "width": 370.125,
-        "height": 64
-      },
-      "band": {
-        "left": 505,
-        "right": 887
-      },
-      "cream": {
-        "left": 101,
-        "top": 341,
-        "right": 899,
-        "bottom": 979
-      }
-    }
-  ]
+  "rulesVersion": "production-log-2026-10-15",
+  "ok": true,
+  "violations": []
 }

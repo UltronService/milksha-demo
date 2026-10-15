@@ -333,9 +333,14 @@ export async function captureFullBoardScreenshot(options) {
     const paused = document.getElementById('milksha-cloud-paused');
     if (off) {
       off.hidden = true;
+      off.setAttribute('hidden', 'hidden');
     }
     if (paused) {
       paused.hidden = true;
+      paused.setAttribute('hidden', 'hidden');
+    }
+    if (window.QMS.runtime.setCloudOfflineVisible) {
+      window.QMS.runtime.setCloudOfflineVisible(false);
     }
     window.QMS.runtime.applyPayload(rows, { silent: true });
   }, payload);
@@ -355,6 +360,19 @@ export async function captureFullBoardScreenshot(options) {
     return true;
   });
   await page.waitForTimeout(400);
+  await page.evaluate(function () {
+    if (window.QMS.runtime.setCloudOfflineVisible) {
+      window.QMS.runtime.setCloudOfflineVisible(false);
+    }
+    const off = document.getElementById('milksha-cloud-offline');
+    const paused = document.getElementById('milksha-cloud-paused');
+    if (off) {
+      off.remove();
+    }
+    if (paused) {
+      paused.remove();
+    }
+  });
   mkdirSync(dirname(outPath), { recursive: true });
   await page.screenshot({ path: outPath, fullPage: false });
   const alignment = await page.evaluate(function (tol) {
@@ -517,7 +535,8 @@ export async function measurePr74BaselineCoords(options) {
         }
         const col = index < 5 ? 0 : 1;
         const expectedIconLeft = inners[col].left;
-        const expectedNumLeft = expectedIconLeft + fontPxLocal * 1.2;
+        const expectedNumLeft =
+          expectedIconLeft + art.ICON_BOX_PX + art.ICON_GAP_PX;
         const iconBox = chip.querySelector('.milksha-board-icon-box');
         out.push({
           zone: zoneKey,
@@ -541,6 +560,90 @@ export async function measurePr74BaselineCoords(options) {
     });
   });
   return rows;
+}
+
+const REF_UI_ICON_TOL_PX = 2;
+
+export async function measureRefUiIconAnchors(options) {
+  const opts = options || {};
+  const payload = opts.payload || buildFullBoardMixedPayload();
+  const { siteRoot, base, port } = prepareSite();
+  const server = await startServer(siteRoot, port);
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await page.evaluate((rows) => {
+    document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
+    window.QMS.runtime.applyPayload(rows, { silent: true });
+  }, payload);
+  await page.waitForSelector('.milksha-prep .milksha-board-icon-box');
+
+  const result = await page.evaluate(function (tol) {
+    const art = window.QMS.Board.LandscapeArtLayout;
+    const canvas = document.getElementById('milksha-board-canvas');
+    const cRect = canvas.getBoundingClientRect();
+    const m = canvas.style.transform.match(/scale\(([^)]+)\)/);
+    const scale = m ? Number(m[1]) : 1;
+    function boardLeft(el) {
+      return (el.getBoundingClientRect().left - cRect.left) / scale;
+    }
+    const failures = [];
+    ['prep', 'ready'].forEach(function (zoneKey) {
+      [0, 1].forEach(function (col) {
+        const expected = art.iconBoxLeftBoard(zoneKey, col);
+        const cell = document.querySelector(
+          '.milksha-zone.' + zoneKey + ' .milksha-num-cell:nth-child(' + (col * 5 + 1) + ')',
+        );
+        const box = cell && cell.querySelector('.milksha-board-icon-box');
+        if (!box) {
+          return;
+        }
+        const got = boardLeft(box);
+        if (Math.abs(got - expected) > tol) {
+          failures.push(zoneKey + ' col' + col + ' iconBoxLeft ' + got.toFixed(2) + ' expected ' + expected);
+        }
+      });
+    });
+    return { ok: failures.length === 0, failures: failures };
+  }, opts.tolPx ?? REF_UI_ICON_TOL_PX);
+
+  await browser.close();
+  await new Promise(function (r) {
+    server.close(function () {
+      r(undefined);
+    });
+  });
+  return result;
+}
+
+/** UI compare layout: fp×3+point×2 | uber×3+point×2 per zone (newest-first grid). */
+export function buildRefLayoutComparisonPayload() {
+  const prep = [
+    { source_type: 'From_milksha_point_Preparing', number: '898' },
+    { source_type: 'From_milksha_point_Preparing', number: '899' },
+    { source_type: 'From_UberEat_Preparing', number: 'A1899' },
+    { source_type: 'From_UberEat_Preparing', number: 'A1901' },
+    { source_type: 'From_UberEat_Preparing', number: 'A1902' },
+    { source_type: 'From_milksha_point_Preparing', number: '903' },
+    { source_type: 'From_milksha_point_Preparing', number: '904' },
+    { source_type: 'From_FoodPanda_Preparing', number: '#1905' },
+    { source_type: 'From_FoodPanda_Preparing', number: '#1906' },
+    { source_type: 'From_FoodPanda_Preparing', number: '#1907' },
+  ];
+  const ready = [
+    { source_type: 'From_milksha_point_OK', number: '798' },
+    { source_type: 'From_milksha_point_OK', number: '799' },
+    { source_type: 'From_UberEat_OK', number: 'B2899' },
+    { source_type: 'From_UberEat_OK', number: 'B2901' },
+    { source_type: 'From_UberEat_OK', number: 'B2902' },
+    { source_type: 'From_milksha_point_OK', number: '803' },
+    { source_type: 'From_milksha_point_OK', number: '804' },
+    { source_type: 'From_FoodPanda_OK', number: '#2905' },
+    { source_type: 'From_FoodPanda_OK', number: '#2906' },
+    { source_type: 'From_FoodPanda_OK', number: '#2907' },
+  ];
+  return prep.concat(ready);
 }
 
 export async function runPr74BaselineCheck(options) {

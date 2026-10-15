@@ -12,9 +12,15 @@
   const NUM_FONT_PX = 64;
   const TITLE_GUARD_MAX_Y = 330;
 
-  /** PR #74 mockup cream pixel edges (source-icons-cream-bounds.json). */
-  const CREAM_EDGE_INSET_PX = 12;
+  /** Milksha UI ref @ 1920: icon box left = cream.left + offset; right ink inset 91px. */
+  const CREAM_LEFT_ICON_OFFSET_PX = [75, 471];
+  const CREAM_RIGHT_CONTENT_INSET_PX = 91;
   const COLUMN_MID_GAP_PX = 10;
+  const ICON_BOX_PX = 54;
+  const ICON_GAP_PX = 14;
+
+  /** @deprecated use CREAM_LEFT_ICON_OFFSET_PX */
+  const CREAM_EDGE_INSET_PX = CREAM_LEFT_ICON_OFFSET_PX[0];
 
   /** Column center X (board coords), averaged from reference art per zone. */
   const PREP_COL_CX = [331.15, 727.91];
@@ -64,12 +70,32 @@
   function columnInnerRectsBoard(zone) {
     const cream = creamRectForZone(zone);
     const creamRight = cream.left + cream.width - 1;
-    const midX = (cream.left + creamRight) / 2;
+    const iconCol0 = cream.left + CREAM_LEFT_ICON_OFFSET_PX[0];
+    const iconCol1 = cream.left + CREAM_LEFT_ICON_OFFSET_PX[1];
     const halfGap = COLUMN_MID_GAP_PX / 2;
     return [
-      { left: cream.left + CREAM_EDGE_INSET_PX, right: midX - halfGap },
-      { left: midX + halfGap, right: creamRight - CREAM_EDGE_INSET_PX },
+      { left: iconCol0, right: iconCol1 - halfGap },
+      { left: iconCol1, right: creamRight },
     ];
+  }
+
+  /**
+   * @param {'prep' | 'ready'} zone
+   * @param {0 | 1} col
+   * @returns {number}
+   */
+  function iconBoxLeftBoard(zone, col) {
+    const cream = creamRectForZone(zone);
+    return cream.left + CREAM_LEFT_ICON_OFFSET_PX[col];
+  }
+
+  /**
+   * @param {'prep' | 'ready'} zone
+   * @param {0 | 1} col
+   * @returns {number}
+   */
+  function expectedNumLeftBoard(zone, col) {
+    return iconBoxLeftBoard(zone, col) + ICON_BOX_PX + ICON_GAP_PX;
   }
 
   /**
@@ -117,7 +143,13 @@
     COL_X_TOL_PX: COL_X_TOL_PX,
     ROW_PITCH_TOL_PX: ROW_PITCH_TOL_PX,
     CREAM_EDGE_INSET_PX: CREAM_EDGE_INSET_PX,
+    CREAM_LEFT_ICON_OFFSET_PX: CREAM_LEFT_ICON_OFFSET_PX,
+    CREAM_RIGHT_CONTENT_INSET_PX: CREAM_RIGHT_CONTENT_INSET_PX,
+    ICON_BOX_PX: ICON_BOX_PX,
+    ICON_GAP_PX: ICON_GAP_PX,
     COLUMN_MID_GAP_PX: COLUMN_MID_GAP_PX,
+    iconBoxLeftBoard: iconBoxLeftBoard,
+    expectedNumLeftBoard: expectedNumLeftBoard,
     creamRectForZone: creamRectForZone,
     colCentersForZone: colCentersForZone,
     columnInnerRectsBoard: columnInnerRectsBoard,
