@@ -69,9 +69,9 @@ test('uber and udd: 4–6 alnum uppercased', function () {
   assert.equal(SendNumber.validateQuickSendNumber('uber', 'abc').ok, false);
 });
 
-test('foodpanda: 4–6 digits, strips hash', function () {
+test('foodpanda: 4–6 digits, preserves optional hash', function () {
   const { SendNumber } = loadControllerSendNumber();
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '6406');
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '#6406');
   assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, true);
   assert.equal(SendNumber.validateQuickSendNumber('fp', '123').ok, false);
 });

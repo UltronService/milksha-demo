@@ -9,7 +9,7 @@
   const PREP_CREAM = { left: 101, top: 341, width: 798, height: 639 };
   const READY_CREAM = { left: 1021, top: 341, width: 798, height: 638 };
 
-  const NUM_FONT_PX = 81;
+  const NUM_FONT_PX = 64;
   const TITLE_GUARD_MAX_Y = 330;
 
   /** Column center X (board coords), averaged from reference art per zone. */
@@ -24,8 +24,8 @@
   });
 
   /** Reference ink metrics for "1907" at NUM_FONT_PX (canvas measureText, Arial). */
-  const REF_INK_CAP_HEIGHT_PX = 58;
-  const REF_INK_WIDTH_1907_PX = 170.145;
+  const REF_INK_CAP_HEIGHT_PX = (58 / 81) * NUM_FONT_PX;
+  const REF_INK_WIDTH_1907_PX = (170.145 / 81) * NUM_FONT_PX;
   const REF_INK_SAMPLE_TEXT = '1907';
 
   const INK_METRIC_TOL_RATIO = 0.05;

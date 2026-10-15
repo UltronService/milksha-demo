@@ -81,9 +81,6 @@ async function loadDeliveryBoard(page) {
       throw new Error(`Expected ${expected} on board, got: ${joined}`);
     }
   }
-  if (joined.includes('#')) {
-    throw new Error('foodpanda hash must not display: ' + joined);
-  }
 }
 
 async function capture(page, width, height, filename) {

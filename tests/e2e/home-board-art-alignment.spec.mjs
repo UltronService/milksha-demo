@@ -78,32 +78,45 @@ async function measureBoard(page, viewport) {
       const colXs = [[], []];
       const rowYs = [[], []];
       for (let i = 0; i < 10; i += 1) {
+        const chipEl = cells[i].querySelector('.milksha-board-chip');
         const numEl = cells[i].querySelector('.milksha-num');
         if (!numEl || !numEl.textContent) {
           return { ok: false, reason: 'empty-cell', index: i };
         }
         const ink = measureInk(numEl);
+        const alignEl = chipEl || numEl;
+        const aRect = alignEl.getBoundingClientRect();
+        const alignCenter = {
+          cx: (aRect.left + aRect.width / 2 - cRect.left) / s,
+          cy: (aRect.top + aRect.height / 2 - cRect.top) / s,
+        };
+        const alignBox = {
+          left: (aRect.left - cRect.left) / s,
+          top: (aRect.top - cRect.top) / s,
+          width: aRect.width / s,
+          height: aRect.height / s,
+        };
         const exp = art.cellCenterBoard(zoneKey, i);
-        const dx = Math.abs(ink.center.cx - exp.cx);
-        const dy = Math.abs(ink.center.cy - exp.cy);
-        if (ink.box.top < art.TITLE_GUARD_MAX_Y) {
+        const dx = Math.abs(alignCenter.cx - exp.cx);
+        const dy = Math.abs(alignCenter.cy - exp.cy);
+        if (alignBox.top < art.TITLE_GUARD_MAX_Y) {
           return { ok: false, reason: 'title-overlap', index: i };
         }
         if (
-          ink.box.left < cream.left - 2 ||
-          ink.box.left + ink.box.width > cream.left + cream.width + 2 ||
-          ink.box.top < cream.top - 2 ||
-          ink.box.top + ink.box.height > cream.top + cream.height + 2
+          alignBox.left < cream.left - 2 ||
+          alignBox.left + alignBox.width > cream.left + cream.width + 2 ||
+          alignBox.top < cream.top - 2 ||
+          alignBox.top + alignBox.height > cream.top + cream.height + 2
         ) {
-          return { ok: false, reason: 'outside-cream', index: i, ink, cream };
+          return { ok: false, reason: 'outside-cream', index: i, ink, cream, alignBox };
         }
         if (dx > centerTol || dy > centerTol) {
-          return { ok: false, reason: 'center-off', index: i, dx, dy, exp, ink };
+          return { ok: false, reason: 'center-off', index: i, dx, dy, exp, alignCenter };
         }
         const col = i < 5 ? 0 : 1;
         const row = i < 5 ? i : i - 5;
-        colXs[col].push(ink.center.cx);
-        rowYs[col].push(ink.center.cy);
+        colXs[col].push(alignCenter.cx);
+        rowYs[col].push(alignCenter.cy);
         const capTol = art.REF_INK_CAP_HEIGHT_PX * art.INK_METRIC_TOL_RATIO;
         const wTol = art.REF_INK_WIDTH_1907_PX * art.INK_METRIC_TOL_RATIO;
         if (ink.text === art.REF_INK_SAMPLE_TEXT) {

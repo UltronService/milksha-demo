@@ -183,13 +183,7 @@
     }
     const key = sourceKey || 'store';
     let working = raw;
-    if (key === 'fp') {
-      working = working.replace(/#/g, '');
-    }
     const trimmed = working.trim();
-    if (trimmed.length > 6) {
-      return null;
-    }
     if (key === 'store') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
@@ -197,7 +191,16 @@
       return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
     }
     if (key === 'fp') {
-      return BOARD_NUMBER_DIGIT_3_TO_6.test(trimmed) ? trimmed : null;
+      if (trimmed.length > 6) {
+        return null;
+      }
+      if (!/^#?\d{3,6}$/.test(trimmed)) {
+        return null;
+      }
+      return trimmed;
+    }
+    if (trimmed.length > 6) {
+      return null;
     }
     if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
       return null;
@@ -381,12 +384,24 @@
     if (!item || !item.number) {
       return '';
     }
+    const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
+    const sourceKey = item.sourceKey || 'store';
+    const chipClass =
+      icons && icons.sourceKeyShowsIcon(sourceKey)
+        ? 'milksha-board-chip milksha-board-chip--with-icon'
+        : 'milksha-board-chip milksha-board-chip--with-slot';
+    const inner =
+      icons && icons.renderChipInnerHtml
+        ? icons.renderChipInnerHtml(item)
+        : '<span class="milksha-num">' + item.number + '</span>';
     return (
-      '<div class="milksha-board-chip" data-item-id="' +
+      '<div class="' +
+      chipClass +
+      '" data-item-id="' +
       item.id +
-      '"><span class="milksha-num">' +
-      item.number +
-      '</span></div>'
+      '">' +
+      inner +
+      '</div>'
     );
   }
 
@@ -734,6 +749,21 @@
         pageSize: PAGE_SIZE,
         layoutPageGrid: layoutPageGrid,
         pageCountForItems: pageCountForItems,
+        renderChipInnerHtml: function (cell) {
+          const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
+          if (icons && icons.renderChipInnerHtml) {
+            return icons.renderChipInnerHtml(cell);
+          }
+          return cell && cell.number ? '<span class="milksha-num">' + cell.number + '</span>' : '';
+        },
+        chipClassForCell: function (cell) {
+          const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
+          const sourceKey = cell && cell.sourceKey ? cell.sourceKey : 'store';
+          if (icons && icons.sourceKeyShowsIcon(sourceKey)) {
+            return 'milksha-board-chip milksha-board-chip--with-icon';
+          }
+          return 'milksha-board-chip milksha-board-chip--with-slot';
+        },
       });
       return boardAnimator;
     }

@@ -624,11 +624,47 @@
    *   pageSize: number,
    *   layoutPageGrid: (items: unknown[], page: number, pageSize: number) => Array<{ id?: string, number?: string } | null>,
    *   pageCountForItems: (count: number, pageSize: number) => number,
+   *   renderChipInnerHtml?: (cell: { id?: string, sourceKey?: string, number?: string }) => string,
+   *   chipClassForCell?: (cell: { id?: string, sourceKey?: string, number?: string }) => string,
    * }} deps
    */
   function createBoardAnimator(deps) {
     let generation = 0;
     let opacityAnimRuns = 0;
+
+    /**
+     * @param {{ id?: string, sourceKey?: string, number?: string }} cell
+     * @returns {string}
+     */
+    function chipClassForCell(cell) {
+      if (deps.chipClassForCell) {
+        return deps.chipClassForCell(cell);
+      }
+      return 'milksha-board-chip';
+    }
+
+    /**
+     * @param {{ id?: string, sourceKey?: string, number?: string }} cell
+     * @returns {string}
+     */
+    function chipInnerHtml(cell) {
+      if (deps.renderChipInnerHtml) {
+        return deps.renderChipInnerHtml(cell);
+      }
+      if (!cell || !cell.number) {
+        return '';
+      }
+      return '<span class="milksha-num">' + cell.number + '</span>';
+    }
+
+    /**
+     * @param {Element} chip
+     * @param {{ id?: string, sourceKey?: string, number?: string }} cell
+     */
+    function fillChipElement(chip, cell) {
+      chip.className = chipClassForCell(cell);
+      chip.innerHTML = chipInnerHtml(cell);
+    }
 
     function bumpGeneration() {
       generation += 1;
@@ -796,9 +832,9 @@
         }
         const id = cell.id || '';
         const chip = deps.document.createElement('div');
-        chip.className = 'milksha-board-chip';
+        chip.className = chipClassForCell(cell);
         chip.setAttribute('data-item-id', id);
-        chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
+        chip.innerHTML = chipInnerHtml(cell);
         snapOpacity(chip, 1);
         slot.appendChild(chip);
         if (id) {
@@ -1056,9 +1092,8 @@
               const cell = cells[i];
               if (cell && cell.number) {
                 const chip = deps.document.createElement('div');
-                chip.className = 'milksha-board-chip';
+                fillChipElement(chip, cell);
                 chip.setAttribute('data-item-id', cell.id || '');
-                chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
                 slot.appendChild(chip);
               }
             }
@@ -1148,9 +1183,8 @@
             scheduleChipFadeOutRemove(strayBefore[sb], numbersLayer, gen, opacityInMs, promises, pendingRemove);
           }
           chip = deps.document.createElement('div');
-          chip.className = 'milksha-board-chip';
+          fillChipElement(chip, cell);
           chip.setAttribute('data-item-id', id);
-          chip.innerHTML = '<span class="milksha-num">' + cell.number + '</span>';
           snapOpacity(chip, 0);
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
           slot.appendChild(chip);

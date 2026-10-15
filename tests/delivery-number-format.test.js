@@ -32,6 +32,8 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'source-icons-layout.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
@@ -63,17 +65,17 @@ test('milksha point keeps leading zero on short numeric codes', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
 });
 
-test('foodpanda strips hash and dedupes hash vs plain within same source', function () {
+test('foodpanda preserves hash; hash and plain are different board numbers', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
   assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('#123456', 'fp'), null);
   const parts = MB.partitionNumberContent([
     { source_type: 'From_FoodPanda_OK', number: '#6406' },
     { source_type: 'From_FoodPanda_OK', number: '6406' },
   ]);
-  assert.equal(parts.ready.length, 1);
-  assert.equal(parts.ready[0].number, '6406');
+  assert.equal(parts.ready.length, 2);
 });
 
 test('uber alphanumeric normalizes to uppercase', function () {

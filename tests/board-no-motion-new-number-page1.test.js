@@ -38,10 +38,12 @@ function parseZoneBoardHtml(zoneHtml) {
   const indicatorMatch = zoneHtml.match(/class="milksha-pg-indicator[^"]*"[^>]*>([^<]+)</);
   const indicator = indicatorMatch ? indicatorMatch[1].trim() : '';
   const cells = [];
-  const cellRe = /<div class="milksha-num-cell"[^>]*>([\s\S]*?)<\/div>/g;
-  let m;
-  while ((m = cellRe.exec(zoneHtml)) !== null) {
-    const inner = m[1];
+  const cellOpenRe = /<div class="milksha-num-cell"[^>]*>/g;
+  let openMatch;
+  while ((openMatch = cellOpenRe.exec(zoneHtml)) !== null) {
+    const from = openMatch.index;
+    const nextOpen = zoneHtml.indexOf('<div class="milksha-num-cell"', from + 1);
+    const inner = nextOpen < 0 ? zoneHtml.slice(from) : zoneHtml.slice(from, nextOpen);
     const numMatch = inner.match(/class="milksha-num">([^<]+)/);
     cells.push(numMatch ? numMatch[1].trim() : null);
   }
@@ -190,6 +192,7 @@ function bootMilkshaBoardHarness(locationSearch, timerOpts) {
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'source-icons-layout.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);

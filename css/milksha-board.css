@@ -52,6 +52,10 @@
   font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
   font-variant-numeric: tabular-nums;
   --milksha-num-font: 88px;
+  --milksha-icon-slot-w: calc(var(--milksha-num-font) * 1);
+  --milksha-icon-gap: calc(var(--milksha-num-font) * 0.2);
+  --milksha-icon-box: calc(var(--milksha-num-font) * 0.8);
+  --milksha-icon-cap-h: calc(var(--milksha-num-font) * 58 / 81);
   --milksha-cream: #fffbe6;
   --milksha-num-color: #222222;
   --milksha-prep-bg: #88a040;
@@ -254,6 +258,57 @@
   vertical-align: middle;
   color: var(--milksha-num-color);
   transform-origin: center center;
+}
+
+.milksha-board-chip--with-icon,
+.milksha-board-chip--with-slot {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.milksha-board-icon-slot {
+  flex: none;
+  width: var(--milksha-icon-slot-w);
+  min-width: var(--milksha-icon-slot-w);
+  max-width: var(--milksha-icon-slot-w);
+  height: var(--milksha-icon-cap-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+.milksha-board-icon-slot--empty {
+  /* store: reserved 1.0F width, no image */
+}
+
+.milksha-board-icon-box {
+  flex: none;
+  width: var(--milksha-icon-box);
+  height: var(--milksha-icon-box);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.milksha-board-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  flex: none;
+  pointer-events: none;
+}
+
+.milksha-board-chip--with-icon .milksha-num,
+.milksha-board-chip--with-slot .milksha-num {
+  margin-left: var(--milksha-icon-gap);
+  flex: none;
 }
 
 .milksha-zone-numbers .milksha-board-chip--layer-float {
