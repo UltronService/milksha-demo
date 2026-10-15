@@ -11,6 +11,8 @@
 
   const VERSION = 'receiver-demo-2026-10-08-realtime-board';
   const FALLBACK_BOARD_POLL_MS = 60000;
+  const OFFLINE_RECOVERY_BOARD_POLL_MS = 2000;
+  const OFFLINE_WATCHDOG_RESYNC_MS = 3000;
 
   function isDemoMode() {
     try {
@@ -753,10 +755,6 @@
       if (resyncInFlight) {
         return resyncInFlight;
       }
-      const recoveryOffline = !cloudReachable;
-      if (recoveryOffline) {
-        syncCloudOfflineUi(true);
-      }
       lastBoardUpdateTime = '';
       const kick = function () {
         sendHeartbeat();
@@ -1386,7 +1384,6 @@
           notifyAuthFailure(e);
           syncCloudGuestStatusUi(false);
         }
-        markCloudUnreachable(e);
         onStatusLine('heartbeat 失敗');
       }
     }
@@ -1488,7 +1485,13 @@
         ) {
           pollDevice();
         }
-        const boardPollEvery = boardListenActive ? FALLBACK_BOARD_POLL_MS : boardPollMs;
+        let boardPollEvery = boardListenActive ? FALLBACK_BOARD_POLL_MS : boardPollMs;
+        if (!cloudReachable && showCloudOfflineUi) {
+          boardPollEvery = OFFLINE_RECOVERY_BOARD_POLL_MS;
+          if (tickMs % OFFLINE_WATCHDOG_RESYNC_MS === 0) {
+            scheduleCloudResync('offline_watchdog');
+          }
+        }
         if (tickMs % boardPollEvery === 0) {
           pollBoard();
         }

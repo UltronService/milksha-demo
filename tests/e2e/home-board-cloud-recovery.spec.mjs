@@ -21,6 +21,38 @@ test.describe('home board cloud recovery', () => {
     await resetCloudState({ seedDevice: true });
   });
 
+  test('B-N07: 60s blocked routes recover within 30s without manual resync', async ({ browser }) => {
+    test.setTimeout(180000);
+    const boardCtx = await isolatedCloudContext(browser);
+    const ctrlCtx = await isolatedCloudContext(browser);
+    const board = await boardCtx.newPage();
+    const controller = await ctrlCtx.newPage();
+    await installBundledCloudRouteShim(board);
+    await installBundledCloudRouteShim(controller);
+    await board.goto(BASE + '/');
+    await controller.goto(BASE + '/controller/');
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
+    await controller.click('[data-testid="btn-send-numbers"]');
+    await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 20000 });
+
+    const blockPattern = /firestore\.googleapis\.com|cloudfunctions\.net|run\.app/;
+    await board.route(blockPattern, (route) => route.abort('failed'));
+    await expandControllerZone(controller, 'sec-special');
+    await controller.click('[data-testid="btn-send-numbers"]');
+    await expect(board.locator('#milksha-cloud-offline')).toBeVisible({ timeout: 25000 });
+
+    await board.waitForTimeout(15000);
+    await board.unroute(blockPattern);
+    const t0 = Date.now();
+    await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 30000 });
+    const recoveryMs = Date.now() - t0;
+    expect(recoveryMs).toBeLessThanOrEqual(30000);
+    await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 5000 });
+    await boardCtx.close();
+    await ctrlCtx.close();
+  });
+
   test('shows 離線 when network drops and clears after online', async ({ browser }) => {
     test.setTimeout(120000);
     const boardCtx = await isolatedCloudContext(browser);
