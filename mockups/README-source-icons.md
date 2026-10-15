@@ -46,6 +46,15 @@ Mock 資料經 `buildPayload()` → `applyPayload()` → `partitionNumberContent
 
 若未來必須改小字級才能 fit，腳本會 fail 並在 `iconFitAdaptation` 寫明 shrink 像素；目前策略為 `chip-scale`。
 
+## Owner hold（暫停改字級／比例）
+
+在負責人回覆前**不要**再調 CSS 字級或 chip scale 策略：
+
+1. **`#` 是否算進熊貓 6 字上限**
+2. **請取餐 1.3× 是否保留**（pulse vs 靜態字級）
+
+Agent Store 最新全板／特寫：`artifacts/source-icons-full-board.png`、`source-icons-zoom-crop.png`（commit **0d48c1e**，見 `source-icons-manifest.json`）。
+
 ## QA
 
 ```bash
