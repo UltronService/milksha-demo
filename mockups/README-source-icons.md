@@ -55,6 +55,17 @@ Mock 資料經 `buildPayload()` → `applyPayload()` → `partitionNumberContent
 
 Agent Store 最新全板／特寫：`artifacts/source-icons-full-board.png`、`source-icons-zoom-crop.png`（commit **0d48c1e**，見 `source-icons-manifest.json`）。
 
+## UI/UX 字級預覽（1920×1080 邏輯、PNG @2x）
+
+- slot **1.0F**（門市留空）、gap **0.2F**、fp/uber 高 **0.8F**、nidin **0.5F**（`nidin.png`）
+- 號碼 sample 改為 log 形（Uber **5 碼**如 `BFBEF`、熊貓 **`#6407`**）
+- Max 字級（同區一致、無 chip-scale）：**icon+5 字 ≈85.08px**、**icon+#999999 ≈73.88px**（見 `max-uniform-font-report.json`）
+- **81px 已可放現行 sample** → 只出 **A=81px**；B（max fit）≥81 時不重出第二張
+
+```bash
+node scripts/capture-source-icons-font-previews.mjs
+```
+
 ## 字級比較預覽（1920×1080，無 chip-scale）
 
 | 檔 | 字級 |

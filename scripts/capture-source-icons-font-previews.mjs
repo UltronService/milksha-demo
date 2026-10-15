@@ -14,9 +14,14 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const repoOutDir = path.join(rootDir, 'mockups', 'artifacts', 'source-icons-mockup');
 const agentStoreDir = '/cursor/stores/self/artifacts';
 const LIVE_FONT = 81;
+const OWNER_ALT_SIZES = [72, 68, 64];
 
 function sha256File(filePath) {
   return createHash('sha256').update(readFileSync(filePath)).digest('hex');
+}
+
+function previewFileName(fontPx) {
+  return 'source-icons-font-preview-' + fontPx + 'px-1920x1080.png';
 }
 
 function readMaxFontIconPlus5() {
@@ -29,14 +34,17 @@ function readMaxFontIconPlus5() {
   return fontPx;
 }
 
-async function capturePreview(port, spec) {
-  const browser = await chromium.launch();
+/**
+ * @param {import('playwright').Browser} browser
+ * @param {number} port
+ * @param {{ fontPx: number, outName: string }} spec
+ */
+async function capturePreview(browser, port, spec) {
   const page = await browser.newPage({
     viewport: { width: 1920, height: 1080 },
     deviceScaleFactor: 2,
   });
-  const query =
-    'fontPx=' + encodeURIComponent(String(spec.fontPx)) + '&markOverflow=0';
+  const query = 'fontPx=' + encodeURIComponent(String(spec.fontPx)) + '&markOverflow=0';
   const url = 'http://127.0.0.1:' + port + '/mockups/source-icons-font-preview.html?' + query;
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForFunction(function () {
@@ -64,8 +72,49 @@ async function capturePreview(port, spec) {
       gapErrors: rootEl ? rootEl.dataset.uiuxGapErrors : null,
     };
   });
-  await browser.close();
+  await page.close();
   return { outPath, meta };
+}
+
+/**
+ * @param {import('playwright').Browser} browser
+ * @param {number} port
+ * @param {number[]} sizes
+ */
+async function captureCompareRow(browser, port, sizes) {
+  const gap = 24;
+  const labelH = 56;
+  const panelW = 1920;
+  const w = panelW * sizes.length + gap * (sizes.length - 1);
+  const h = labelH + 1080;
+  const page = await browser.newPage({
+    viewport: { width: w, height: h },
+    deviceScaleFactor: 2,
+  });
+  const url =
+    'http://127.0.0.1:' +
+    port +
+    '/mockups/source-icons-font-compare.html?sizes=' +
+    encodeURIComponent(sizes.join(','));
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.waitForFunction(function () {
+    var imgs = document.querySelectorAll('.compare-col img');
+    if (imgs.length < 1) {
+      return false;
+    }
+    for (var i = 0; i < imgs.length; i += 1) {
+      if (!imgs[i].complete || imgs[i].naturalWidth === 0) {
+        return false;
+      }
+    }
+    return true;
+  });
+  await page.waitForTimeout(300);
+  const outName = 'source-icons-font-preview-compare-' + sizes.join('-') + 'px-1920x1080.png';
+  const outPath = path.join(repoOutDir, outName);
+  await page.screenshot({ path: outPath, type: 'png' });
+  await page.close();
+  return { outPath, meta: { compareSizes: sizes.join(',') } };
 }
 
 async function main() {
@@ -82,19 +131,33 @@ async function main() {
 
   const server = await startStaticServer(rootDir, 0);
   const port = serverPort(server);
+  const browser = await chromium.launch();
 
   const captures = [];
+
   captures.push(
-    await capturePreview(port, {
+    await capturePreview(browser, port, {
       fontPx: LIVE_FONT,
-      outName: 'source-icons-font-preview-81px-1920x1080.png',
+      outName: previewFileName(LIVE_FONT),
     }),
   );
+
+  for (let i = 0; i < OWNER_ALT_SIZES.length; i += 1) {
+    const px = OWNER_ALT_SIZES[i];
+    captures.push(
+      await capturePreview(browser, port, {
+        fontPx: px,
+        outName: previewFileName(px),
+      }),
+    );
+  }
+
+  captures.push(await captureCompareRow(browser, port, OWNER_ALT_SIZES));
 
   let bNote = null;
   if (!skipB) {
     captures.push(
-      await capturePreview(port, {
+      await capturePreview(browser, port, {
         fontPx: maxFit5,
         outName: 'source-icons-font-preview-maxfit-1920x1080.png',
       }),
@@ -106,6 +169,7 @@ async function main() {
       'px >= 81px; only A delivered.';
   }
 
+  await browser.close();
   await new Promise(function (resolve) {
     server.close(function () {
       resolve(undefined);
@@ -117,6 +181,7 @@ async function main() {
     viewportLogical: '1920x1080',
     deviceScaleFactor: 2,
     pngPixelSize: '3840x2160',
+    ownerAltSizesPx: OWNER_ALT_SIZES,
     uiuxSpec: {
       slotWidth: '1.0F',
       gap: '0.2F',

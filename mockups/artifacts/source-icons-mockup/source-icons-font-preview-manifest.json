@@ -1,8 +1,13 @@
 {
-  "capturedAtUtc": "2026-10-15T11:38:42.711Z",
+  "capturedAtUtc": "2026-10-15T11:40:10.771Z",
   "viewportLogical": "1920x1080",
   "deviceScaleFactor": 2,
   "pngPixelSize": "3840x2160",
+  "ownerAltSizesPx": [
+    72,
+    68,
+    64
+  ],
   "uiuxSpec": {
     "slotWidth": "1.0F",
     "gap": "0.2F",
@@ -56,6 +61,35 @@
       "overflowCount": "0",
       "numLeftDeltaPx": "0.0031250000000113687",
       "gapErrors": "0"
+    },
+    {
+      "name": "source-icons-font-preview-72px-1920x1080.png",
+      "sha256": "47aa95f68ad81c220587bfe25262ec27443eeab803d5c203f66bac867282fc2d",
+      "fontPx": "72",
+      "overflowCount": "0",
+      "numLeftDeltaPx": "0.014062500000022737",
+      "gapErrors": "0"
+    },
+    {
+      "name": "source-icons-font-preview-68px-1920x1080.png",
+      "sha256": "e60e5ad875c1e2dedfb3da596f382e9bf3d2d776d3cae211c243ccfcf19561e9",
+      "fontPx": "68",
+      "overflowCount": "0",
+      "numLeftDeltaPx": "0.00937500000009095",
+      "gapErrors": "0"
+    },
+    {
+      "name": "source-icons-font-preview-64px-1920x1080.png",
+      "sha256": "3f4464bd4d74fc9ad1c3f0564a9318beeff3cf87b404db587deb3e6f0bea7398",
+      "fontPx": "64",
+      "overflowCount": "0",
+      "numLeftDeltaPx": "0.004687500000045475",
+      "gapErrors": "0"
+    },
+    {
+      "name": "source-icons-font-preview-compare-72-68-64px-1920x1080.png",
+      "sha256": "de9c8b72ae35cb47725859cfae30717480272d477573c34ca077d1139676a9fb",
+      "compareSizes": "72,68,64"
     }
   ]
 }
