@@ -1,5 +1,5 @@
 {
-  "capturedAtUtc": "2026-10-15T02:54:08.897Z",
+  "capturedAtUtc": "2026-10-15T11:38:42.711Z",
   "viewportLogical": "1920x1080",
   "deviceScaleFactor": 2,
   "pngPixelSize": "3840x2160",
@@ -51,7 +51,7 @@
   "files": [
     {
       "name": "source-icons-font-preview-81px-1920x1080.png",
-      "sha256": "93a7c68b394d1d84925343c861b4874d2aa1e9cc81faad9ed60374a6c0d07a7b",
+      "sha256": "1bdc4a16d819a34d861ec150fcd3fdc04624e572872d0ac9ad24040517766aa2",
       "fontPx": "81",
       "overflowCount": "0",
       "numLeftDeltaPx": "0.0031250000000113687",

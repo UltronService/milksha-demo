@@ -32,12 +32,12 @@
   const WORST_ICON_PLUS_FIVE = 'BFBEF';
   const FP_WORST_HASH_SIX = '#999999';
 
-  /** Log-shaped samples (Uber 5 碼 16 進位、熊貓 #6407 等；最長 5 字不含 #）。 */
+  /** Log-shaped samples（Uber 5 碼、熊貓 #+4 數字如 #6405、你訂 3–4 位、門市 4 位）。 */
   const PREP_SAMPLES = [
     { source: 'store', number: '1985' },
     { source: 'uber', number: 'BFBEF' },
     { source: 'point', number: '087' },
-    { source: 'fp', number: '6407' },
+    { source: 'fp', number: '6405' },
     { source: 'store', number: '3105' },
     { source: 'point', number: '0412' },
     { source: 'uber', number: 'A2C9E' },
@@ -64,7 +64,7 @@
     { source: 'store', number: '1985', label: '門市（1.0F 空格）' },
     { source: 'point', number: '0412', label: '你訂 nidin.png' },
     { source: 'uber', number: 'BFBEF', label: 'Uber Eats 5 碼' },
-    { source: 'fp', number: '6407', label: 'foodpanda #6407' },
+    { source: 'fp', number: '6405', label: 'foodpanda #6405' },
   ];
 
   /**
