@@ -1,0 +1,60 @@
+/**
+ * Uniform-font full-board previews (no chip-scale).
+ */
+.source-icons-font-preview .milksha-board-chip,
+.source-icons-font-preview .milksha-board-chip--with-icon {
+  transform: none !important;
+}
+
+.source-icons-font-preview .milksha-zone {
+  --source-icons-chip-scale: 1 !important;
+}
+
+.source-icons-font-preview .milksha-board-chip--with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.source-icons-font-preview .source-icons-font-preview__legend {
+  position: fixed;
+  left: 24px;
+  top: 24px;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #222;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(34, 34, 34, 0.35);
+  border-radius: 6px;
+  padding: 12px 16px;
+  pointer-events: none;
+  max-width: 520px;
+}
+
+.source-icons-font-preview .source-icons-font-preview__legend strong {
+  font-weight: 700;
+}
+
+.source-icons-font-preview .milksha-board-chip--overflow {
+  outline: 3px solid #e53935;
+  outline-offset: 2px;
+}
+
+.source-icons-font-preview .source-icons-overflow-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  z-index: 6;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #e53935;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1.2;
+  pointer-events: none;
+}
