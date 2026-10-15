@@ -39,7 +39,7 @@ test('Milksha ref UI: icon box left edges within 2px @ 1920', async function () 
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('Milksha ref UI: landscape art CSS tokens 54px box, 14px gap, bold numbers', function () {
+test('Milksha ref UI: landscape art CSS tokens 54px box, 14px gap, Arial Regular numbers', function () {
   const css = fs.readFileSync(path.join(ROOT, 'css', 'milksha-board.css'), 'utf8');
   assert.match(
     css,
@@ -49,5 +49,10 @@ test('Milksha ref UI: landscape art CSS tokens 54px box, 14px gap, bold numbers'
     css,
     /\.milksha-board\.milksha-board--landscape-art[\s\S]*--milksha-icon-gap:\s*calc\(var\(--milksha-num-font\)\s*\*\s*14\s*\/\s*64\)/,
   );
-  assert.match(css, /\.milksha-board\.milksha-board--landscape-art[\s\S]*font-weight:\s*700/);
+  const artNumBlock = css.match(
+    /\.milksha-board\.milksha-board--landscape-art \.milksha-art-numbers \.milksha-num\s*\{[^}]+\}/,
+  );
+  assert.ok(artNumBlock, 'landscape art .milksha-num block');
+  assert.match(artNumBlock[0], /font-family:\s*Arial,\s*Arimo,\s*sans-serif/);
+  assert.match(artNumBlock[0], /font-weight:\s*400/);
 });

@@ -90,7 +90,11 @@ export async function runOfficialBoardLayoutCheck() {
       if (Math.abs(fs - expectedFont) > 0.5) {
         failures.push('font-size ' + fs + ' on ' + el.textContent);
       }
-      if (cs.fontWeight !== '700' && cs.fontWeight !== 'bold') {
+      const fam = cs.fontFamily || '';
+      if (!/^Arial/.test(fam) && !fam.includes('Arial')) {
+        failures.push('font-family must lead with Arial on ' + el.textContent + ' got ' + fam);
+      }
+      if (cs.fontWeight !== '400' && cs.fontWeight !== 'normal') {
         failures.push('font-weight ' + cs.fontWeight + ' on ' + el.textContent);
       }
     });

@@ -105,7 +105,7 @@ test('PR #74 widest compliant stress: all chips inside cream bands', async funct
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('production board @ 1920×1080: 64px font, icons, foodpanda #6405', async function () {
+test('production board @ 1920×1080: 64px Arial Regular, icons, foodpanda #6405', async function () {
   const { runOfficialBoardLayoutCheck } = await import('../scripts/check-milksha-board-official-layout.mjs');
   const result = await runOfficialBoardLayoutCheck();
   assert.equal(result.fontPx, 64);

@@ -1,4 +1,4 @@
 (function (root) {
   'use strict';
-  root.MILKSHA_ASSET_VERSION = '20261015d';
+  root.MILKSHA_ASSET_VERSION = '20261015e';
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

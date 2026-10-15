@@ -138,9 +138,10 @@
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-num {
+  font-family: Arial, Arimo, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-pg-indicator--art {
