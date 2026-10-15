@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.3.0"
+  version: "1.3.4"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -19,6 +19,7 @@ info:
 
     1. **開啟試點看板**
        請門市先開啟叫號螢幕（瀏覽器看板）。
+       送測試號碼前，請確認看板上**沒有正在營業使用的叫號內容**；僅在試點 `c030020` 測試，**勿對其他真實門市亂送測試號碼**。
        試點門市 `c030020` 看板網址：
 
        `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
@@ -52,7 +53,7 @@ info:
 
     4. **常見錯誤與處理**
 
-       下列三種訊息：`isOK: true` 且內層 `isSuccess: false`（文案不變）。
+       下列常見內層訊息（部分為 `isOK: true` 且內層 `isSuccess: false`；文案以 API 回傳為準）：
 
        | 內層 information | isOK | isSuccess | 建議處理 |
        |------------------|------|-----------|----------|
@@ -85,10 +86,9 @@ info:
 
     1. 在任意資料夾新增檔案 `pos_receiver_test.py`。
     2. 將下方 **整段** Python 程式複製貼上（不要只貼一半）。
-    3. 打開檔案最上方 **`只改這裡`** 區塊。一般只需改：
-       - `STORE`：店號（對應 JSON 的 `account`）。
-       - 後端 QA 自測請改 `STORE = "zz-qa-backend"`（勿對真實門市亂送）。
-       - `SIGNATURE`：試點／QA 測試期維持 `""` 即可。
+    3. 打開檔案最上方 `只改這裡` 區塊。一般只需改：
+       - `STORE`：店號（對應 JSON 的 `account`）；試點請維持 `c030020`。
+       - `SIGNATURE`：試點店測試期間維持 `""` 即可。
     4. 開啟終端機，**cd** 進入 `pos_receiver_test.py` 所在資料夾。
     5. 執行：
        - macOS / Linux：`python3 pos_receiver_test.py`
@@ -107,13 +107,13 @@ info:
     from typing import Optional, Tuple
 
     # ========== 只改這裡 ==========
-    STORE = "c030020"  # 店號（account）。後端 QA 自測可改 "zz-qa-backend"
+    STORE = "c030020"  # 店號（account）
     MERCHANT_ID = "Milksha"
     # 以下為測試環境 URL，非正式上線；正式 URL 待測試通過後由迷客夏另行提供。
     POS_RECEIVER_URL = (
         "https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver"
     )
-    SIGNATURE = ""  # 簽章（signature）：試點／QA 測試期可留空字串 ""
+    SIGNATURE = ""  # 簽章（signature）：試點店測試期間可留空字串 ""
     # ==============================
 
     TAIPEI = timezone(timedelta(hours=8))
@@ -149,7 +149,7 @@ info:
 
 
     def md5_hex_utf8(text: str) -> str:
-        # MD5（雜湊）：後端會對 HTTP body 裡 serviceSpecialData_Json 的「原始 JSON 文字」重算。
+        # MD5（雜湊）：伺服端會對 HTTP body 裡 serviceSpecialData_Json 的「原始 JSON 文字」重算。
         # 若您先 json.dumps 再手改空白或 key 順序，雜湊就對不上 → Md5Hash 不符。
         return hashlib.md5(text.encode("utf-8")).hexdigest()
 
@@ -261,14 +261,14 @@ info:
 
     ### 成功時你會看到（範例）
 
-    內層 `information` 可能是 **`資料顯示成功`** 或 **`目標叫號機尚未連線`**（看板沒開時）；兩者都代表 Request 已被伺服器接受。
+    內層 `information` 可能是 `資料顯示成功` 或 `目標叫號機尚未連線`（看板沒開時）；兩者都代表 Request 已被伺服器接受。
 
     ```
     === posReceiver 一鍵試打 ===
-    [1/5] 店號 account / target 前綴 milksha → zz-qa-backend
+    [1/5] 店號 account / target 前綴 milksha → c030020
     [2/5] 新 timeStmp（台北時間，10 分鐘內有效）→ 2026-10-15-00-06-07:0365
     [3/5] 內層 JSON 字串（MD5 必須對「這一整串」計算）→
-    {"target":"milkshazz-qa-backend","data":{"number_content":[...],"newsTicker_content":[],"newsTickerSpeed":0}}
+    {"target":"milkshac030020","data":{...}}
     [4/5] serviceSpecialData_Json_Md5Hash → 16c1adfdb1cf2216dd81de535acde1eb
     [5/5] POST https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
     HTTP 狀態: 200
@@ -277,13 +277,13 @@ info:
     內層 information → 資料顯示成功
     ```
 
-    若為 **`資料顯示成功`**，可到看板網址目視確認號碼是否更新（QA 店號範例：  
-    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-backend`）。
+    若為 `資料顯示成功`，可到試點看板網址目視確認號碼是否更新：  
+    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`。
 
     ### 出錯怎麼辦
 
     先看終端機最後幾行的 **內層 information**（或外層 `information` 解 JSON 後的 `information` 欄位）。  
-    下列文案與 **milksha-cloud / posReceiver** 後端一致（HTTP 狀態碼通常仍為 **200**）。
+    下列錯誤訊息與 posReceiver API 回傳一致（HTTP 狀態碼通常仍為 **200**）。
 
     | 錯誤訊息 | 常見原因 | 怎麼改 |
     |----------|----------|--------|
@@ -293,12 +293,12 @@ info:
     | 找不到目標叫號機 | `target` 不是 `milksha` + `account`（店號打錯）。 | 檢查 `STORE` 與 `target` 是否為 `milksha` + 店號。 |
     | 目標叫號機尚未連線 | 看板網頁未開或未連上雲端。 | 先開看板 URL 再重跑；不影響「Request 已受理」。 |
     | 叫號資料格式錯誤 | JSON 結構或 `source_type`、號碼格式不符。 | 對照 OpenAPI 範例；先勿改 `number_content` 測通再改。 |
-    | 簽章錯誤 | 非免簽期卻留空或 HMAC 算錯。 | 向迷客夏取得金鑰（`<REDACTED>`）並正確簽章；QA 測試可留空。 |
+    | 簽章錯誤 | 非免簽期卻留空或 HMAC 算錯。 | 向迷客夏取得金鑰（`<REDACTED>`）並正確簽章；試點店測試期間可留空。 |
     | 終端機：`python3` / `py` 找不到 | 未安裝 Python 或未加入 PATH。 | 安裝 Python 3.9+ 並重開終端機。 |
     | `URLError` / SSL / 連線逾時 | 公司防火牆、無網路、DNS 問題。 | 換網路或請 IT 放行 `*.cloudfunctions.net`。 |
 
     - **跑法：** `python3 pos_receiver_test.py`（Windows 可用 `py pos_receiver_test.py`）。
-    - **成功：** 外層 `isOK: true`，且內層 `isSuccess: true` 並顯示 **`資料顯示成功`**（或 `false` + **`目標叫號機尚未連線`** 亦表示已送達伺服器）；再到看板 URL 目視確認。
+    - **成功：** 外層 `isOK: true`，且內層 `isSuccess: true` 並顯示 `資料顯示成功`（或 `false` 且內層為 `目標叫號機尚未連線` 亦表示已送達伺服器）；再到看板 URL 目視確認。
     - **整批覆寫：** 每次送出的 `number_content` 就是看板上的**完整名單**；`number_content: []` 會**清空**看板。
 
     ---
@@ -604,8 +604,8 @@ x-response-messages:
   description: |
     ## 內層 information 訊息
 
-    外層 **`isOK: true`** = Request 已處理完畢。  
-    內層 **`isSuccess`** = 號碼是否已顯示。
+    外層 `isOK: true` = Request 已處理完畢。  
+    內層 `isSuccess` = 號碼是否已顯示。
 
     | information | 外層 isOK | 內層 isSuccess | 時機 |
     |-------------|-----------|----------------|------|
