@@ -27,6 +27,11 @@ async function capture(pagePath, outName) {
     }
     return true;
   });
+  if (pagePath === 'source-icons.html') {
+    await page.waitForFunction(function () {
+      return document.querySelector('[data-mockup-layout-ready="true"]') !== null;
+    });
+  }
   await page.waitForTimeout(400);
   const outPath = path.join(outDir, outName);
   await page.screenshot({ path: outPath, type: 'png' });
@@ -36,6 +41,15 @@ async function capture(pagePath, outName) {
 
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
+  const { spawnSync } = await import('node:child_process');
+  const check = spawnSync(process.execPath, ['scripts/check-source-icons-mockup.mjs'], {
+    cwd: rootDir,
+    encoding: 'utf8',
+  });
+  if (check.status !== 0) {
+    console.error(check.stdout || check.stderr);
+    process.exit(check.status || 1);
+  }
   const full = await capture('source-icons.html', 'source-icons-full-1920x1080.png');
   const zoom = await capture('source-icons-zoom.html', 'source-icons-zoom-1920x1080.png');
   console.log(JSON.stringify({ full, zoom }, null, 2));

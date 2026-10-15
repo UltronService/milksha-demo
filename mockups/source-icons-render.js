@@ -36,13 +36,11 @@
   /**
    * @param {Document} doc
    * @param {{ source: string, number: string }} item
-   * @param {boolean} readyZone
    * @returns {HTMLElement}
    */
-  function createChipRow(doc, item, readyZone) {
+  function createChipRow(doc, item) {
     const row = doc.createElement('div');
-    row.className =
-      'source-icons-mockup__row' + (readyZone ? ' source-icons-mockup__row--ready' : '');
+    row.className = 'source-icons-mockup__row';
 
     const slot = doc.createElement('div');
     slot.className = 'source-icons-mockup__icon-slot';
@@ -62,43 +60,53 @@
   }
 
   /**
-   * @param {HTMLElement} row
-   * @param {number} maxWidthPx
+   * @param {HTMLElement} layer
+   * @param {'prep' | 'ready'} zone
    */
-  function fitRowWidth(row, maxWidthPx) {
-    const ready = row.classList.contains('source-icons-mockup__row--ready');
-    row.style.transform = 'none';
-    const natural = row.getBoundingClientRect().width;
-    if (natural <= 0) {
-      row.style.transform = ready ? 'scale(var(--mockup-ready-scale))' : 'none';
-      return;
-    }
-    let shrink = 1;
-    const readyScale = ready ? 1.3 : 1;
-    if (natural * readyScale > maxWidthPx) {
-      shrink = maxWidthPx / (natural * readyScale);
-    }
-    const total = readyScale * shrink;
-    if (Math.abs(total - 1) < 0.002) {
-      row.style.transform = ready ? 'scale(var(--mockup-ready-scale))' : 'none';
-      return;
-    }
-    row.style.transform = 'scale(' + total + ')';
-  }
+  function applyUniformZoneScale(layer, zone) {
+    const data = root.MilkshaSourceIconMockup;
+    const cols = data.columnRects(zone);
+    const isReady = zone === 'ready';
+    const baseScale = isReady ? data.READY_BASE_SCALE : 1;
+    const cells = layer.querySelectorAll('.source-icons-mockup__cell');
 
-  /**
-   * @param {Document} doc
-   * @returns {number}
-   */
-  function readCellMaxWidth(doc) {
-    const raw = getComputedStyle(doc.documentElement).getPropertyValue('--mockup-cell-w');
-    const pl = getComputedStyle(doc.documentElement).getPropertyValue('--mockup-cell-pl');
-    const w = Number.parseFloat(raw);
-    const pad = Number.parseFloat(pl);
-    if (!Number.isFinite(w)) {
-      return 368;
-    }
-    return w - (Number.isFinite(pad) ? pad : 0);
+    cells.forEach(function (cell) {
+      const row = cell.querySelector('.source-icons-mockup__row');
+      if (row) {
+        row.style.transform = 'none';
+      }
+    });
+
+    let shrink = 1;
+    cells.forEach(function (cell) {
+      const colIdx = Number(cell.dataset.col);
+      const col = cols[colIdx];
+      if (!col || !Number.isFinite(colIdx)) {
+        return;
+      }
+      const row = cell.querySelector('.source-icons-mockup__row');
+      if (!row) {
+        return;
+      }
+      const natural = row.getBoundingClientRect().width;
+      if (natural <= 0) {
+        return;
+      }
+      const maxW = col.width - 6;
+      if (natural * baseScale > maxW) {
+        shrink = Math.min(shrink, maxW / (natural * baseScale));
+      }
+    });
+
+    const displayScale = baseScale * shrink;
+    layer.style.setProperty('--mockup-zone-display-scale', String(displayScale));
+
+    cells.forEach(function (cell) {
+      const row = cell.querySelector('.source-icons-mockup__row');
+      if (row) {
+        row.style.transform = '';
+      }
+    });
   }
 
   /**
@@ -109,35 +117,26 @@
   function renderZoneLayer(layer, zone, samples) {
     const data = root.MilkshaSourceIconMockup;
     const doc = layer.ownerDocument;
-    const maxW = readCellMaxWidth(doc);
+    const cols = data.columnRects(zone);
+    layer.dataset.zone = zone;
 
     for (let i = 0; i < 10; i += 1) {
-      const center = data.cellCenter(zone, i);
+      const meta = data.cellCenter(zone, i);
+      const colRect = cols[meta.col];
       const cell = doc.createElement('div');
       cell.className = 'source-icons-mockup__cell';
-      cell.style.left = center.cx + 'px';
-      cell.style.top = center.cy + 'px';
+      cell.dataset.col = String(meta.col);
+      cell.dataset.row = String(meta.row);
+      cell.style.left = colRect.left + 'px';
+      cell.style.top = meta.cy + 'px';
+      cell.style.width = colRect.width + 'px';
 
       const sample = samples[i];
       if (sample) {
-        const row = createChipRow(doc, sample, zone === 'ready');
-        cell.appendChild(row);
-        layer.appendChild(cell);
-        fitRowWidth(row, maxW);
+        cell.appendChild(createChipRow(doc, sample));
       }
+      layer.appendChild(cell);
     }
-  }
-
-  /**
-   * @param {HTMLElement} layer
-   */
-  function refitLayerRows(layer) {
-    const doc = layer.ownerDocument;
-    const maxW = readCellMaxWidth(doc);
-    const rows = layer.querySelectorAll('.source-icons-mockup__row');
-    rows.forEach(function (row) {
-      fitRowWidth(row, maxW);
-    });
   }
 
   /**
@@ -146,6 +145,7 @@
   function renderFullBoard(boardRoot) {
     const data = root.MilkshaSourceIconMockup;
     const doc = boardRoot.ownerDocument;
+    delete boardRoot.dataset.mockupLayoutReady;
 
     const prepLayer = doc.createElement('div');
     prepLayer.className = 'source-icons-mockup__layer';
@@ -158,13 +158,16 @@
     renderZoneLayer(readyLayer, 'ready', data.READY_SAMPLES);
 
     boardRoot.replaceChildren(prepLayer, readyLayer);
+
+    function finalize() {
+      applyUniformZoneScale(prepLayer, 'prep');
+      applyUniformZoneScale(readyLayer, 'ready');
+      boardRoot.dataset.mockupLayoutReady = 'true';
+    }
+
     requestAnimationFrame(function () {
-      refitLayerRows(prepLayer);
-      refitLayerRows(readyLayer);
-      requestAnimationFrame(function () {
-        refitLayerRows(prepLayer);
-        refitLayerRows(readyLayer);
-      });
+      finalize();
+      requestAnimationFrame(finalize);
     });
   }
 
@@ -187,7 +190,7 @@
 
       const chip = doc.createElement('div');
       chip.className = 'source-icons-zoom__chip';
-      chip.appendChild(createChipRow(doc, sample, false));
+      chip.appendChild(createChipRow(doc, sample));
       panel.appendChild(chip);
 
       zoomRoot.appendChild(panel);
@@ -197,6 +200,6 @@
   root.MilkshaSourceIconRender = {
     renderFullBoard: renderFullBoard,
     renderZoomPanel: renderZoomPanel,
-    fitRowWidth: fitRowWidth,
+    applyUniformZoneScale: applyUniformZoneScale,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

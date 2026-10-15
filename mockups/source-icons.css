@@ -9,10 +9,8 @@
   --mockup-icon-h: 58px;
   --mockup-icon-gap: 16px;
   --mockup-icon-slot-w: 118px;
-  --mockup-cell-w: 368px;
-  --mockup-cell-pl: 8px;
   --mockup-prep-font: 81px;
-  --mockup-ready-scale: 1.3;
+  --mockup-zone-display-scale: 1;
 }
 
 .source-icons-mockup__board {
@@ -36,11 +34,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: var(--mockup-cell-w);
-  padding-left: var(--mockup-cell-pl);
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   min-width: 0;
   box-sizing: border-box;
+  padding-right: 6px;
+  overflow: visible;
 }
 
 .source-icons-mockup__row {
@@ -48,12 +46,9 @@
   align-items: center;
   justify-content: flex-start;
   gap: var(--mockup-icon-gap);
+  transform: scale(var(--mockup-zone-display-scale));
   transform-origin: left center;
   min-width: 0;
-}
-
-.source-icons-mockup__row--ready {
-  transform: scale(var(--mockup-ready-scale));
 }
 
 .source-icons-mockup__icon-slot {
@@ -63,12 +58,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-right: 0;
 }
 
 .source-icons-mockup__icon {
   flex: none;
   display: block;
   object-fit: contain;
+  pointer-events: none;
 }
 
 .source-icons-mockup__icon--square {
@@ -130,8 +127,9 @@
   --mockup-icon-slot-w: 148px;
   --mockup-icon-gap: 20px;
   --mockup-prep-font: 96px;
+  --mockup-zone-display-scale: 1;
 }
 
 .source-icons-zoom__chip .source-icons-mockup__row {
-  transform: none;
+  transform: scale(1);
 }
