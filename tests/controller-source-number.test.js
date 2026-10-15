@@ -50,15 +50,16 @@ test('store quick send accepts only four digits', function () {
   assert.equal(SendNumber.validateQuickSendNumber('store', '12345').ok, false);
 });
 
-test('point quick send: 3–4 digits preserves leading zero', function () {
+test('point quick send: exactly 3 digits preserves leading zero', function () {
   const { SendNumber } = loadControllerSendNumber();
   const ok = SendNumber.validateQuickSendNumber('point', '091');
   assert.equal(ok.ok, true);
   assert.equal(ok.normalized, '091');
   assert.equal(SendNumber.validateQuickSendNumber('point', '12').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('point', '1234').ok, false);
 });
 
-test('uber and udd: 4–6 alnum uppercased', function () {
+test('uber: exactly 5 hex; udd keeps legacy 4–6 alnum', function () {
   const { SendNumber } = loadControllerSendNumber();
   const uber = SendNumber.validateQuickSendNumber('uber', 'c7458');
   assert.equal(uber.ok, true);
@@ -67,13 +68,14 @@ test('uber and udd: 4–6 alnum uppercased', function () {
   assert.equal(udd.ok, true);
   assert.equal(udd.normalized, 'AB12');
   assert.equal(SendNumber.validateQuickSendNumber('uber', 'abc').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('uber', 'GGGGG').ok, false);
 });
 
-test('foodpanda: 4–6 digits, preserves optional hash', function () {
+test('foodpanda: # plus exactly 4 digits', function () {
   const { SendNumber } = loadControllerSendNumber();
   assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '#6406');
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, true);
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '123').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '#123').ok, false);
 });
 
 test('invalid quick send returns message and does not normalize', function () {

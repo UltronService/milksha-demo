@@ -20,9 +20,11 @@
 
   const ALNUM_POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_6 = /^\d{3,6}$/;
+  const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
+  const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
+  const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
   const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
+  const UBER_HEX_POOL = '0123456789ABCDEF';
 
   const MODE_TIMING = {
     normal: {
@@ -77,25 +79,24 @@
       return null;
     }
     const key = sourceKey || 'store';
-    let working = raw;
-    if (key === 'fp') {
-      working = working.replace(/#/g, '');
-    }
-    const trimmed = working.trim();
-    if (trimmed.length > 6) {
-      return null;
-    }
+    const trimmed = typeof raw === 'string' ? raw.trim() : String(raw == null ? '' : raw).trim();
     if (key === 'store') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {
-      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
+      return BOARD_NUMBER_THREE_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'fp') {
-      if (!BOARD_NUMBER_DIGIT_3_TO_6.test(trimmed) || trimmed.length < 4) {
+      return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'uber') {
+      if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
         return null;
       }
-      return trimmed;
+      return trimmed.toUpperCase();
+    }
+    if (trimmed.length > 6) {
+      return null;
     }
     if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed) || trimmed.length < 4) {
       return null;
@@ -138,9 +139,7 @@
    * @returns {string}
    */
   function randomPointNumber(rng) {
-    const len = rng() < 0.5 ? 3 : 4;
-    const digits = randomDigitString(len, rng);
-    return len === 3 ? digits.padStart(3, '0').slice(-3) : digits.padStart(4, '0').slice(-4);
+    return randomDigitString(3, rng);
   }
 
   /**
@@ -148,8 +147,19 @@
    * @returns {string}
    */
   function randomFpNumber(rng) {
-    const len = 4 + Math.floor(rng() * 3);
-    return randomDigitString(len, rng);
+    return '#' + randomDigitString(4, rng);
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomUberHexNumber(rng) {
+    let s = '';
+    for (let i = 0; i < 5; i += 1) {
+      s += UBER_HEX_POOL.charAt(Math.floor(rng() * UBER_HEX_POOL.length));
+    }
+    return s;
   }
 
   /**
@@ -263,7 +273,9 @@
         raw = randomPointNumber(rng);
       } else if (key === 'fp') {
         raw = randomFpNumber(rng);
-      } else if (key === 'uber' || key === 'udd') {
+      } else if (key === 'uber') {
+        raw = randomUberHexNumber(rng);
+      } else if (key === 'udd') {
         raw = randomAlnumNumber(rng);
       } else {
         raw = allocateNextNumber(state, usedOnBoard, rng);

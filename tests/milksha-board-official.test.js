@@ -49,19 +49,12 @@ test('landscape art baseline uses 64px number font for both zones', function () 
   assert.equal(art.NUM_FONT_PX, OFFICIAL_NUM_FONT_PX);
 });
 
-test('foodpanda keeps hash in display; plain and hash are distinct numbers', function () {
+test('foodpanda requires hash + 4 digits on board', function () {
   const { MB } = loadBoardStack();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('#123456', 'fp'), null);
-  const parts = MB.partitionNumberContent([
-    { source_type: 'From_FoodPanda_OK', number: '#6405' },
-    { source_type: 'From_FoodPanda_OK', number: '6405' },
-  ]);
-  assert.equal(parts.ready.length, 2);
-  const nums = parts.ready.map((r) => r.number).sort();
-  assert.equal(JSON.stringify(nums), JSON.stringify(['#6405', '6405']));
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
 });
 
 test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', function () {
@@ -71,7 +64,7 @@ test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', 
   assert.match(storeHtml, /milksha-board-icon-slot--empty/);
   assert.doesNotMatch(storeHtml, /<img/);
 
-  const pointHtml = MB.renderNumberChip({ id: 'point:0096', sourceKey: 'point', number: '0096' });
+  const pointHtml = MB.renderNumberChip({ id: 'point:096', sourceKey: 'point', number: '096' });
   assert.match(pointHtml, new RegExp(icons.SOURCE_ICON_SRC.point.replace(/\./g, '\\.')));
   assert.match(pointHtml, /milksha-board-icon-box/);
 
@@ -104,34 +97,12 @@ test('PR #74: icon slot and number left match 64px preview anchors', async funct
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('PR #74 worst-case 6-char stress: report overflow without shrinking font', async function () {
-  const fs = require('node:fs');
+test('PR #74 widest compliant stress: all chips inside cream bands', async function () {
   const { runCreamColumnBoundsCheck, buildWorstCaseStressPayload } = await import(
     '../scripts/check-milksha-board-column-alignment.mjs'
   );
   const result = await runCreamColumnBoundsCheck({ payload: buildWorstCaseStressPayload() });
-  const reportPath = path.join(ROOT, 'artifacts', 'milksha-official-board', 'worst-case-64px-overflow-report.json');
-  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-  fs.writeFileSync(
-    reportPath,
-    JSON.stringify(
-      {
-        fontPx: 64,
-        columnBandWidthPx: 382,
-        ok: result.ok,
-        violations: result.violations,
-      },
-      null,
-      2,
-    ),
-  );
-  assert.ok(result.violations.length >= 1, 'stress fixture should measure at least one band overflow at 64px');
-  const worst = result.violations.reduce(function (max, v) {
-    const over = v.rect.right - v.band.right;
-    return over > max.overPx ? { overPx: over, violation: v } : max;
-  }, { overPx: 0, violation: null });
-  assert.ok(worst.overPx > 0, 'documented overflow px for PM decision');
-  assert.equal(result.ok, false, '64px must not silently shrink; overflow stays visible until PM decides');
+  assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
 test('production board @ 1920×1080: 64px font, icons, foodpanda #6405', async function () {

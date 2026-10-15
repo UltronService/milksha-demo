@@ -17,11 +17,11 @@ const PR74_BASELINE_TOL_PX = 2;
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
   { source_type: 'From_UberEat_Preparing', number: 'A2C9E' },
   { source_type: 'From_FoodPanda_Preparing', number: '#6406' },
-  { source_type: 'From_milksha_point_Preparing', number: '0097' },
+  { source_type: 'From_milksha_point_Preparing', number: '097' },
   { source_type: 'From_Store_Preparing', number: '2218' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
   { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
-  { source_type: 'From_milksha_point_Preparing', number: '0096' },
+  { source_type: 'From_milksha_point_Preparing', number: '096' },
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_UberEat_Preparing', number: 'C3D4E' },
   { source_type: 'From_FoodPanda_Preparing', number: '#1234' },
@@ -399,26 +399,26 @@ export function buildFullBoardMixedPayload() {
   const prepNos = [
     { sourceKey: 'uber', no: 'A2C9E' },
     { sourceKey: 'fp', no: '#6406' },
-    { sourceKey: 'point', no: '0097' },
+    { sourceKey: 'point', no: '097' },
     { sourceKey: 'store', no: '2218' },
     { sourceKey: 'uber', no: 'BFBEF' },
     { sourceKey: 'fp', no: '#6405' },
-    { sourceKey: 'point', no: '0096' },
+    { sourceKey: 'point', no: '096' },
     { sourceKey: 'store', no: '2217' },
     { sourceKey: 'uber', no: 'C3D4E' },
     { sourceKey: 'fp', no: '#1234' },
   ];
   const readyNos = [
     { sourceKey: 'store', no: '8801' },
-    { sourceKey: 'point', no: '8802' },
+    { sourceKey: 'point', no: '802' },
     { sourceKey: 'fp', no: '#8803' },
     { sourceKey: 'uber', no: 'D4E5F' },
     { sourceKey: 'store', no: '8804' },
-    { sourceKey: 'point', no: '8805' },
+    { sourceKey: 'point', no: '805' },
     { sourceKey: 'fp', no: '#8806' },
     { sourceKey: 'uber', no: 'E5F6A' },
     { sourceKey: 'store', no: '8807' },
-    { sourceKey: 'point', no: '8808' },
+    { sourceKey: 'point', no: '808' },
   ];
   const prefix = {
     store: 'From_Store_',
@@ -435,31 +435,31 @@ export function buildFullBoardMixedPayload() {
   return prep.concat(ready);
 }
 
-/** 10+10 stress: widest valid labels (Uber WWWWWW, foodpanda #99999 / #999999). */
+/** 10+10 stress: widest compliant labels per source @ 64px. */
 export function buildWorstCaseStressPayload() {
   const prepNos = [
-    { sourceKey: 'uber', no: 'WWWWWW' },
-    { sourceKey: 'fp', no: '#99999' },
-    { sourceKey: 'uber', no: 'BFBEF' },
-    { sourceKey: 'fp', no: '#99888' },
-    { sourceKey: 'uber', no: 'AAAAAA' },
-    { sourceKey: 'fp', no: '#99777' },
-    { sourceKey: 'store', no: '9999' },
-    { sourceKey: 'point', no: '9999' },
-    { sourceKey: 'uber', no: 'CCCCCC' },
-    { sourceKey: 'fp', no: '#99666' },
+    { sourceKey: 'uber', no: 'DDDDD' },
+    { sourceKey: 'fp', no: '#8888' },
+    { sourceKey: 'point', no: '888' },
+    { sourceKey: 'store', no: '8888' },
+    { sourceKey: 'uber', no: 'BBBBB' },
+    { sourceKey: 'fp', no: '#7777' },
+    { sourceKey: 'point', no: '777' },
+    { sourceKey: 'store', no: '7777' },
+    { sourceKey: 'uber', no: 'EEEEE' },
+    { sourceKey: 'fp', no: '#6666' },
   ];
   const readyNos = [
-    { sourceKey: 'uber', no: 'ZZZZZZ' },
-    { sourceKey: 'fp', no: '#88888' },
-    { sourceKey: 'store', no: '8888' },
-    { sourceKey: 'point', no: '8888' },
-    { sourceKey: 'uber', no: 'DDDDDD' },
-    { sourceKey: 'fp', no: '#66666' },
-    { sourceKey: 'store', no: '7777' },
-    { sourceKey: 'point', no: '7777' },
-    { sourceKey: 'uber', no: 'EEEEEE' },
-    { sourceKey: 'fp', no: '#55555' },
+    { sourceKey: 'uber', no: 'FFFFF' },
+    { sourceKey: 'fp', no: '#5555' },
+    { sourceKey: 'point', no: '555' },
+    { sourceKey: 'store', no: '5555' },
+    { sourceKey: 'uber', no: 'AAAAA' },
+    { sourceKey: 'fp', no: '#4444' },
+    { sourceKey: 'point', no: '444' },
+    { sourceKey: 'store', no: '4444' },
+    { sourceKey: 'uber', no: 'CCCCC' },
+    { sourceKey: 'fp', no: '#3333' },
   ];
   const prefix = {
     store: 'From_Store_',

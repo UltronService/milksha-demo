@@ -154,8 +154,9 @@
   }
 
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_6 = /^\d{3,6}$/;
+  const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
+  const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
+  const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
   const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
@@ -172,7 +173,8 @@
   }
 
   /**
-   * Board display guard — store: 4 digits; point: 3–4 digits; others: 3–6 alnum (uppercase).
+   * Board display guard (production log rules):
+   * store 4 digits; point 3 digits; fp #+4 digits; uber 5 hex; udd legacy 3–6 alnum.
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
@@ -182,22 +184,21 @@
       return null;
     }
     const key = sourceKey || 'store';
-    let working = raw;
-    const trimmed = working.trim();
+    const trimmed = raw.trim();
     if (key === 'store') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {
-      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
+      return BOARD_NUMBER_THREE_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'fp') {
-      if (trimmed.length > 6) {
+      return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
+    }
+    if (key === 'uber') {
+      if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
         return null;
       }
-      if (!/^#?\d{3,6}$/.test(trimmed)) {
-        return null;
-      }
-      return trimmed;
+      return trimmed.toUpperCase();
     }
     if (trimmed.length > 6) {
       return null;

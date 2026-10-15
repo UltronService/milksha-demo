@@ -65,17 +65,12 @@ test('milksha point keeps leading zero on short numeric codes', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
 });
 
-test('foodpanda preserves hash; hash and plain are different board numbers', function () {
+test('foodpanda requires # plus four digits', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('#123456', 'fp'), null);
-  const parts = MB.partitionNumberContent([
-    { source_type: 'From_FoodPanda_OK', number: '#6406' },
-    { source_type: 'From_FoodPanda_OK', number: '6406' },
-  ]);
-  assert.equal(parts.ready.length, 2);
+  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
 });
 
 test('uber alphanumeric normalizes to uppercase', function () {
@@ -83,16 +78,16 @@ test('uber alphanumeric normalizes to uppercase', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
 });
 
-test('same number on different sources both appear on board', function () {
+test('same digits on different sources both appear when each is valid for its source', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
     { source_type: 'From_Store_OK', number: '1234' },
-    { source_type: 'From_UberEat_OK', number: '1234' },
+    { source_type: 'From_UberEat_OK', number: '12340' },
   ]);
   assert.equal(parts.ready.length, 2);
   assert.ok(parts.ready.some((r) => r.sourceKey === 'store' && r.number === '1234'));
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '1234'));
+  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '12340'));
 });
 
 test('non-store numbers longer than six characters are dropped', function () {
@@ -128,5 +123,5 @@ test('cloud-shaped delivery sample tickets partition to four ready numbers', fun
   const parts = MB.partitionNumberContent(nc);
   assert.equal(parts.ready.length, 4);
   const nums = parts.ready.map((r) => r.number).sort();
-  assert.equal(nums.join(','), '578,6406,7112,C7458');
+  assert.equal(nums.join(','), '#6406,578,7112,C7458');
 });

@@ -46,12 +46,15 @@ function sourceNumberPattern(sourceKey) {
     return /^\d{4}$/;
   }
   if (sourceKey === 'point') {
-    return /^\d{3,4}$/;
+    return /^\d{3}$/;
   }
   if (sourceKey === 'fp') {
-    return /^\d{4,6}$/;
+    return /^#\d{4}$/;
   }
-  if (sourceKey === 'uber' || sourceKey === 'udd') {
+  if (sourceKey === 'uber') {
+    return /^[0-9A-F]{5}$/;
+  }
+  if (sourceKey === 'udd') {
     return /^[A-Z0-9]{4,6}$/;
   }
   return /^.+$/;
@@ -101,7 +104,7 @@ test('validateTicketsForBoardPush allows same number on different sources', func
   const { Sim } = loadSimulation();
   const check = Sim.validateTicketsForBoardPush([
     { no: '1234', status: 'preparing', sourceKey: 'store' },
-    { no: '1234', status: 'ready', sourceKey: 'uber' },
+    { no: '12340', status: 'ready', sourceKey: 'uber' },
     { no: 'C7458', status: 'preparing', sourceKey: 'uber' },
     { no: '091', status: 'ready', sourceKey: 'point' },
   ]);

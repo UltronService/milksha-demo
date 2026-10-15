@@ -52,7 +52,7 @@ function loadTodayBoard() {
 const QA_LIVE2_TICKETS = [
   { no: '1234', status: 'ready', updatedAt: '2026-10-13T10:00:00.000Z' },
   {
-    no: '1234',
+    no: '12340',
     status: 'ready',
     sourceType: 'From_UberEats_OK',
     updatedAt: '2026-10-13T10:00:01.000Z',
@@ -69,7 +69,7 @@ test('QA live2: unrecognized sourceType shows 3–6 alnum code A1B', function ()
   assert.equal(parts.ready[0].number, 'A1B');
 });
 
-test('QA live2: store 1234 without sourceType and UberEats 1234 both on board', function () {
+test('QA live2: store 1234 without sourceType and UberEats 12340 both on board', function () {
   const TB = loadTodayBoard();
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
@@ -78,5 +78,5 @@ test('QA live2: store 1234 without sourceType and UberEats 1234 both on board', 
   const parts = MB.partitionNumberContent(nc);
   assert.equal(parts.ready.length, 2);
   assert.ok(parts.ready.some((r) => r.sourceKey === 'store' && r.number === '1234'));
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '1234'));
+  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '12340'));
 });
