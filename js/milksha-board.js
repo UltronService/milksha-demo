@@ -174,7 +174,7 @@
 
   /**
    * Board display guard (production log rules):
-   * store 4 digits; point 3 digits; fp #+4 digits; uber 5 hex; udd legacy 3–6 alnum.
+   * store 4 digits; point 3 digits; fp #+4 digits; uber/udd 5 hex (Udd = Uber Eats rule).
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
@@ -194,7 +194,7 @@
     if (key === 'fp') {
       return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
     }
-    if (key === 'uber') {
+    if (key === 'uber' || key === 'udd') {
       if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
         return null;
       }

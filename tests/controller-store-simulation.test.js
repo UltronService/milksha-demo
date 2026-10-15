@@ -75,11 +75,14 @@ test('allocateNumberForSource: 1000 draws per non-store source match cloud hex/f
   const MB = loadMilkshaBoard();
   const rng = mulberry32(20261015);
   const state = Sim.createSimulationState({ lastIssuedNumber: 0 });
-  const used = new Set();
+  /** point has only 1000 slots (000–999); stay under saturation so sim does not store-fallback. */
+  const drawCounts = { point: 500, fp: 1000, uber: 1000, udd: 1000 };
   const sources = ['point', 'fp', 'uber', 'udd'];
   for (let s = 0; s < sources.length; s += 1) {
     const sk = sources[s];
-    for (let i = 0; i < 1000; i += 1) {
+    const used = new Set();
+    const nDraws = drawCounts[sk];
+    for (let i = 0; i < nDraws; i += 1) {
       const no = Sim.allocateNumberForSource(sk, state, used, rng);
       assert.match(no, sourceNumberPattern(sk));
       assert.equal(MB.normalizeBoardDisplayNumber(no, sk), no);
