@@ -13,6 +13,8 @@
   const FALLBACK_BOARD_POLL_MS = 60000;
   const OFFLINE_RECOVERY_BOARD_POLL_MS = 2000;
   const OFFLINE_WATCHDOG_RESYNC_MS = 3000;
+  const POST_OFFLINE_FAST_POLL_MS = 2000;
+  const POST_OFFLINE_FAST_POLL_WINDOW_MS = 45000;
 
   function isDemoMode() {
     try {
@@ -110,6 +112,9 @@
     let lastHeartbeatSucceeded = true;
     let lastTickWallMs = Date.now();
     let resyncInFlight = null;
+    let boardRecoveryInFlight = null;
+    let postOfflineFastPollUntilMs = 0;
+    let boardRecoveryKickCount = 0;
     let reconnectHandlers = [];
     /** @type {object|null} */
     let deferredReloadCommand = null;
@@ -698,11 +703,85 @@
       // block the first real board when seq is small).
     }
 
+    function isPostOfflineFastPollActive() {
+      return postOfflineFastPollUntilMs > 0 && Date.now() < postOfflineFastPollUntilMs;
+    }
+
+    function beginPostOfflineFastPollWindow() {
+      postOfflineFastPollUntilMs = Date.now() + POST_OFFLINE_FAST_POLL_WINDOW_MS;
+    }
+
+    async function resyncFirebaseAuthAfterOffline() {
+      const Bridge = QMS.Transport.FirebaseSdkBridge;
+      let firebaseConfig = options.firebaseConfig || null;
+      if (!firebaseConfig && root.MILKSHA_FIREBASE_CONFIG) {
+        firebaseConfig = root.MILKSHA_FIREBASE_CONFIG;
+      }
+      if (!Bridge || !firebaseConfig || !transport.session) {
+        return;
+      }
+      if (Bridge.retryFirebaseAuthSync) {
+        await Bridge.retryFirebaseAuthSync(firebaseConfig, transport.session);
+        return;
+      }
+      if (transport.session.ensureIdToken) {
+        try {
+          await transport.session.ensureIdToken();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+
+    function kickBoardRecoveryAfterOffline(reason) {
+      if (simulateOffline || authBlocksBoardSync()) {
+        return Promise.resolve();
+      }
+      if (boardRecoveryInFlight) {
+        return boardRecoveryInFlight;
+      }
+      boardRecoveryKickCount += 1;
+      beginPostOfflineFastPollWindow();
+      lastBoardUpdateTime = '';
+      boardRecoveryInFlight = Promise.resolve()
+        .then(function () {
+          return resyncFirebaseAuthAfterOffline();
+        })
+        .then(function () {
+          if (boardListenActive || firestoreRealtime) {
+            enterPollFallback();
+          }
+          return pollBoard({ force: true });
+        })
+        .then(function () {
+          if (onCloudResync) {
+            return onCloudResync('board_recovery_' + reason).catch(function () {
+              return pollBoard({ force: true });
+            });
+          }
+          return pollBoard({ force: true });
+        })
+        .then(function () {
+          if (commandListenMode === 'poll') {
+            return pollDevice();
+          }
+          return undefined;
+        })
+        .then(function () {
+          return startFirestoreRealtimeIfPossible();
+        })
+        .finally(function () {
+          boardRecoveryInFlight = null;
+        });
+      return boardRecoveryInFlight;
+    }
+
     function markCloudReachable() {
       const wasOffline = !cloudReachable;
       cloudReachable = true;
       if (wasOffline) {
         syncCloudOfflineUi(false);
+        kickBoardRecoveryAfterOffline('reachable');
       }
       tryFlushDeferredReloadCommand();
     }
@@ -741,6 +820,9 @@
         return;
       }
       cloudReachable = false;
+      if (boardListenActive || firestoreRealtime) {
+        enterPollFallback();
+      }
       if (isPermissionOrAuthFailure(err)) {
         syncCloudGuestStatusUi(false);
         return;
@@ -755,40 +837,16 @@
       if (resyncInFlight) {
         return resyncInFlight;
       }
-      lastBoardUpdateTime = '';
-      const kick = function () {
-        sendHeartbeat();
-        const refetch =
-          firestoreRealtime && firestoreRealtime.forceRefetch
-            ? firestoreRealtime.forceRefetch()
-            : Promise.resolve();
-        return refetch
-          .then(function () {
-            return pollBoard({ force: true });
-          })
-          .then(function () {
-            if (commandListenMode === 'poll') {
-              return pollDevice();
-            }
-            return undefined;
-          });
-      };
-      if (onCloudResync) {
-        resyncInFlight = Promise.resolve()
-          .then(function () {
-            return onCloudResync(reason);
-          })
-          .catch(function () {
-            return kick();
-          })
-          .finally(function () {
-            resyncInFlight = null;
-          });
-        return resyncInFlight;
-      }
-      resyncInFlight = kick().finally(function () {
-        resyncInFlight = null;
-      });
+      resyncInFlight = Promise.resolve()
+        .then(function () {
+          return sendHeartbeat();
+        })
+        .then(function () {
+          return kickBoardRecoveryAfterOffline('resync_' + reason);
+        })
+        .finally(function () {
+          resyncInFlight = null;
+        });
       return resyncInFlight;
     }
 
@@ -1485,15 +1543,23 @@
         ) {
           pollDevice();
         }
-        let boardPollEvery = boardListenActive ? FALLBACK_BOARD_POLL_MS : boardPollMs;
+        const postOfflineFastPoll = showCloudOfflineUi && isPostOfflineFastPollActive();
+        let boardPollEvery = boardListenActive && !postOfflineFastPoll
+          ? FALLBACK_BOARD_POLL_MS
+          : boardPollMs;
         if (!cloudReachable && showCloudOfflineUi) {
           boardPollEvery = OFFLINE_RECOVERY_BOARD_POLL_MS;
           if (tickMs % OFFLINE_WATCHDOG_RESYNC_MS === 0) {
             scheduleCloudResync('offline_watchdog');
           }
+        } else if (postOfflineFastPoll) {
+          boardPollEvery = POST_OFFLINE_FAST_POLL_MS;
+          if (tickMs % OFFLINE_WATCHDOG_RESYNC_MS === 0) {
+            scheduleCloudResync('post_offline_watchdog');
+          }
         }
         if (tickMs % boardPollEvery === 0) {
-          pollBoard();
+          pollBoard({ force: postOfflineFastPoll || (!cloudReachable && showCloudOfflineUi) });
         }
       }, 1000);
     }
@@ -1615,6 +1681,12 @@
           lastHandledCommandId: lastHandledCommandId,
           reloadFired: Boolean(root.__testReloadFired),
         };
+      };
+      api.getBoardRecoveryKickCountForTests = function () {
+        return boardRecoveryKickCount;
+      };
+      api.waitBoardRecoveryForTests = function () {
+        return boardRecoveryInFlight || Promise.resolve();
       };
     }
     return api;

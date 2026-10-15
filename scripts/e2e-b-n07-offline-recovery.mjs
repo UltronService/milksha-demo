@@ -116,27 +116,31 @@ try {
     await sleep(60000);
     await p.unroute(blockPattern);
     const t2 = Date.now();
-    let ok = false;
+    let numberMs = null;
+    let bannerClearMs = null;
     while (Date.now() - t2 < 120000) {
       const f = await shown();
-      if (f.length === 1 && f[0].includes(targetNo)) {
-        ok = true;
+      if (numberMs == null && f.length === 1 && f[0].includes(targetNo)) {
+        numberMs = Date.now() - t2;
+      }
+      const off = await p.evaluate(() => document.getElementById('milksha-cloud-offline').hidden);
+      if (bannerClearMs == null && off) {
+        bannerClearMs = Date.now() - t2;
+      }
+      if (numberMs != null && bannerClearMs != null) {
         break;
       }
-      await p.waitForTimeout(1000);
+      await p.waitForTimeout(250);
     }
-    const ms = Date.now() - t2;
+    const ms = numberMs != null ? numberMs : Date.now() - t2;
     const off = await p.evaluate(() => ({
       off: !document.getElementById('milksha-cloud-offline').hidden,
       paused: !document.getElementById('milksha-cloud-paused').hidden,
     }));
-    await p.waitForTimeout(3000);
-    off.after3s = !(
-      await p.evaluate(() => !document.getElementById('milksha-cloud-offline').hidden)
-    );
     await p.screenshot({ path: `shots/B-N07-run-${run}.png` });
-    results.push({ run, pass: ok && ms <= 30000 && !off.after3s, ms, banner: off });
-    console.log(`run ${run}`, ok && ms <= 30000 ? 'PASS' : 'FAIL', JSON.stringify({ ms, banner: off }));
+    const pass = numberMs != null && numberMs <= 30000 && bannerClearMs != null && bannerClearMs <= 8000;
+    results.push({ run, pass, numberMs: ms, bannerClearMs, banner: off });
+    console.log(`run ${run}`, pass ? 'PASS' : 'FAIL', JSON.stringify({ numberMs: ms, bannerClearMs, banner: off }));
     await c.close();
   }
 } finally {
