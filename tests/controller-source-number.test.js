@@ -59,16 +59,19 @@ test('point quick send: exactly 3 digits preserves leading zero', function () {
   assert.equal(SendNumber.validateQuickSendNumber('point', '1234').ok, false);
 });
 
-test('uber: exactly 5 hex; udd keeps legacy 4–6 alnum', function () {
+test('uber: 5 hex; udd: 4 digits (store rule)', function () {
   const { SendNumber } = loadControllerSendNumber();
   const uber = SendNumber.validateQuickSendNumber('uber', 'c7458');
   assert.equal(uber.ok, true);
   assert.equal(uber.normalized, 'C7458');
-  const udd = SendNumber.validateQuickSendNumber('udd', 'ab12');
+  const udd = SendNumber.validateQuickSendNumber('udd', '1234');
   assert.equal(udd.ok, true);
-  assert.equal(udd.normalized, 'AB12');
+  assert.equal(udd.normalized, '1234');
+  assert.equal(SendNumber.validateQuickSendNumber('udd', 'bfbef').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('udd', 'ab12').ok, false);
   assert.equal(SendNumber.validateQuickSendNumber('uber', 'abc').ok, false);
   assert.equal(SendNumber.validateQuickSendNumber('uber', 'GGGGG').ok, false);
+  assert.match(SendNumber.VALIDATION_HINT.udd, /4 位數字/);
 });
 
 test('foodpanda: # plus exactly 4 digits', function () {

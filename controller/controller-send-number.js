@@ -21,7 +21,7 @@
     point: '你訂號碼須為 3 位數字',
     fp: 'foodpanda 須為 # 加 4 位數字（例 #6405）',
     uber: 'Uber Eats 須為 5 碼英數（0–9、A–F）',
-    udd: 'Udd 號碼須為 4–6 位英數字',
+    udd: 'Udd 號碼須為 4 位數字',
   };
 
   function sourceOptionForKey(key) {

@@ -174,7 +174,7 @@
 
   /**
    * Board display guard (production log rules):
-   * store 4 digits; point 3 digits; fp #+4 digits; uber 5 hex; udd legacy 3–6 alnum.
+   * store/udd 4 digits; point 3 digits; fp #+4 digits; uber 5 hex.
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
@@ -185,7 +185,7 @@
     }
     const key = sourceKey || 'store';
     const trimmed = raw.trim();
-    if (key === 'store') {
+    if (key === 'store' || key === 'udd') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {

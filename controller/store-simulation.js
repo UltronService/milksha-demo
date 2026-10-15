@@ -18,12 +18,10 @@
     udd: 0.075,
   };
 
-  const ALNUM_POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
   const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
   const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
   const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
-  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const UBER_HEX_POOL = '0123456789ABCDEF';
 
   const MODE_TIMING = {
@@ -80,7 +78,7 @@
     }
     const key = sourceKey || 'store';
     const trimmed = typeof raw === 'string' ? raw.trim() : String(raw == null ? '' : raw).trim();
-    if (key === 'store') {
+    if (key === 'store' || key === 'udd') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {
@@ -95,13 +93,7 @@
       }
       return trimmed.toUpperCase();
     }
-    if (trimmed.length > 6) {
-      return null;
-    }
-    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed) || trimmed.length < 4) {
-      return null;
-    }
-    return trimmed.toUpperCase();
+    return null;
   }
 
   /**
@@ -160,19 +152,6 @@
       s += UBER_HEX_POOL.charAt(Math.floor(rng() * UBER_HEX_POOL.length));
     }
     return s;
-  }
-
-  /**
-   * @param {() => number} rng
-   * @returns {string}
-   */
-  function randomAlnumNumber(rng) {
-    const len = 4 + Math.floor(rng() * 3);
-    let s = '';
-    for (let i = 0; i < len; i += 1) {
-      s += ALNUM_POOL.charAt(Math.floor(rng() * ALNUM_POOL.length));
-    }
-    return s.toUpperCase();
   }
 
   /**
@@ -276,7 +255,7 @@
       } else if (key === 'uber') {
         raw = randomUberHexNumber(rng);
       } else if (key === 'udd') {
-        raw = randomAlnumNumber(rng);
+        raw = randomDigitString(4, rng);
       } else {
         raw = allocateNextNumber(state, usedOnBoard, rng);
       }
