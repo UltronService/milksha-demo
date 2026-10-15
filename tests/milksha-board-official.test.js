@@ -83,6 +83,13 @@ test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', 
   assert.match(uberHtml, /ubereats\.png/);
 });
 
+test('PR #74: same column number and icon-box left edges within 1px', async function () {
+  const { runColumnAlignmentCheck } = await import('../scripts/check-milksha-board-column-alignment.mjs');
+  const result = await runColumnAlignmentCheck();
+  assert.equal(result.tolPx, 1);
+  assert.equal(result.ok, true, result.failures.join('\n'));
+});
+
 test('production board @ 1920×1080: 64px font, icons, foodpanda #6405', async function () {
   const { runOfficialBoardLayoutCheck } = await import('../scripts/check-milksha-board-official-layout.mjs');
   const result = await runOfficialBoardLayoutCheck();

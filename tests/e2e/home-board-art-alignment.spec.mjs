@@ -84,21 +84,21 @@ async function measureBoard(page, viewport) {
           return { ok: false, reason: 'empty-cell', index: i };
         }
         const ink = measureInk(numEl);
-        const alignEl = chipEl || numEl;
-        const aRect = alignEl.getBoundingClientRect();
-        const alignCenter = {
-          cx: (aRect.left + aRect.width / 2 - cRect.left) / s,
-          cy: (aRect.top + aRect.height / 2 - cRect.top) / s,
+        const numRect = numEl.getBoundingClientRect();
+        const chipRect = chipEl ? chipEl.getBoundingClientRect() : numRect;
+        const numCenter = {
+          cx: (numRect.left + numRect.width / 2 - cRect.left) / s,
+          cy: (numRect.top + numRect.height / 2 - cRect.top) / s,
         };
+        const numLeftBoard = (numRect.left - cRect.left) / s;
         const alignBox = {
-          left: (aRect.left - cRect.left) / s,
-          top: (aRect.top - cRect.top) / s,
-          width: aRect.width / s,
-          height: aRect.height / s,
+          left: (chipRect.left - cRect.left) / s,
+          top: (chipRect.top - cRect.top) / s,
+          width: chipRect.width / s,
+          height: chipRect.height / s,
         };
         const exp = art.cellCenterBoard(zoneKey, i);
-        const dx = Math.abs(alignCenter.cx - exp.cx);
-        const dy = Math.abs(alignCenter.cy - exp.cy);
+        const dy = Math.abs(numCenter.cy - exp.cy);
         if (alignBox.top < art.TITLE_GUARD_MAX_Y) {
           return { ok: false, reason: 'title-overlap', index: i };
         }
@@ -110,13 +110,13 @@ async function measureBoard(page, viewport) {
         ) {
           return { ok: false, reason: 'outside-cream', index: i, ink, cream, alignBox };
         }
-        if (dx > centerTol || dy > centerTol) {
-          return { ok: false, reason: 'center-off', index: i, dx, dy, exp, alignCenter };
+        if (dy > centerTol) {
+          return { ok: false, reason: 'center-off-y', index: i, dy, exp, numCenter };
         }
         const col = i < 5 ? 0 : 1;
         const row = i < 5 ? i : i - 5;
-        colXs[col].push(alignCenter.cx);
-        rowYs[col].push(alignCenter.cy);
+        colXs[col].push(numLeftBoard);
+        rowYs[col].push(numCenter.cy);
         const capTol = art.REF_INK_CAP_HEIGHT_PX * art.INK_METRIC_TOL_RATIO;
         const wTol = art.REF_INK_WIDTH_1907_PX * art.INK_METRIC_TOL_RATIO;
         if (ink.text === art.REF_INK_SAMPLE_TEXT) {

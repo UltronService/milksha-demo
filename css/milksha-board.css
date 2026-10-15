@@ -115,13 +115,20 @@
   position: absolute;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   transform: translate(-50%, -50%);
-  width: auto;
+  width: calc(var(--milksha-icon-slot-w) + var(--milksha-icon-gap) + 7ch);
+  max-width: calc(50% - 2px);
   height: auto;
   min-width: 0;
   min-height: 0;
   font-variant-numeric: tabular-nums;
+}
+
+.milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-board-chip--with-icon,
+.milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-board-chip--with-slot {
+  justify-content: flex-start;
+  max-width: 100%;
 }
 
 .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-num {
