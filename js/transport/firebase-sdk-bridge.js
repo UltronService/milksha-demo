@@ -138,6 +138,47 @@
     return lastAuthSyncErrorCode;
   }
 
+  /**
+   * After network returns, Firebase Auth may still be unsigned if the first sync failed mid-outage.
+   * @param {object} config
+   * @param {object} session
+   * @returns {Promise<boolean>}
+   */
+  async function retryFirebaseAuthSync(config, session) {
+    if (!initApp(config)) {
+      return false;
+    }
+    const auth = firebaseGlobal().auth();
+    if (auth.currentUser) {
+      lastAuthSyncErrorCode = null;
+      return true;
+    }
+    authSyncWarned = false;
+    if (session && session.ensureIdToken) {
+      try {
+        await session.ensureIdToken();
+      } catch (e) {
+        /* REST session may still recover via devLogin below */
+      }
+    }
+    if (auth.currentUser) {
+      lastAuthSyncErrorCode = null;
+      return true;
+    }
+    if (!session || !session.devLogin) {
+      return false;
+    }
+    try {
+      const customToken = await session.devLogin();
+      await auth.signInWithCustomToken(customToken);
+      lastAuthSyncErrorCode = null;
+      return Boolean(auth.currentUser);
+    } catch (e) {
+      lastAuthSyncErrorCode = authErrorCode(e);
+      return false;
+    }
+  }
+
   function firestoreDb() {
     if (!isSdkLoaded() || !appInited) {
       return null;
@@ -151,6 +192,7 @@
     initApp: initApp,
     ensureFirebaseSignedIn: ensureFirebaseSignedIn,
     syncCustomToken: syncCustomToken,
+    retryFirebaseAuthSync: retryFirebaseAuthSync,
     getLastAuthSyncError: getLastAuthSyncError,
     firestoreDb: firestoreDb,
   };

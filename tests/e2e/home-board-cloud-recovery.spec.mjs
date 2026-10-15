@@ -34,21 +34,30 @@ test.describe('home board cloud recovery', () => {
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await controller.click('[data-testid="btn-send-numbers"]');
-    await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 20000 });
+    const numLoc = board.locator('.milksha-ready .milksha-num').first();
+    await expect(numLoc).toBeVisible({ timeout: 20000 });
+    const baselineNum = (await numLoc.innerText()).trim();
 
     const blockPattern = /firestore\.googleapis\.com|cloudfunctions\.net|run\.app/;
     await board.route(blockPattern, (route) => route.abort('failed'));
     await expandControllerZone(controller, 'sec-special');
     await controller.click('[data-testid="btn-send-numbers"]');
+    const expectedNo = (await controller.locator('#fld-quick-no').inputValue()).trim();
+    expect(expectedNo.length).toBeGreaterThan(0);
+    expect(expectedNo).not.toEqual(baselineNum);
     await expect(board.locator('#milksha-cloud-offline')).toBeVisible({ timeout: 25000 });
 
     await board.waitForTimeout(15000);
     await board.unroute(blockPattern);
     const t0 = Date.now();
-    await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 30000 });
-    const recoveryMs = Date.now() - t0;
-    expect(recoveryMs).toBeLessThanOrEqual(30000);
-    await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 5000 });
+    await expect(board.locator('.milksha-num').filter({ hasText: expectedNo })).toBeVisible({
+      timeout: 30000,
+    });
+    const numberRecoveryMs = Date.now() - t0;
+    expect(numberRecoveryMs).toBeLessThanOrEqual(30000);
+    expect(numberRecoveryMs).toBeLessThanOrEqual(8000);
+    await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 8000 });
+    console.log('B-N07 numberRecoveryMs', numberRecoveryMs);
     await boardCtx.close();
     await ctrlCtx.close();
   });

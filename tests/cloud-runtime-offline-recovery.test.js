@@ -13,6 +13,8 @@ function bootOfflineHarness(options) {
   let offlineVisible = false;
   let boardReads = 0;
   let heartbeatCalls = 0;
+  let applyCount = 0;
+  let lastAppliedNo = '';
   const boardDoc = options.boardDoc;
   const failHeartbeat = options.failHeartbeat !== false;
 
@@ -97,9 +99,15 @@ function bootOfflineHarness(options) {
     transport: transport,
     skipBootReceiverCache: true,
     skipInitialCloudKick: true,
+    enableTestPollHook: true,
     showCloudOfflineUi: true,
     milkshaRuntime: {
-      applyPayload: function () {},
+      applyPayload: function (list) {
+        applyCount += 1;
+        if (Array.isArray(list) && list[0] && list[0].number) {
+          lastAppliedNo = String(list[0].number);
+        }
+      },
       setCloudOfflineVisible: function (visible) {
         offlineVisible = Boolean(visible);
       },
@@ -118,6 +126,12 @@ function bootOfflineHarness(options) {
     },
     getHeartbeatCalls: function () {
       return heartbeatCalls;
+    },
+    getApplyCount: function () {
+      return applyCount;
+    },
+    getLastAppliedNo: function () {
+      return lastAppliedNo;
     },
   };
 }
@@ -154,6 +168,30 @@ test('B-N07: scheduleCloudResync does not force offline banner while board is re
   assert.equal(h.getOfflineVisible(), false);
   await h.cloud.scheduleCloudResync('online');
   assert.equal(h.getOfflineVisible(), false, 'resync must not flash offline when cloud is reachable');
+});
+
+test('B-N07b: heartbeat after offline forces board refetch and apply', async function () {
+  let failBoard = true;
+  let cloudBoard = sampleBoard(5, '2601');
+  const h = bootOfflineHarness({
+    failHeartbeat: false,
+    readBoard: function () {
+      if (failBoard) {
+        throw new Error('board_network_error');
+      }
+      return cloudBoard;
+    },
+  });
+  await h.cloud.triggerBoardPoll({ force: true });
+  assert.equal(h.getOfflineVisible(), true);
+  failBoard = false;
+  cloudBoard = sampleBoard(6, '2799');
+  await h.cloud.sendHeartbeat();
+  await h.cloud.waitBoardRecoveryForTests();
+  assert.ok(h.cloud.getBoardRecoveryKickCountForTests() >= 1);
+  assert.ok(h.getBoardReads() >= 2, 'recovery should force readBoard after coming back online');
+  assert.equal(h.getLastAppliedNo(), '2799');
+  assert.equal(h.getOfflineVisible(), false);
 });
 
 test('B-N07: poll failure shows offline; recovery poll clears it', async function () {
