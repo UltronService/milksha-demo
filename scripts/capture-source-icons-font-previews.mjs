@@ -36,12 +36,7 @@ async function capturePreview(port, spec) {
     deviceScaleFactor: 2,
   });
   const query =
-    'fontPx=' +
-    encodeURIComponent(String(spec.fontPx)) +
-    '&markOverflow=' +
-    (spec.markOverflow ? '1' : '0') +
-    '&label=' +
-    encodeURIComponent(spec.label);
+    'fontPx=' + encodeURIComponent(String(spec.fontPx)) + '&markOverflow=0';
   const url = 'http://127.0.0.1:' + port + '/mockups/source-icons-font-preview.html?' + query;
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForFunction(function () {
@@ -93,8 +88,6 @@ async function main() {
     await capturePreview(port, {
       fontPx: LIVE_FONT,
       outName: 'source-icons-font-preview-81px-1920x1080.png',
-      label: 'A) 81px · UI/UX icon spec',
-      markOverflow: true,
     }),
   );
 
@@ -104,8 +97,6 @@ async function main() {
       await capturePreview(port, {
         fontPx: maxFit5,
         outName: 'source-icons-font-preview-maxfit-1920x1080.png',
-        label: 'B) icon+5字 max fit ' + Math.round(maxFit5 * 100) / 100 + 'px',
-        markOverflow: false,
       }),
     );
   } else {

@@ -7,7 +7,7 @@
   const QMS = root.QMS;
 
   /**
-   * @returns {{ fontPx: number, markOverflow: boolean, label: string }}
+   * @returns {{ fontPx: number, markOverflow: boolean }}
    */
   function previewOptions() {
     const params = new URLSearchParams(root.location.search);
@@ -15,8 +15,7 @@
     const fontPx = Number.parseFloat(fontRaw);
     return {
       fontPx: Number.isFinite(fontPx) ? fontPx : 81,
-      markOverflow: params.get('markOverflow') !== '0',
-      label: params.get('label') || '字級預覽',
+      markOverflow: params.get('markOverflow') === '1',
     };
   }
 
@@ -27,17 +26,6 @@
     document.body.classList.add('source-icons-font-preview', 'source-icons-uiux-preview');
 
     const opts = previewOptions();
-    const legend = document.getElementById('font-preview-legend');
-    if (legend) {
-      legend.innerHTML =
-        '<strong>' +
-        opts.label +
-        '</strong><br/>' +
-        '1920×1080 @2x · 兩區同字級 <strong>' +
-        opts.fontPx +
-        'px</strong> · UI/UX slot 1.0F gap 0.2F · 熊貓 #<br/>' +
-        '背景 <code>assets/milksha-board-bg-1007.jpg</code> · 正式看板號碼排版';
-    }
 
     QMS.loadSiteBrand({
       fetchFn: function fetchBrandFromSiteRoot(url, init) {
@@ -62,26 +50,11 @@
         if (typeof root.MilkshaSourceIconsFontPreviewOverlay !== 'object') {
           throw new Error('MilkshaSourceIconsFontPreviewOverlay missing');
         }
-        const result = root.MilkshaSourceIconsFontPreviewOverlay.apply(rootEl, opts);
-        const overflows = result.overflows;
-        const acc = result.acceptance;
-        if (legend && acc) {
-          legend.innerHTML +=
-            '<br/>號碼左緣 Δ≈' +
-            acc.maxNumLeftDeltaPx.toFixed(2) +
-            'px · gap 0.2F 偏差列數 ' +
-            acc.gapErrors;
-        }
-        if (legend && overflows.length > 0) {
-          legend.innerHTML +=
-            '<br/><span style="color:#c62828">溢出 ' +
-            overflows.length +
-            ' 列（紅框）：</span> ' +
-            overflows.slice(0, 6).join(' · ') +
-            (overflows.length > 6 ? ' …' : '');
-        } else if (legend && opts.markOverflow) {
-          legend.innerHTML += '<br/>欄寬：全部列未標溢出';
-        }
+        root.MilkshaSourceIconsFontPreviewOverlay.apply(rootEl, {
+          fontPx: opts.fontPx,
+          markOverflow: opts.markOverflow,
+          label: '',
+        });
       })
       .catch(function (err) {
         const rootEl = document.getElementById('board-root');
