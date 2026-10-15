@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.1"
+  version: "1.4.2"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -138,7 +138,7 @@ info:
 
 
     def build_payload(store: str, time_stmp: str) -> Dict[str, Any]:
-        # target = "milksha" + 店號；必須與 account 對得上，否則「找不到目標叫號機」。
+        # target = "milksha" + 店號；若 target 與 account 對不上，API 回「叫號資料格式錯誤」（非「找不到目標叫號機」）。
         return {
             "isEncrypt": False,
             "serviceSpecialData_Json": {
@@ -253,9 +253,9 @@ info:
     |----------|----------|--------|
     | timeStmp 格式錯誤 | 時間字串不符合 `YYYY-MM-DD-HH-mm-ss:XXXX`。 | 用腳本自動產生；勿複製舊範例時間。 |
     | timeStmp 已過期 | 時間與伺服器相差超過 10 分鐘。 | 重新執行腳本產生新時間。 |
-    | 找不到目標叫號機 | `target` 不是 `milksha` + `account`（店號打錯）。 | 確認 `STORE` 為 `c030020` 且 `target` 為 `milkshac030020`。 |
+    | 找不到目標叫號機 | `account` 在系統中不存在或未建檔。 | 確認試點 `STORE` 為 `c030020` 且店號已開通叫號。 |
     | 目標叫號機尚未連線 | 看板網頁未開或未連上雲端。 | 先開試點看板 URL 再重跑；不影響「Request 已受理」。 |
-    | 叫號資料格式錯誤 | JSON 結構或 `source_type`、號碼格式不符。 | 對照 OpenAPI 範例；先勿改 `number_content` 測通再改。 |
+    | 叫號資料格式錯誤 | JSON、`source_type`、號碼格式不符，或 `target` 不等於 `milksha` + `account`。 | 確認 `target` 為 `milkshac030020`；對照 OpenAPI 範例，先勿改 `number_content` 測通再改。 |
     | 終端機：`python3` / `py` 找不到 | 未安裝 Python 或未加入 PATH。 | 安裝 Python 3.9+ 並重開終端機。 |
     | `URLError` / SSL / 連線逾時 | 公司防火牆、無網路、DNS 問題。 | 換網路或請 IT 放行 `*.cloudfunctions.net`。 |
 
