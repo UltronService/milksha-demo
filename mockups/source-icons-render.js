@@ -60,53 +60,46 @@
   }
 
   /**
-   * @param {HTMLElement} layer
-   * @param {'prep' | 'ready'} zone
+   * @returns {CanvasRenderingContext2D}
    */
-  function applyUniformZoneScale(layer, zone) {
+  function measureCtx() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4;
+    canvas.height = 4;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('canvas 2d unavailable');
+    }
+    return ctx;
+  }
+
+  /** @type {{ prepFont: number, readyFont: number, ratio: number, meetsMin: boolean } | null} */
+  let typographyCache = null;
+
+  function getTypography() {
+    if (typographyCache) {
+      return typographyCache;
+    }
     const data = root.MilkshaSourceIconMockup;
-    const cols = data.columnRects(zone);
-    const isReady = zone === 'ready';
-    const baseScale = isReady ? data.READY_BASE_SCALE : 1;
-    const cells = layer.querySelectorAll('.source-icons-mockup__cell');
+    const measure = root.MilkshaSourceIconMeasure;
+    const ctx = measureCtx();
+    typographyCache = measure.computeBothZoneFonts(
+      ctx,
+      data.PREP_SAMPLES,
+      data.READY_SAMPLES,
+      data.columnRects('prep'),
+      data.columnRects('ready'),
+    );
+    return typographyCache;
+  }
 
-    cells.forEach(function (cell) {
-      const row = cell.querySelector('.source-icons-mockup__row');
-      if (row) {
-        row.style.transform = 'none';
-      }
-    });
-
-    let shrink = 1;
-    cells.forEach(function (cell) {
-      const colIdx = Number(cell.dataset.col);
-      const col = cols[colIdx];
-      if (!col || !Number.isFinite(colIdx)) {
-        return;
-      }
-      const row = cell.querySelector('.source-icons-mockup__row');
-      if (!row) {
-        return;
-      }
-      const natural = row.getBoundingClientRect().width;
-      if (natural <= 0) {
-        return;
-      }
-      const maxW = col.width - 6;
-      if (natural * baseScale > maxW) {
-        shrink = Math.min(shrink, maxW / (natural * baseScale));
-      }
-    });
-
-    const displayScale = baseScale * shrink;
-    layer.style.setProperty('--mockup-zone-display-scale', String(displayScale));
-
-    cells.forEach(function (cell) {
-      const row = cell.querySelector('.source-icons-mockup__row');
-      if (row) {
-        row.style.transform = '';
-      }
-    });
+  /**
+   * @param {'prep' | 'ready'} zone
+   * @returns {number}
+   */
+  function fontPxForZone(zone) {
+    const typo = getTypography();
+    return zone === 'ready' ? typo.readyFont : typo.prepFont;
   }
 
   /**
@@ -118,7 +111,13 @@
     const data = root.MilkshaSourceIconMockup;
     const doc = layer.ownerDocument;
     const cols = data.columnRects(zone);
+    const typo = getTypography();
+    const fontPx = fontPxForZone(zone);
     layer.dataset.zone = zone;
+    layer.style.setProperty('--mockup-zone-font', fontPx + 'px');
+    layer.dataset.zoneFontPx = String(fontPx);
+    layer.dataset.readyToPrepRatio = String(typo.ratio);
+    layer.dataset.readyMeetsMin = typo.meetsMin ? 'true' : 'false';
 
     for (let i = 0; i < 10; i += 1) {
       const meta = data.cellCenter(zone, i);
@@ -145,6 +144,7 @@
   function renderFullBoard(boardRoot) {
     const data = root.MilkshaSourceIconMockup;
     const doc = boardRoot.ownerDocument;
+    typographyCache = null;
     delete boardRoot.dataset.mockupLayoutReady;
 
     const prepLayer = doc.createElement('div');
@@ -158,17 +158,11 @@
     renderZoneLayer(readyLayer, 'ready', data.READY_SAMPLES);
 
     boardRoot.replaceChildren(prepLayer, readyLayer);
-
-    function finalize() {
-      applyUniformZoneScale(prepLayer, 'prep');
-      applyUniformZoneScale(readyLayer, 'ready');
-      boardRoot.dataset.mockupLayoutReady = 'true';
-    }
-
-    requestAnimationFrame(function () {
-      finalize();
-      requestAnimationFrame(finalize);
-    });
+    const typo = getTypography();
+    boardRoot.dataset.prepFontPx = String(typo.prepFont);
+    boardRoot.dataset.readyFontPx = String(typo.readyFont);
+    boardRoot.dataset.readyToPrepRatio = String(typo.ratio);
+    boardRoot.dataset.mockupLayoutReady = 'true';
   }
 
   /**
@@ -200,6 +194,6 @@
   root.MilkshaSourceIconRender = {
     renderFullBoard: renderFullBoard,
     renderZoomPanel: renderZoomPanel,
-    applyUniformZoneScale: applyUniformZoneScale,
+    getTypography: getTypography,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

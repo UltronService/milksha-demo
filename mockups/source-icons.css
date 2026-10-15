@@ -6,11 +6,13 @@
   background: #000;
   font-family: 'Noto Sans CJK TC', 'Noto Sans TC', 'Noto Sans', sans-serif;
   --mockup-num-color: #222222;
-  --mockup-icon-h: 58px;
-  --mockup-icon-gap: 16px;
-  --mockup-icon-slot-w: 118px;
-  --mockup-prep-font: 81px;
-  --mockup-zone-display-scale: 1;
+}
+
+.source-icons-mockup__layer {
+  --mockup-zone-font: 81px;
+  --mockup-icon-h: calc(var(--mockup-zone-font) * 58 / 81);
+  --mockup-icon-slot-w: calc(var(--mockup-icon-h) * 1.32);
+  --mockup-icon-gap: calc(6 * var(--mockup-zone-font) / 81);
 }
 
 .source-icons-mockup__board {
@@ -37,7 +39,6 @@
   transform: translateY(-50%);
   min-width: 0;
   box-sizing: border-box;
-  padding-right: 6px;
   overflow: visible;
 }
 
@@ -45,9 +46,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--mockup-icon-gap);
-  transform: scale(var(--mockup-zone-display-scale));
-  transform-origin: left center;
+  gap: 0;
   min-width: 0;
 }
 
@@ -58,7 +57,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-right: 0;
+  overflow: hidden;
+  padding-right: 1px;
+  box-sizing: border-box;
 }
 
 .source-icons-mockup__icon {
@@ -83,13 +84,14 @@
   font-family: Arial, Arimo, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  font-size: var(--mockup-prep-font);
+  font-size: var(--mockup-zone-font);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.02em;
   color: var(--mockup-num-color);
   white-space: nowrap;
   flex: none;
+  margin-left: var(--mockup-icon-gap);
 }
 
 .source-icons-zoom {
@@ -123,13 +125,5 @@
 }
 
 .source-icons-zoom__chip {
-  --mockup-icon-h: 72px;
-  --mockup-icon-slot-w: 148px;
-  --mockup-icon-gap: 20px;
-  --mockup-prep-font: 96px;
-  --mockup-zone-display-scale: 1;
-}
-
-.source-icons-zoom__chip .source-icons-mockup__row {
-  transform: scale(1);
+  --mockup-zone-font: 96px;
 }

@@ -2,21 +2,31 @@
   "ok": true,
   "issues": [],
   "metrics": {
-    "prepZoneScale": "1",
-    "prepRowScaleMin": 1,
-    "prepRowScaleMax": 1,
-    "prepRow0ColGap": 99.828125,
-    "prepRow1ColGap": 18,
-    "prepRow2ColGap": 146.5,
-    "prepRow3ColGap": 18,
-    "prepRow4ColGap": 99.828125,
-    "readyZoneScale": "1.0000126393716426",
-    "readyRowScaleMin": 1.00001,
-    "readyRowScaleMax": 1.00001,
-    "readyRow0ColGap": 17.994873046875,
-    "readyRow1ColGap": 97.1522216796875,
-    "readyRow2ColGap": 17.994873046875,
-    "readyRow3ColGap": 143.82470703125,
-    "readyRow4ColGap": 97.1522216796875
+    "creamPrepPixel": {
+      "left": 101,
+      "top": 341,
+      "right": 899,
+      "bottom": 979
+    },
+    "creamReadyPixel": {
+      "left": 1020,
+      "top": 340,
+      "right": 1819,
+      "bottom": 979
+    },
+    "prepFontPx": 58.015625,
+    "prepRow0ColGap": 199.203125,
+    "prepRow1ColGap": 106.65625,
+    "prepRow2ColGap": 232.609375,
+    "prepRow3ColGap": 132.359375,
+    "prepRow4ColGap": 199.203125,
+    "readyFontPx": 75.42031250000001,
+    "readyRow0ColGap": 60.5625,
+    "readyRow1ColGap": 141.84375,
+    "readyRow2ColGap": 13.234375,
+    "readyRow3ColGap": 185.296875,
+    "readyRow4ColGap": 141.84375,
+    "readyToPrepFontRatio": 1.3,
+    "readyTargetRatio": 1.3
   }
 }

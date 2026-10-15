@@ -4,20 +4,20 @@
 (function (root) {
   'use strict';
 
-  const PREP_CREAM = { left: 101, top: 341, width: 798, height: 639 };
-  const READY_CREAM = { left: 1021, top: 341, width: 798, height: 638 };
+  /** @type {{ prep: object, ready: object }} — from pixel scan; see source-icons-cream-bounds.json */
+  const CREAM_PIXEL = {
+    prep: { left: 101, top: 341, right: 899, bottom: 979 },
+    ready: { left: 1020, top: 340, right: 1819, bottom: 979 },
+  };
 
-  const PREP_COL_CX = [331.15, 727.91];
-  const READY_COL_CX = [1248.4, 1645.31];
   const ROW_CY_FIRST = 438.4425;
   const ROW_CY_PITCH = 110.4075;
   const ROW_CY = [0, 1, 2, 3, 4].map(function (i) {
     return ROW_CY_FIRST + i * ROW_CY_PITCH;
   });
 
-  const CREAM_EDGE_INSET_PX = 14;
-  const COLUMN_MID_GAP_PX = 12;
-  const READY_BASE_SCALE = 1.3;
+  const CREAM_EDGE_INSET_PX = 12;
+  const COLUMN_MID_GAP_PX = 10;
 
   /** @typedef {'store' | 'point' | 'uber' | 'fp'} MockSourceKey */
 
@@ -58,58 +58,51 @@
 
   /**
    * @param {'prep' | 'ready'} zone
+   * @returns {{ left: number, top: number, right: number, bottom: number, width: number, height: number }}
+   */
+  function creamRectPixel(zone) {
+    const c = zone === 'ready' ? CREAM_PIXEL.ready : CREAM_PIXEL.prep;
+    return {
+      left: c.left,
+      top: c.top,
+      right: c.right,
+      bottom: c.bottom,
+      width: c.right - c.left + 1,
+      height: c.bottom - c.top + 1,
+    };
+  }
+
+  /**
+   * @param {'prep' | 'ready'} zone
    * @returns {Array<{ left: number, width: number, right: number }>}
    */
   function columnRects(zone) {
-    const cream = zone === 'ready' ? READY_CREAM : PREP_CREAM;
-    const cols = zone === 'ready' ? READY_COL_CX : PREP_COL_CX;
-    const midX = (cols[0] + cols[1]) / 2;
-    const creamRight = cream.left + cream.width;
+    const cream = creamRectPixel(zone);
+    const midX = (cream.left + cream.right) / 2;
     const left0 = cream.left + CREAM_EDGE_INSET_PX;
     const right0 = midX - COLUMN_MID_GAP_PX / 2;
     const left1 = midX + COLUMN_MID_GAP_PX / 2;
-    const right1 = creamRight - CREAM_EDGE_INSET_PX;
+    const right1 = cream.right - CREAM_EDGE_INSET_PX;
     return [
       { left: left0, width: right0 - left0, right: right0 },
       { left: left1, width: right1 - left1, right: right1 },
     ];
   }
 
-  /**
-   * @param {'prep' | 'ready'} zone
-   * @returns {{ left: number, top: number, width: number, height: number, right: number, bottom: number }}
-   */
-  function creamRect(zone) {
-    const cream = zone === 'ready' ? READY_CREAM : PREP_CREAM;
-    return {
-      left: cream.left,
-      top: cream.top,
-      width: cream.width,
-      height: cream.height,
-      right: cream.left + cream.width,
-      bottom: cream.top + cream.height,
-    };
-  }
-
   root.MilkshaSourceIconMockup = {
-    PREP_CREAM: PREP_CREAM,
-    READY_CREAM: READY_CREAM,
-    PREP_COL_CX: PREP_COL_CX,
-    READY_COL_CX: READY_COL_CX,
+    CREAM_PIXEL: CREAM_PIXEL,
     ROW_CY: ROW_CY,
     CREAM_EDGE_INSET_PX: CREAM_EDGE_INSET_PX,
     COLUMN_MID_GAP_PX: COLUMN_MID_GAP_PX,
-    READY_BASE_SCALE: READY_BASE_SCALE,
     PREP_SAMPLES: PREP_SAMPLES,
     READY_SAMPLES: READY_SAMPLES,
     ZOOM_SAMPLES: ZOOM_SAMPLES,
+    creamRectPixel: creamRectPixel,
     columnRects: columnRects,
-    creamRect: creamRect,
     cellCenter: function cellCenter(zone, gridIndex) {
-      const cols = zone === 'ready' ? READY_COL_CX : PREP_COL_CX;
       const col = gridIndex < 5 ? 0 : 1;
       const row = gridIndex < 5 ? gridIndex : gridIndex - 5;
-      return { cx: cols[col], cy: ROW_CY[row], col: col, row: row };
+      return { cy: ROW_CY[row], col: col, row: row };
     },
   };
 })(typeof window !== 'undefined' ? window : globalThis);
