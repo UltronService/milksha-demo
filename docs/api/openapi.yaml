@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.3.1"
+  version: "1.3.2"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -88,7 +88,7 @@ info:
     2. 將下方 **整段** Python 程式複製貼上（不要只貼一半）。
     3. 打開檔案最上方 **`只改這裡`** 區塊。一般只需改：
        - `STORE`：店號（對應 JSON 的 `account`）；試點請維持 `c030020`。
-       - `SIGNATURE`：試點／QA 測試期維持 `""` 即可。
+       - `SIGNATURE`：試點店測試期間維持 `""` 即可。
     4. 開啟終端機，**cd** 進入 `pos_receiver_test.py` 所在資料夾。
     5. 執行：
        - macOS / Linux：`python3 pos_receiver_test.py`
@@ -113,7 +113,7 @@ info:
     POS_RECEIVER_URL = (
         "https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver"
     )
-    SIGNATURE = ""  # 簽章（signature）：試點／QA 測試期可留空字串 ""
+    SIGNATURE = ""  # 簽章（signature）：試點店測試期間可留空字串 ""
     # ==============================
 
     TAIPEI = timezone(timedelta(hours=8))
@@ -149,7 +149,7 @@ info:
 
 
     def md5_hex_utf8(text: str) -> str:
-        # MD5（雜湊）：後端會對 HTTP body 裡 serviceSpecialData_Json 的「原始 JSON 文字」重算。
+        # MD5（雜湊）：伺服端會對 HTTP body 裡 serviceSpecialData_Json 的「原始 JSON 文字」重算。
         # 若您先 json.dumps 再手改空白或 key 順序，雜湊就對不上 → Md5Hash 不符。
         return hashlib.md5(text.encode("utf-8")).hexdigest()
 
@@ -283,7 +283,7 @@ info:
     ### 出錯怎麼辦
 
     先看終端機最後幾行的 **內層 information**（或外層 `information` 解 JSON 後的 `information` 欄位）。  
-    下列文案與 **milksha-cloud / posReceiver** 後端一致（HTTP 狀態碼通常仍為 **200**）。
+    下列錯誤訊息與 posReceiver API 回傳一致（HTTP 狀態碼通常仍為 **200**）。
 
     | 錯誤訊息 | 常見原因 | 怎麼改 |
     |----------|----------|--------|
@@ -293,7 +293,7 @@ info:
     | 找不到目標叫號機 | `target` 不是 `milksha` + `account`（店號打錯）。 | 檢查 `STORE` 與 `target` 是否為 `milksha` + 店號。 |
     | 目標叫號機尚未連線 | 看板網頁未開或未連上雲端。 | 先開看板 URL 再重跑；不影響「Request 已受理」。 |
     | 叫號資料格式錯誤 | JSON 結構或 `source_type`、號碼格式不符。 | 對照 OpenAPI 範例；先勿改 `number_content` 測通再改。 |
-    | 簽章錯誤 | 非免簽期卻留空或 HMAC 算錯。 | 向迷客夏取得金鑰（`<REDACTED>`）並正確簽章；QA 測試可留空。 |
+    | 簽章錯誤 | 非免簽期卻留空或 HMAC 算錯。 | 向迷客夏取得金鑰（`<REDACTED>`）並正確簽章；試點店測試期間可留空。 |
     | 終端機：`python3` / `py` 找不到 | 未安裝 Python 或未加入 PATH。 | 安裝 Python 3.9+ 並重開終端機。 |
     | `URLError` / SSL / 連線逾時 | 公司防火牆、無網路、DNS 問題。 | 換網路或請 IT 放行 `*.cloudfunctions.net`。 |
 
