@@ -285,6 +285,11 @@ export async function runLayoutCheck(options) {
         productionStaticReadyToPrepFontRatio: 1,
         readyPulseNote:
           '請取餐 1.3× = readyScale pulse on new numbers (MilkshaBoardAnimConfig), not a larger static CSS font.',
+        foodpandaMockShowsHashPrefix: true,
+        productionFoodpandaStripsHash:
+          MB && MB.normalizeBoardDisplayNumber('#640609', 'fp') === '640609',
+        productionFoodpandaChangeNeeded:
+          'To show # on live board, update normalizeBoardDisplayNumber / display in milksha-board.js.',
       };
       metrics.numberRules = numberRules;
 
@@ -325,8 +330,22 @@ export async function runLayoutCheck(options) {
         const prepCells = MB.layoutPageGrid(prepSorted, 0, MB.PAGE_SIZE);
 
         /**
+         * @param {{ number: string, sourceKey?: string } | null} cell
+         * @returns {string}
+         */
+        function mockDisplayForCell(cell) {
+          if (!cell || !cell.number) {
+            return '';
+          }
+          if (cell.sourceKey === 'fp' && typeof mockData.formatFoodpandaMockDisplay === 'function') {
+            return mockData.formatFoodpandaMockDisplay(cell.number);
+          }
+          return cell.number;
+        }
+
+        /**
          * @param {'prep' | 'ready'} zoneKey
-         * @param {Array<{ number: string } | null>} expectedCells
+         * @param {Array<{ number: string, sourceKey?: string } | null>} expectedCells
          */
         function assertZoneGrid(zoneKey, expectedCells) {
           const zone = document.querySelector('.milksha-zone.' + zoneKey);
@@ -344,7 +363,7 @@ export async function runLayoutCheck(options) {
             const chip = domCells[gi].querySelector('.milksha-board-chip');
             const numEl = chip && chip.querySelector('.milksha-num');
             const shown = numEl ? numEl.textContent : '';
-            const expNum = expected && expected.number ? expected.number : '';
+            const expNum = mockDisplayForCell(expected);
             if (shown !== expNum) {
               issues.push(
                 zoneKey + ' grid[' +
@@ -409,6 +428,13 @@ export async function runLayoutCheck(options) {
           if (sourceKey === 'store' && chip.querySelector('.source-icons-live__icon')) {
             issues.push('store number must not have icon: ' + id);
           }
+          if (sourceKey === 'fp') {
+            const numEl = chip.querySelector('.milksha-num');
+            const shown = numEl ? numEl.textContent : '';
+            if (!shown.startsWith('#')) {
+              issues.push('foodpanda mock must show leading #: ' + id + ' got ' + shown);
+            }
+          }
         });
       }
 
@@ -436,6 +462,11 @@ export async function runLayoutCheck(options) {
         readyFontShrinkFromLivePx: readyShrink,
         prepChipScale: boardRoot ? boardRoot.dataset.prepChipScale : null,
         readyChipScale: boardRoot ? boardRoot.dataset.readyChipScale : null,
+        foodpandaIconFitWorstCaseLabel: boardRoot
+          ? boardRoot.dataset.mockupFpWorstCaseFitLabel || '#999999'
+          : '#999999',
+        foodpandaIconFitWorstCaseNote:
+          'Chip scale sized using mock worst case # + 6 digits + icon per zone (uniform scale).',
         reportedExplicitly: true,
       };
 

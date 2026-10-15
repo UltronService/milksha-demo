@@ -59,7 +59,7 @@
     { source: 'store', number: '1985', label: '門市（無 icon）' },
     { source: 'point', number: '0412', label: '迷點 / 你訂' },
     { source: 'uber', number: 'A7K2Q9', label: 'Uber Eats' },
-    { source: 'fp', number: '640609', label: 'foodpanda' },
+    { source: 'fp', number: '640609', label: 'foodpanda (#640609)' },
   ];
 
   /**
@@ -93,6 +93,18 @@
       { left: left0, width: right0 - left0, right: right0 },
       { left: left1, width: right1 - left1, right: right1 },
     ];
+  }
+
+  /** Owner mock spec: show `#` + up to 6 digits (production still strips `#` today). */
+  const FP_WORST_CASE_DISPLAY = '#999999';
+
+  /**
+   * @param {string} digits — payload / board id digits (no `#`)
+   * @returns {string}
+   */
+  function formatFoodpandaMockDisplay(digits) {
+    const body = String(digits || '').replace(/^#+/, '').slice(0, 6);
+    return body ? '#' + body : '#';
   }
 
   const SOURCE_PREFIX = {
@@ -152,5 +164,7 @@
     },
     buildPayload: buildPayload,
     sourceTypeFor: sourceTypeFor,
+    FP_WORST_CASE_DISPLAY: FP_WORST_CASE_DISPLAY,
+    formatFoodpandaMockDisplay: formatFoodpandaMockDisplay,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -80,7 +80,10 @@
           row.appendChild(slot);
           var num = document.createElement('span');
           num.className = 'milksha-num';
-          num.textContent = sample.number;
+          num.textContent =
+            sample.source === 'fp' && data.formatFoodpandaMockDisplay
+              ? data.formatFoodpandaMockDisplay(sample.number)
+              : sample.number;
           row.appendChild(num);
           chip.appendChild(row);
           panel.appendChild(chip);

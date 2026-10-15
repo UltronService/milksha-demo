@@ -49,6 +49,41 @@
   }
 
   /**
+   * @param {string} itemId
+   * @returns {string}
+   */
+  function parseNumberFromItemId(itemId) {
+    const idx = itemId.indexOf(':');
+    if (idx < 0) {
+      return '';
+    }
+    return itemId.slice(idx + 1);
+  }
+
+  /**
+   * @param {HTMLElement} boardRoot
+   */
+  function applyFoodpandaMockDisplay(boardRoot) {
+    const mock = root.MilkshaSourceIconMockup;
+    if (!mock || typeof mock.formatFoodpandaMockDisplay !== 'function') {
+      return;
+    }
+    boardRoot.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+      const sourceKey = parseSourceKey(chip.getAttribute('data-item-id') || '');
+      if (sourceKey !== 'fp') {
+        return;
+      }
+      const num = chip.querySelector('.milksha-num');
+      if (!num) {
+        return;
+      }
+      const digits = parseNumberFromItemId(chip.getAttribute('data-item-id') || '');
+      num.textContent = mock.formatFoodpandaMockDisplay(digits);
+      chip.classList.add('milksha-board-chip--fp-mock-hash');
+    });
+  }
+
+  /**
    * @param {HTMLElement} boardRoot
    */
   function injectIcons(boardRoot) {
@@ -81,6 +116,8 @@
     if (!data) {
       return 1;
     }
+    const worstFp =
+      typeof data.FP_WORST_CASE_DISPLAY === 'string' ? data.FP_WORST_CASE_DISPLAY : '#999999';
     zoneEl.style.setProperty('--source-icons-chip-scale', '1');
     const cream = data.creamRectPixel(zone);
     const inset = data.CREAM_EDGE_INSET_PX;
@@ -101,9 +138,24 @@
       const cellRect = cell.getBoundingClientRect();
       const col = cellRect.left + cellRect.width / 2 < midX ? 0 : 1;
       const inner = colInner[col];
+      const num = chip.querySelector('.milksha-num');
+      const sourceKey = parseSourceKey(chip.getAttribute('data-item-id') || '');
+      const useWorstFp =
+        sourceKey === 'fp' && chip.classList.contains('milksha-board-chip--with-icon') && num;
+      let savedText = '';
+      if (useWorstFp && num) {
+        savedText = num.textContent || '';
+        num.textContent = worstFp;
+      }
+
       const rect = chip.getBoundingClientRect();
       const cx = (rect.left + rect.right) / 2;
       const halfW = rect.width / 2;
+
+      if (useWorstFp && num) {
+        num.textContent = savedText;
+      }
+
       if (halfW <= 0) {
         return;
       }
@@ -127,6 +179,7 @@
    */
   function apply(boardRoot) {
     injectIcons(boardRoot);
+    applyFoodpandaMockDisplay(boardRoot);
     const prepZone = boardRoot.querySelector('.milksha-zone.prep');
     const readyZone = boardRoot.querySelector('.milksha-zone.ready');
     let prepScale = 1;
@@ -143,6 +196,7 @@
     if (readyZone) {
       readyScale = fitZoneChipScale(readyZone, 'ready');
     }
+    applyFoodpandaMockDisplay(boardRoot);
 
     const art = root.QMS && root.QMS.Board && root.QMS.Board.LandscapeArtLayout;
     const liveFontPx = art && art.NUM_FONT_PX ? art.NUM_FONT_PX : 81;
@@ -164,6 +218,10 @@
       readyPulseScale = animCfg().effective;
     }
 
+    const mock = root.MilkshaSourceIconMockup;
+    const worstFp =
+      mock && typeof mock.FP_WORST_CASE_DISPLAY === 'string' ? mock.FP_WORST_CASE_DISPLAY : '#999999';
+
     boardRoot.dataset.mockupLayoutReady = 'true';
     boardRoot.dataset.mockupMode = 'icons';
     boardRoot.dataset.liveNumFontPx = String(liveFontPx);
@@ -176,11 +234,14 @@
     boardRoot.dataset.prepChipScale = String(prepScale);
     boardRoot.dataset.readyChipScale = String(readyScale);
     boardRoot.dataset.productionReadyPulseScale = String(readyPulseScale);
+    boardRoot.dataset.mockupFpWorstCaseFitLabel = worstFp;
+    boardRoot.dataset.mockupFoodpandaShowsHash = '1';
   }
 
   root.MilkshaSourceIconsLiveOverlay = {
     apply: apply,
     injectIcons: injectIcons,
+    applyFoodpandaMockDisplay: applyFoodpandaMockDisplay,
     fitZoneChipScale: fitZoneChipScale,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

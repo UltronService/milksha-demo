@@ -27,7 +27,9 @@
 | Arial Regular **400** | `css/milksha-board.css` → `.milksha-num` |
 | 2 欄 × 5 列、每頁 10 筆 | `MilkshaBoard.PAGE_SIZE` / `layoutPageGrid` |
 | 最新左上、先填左欄再右欄 | `layoutPageGrid` + `compareNewestFirst` 排序 |
-| 號碼格式（門市 4 碼、迷點 3–4 碼保留前導 0、Uber 3–6 英數大寫、熊貓 3–6 數字無 #、最長 6） | `normalizeBoardDisplayNumber` |
+| 號碼格式（門市 4 碼、迷點 3–4 碼保留前導 0、Uber 3–6 英數大寫、熊貓最長 6） | `normalizeBoardDisplayNumber` |
+| **熊貓顯示 `#640609`** | **mock only**（`formatFoodpandaMockDisplay`）；**live 仍會 strip `#`**，上線需改 production |
+| icon fit 最寬列 | **`#` + 6 碼**（`FP_WORST_CASE_DISPLAY` = `#999999`）+ icon |
 | 門市無 icon | overlay 略過 `store` |
 | **請取餐 1.3×** | **`readyScale` 新號 pulse**（`MilkshaBoardAnimConfig`，預設 1.3），**不是**常駐 CSS 字級；靜態字級兩區皆 **81px** |
 

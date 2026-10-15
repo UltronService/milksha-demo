@@ -62,6 +62,10 @@
         runtime.applyPayload(payload, { silent: true });
 
         if (mode === 'numbers') {
+          if (typeof root.MilkshaSourceIconsLiveOverlay.applyFoodpandaMockDisplay === 'function') {
+            root.MilkshaSourceIconsLiveOverlay.applyFoodpandaMockDisplay(rootEl);
+          }
+          rootEl.dataset.mockupFoodpandaShowsHash = '1';
           rootEl.dataset.mockupLayoutReady = 'true';
           rootEl.dataset.mockupMode = 'baseline-numbers';
           return;

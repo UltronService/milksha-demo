@@ -61,3 +61,10 @@ test('production ready pulse scale defaults to 1.3 (請取餐 vs 準備中 motio
   assert.equal(MB.GRID_COLS, 2);
   assert.equal(MB.GRID_ROWS, 5);
 });
+
+test('foodpanda mock shows hash but production normalize still strips it', function () {
+  const { MB, mock } = loadMilkshaBoard();
+  assert.equal(mock.formatFoodpandaMockDisplay('640609'), '#640609');
+  assert.equal(MB.normalizeBoardDisplayNumber('#640609', 'fp'), '640609');
+  assert.equal(MB.normalizeBoardDisplayNumber('640609', 'fp'), '640609');
+});
