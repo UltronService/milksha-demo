@@ -17,7 +17,7 @@ import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
-const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020']);
+const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
 const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
 const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
 const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
