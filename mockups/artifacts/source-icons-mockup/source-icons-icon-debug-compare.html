@@ -1,0 +1,53 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><base href="/" />
+<style>
+body{margin:0;background:#1a1a1a;font-family:Arial,sans-serif;color:#eee}
+.row{display:flex;gap:32px;padding:24px;align-items:flex-start;border-bottom:1px solid #444}
+.panel{background:#fff;padding:12px}
+.panel h3{margin:0 0 8px;font-size:18px;color:#222;text-align:center}
+.box{position:relative;display:inline-block;background:repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50%/16px 16px}
+img{display:block}
+.slot-sim{overflow:hidden;background:rgba(255,0,0,0.08);outline:2px dashed #e53935;position:relative}
+.crop{position:absolute;border:2px solid #e53935;box-sizing:border-box;pointer-events:none}
+label{font-size:14px;color:#ccc;display:block;margin:8px 0 4px}
+</style></head><body>
+<script>
+const F=64;
+const slotW=F*1, capH=F*58/81, boxS=F*0.8;
+const specs=[
+  {key:'nidin',src:'/assets/source-icons/nidin.png'},
+  {key:'foodpanda',src:'/assets/source-icons/foodpanda.png'},
+  {key:'uber',src:'/assets/source-icons/ubereats.png'},
+];
+function addRow(spec){
+  const row=document.createElement('div'); row.className='row';
+  const left=document.createElement('div'); left.className='panel';
+  left.innerHTML='<h3>原圖 '+spec.key+'</h3>';
+  const nat=document.createElement('img'); nat.src=spec.src; nat.style.maxHeight='220px'; nat.width=nat.naturalWidth;
+  left.appendChild(nat);
+  const right=document.createElement('div'); right.className='panel';
+  right.innerHTML='<h3>修後 64px（綠框=S×S '+boxS.toFixed(1)+'，外層 slot '+slotW.toFixed(1)+'×'+capH.toFixed(1)+'）</h3>';
+  const outer=document.createElement('div'); outer.className='slot-sim';
+  outer.style.width=slotW+'px'; outer.style.height=capH+'px';
+  outer.style.display='flex'; outer.style.alignItems='center'; outer.style.justifyContent='center';
+  outer.style.overflow='visible'; outer.style.outline='1px dashed #888';
+  const sim=document.createElement('div'); sim.className='slot-sim';
+  sim.style.width=boxS+'px'; sim.style.height=boxS+'px';
+  sim.style.display='flex'; sim.style.alignItems='center'; sim.style.justifyContent='center';
+  sim.style.overflow='visible';
+  const img=document.createElement('img'); img.src=spec.src;
+  img.style.width='100%'; img.style.height='100%'; img.style.objectFit='contain';
+  sim.appendChild(img); outer.appendChild(sim); right.appendChild(outer);
+  row.appendChild(left); row.appendChild(right);
+  document.body.appendChild(row);
+  img.onload=function(){
+    const sr=sim.getBoundingClientRect();
+    const scale=Math.min(sr.width/img.naturalWidth,sr.height/img.naturalHeight);
+    const pw=img.naturalWidth*scale, ph=img.naturalHeight*scale;
+    const note=document.createElement('label');
+    note.textContent='contain 繪製 ≈ '+pw.toFixed(1)+'×'+ph.toFixed(1)+'px，比例 '+(pw/ph).toFixed(3)
+      +'；S×S 框 '+sr.width.toFixed(1)+'×'+sr.height.toFixed(1)+'，overflow:visible';
+    right.appendChild(note);
+  };
+}
+specs.forEach(addRow);
+</script></body></html>

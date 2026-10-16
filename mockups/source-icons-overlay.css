@@ -1,0 +1,59 @@
+/**
+ * Source-icon overlay on live milksha-board (mockup only).
+ */
+.source-icons-live-mockup .milksha-board-chip--with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  transform: scale(var(--source-icons-chip-scale, 1));
+  transform-origin: center center;
+}
+
+.source-icons-live-mockup .source-icons-live__icon-slot {
+  flex: none;
+  width: var(--source-icons-slot-w);
+  height: var(--source-icons-icon-h);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-right: 1px;
+}
+
+.source-icons-live-mockup .source-icons-live__icon {
+  display: block;
+  object-fit: contain;
+  flex: none;
+  pointer-events: none;
+}
+
+.source-icons-live-mockup .source-icons-live__icon--square {
+  width: var(--source-icons-icon-h);
+  height: var(--source-icons-icon-h);
+}
+
+.source-icons-live-mockup .source-icons-live__icon--nidin {
+  height: var(--source-icons-icon-h);
+  width: auto;
+  max-width: var(--source-icons-slot-w);
+}
+
+.source-icons-live-mockup .milksha-board-chip--with-icon .milksha-num {
+  margin-left: var(--source-icons-gap);
+}
+
+.source-icons-live-mockup .milksha-zone.prep {
+  --source-icons-chip-scale: 1;
+  --source-icons-icon-h: calc(var(--milksha-num-font, 81px) * 58 / 81);
+  --source-icons-slot-w: calc(var(--source-icons-icon-h) * 1.32);
+  --source-icons-gap: calc(6 * var(--milksha-num-font, 81px) / 81);
+}
+
+.source-icons-live-mockup .milksha-zone.ready {
+  --source-icons-chip-scale: 1;
+  --source-icons-icon-h: calc(var(--milksha-num-font, 81px) * 58 / 81);
+  --source-icons-slot-w: calc(var(--source-icons-icon-h) * 1.32);
+  --source-icons-gap: calc(6 * var(--milksha-num-font, 81px) / 81);
+}

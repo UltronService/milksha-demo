@@ -1,0 +1,60 @@
+{
+  "ok": true,
+  "issues": [],
+  "metrics": {
+    "creamPrepPixel": {
+      "left": 101,
+      "top": 341,
+      "right": 899,
+      "bottom": 979
+    },
+    "creamReadyPixel": {
+      "left": 1020,
+      "top": 340,
+      "right": 1819,
+      "bottom": 979
+    },
+    "backgroundAssetPath": "assets/milksha-board-bg-1007.jpg",
+    "prepRow0ColGap": 200.324462890625,
+    "prepRow1ColGap": 182.45849609375,
+    "prepRow2ColGap": 190.5767822265625,
+    "prepRow3ColGap": 129.10484313964844,
+    "prepRow4ColGap": 200.324462890625,
+    "readyRow0ColGap": 180.6151123046875,
+    "readyRow1ColGap": 216.939208984375,
+    "readyRow2ColGap": 156.947021484375,
+    "readyRow3ColGap": 171.9005126953125,
+    "readyRow4ColGap": 151.011474609375,
+    "liveBoardNumFontPx": 81,
+    "prepComputedFontPx": 81,
+    "readyComputedFontPx": 81,
+    "readyToPrepFontRatio": 1,
+    "prepChipScale": "0.7658562101485242",
+    "readyChipScale": "0.7784173952884579",
+    "numberRules": {
+      "rendering": "production-milksha-board.js",
+      "pageSize": 10,
+      "gridCols": 2,
+      "gridRows": 5,
+      "productionReadyPulseScale": 1.3,
+      "productionStaticReadyToPrepFontRatio": 1,
+      "readyPulseNote": "請取餐 1.3× = readyScale pulse on new numbers (MilkshaBoardAnimConfig), not a larger static CSS font.",
+      "foodpandaMockShowsHashPrefix": true,
+      "productionFoodpandaStripsHash": true,
+      "productionFoodpandaChangeNeeded": "To show # on live board, update normalizeBoardDisplayNumber / display in milksha-board.js."
+    },
+    "iconFitAdaptation": {
+      "strategy": "chip-scale",
+      "liveBoardBaseFontPx": 81,
+      "mockupPrepAppliedFontPx": 81,
+      "mockupReadyAppliedFontPx": 81,
+      "prepFontShrinkFromLivePx": 0,
+      "readyFontShrinkFromLivePx": 0,
+      "prepChipScale": "0.7658562101485242",
+      "readyChipScale": "0.7784173952884579",
+      "foodpandaIconFitWorstCaseLabel": "#999999",
+      "foodpandaIconFitWorstCaseNote": "Chip scale sized using mock worst case # + 6 digits + icon per zone (uniform scale).",
+      "reportedExplicitly": true
+    }
+  }
+}
