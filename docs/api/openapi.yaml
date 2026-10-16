@@ -249,7 +249,7 @@ info:
     [1/3] 店號 account → a17；target 前綴 → milksha
     [2/3] timeStmp（台北時間，10 分鐘內有效）→ 2026-10-15-10-06-07:0365
     [2/3] Request JSON →
-    {"isEncrypt": false, "serviceSpecialData_Json": {"target": "milkshac030020", ...}, ...}
+    {"isEncrypt": false, "serviceSpecialData_Json": {"target": "milkshaa17", ...}, ...}
     [3/3] POST https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
     HTTP 狀態: 200
     外層 isOK → True
