@@ -501,7 +501,9 @@ components:
           example: Milksha
         account:
           type: string
-          description: 門市帳號（店號），與看板 URL 的 `store` 相同。例 `c030020`（試點）、`a17`（測試店）。
+          description: |
+            門市帳號（店號），與看板 URL 的 `store` 相同。例 `c030020`（試點）、`a17`（測試店）。
+            `serviceSpecialData_Json.target` 須以本欄值為字尾（大小寫須完全一致）。
           example: a17
         timeStmp:
           type: string
