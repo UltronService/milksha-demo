@@ -16,6 +16,7 @@
   const MSG_REGISTRY_FULL = '測試店登記名額已滿，請聯絡後端';
 
   const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
+  const OPERATOR_PICKER_STORE_IDS = new Set(['c030020', 'a17']);
   const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
   const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
   const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
@@ -137,6 +138,28 @@
   }
 
   /**
+   * Production operator picker: c030020 + a17, plus URL-pinned QA store for CI.
+   * @param {Array<{ storeId: string }>} stores
+   * @param {string} urlStoreId
+   * @returns {Array<object>}
+   */
+  function filterStoresForOperatorPicker(stores, urlStoreId) {
+    const pinned = String(urlStoreId || '').trim();
+    return (stores || []).filter(function (s) {
+      if (!s || !s.storeId) {
+        return false;
+      }
+      if (OPERATOR_PICKER_STORE_IDS.has(s.storeId)) {
+        return true;
+      }
+      if (pinned && s.storeId === pinned) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  /**
    * @param {Array<object>} stores
    * @param {string} storeId
    * @param {string} [label]
@@ -236,6 +259,8 @@
     listStoresErrorLine: listStoresErrorLine,
     sortStoresByStoreId: sortStoresByStoreId,
     filterStoresForPicker: filterStoresForPicker,
+    filterStoresForOperatorPicker: filterStoresForOperatorPicker,
+    OPERATOR_PICKER_STORE_IDS: OPERATOR_PICKER_STORE_IDS,
     mergePinnedStore: mergePinnedStore,
     formatStoreOptionMeta: formatStoreOptionMeta,
     fetchListStores: fetchListStores,

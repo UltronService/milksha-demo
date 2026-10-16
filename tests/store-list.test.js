@@ -26,6 +26,19 @@ test('sortStoresByStoreId ascending', function () {
   assert.deepEqual(sorted.map((s) => s.storeId), ['c030020', 's120030', 'zz-qa-store-b']);
 });
 
+test('filterStoresForOperatorPicker keeps c030020, a17, and URL pin only', function () {
+  const S = loadStoreList();
+  const rows = [
+    { storeId: 'c030020' },
+    { storeId: 'a17' },
+    { storeId: 's120030' },
+    { storeId: 'zz-qa-ci-store', test: true },
+  ];
+  assert.deepEqual(S.filterStoresForOperatorPicker(rows, '').map((s) => s.storeId), ['c030020', 'a17']);
+  const pinned = S.filterStoresForOperatorPicker(rows, 'zz-qa-ci-store');
+  assert.equal(pinned.some((s) => s.storeId === 'zz-qa-ci-store'), true);
+});
+
 test('filterStoresForPicker hides test stores except URL pin', function () {
   const S = loadStoreList();
   const rows = [

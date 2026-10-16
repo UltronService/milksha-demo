@@ -4,13 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261015f" />
-    <script src="../js/board/today-board.js?v=20261015f"></script>
+    <link rel="stylesheet" href="controller.css?v=20261016a" />
+    <script src="../js/board/today-board.js?v=20261016a"></script>
   </head>
   <body>
-    <header class="top">
-      <h1>叫號看板控制端</h1>
-      <p class="sub">本控制頁僅供測試環境使用。</p>
+    <header class="app-header">
+      <h1>叫號控制端</h1>
+      <span
+        id="connection-status-pill"
+        class="connection-status-pill"
+        data-connected="0"
+        data-testid="connection-status-pill"
+        aria-live="polite"
+      >
+        <span class="connection-status-dot" aria-hidden="true"></span>
+        <span id="connection-status-pill-label" data-testid="connection-status-pill-label">未連線</span>
+      </span>
     </header>
     <p id="local-mode-notice" class="local-notice" hidden data-testid="local-mode-notice">
       目前是本機測試：控制頁和看板要在同一台電腦、同一個瀏覽器開兩個視窗才會連動。
@@ -49,7 +58,23 @@
       </button>
     </div>
     <main class="controller-main" id="main-grid">
+      <section id="sec-store-top" class="card store-top" data-testid="sec-store-top">
+        <h2 class="card-section-title">目前門市</h2>
+        <label class="field-label" for="fld-store">選擇門市
+          <select id="fld-store" data-testid="fld-store"></select>
+        </label>
+        <p class="field-hint store-top-hint">切換門市後會重新連線；綠色標示代表看板目前有心跳。</p>
+        <p
+          id="store-not-allowed-banner"
+          class="store-not-allowed-banner"
+          hidden
+          role="alert"
+          data-testid="store-not-allowed-banner"
+        ></p>
+        <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
+      </section>
       <section id="sec-quick-send" class="card zone quick-send" data-zone="quick" data-default-expanded="1">
+        <h2 class="card-section-title">送出號碼</h2>
         <div class="zone-body quick-send-body">
           <div class="quick-send-fields">
             <label class="quick-send-label">來源
@@ -66,6 +91,19 @@
             </label>
           </div>
           <p id="quick-send-error" class="quick-send-error" hidden role="alert" data-testid="quick-send-error"></p>
+          <div
+            id="quick-send-success"
+            class="quick-send-success"
+            hidden
+            role="status"
+            data-testid="quick-send-success"
+          >
+            <span class="quick-send-success-icon" aria-hidden="true">✓</span>
+            <div>
+              <strong data-testid="quick-send-success-line"></strong>
+              <span class="quick-send-success-sub">看板約 1 秒內更新；可繼續輸入下一筆。</span>
+            </div>
+          </div>
           <button
             type="button"
             id="btn-send-numbers"
@@ -77,24 +115,29 @@
           </button>
           <p class="hint quick-send-hint">每次送出一筆示範號碼到看板（預設雲端連線，免填金鑰）。</p>
           <p id="transport-route" class="transport-route" data-testid="transport-route">路由：—</p>
-          <p id="online-state" class="hint" data-connected="0" data-testid="online-state">尚未連線</p>
+          <p id="online-state" class="hint online-state-detail" data-connected="0" data-testid="online-state">尚未連線</p>
         </div>
       </section>
+      <section id="sec-clear-board" class="card clear-board-card" aria-labelledby="clear-board-heading">
+        <h2 class="card-section-title" id="clear-board-heading">清空看板</h2>
+        <p class="clear-board-warning">會立即清除看板上所有號碼，營運中請再三確認。</p>
+        <button
+          type="button"
+          id="btn-clear-board-main"
+          class="btn-clear-board-main"
+          data-testid="btn-clear-board-main"
+          data-requires-connect="1"
+        >
+          清空看板
+        </button>
+      </section>
+      <section id="sec-test-tools" class="card zone test-tools-zone" data-zone="test-tools" data-default-expanded="0">
+        <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-test-tools">測試工具</button>
+        <div class="zone-body" hidden>
       <div class="controller-zone-stack" data-testid="controller-zone-stack">
       <section id="sec-connect" class="card zone" data-zone="connect" data-default-expanded="0">
         <button type="button" class="zone-toggle" aria-expanded="false" data-testid="zone-toggle-connect">1. 連線與狀態</button>
-          <p
-            id="store-not-allowed-banner"
-            class="store-not-allowed-banner"
-            hidden
-            role="alert"
-            data-testid="store-not-allowed-banner"
-          ></p>
-          <p id="store-list-fetch-hint" class="store-list-fetch-hint" hidden data-testid="store-list-fetch-hint"></p>
         <div class="zone-body" hidden>
-          <label>選擇門市
-            <select id="fld-store" data-testid="fld-store"></select>
-          </label>
           <p id="cloud-config-prompt" class="hint cloud-prompt" hidden data-testid="cloud-config-prompt">
             請先展開「進階設定」，在「雲端設定」填寫專案與金鑰後再按連線。
           </p>
@@ -278,40 +321,64 @@
         </div>
       </section>
       </div>
+        </div>
+      </section>
     </main>
-    <script src="../js/milksha-board.js?v=20261015f"></script>
-    <script src="../js/transport/push-numbers-params.js?v=20261015f"></script>
-    <script src="controller-send-number.js?v=20261015f"></script>
-    <script src="controller-cloud-ticket-readback.js?v=20261015f"></script>
-    <script src="../config/firebase.js?v=20261015f"></script>
-    <script src="../js/transport/paths.js?v=20261015f"></script>
-    <script src="../js/transport/firestore-value.js?v=20261015f"></script>
-    <script src="../js/transport/board-seq.js?v=20261015f"></script>
-    <script src="../js/transport/cloud-settings.js?v=20261015f"></script>
-    <script src="../js/transport/controller-secrets.js?v=20261015f"></script>
-    <script src="../js/transport/config-resolve.js?v=20261015f"></script>
-    <script src="../js/vendor/qrcode-generator.js?v=20261015f"></script>
-    <script src="../js/transport/auth-session.js?v=20261015f"></script>
-    <script src="../js/vendor/md5.min.js?v=20261015f"></script>
-    <script src="../js/transport/milksha-md5.js?v=20261015f"></script>
-    <script src="../js/transport/milksha-pos-sign.js?v=20261015f"></script>
-    <script src="../js/transport/milksha-pos-wire.js?v=20261015f"></script>
-    <script src="../js/transport/json-raw.js?v=20261015f"></script>
-    <script src="../js/transport/dev-command-validation.js?v=20261015f"></script>
-    <script src="../js/transport/controller-command-errors.js?v=20261015f"></script>
-    <script src="../js/transport/board-refresh-after-command.js?v=20261015f"></script>
-    <script src="../js/transport/cloud-api.js?v=20261015f"></script>
-    <script src="../js/transport/firestore-rest.js?v=20261015f"></script>
-    <script src="../js/transport/pos-receiver-validate.js?v=20261015f"></script>
-    <script src="../js/transport/local-poc-coord.js?v=20261015f"></script>
-    <script src="../js/transport/local-cloud-shim.js?v=20261015f"></script>
-    <script src="../js/transport/local-transport.js?v=20261015f"></script>
-    <script src="../js/transport/firestore-transport.js?v=20261015f"></script>
-    <script src="../js/transport/create-transport.js?v=20261015f"></script>
-    <script src="../js/receiver/validate-request.js?v=20261015f"></script>
-    <script src="store-list.js?v=20261015f"></script>
-    <script src="store-simulation.js?v=20261015f"></script>
-    <script src="store-simulation-host.js?v=20261015f"></script>
-    <script src="controller-app.js?v=20261015f"></script>
+    <div
+      id="clear-board-modal"
+      class="clear-board-modal-backdrop"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clear-board-modal-title"
+      data-testid="clear-board-modal"
+    >
+      <div class="clear-board-modal">
+        <h2 id="clear-board-modal-title">確定要清空看板？</h2>
+        <p>
+          門市 <strong id="clear-board-modal-store" data-testid="clear-board-modal-store"></strong>
+          上的準備中與可取餐號碼將全部移除，此動作無法自動復原。
+        </p>
+        <div class="clear-board-modal-actions">
+          <button type="button" id="btn-clear-confirm" class="btn-clear-confirm" data-testid="btn-clear-confirm">確認清空</button>
+          <button type="button" id="btn-clear-cancel" class="btn-clear-cancel" data-testid="btn-clear-cancel">取消</button>
+        </div>
+      </div>
+    </div>
+    <script src="../js/milksha-board.js?v=20261016a"></script>
+    <script src="../js/transport/push-numbers-params.js?v=20261016a"></script>
+    <script src="controller-send-number.js?v=20261016a"></script>
+    <script src="controller-cloud-ticket-readback.js?v=20261016a"></script>
+    <script src="../config/firebase.js?v=20261016a"></script>
+    <script src="../js/transport/paths.js?v=20261016a"></script>
+    <script src="../js/transport/firestore-value.js?v=20261016a"></script>
+    <script src="../js/transport/board-seq.js?v=20261016a"></script>
+    <script src="../js/transport/cloud-settings.js?v=20261016a"></script>
+    <script src="../js/transport/controller-secrets.js?v=20261016a"></script>
+    <script src="../js/transport/config-resolve.js?v=20261016a"></script>
+    <script src="../js/vendor/qrcode-generator.js?v=20261016a"></script>
+    <script src="../js/transport/auth-session.js?v=20261016a"></script>
+    <script src="../js/vendor/md5.min.js?v=20261016a"></script>
+    <script src="../js/transport/milksha-md5.js?v=20261016a"></script>
+    <script src="../js/transport/milksha-pos-sign.js?v=20261016a"></script>
+    <script src="../js/transport/milksha-pos-wire.js?v=20261016a"></script>
+    <script src="../js/transport/json-raw.js?v=20261016a"></script>
+    <script src="../js/transport/dev-command-validation.js?v=20261016a"></script>
+    <script src="../js/transport/controller-command-errors.js?v=20261016a"></script>
+    <script src="../js/transport/board-refresh-after-command.js?v=20261016a"></script>
+    <script src="../js/transport/cloud-api.js?v=20261016a"></script>
+    <script src="../js/transport/firestore-rest.js?v=20261016a"></script>
+    <script src="../js/transport/pos-receiver-validate.js?v=20261016a"></script>
+    <script src="../js/transport/local-poc-coord.js?v=20261016a"></script>
+    <script src="../js/transport/local-cloud-shim.js?v=20261016a"></script>
+    <script src="../js/transport/local-transport.js?v=20261016a"></script>
+    <script src="../js/transport/firestore-transport.js?v=20261016a"></script>
+    <script src="../js/transport/create-transport.js?v=20261016a"></script>
+    <script src="../js/receiver/validate-request.js?v=20261016a"></script>
+    <script src="store-list.js?v=20261016a"></script>
+    <script src="store-simulation.js?v=20261016a"></script>
+    <script src="store-simulation-host.js?v=20261016a"></script>
+    <script src="controller-view.js?v=20261016a"></script>
+    <script src="controller-app.js?v=20261016a"></script>
   </body>
 </html>

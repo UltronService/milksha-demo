@@ -41,6 +41,13 @@
       target: 'milkshac030020',
     },
     {
+      id: 'a17',
+      name: '測試店 a17',
+      merchant_id: 'milksha',
+      account: 'a17',
+      target: 'milkshaa17',
+    },
+    {
       id: 's120030',
       name: '迷客夏臺南東安店',
       merchant_id: 'milksha',

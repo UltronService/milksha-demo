@@ -5,7 +5,7 @@ const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local`;
 const PUBLIC_CTRL = 'https://ultronservice.github.io/milksha-demo/controller/';
 
 const ZONE_TOGGLES = [
-  { testId: 'zone-toggle-connect', title: '1. 連線與狀態', bodyTestId: 'fld-store' },
+  { testId: 'zone-toggle-connect', title: '1. 連線與狀態', bodyTestId: 'btn-connect' },
   { testId: 'zone-toggle-pos', title: '2. 模擬 POS', bodyTestId: 'btn-add-ticket' },
   { testId: 'zone-toggle-net', title: '3. 模擬網路', bodyTestId: 'btn-offline' },
   { testId: 'zone-toggle-special', title: '4. 特殊狀況', bodyTestId: 'btn-clear-now' },
@@ -18,15 +18,25 @@ async function assertControllerZones(page, viewport) {
   await page.waitForSelector('[data-testid="btn-send-numbers"]', { timeout: 15000 });
 
   const sendBox = await page.locator('#sec-quick-send').boundingBox();
+  const storeBox = await page.locator('[data-testid="sec-store-top"]').boundingBox();
+  const testToolsBox = await page.locator('#sec-test-tools').boundingBox();
   expect(sendBox).not.toBeNull();
+  expect(storeBox).not.toBeNull();
+  expect(testToolsBox).not.toBeNull();
+  expect(storeBox.y).toBeLessThan(sendBox.y);
+  expect(testToolsBox.y).toBeGreaterThan(sendBox.y);
+  await page.evaluate(() => {
+    const section = document.getElementById('sec-test-tools');
+    const btn = section && section.querySelector('.zone-toggle');
+    const body = section && section.querySelector('.zone-body');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+    if (body) body.hidden = false;
+  });
 
   for (const z of ZONE_TOGGLES) {
     const toggle = page.locator(`[data-testid="${z.testId}"]`);
     await expect(toggle).toBeVisible();
     await expect(toggle).toContainText(z.title);
-    const zoneBox = await toggle.boundingBox();
-    expect(zoneBox).not.toBeNull();
-    expect(zoneBox.y).toBeGreaterThan(sendBox.y + sendBox.height - 4);
     await expect(page.locator(`[data-testid="${z.bodyTestId}"]`)).toBeHidden();
     await toggle.click();
     await expect(page.locator(`[data-testid="${z.bodyTestId}"]`)).toBeVisible();

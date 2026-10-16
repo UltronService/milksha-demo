@@ -85,6 +85,7 @@
   const CloudSettings = window.QMS.Transport.CloudSettings;
   const ControllerSecrets = window.QMS.Transport.ControllerSecrets;
   const StoreList = window.QMS.Controller.StoreList;
+  const ControllerView = window.QMS.Controller.View;
 
   function modeDisplayName(mode) {
     if (mode === 'cloud') {
@@ -555,6 +556,7 @@
       el.textContent = '尚未連線';
     }
     window.__controllerTelemetry.connected = isOn;
+    syncConnectionPill();
     syncActionButtonStates();
     syncTransportRoute();
   }
@@ -718,6 +720,98 @@
     }
     el.textContent = message;
     el.hidden = false;
+    hideQuickSendSuccess();
+  }
+
+  function hideQuickSendSuccess() {
+    const box = document.getElementById('quick-send-success');
+    if (box) {
+      box.hidden = true;
+    }
+    const line = document.querySelector('[data-testid="quick-send-success-line"]');
+    if (line) {
+      line.textContent = '';
+    }
+  }
+
+  function showQuickSendSuccess(ticket) {
+    if (!ControllerView || !ControllerView.shouldShowQuickSendSuccess({ isSuccess: true })) {
+      return;
+    }
+    const sourceKey = ticket.sourceKey || readQuickSendSourceKey();
+    const def = sourceDef(sourceKey);
+    const statusLabel = ticket.status === 'ready' ? '請取餐' : '準備中';
+    const lineText = ControllerView.formatQuickSendSuccessLine({
+      no: ticket.no,
+      sourceLabel: def.label,
+      statusLabel: statusLabel,
+    });
+    const line = document.querySelector('[data-testid="quick-send-success-line"]');
+    const box = document.getElementById('quick-send-success');
+    if (line) {
+      line.textContent = lineText;
+    }
+    if (box) {
+      box.hidden = false;
+    }
+    setQuickSendValidationError('');
+  }
+
+  function syncConnectionPill() {
+    const pill = document.getElementById('connection-status-pill');
+    const labelEl = document.getElementById('connection-status-pill-label');
+    if (!pill || !labelEl || !ControllerView) {
+      return;
+    }
+    pill.setAttribute('data-connected', connected ? '1' : '0');
+    labelEl.textContent = ControllerView.formatConnectionPillLabel({
+      connected: connected,
+      boardOnline: deviceOnline,
+      boardHint: boardLinkHint || '',
+    });
+  }
+
+  function openClearBoardModal() {
+    const modal = document.getElementById('clear-board-modal');
+    const storeEl = document.getElementById('clear-board-modal-store');
+    if (storeEl) {
+      storeEl.textContent = storeId();
+    }
+    if (modal) {
+      modal.hidden = false;
+    }
+  }
+
+  function closeClearBoardModal() {
+    const modal = document.getElementById('clear-board-modal');
+    if (modal) {
+      modal.hidden = true;
+    }
+  }
+
+  function runClearBoardConfirmed() {
+    closeClearBoardModal();
+    if (!requireConnect()) {
+      return;
+    }
+    sendCommand('clear_now', {})
+      .then(function () {
+        tickets = [];
+        hideQuickSendSuccess();
+        showUserBanner('看板已清空');
+        pushLog({ summary: '清空看板 · clear_now', kind: 'command' });
+        return refreshBoardLists();
+      })
+      .catch(function (e) {
+        showUserBanner((e && e.message) || '清空看板失敗');
+      });
+  }
+
+  function requestClearBoardWithConfirm() {
+    if (!requireConnect()) {
+      return;
+    }
+    openClearBoardModal();
   }
 
   const SendNumberModule = window.QMS.Controller.SendNumber;
@@ -1671,6 +1765,9 @@
     const current = String(selectedId || sel.value || '').trim() || storeId();
     let rows = StoreList.mergePinnedStore(stores || [], current);
     rows = StoreList.filterStoresForPicker(rows, pinned);
+    if (StoreList.filterStoresForOperatorPicker) {
+      rows = StoreList.filterStoresForOperatorPicker(rows, pinned);
+    }
     rows = StoreList.sortStoresByStoreId(rows);
     cloudStoreRows = rows;
     const prev = current;
@@ -1719,7 +1816,25 @@
       return;
     }
     const sel = document.getElementById('fld-store');
-    Validate.STORES.forEach(function (s) {
+    const fromUrl = urlStoreParam();
+    const operatorIds =
+      StoreList && StoreList.OPERATOR_PICKER_STORE_IDS ? StoreList.OPERATOR_PICKER_STORE_IDS : null;
+    let rows = Validate.STORES.slice();
+    if (operatorIds) {
+      rows = rows.filter(function (s) {
+        return operatorIds.has(s.id) || (fromUrl && s.id === fromUrl);
+      });
+      if (fromUrl && !rows.some(function (s) { return s.id === fromUrl; })) {
+        rows.push({
+          id: fromUrl,
+          name: fromUrl,
+          merchant_id: 'milksha',
+          account: fromUrl,
+          target: Validate.milkshaTargetForAccount(fromUrl),
+        });
+      }
+    }
+    rows.forEach(function (s) {
       const opt = document.createElement('option');
       opt.value = s.id;
       opt.textContent = s.name + ' (' + s.id + ')';
@@ -1728,7 +1843,6 @@
       }
       sel.appendChild(opt);
     });
-    const fromUrl = urlStoreParam();
     if (fromUrl) {
       sel.value = fromUrl;
     }
@@ -2024,6 +2138,7 @@
   });
 
   function sendQuickDemoNumber() {
+    hideQuickSendSuccess();
     if (!requireConnect()) {
       return;
     }
@@ -2057,12 +2172,17 @@
     posSend(ticketsToNc(), false)
       .then(function (res) {
         if (res && res.staleList) {
+          showQuickSendSuccess(ticket);
           return;
         }
         if (res && res.isSuccess === false) {
           tickets.splice(ticketCountBefore);
+          const failMsg =
+            res && res.information ? String(res.information) : '叫號送出失敗';
+          setQuickSendValidationError(failMsg);
           return;
         }
+        showQuickSendSuccess(ticket);
         if (sourceKey === 'store') {
           bumpNumberFieldAfterSend(no);
         }
@@ -2079,17 +2199,14 @@
           return;
         }
         tickets.splice(ticketCountBefore);
-        if (transportUsesDevCommandNumbers()) {
-          const devMsg =
-            CmdErrors && CmdErrors.devCommandUserMessage
-              ? CmdErrors.devCommandUserMessage(e, {})
-              : '';
-          if (devMsg) {
-            presentDevCommandError(e, {});
-            return;
-          }
-        }
-        presentConnectError(e);
+        hideQuickSendSuccess();
+        const quickMsg =
+          CmdErrors && CmdErrors.devCommandUserMessage
+            ? CmdErrors.devCommandUserMessage(e, {})
+            : e && e.message
+              ? String(e.message)
+              : '叫號送出失敗';
+        setQuickSendValidationError(quickMsg);
       });
   }
 
@@ -2157,18 +2274,26 @@
   });
 
   document.getElementById('btn-clear-now').addEventListener('click', function () {
-    if (!requireConnect()) return;
-    sendCommand('clear_now', {})
-      .then(function () {
-        tickets = [];
-        showUserBanner('看板已清空');
-        pushLog({ summary: '清空看板 · clear_now', kind: 'command' });
-        return refreshBoardLists();
-      })
-      .catch(function (e) {
-        showUserBanner((e && e.message) || '清空看板失敗');
-      });
+    requestClearBoardWithConfirm();
   });
+  const btnClearMain = document.getElementById('btn-clear-board-main');
+  if (btnClearMain) {
+    btnClearMain.addEventListener('click', function () {
+      requestClearBoardWithConfirm();
+    });
+  }
+  const btnClearConfirm = document.getElementById('btn-clear-confirm');
+  if (btnClearConfirm) {
+    btnClearConfirm.addEventListener('click', function () {
+      runClearBoardConfirmed();
+    });
+  }
+  const btnClearCancel = document.getElementById('btn-clear-cancel');
+  if (btnClearCancel) {
+    btnClearCancel.addEventListener('click', function () {
+      closeClearBoardModal();
+    });
+  }
   document.getElementById('btn-reload').addEventListener('click', function () {
     if (!requireConnect()) return;
     sendCommand('reload', {}).catch(function () {});
@@ -2362,6 +2487,7 @@
     }
   }
   syncTransportRoute();
+  syncConnectionPill();
 
   setInterval(function () {
     window.__controllerTelemetry.storeAccessBlocked = storeAccessBlocked;
