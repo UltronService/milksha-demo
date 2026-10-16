@@ -6,7 +6,8 @@
 |------|-----|
 | 案例數 | 26（通過 19／不通過 7） |
 | Fallback 率（confidence&lt;0.85 或「看不出來」） | 73.1%（19/26） |
-| 整體 match 率（含 fallback 算未命中） | 26.9%（7/26） |
+| 整體 match 率（僅 confidence≥0.85 且非「看不出來」計 match） | 26.9%（7/26） |
+| jev 選項與 QA 標籤一致（不看 threshold） | 84.6%（22/26） |
 | 非 fallback 準確率 | **100%**（7/7） |
 | FAIL recall（QA 不通過被 jev 判不通過，非 fallback） | **100%**（7/7 中有 7 個 QA fail；非 fallback 子集內全對） |
 | Input tokens | 55,819 |
