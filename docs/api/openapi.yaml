@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.5"
+  version: "1.4.6"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -19,15 +19,21 @@ info:
 
     > ⚠️ 試點測試安全提醒  
     > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
-    > 文件範例以試點店號 `c030020` 為例；請勿對未開通叫號的真實門市發送測試 Request。
+    > 文件範例店號如 `c030020`（試點）、`a17`（測試店）等；請勿對未開通叫號的真實門市發送測試 Request。
 
-    1. 開啟試點看板
+    1. 開啟叫號看板
        請門市先開啟叫號螢幕（瀏覽器看板）。
+       **`account` 即您的門市店號**，與看板 URL 的 `store` 參數相同（例：`c030020`、`a17`）。
        看板網頁在瀏覽器開著且持續向雲端送出心跳時，POS 才會判定為在線；號碼送出後通常幾秒內會出現在畫面上。
-       看板約每 **15 秒**送出一筆心跳；關閉看板網頁後，若超過約 **120 秒**未再收到心跳，`posReceiver` 會回「目標叫號機尚未連線」（號碼不會上板）。
-       試點門市 `c030020` 看板網址：
+       看板 URL 模板：
 
-       `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
+       `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=<店號>`
+
+       例（測試店）：`https://ultronservice.github.io/milksha-demo/?mode=cloud&store=a17`
+
+       請將看板頁面保持在**前景**（勿最小化視窗、勿切換到其他分頁、勿讓電腦進入睡眠）；否則心跳可能停止，約 **120 秒**後系統會判定看板離線。
+       看板約每 **15 秒**送出一筆心跳；關閉看板網頁後，若超過約 **120 秒**未再收到心跳，`posReceiver` 會回「目標叫號機尚未連線」（`isSuccess: false`，號碼不會上板）。
+       開啟看板後請等待約 **30 秒**再送 Request，讓心跳先建立連線。
 
     2. 送第一筆 Request
        - 方法：`POST`
@@ -38,24 +44,32 @@ info:
        ```
 
        - Header：`Content-Type: application/json`
-       - `account` 填 `c030020`。
-       - `serviceSpecialData_Json.target` 填 `milkshac030020`（=`milksha` + 店號）。
+       - `account` 填您的店號（例 `c030020` 或測試店 `a17`）。
+       - `serviceSpecialData_Json.target` 填目標識別字串，**字尾須與店號一致**（見下方「target 規則」）。
        - 外送平台 `source_type` 須與規格完全一致；Uber Eats 為單數 `From_UberEat_Preparing` / `From_UberEat_OK`（不是 `UberEats`）。
        - 每次 Request 的 `number_content` 為看板完整名單（整批覆寫）；多來源混送範例見下方 OpenAPI Request 範例「試點多來源混送」。
        - 同號同來源若已在看板「請取餐」（`*_OK`），再送「準備中」（`*_Preparing`）時看板不退回，仍顯示請取餐；伺服器仍回「資料顯示成功」。
        - `timeStmp` 須為台北時間格式，且與伺服器時間相差在 10 分鐘內（見下方欄位說明）。
        - `serviceSpecialData_Json_Md5Hash` 與 `signature` 為選填，可省略或留空；伺服器不驗證。
 
-       curl 範例（`timeStmp` 請改成執行當下時間，或使用下方 Python 腳本自動產生）：
+       **target 規則**
+       - `target` 必須以 `account`（店號）為**字尾**，且與店號**大小寫完全一致**（suffix 比對）。
+       - **前綴任意**（例 `milksha`、`dotech`、`compose`）；亦可僅填店號本身（例 `a17`）。**不可為空字串**。
+       - 字尾與 `account` 不符時回「叫號資料格式錯誤」（非「找不到目標叫號機」）。
+       - 例：店號 `a17` → `milkshaa17`、`dotecha17`、`a17` 皆可；`milkshaA17` 不符（大小寫不同）。
+
+       curl 範例（請先改 `STORE`、`PREFIX`；`timeStmp` 請改成執行當下時間，或使用下方 Python 腳本自動產生）：
 
        ```bash
-       curl -sS -X POST 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver' -H 'Content-Type: application/json' -d '{"isEncrypt":false,"serviceSpecialData_Json":{"target":"milkshac030020","data":{"number_content":[{"source_type":"From_Store_Preparing","number":"1234"},{"source_type":"From_Store_OK","number":"5678"}],"newsTicker_content":[],"newsTickerSpeed":0}},"merchant_id":"Milksha","account":"c030020","timeStmp":"2026-10-14-15-30-00:0123"}'
+       STORE="a17"
+       PREFIX="milksha"
+       curl -sS -X POST 'https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver' -H 'Content-Type: application/json' -d "{\"isEncrypt\":false,\"serviceSpecialData_Json\":{\"target\":\"${PREFIX}${STORE}\",\"data\":{\"number_content\":[{\"source_type\":\"From_Store_Preparing\",\"number\":\"1234\"},{\"source_type\":\"From_Store_OK\",\"number\":\"5678\"}],\"newsTicker_content\":[],\"newsTickerSpeed\":0}},\"merchant_id\":\"Milksha\",\"account\":\"${STORE}\",\"timeStmp\":\"2026-10-14-15-30-00:0123\"}"
        ```
 
     3. 檢查 Response
        - HTTP 狀態碼永遠是 200。
        - 外層 `isOK: true` 表示 Request 已被伺服端受理並處理完畢（含驗證失敗）。
-       - `isOK` 不代表號碼已上板；是否顯示請看內層 `isSuccess`。
+       - **`isOK` 不代表號碼已上板**；請以內層 **`isSuccess`** 判斷是否顯示（`true` 才表示已上板）。
        - 將 `information`（或 `reslut.CallingNumberMasterResponse.result`）當 JSON 字串解析。
        - 內層 `isSuccess: true` → 號碼已顯示；`false` → 未顯示，原因在內層 `information` 文字。
 
@@ -67,8 +81,8 @@ info:
        |------------------|------|-----------|----------|
        | 資料顯示成功 | true | true | 正常；請目視看板是否更新。 |
        | 目標叫號機尚未連線 | true | false | 看板未開或未連線；請先開啟試點看板網址再重送。 |
-       | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔；請確認店號是否已開通叫號（試點為 `c030020`）。 |
-       | 叫號資料格式錯誤 | true | false | 整包 JSON、`source_type` 不合法、`timeStmp`，或 `target` 不等於 `milksha` + `account`（例打錯 target 亦回此文案，而非「找不到目標叫號機」）；**單筆 `number` 不合規不屬此項**（該筆捨棄，仍可能回「資料顯示成功」，見 `number` 欄）。 |
+       | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔；請確認店號是否已開通叫號。 |
+       | 叫號資料格式錯誤 | true | false | 整包 JSON、`source_type` 不合法、`timeStmp`、`target` 為空，或 `target` 字尾與 `account` 不符（大小寫須一致；打錯亦回此文案，而非「找不到目標叫號機」）；**單筆 `number` 不合規不屬此項**（該筆捨棄，仍可能回「資料顯示成功」，見 `number` 欄）。 |
        | timeStmp 格式錯誤 / timeStmp 已過期 | — | false | 使用台北時間格式；與伺服器時間差勿超過 10 分鐘。 |
 
     ## 一鍵試打（Python）
@@ -79,7 +93,7 @@ info:
 
     > ⚠️ 試點測試安全提醒  
     > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
-    > 文件範例以試點店號 `c030020` 為例；請勿對未開通叫號的真實門市發送測試 Request。
+    > 文件範例店號如 `c030020`（試點）、`a17`（測試店）等；請勿對未開通叫號的真實門市發送測試 Request。
 
     若您剛接這支 API，固定 `timeStmp` 的 curl 容易因過期而失敗。  
     下面是一支 Python 3.9+ 腳本（只用標準函式庫），會組好 JSON、自動產生 `timeStmp` 並 POST。
@@ -96,7 +110,7 @@ info:
 
     1. 在任意資料夾新增檔案 `pos_receiver_test.py`。
     2. 將下方整段 Python 程式複製貼上（不要只貼一半）。
-    3. 打開檔案最上方「只改這裡」區塊。試點測試請維持 `STORE = "c030020"`，勿改為其他門市店號。
+    3. 打開檔案最上方「只改這裡」區塊：將 `STORE` 改為您的店號（例 `c030020`、`a17`）；`TARGET_PREFIX` 可任意（預設 `milksha`），組出的 `target` 須以 `STORE` 為字尾。
     4. 開啟終端機，cd 進入 `pos_receiver_test.py` 所在資料夾。
     5. 執行：
        - macOS / Linux：`python3 pos_receiver_test.py`
@@ -114,7 +128,8 @@ info:
     from typing import Any, Dict, Optional, Tuple
 
     # ========== 只改這裡 ==========
-    STORE = "c030020"  # 試點店號（account）；請勿對其他真實門市發送測試資料
+    STORE = "a17"  # 您的店號（account）；例 c030020、a17
+    TARGET_PREFIX = "milksha"  # 前綴可任意；target = TARGET_PREFIX + STORE，須以 STORE 為字尾（不可留空 target）
     MERCHANT_ID = "Milksha"
     # 以下為測試環境 URL，非正式上線；正式 URL 待測試通過後由迷客夏另行提供。
     POS_RECEIVER_URL = (
@@ -139,12 +154,12 @@ info:
         )
 
 
-    def build_payload(store: str, time_stmp: str) -> Dict[str, Any]:
-        # target = "milksha" + 店號；若 target 與 account 對不上，API 回「叫號資料格式錯誤」（非「找不到目標叫號機」）。
+    def build_payload(store: str, target_prefix: str, time_stmp: str) -> Dict[str, Any]:
+        # target 須以店號為字尾；字尾與 account 不符時回「叫號資料格式錯誤」（非「找不到目標叫號機」）。
         return {
             "isEncrypt": False,
             "serviceSpecialData_Json": {
-                "target": "milksha" + store,
+                "target": target_prefix + store,
                 "data": {
                     "number_content": [
                         {"source_type": "From_Store_Preparing", "number": "1234"},
@@ -177,12 +192,12 @@ info:
 
     def main() -> int:
         print("=== posReceiver 一鍵試打 ===")
-        print(f"[1/3] 店號 account / target 前綴 milksha → {STORE}")
+        print(f"[1/3] 店號 account → {STORE}；target 前綴 → {TARGET_PREFIX}")
 
         time_stmp = format_time_stmp()
         print(f"[2/3] timeStmp（台北時間，10 分鐘內有效）→ {time_stmp}")
 
-        payload = build_payload(STORE, time_stmp)
+        payload = build_payload(STORE, TARGET_PREFIX, time_stmp)
         body_text = json.dumps(payload, ensure_ascii=False)
         print("[2/3] Request JSON →")
         print(body_text)
@@ -228,14 +243,14 @@ info:
 
     ### 成功時你會看到（範例）
 
-    內層 `information` 可能是「資料顯示成功」或「目標叫號機尚未連線」（看板沒開時）；兩者都代表 Request 已被伺服器接受。
+    是否上板請看內層 **`isSuccess`**：`true` 且 information 為「資料顯示成功」表示已上板；`false` 且為「目標叫號機尚未連線」表示**未上板**（看板未連線）。
 
     ```
     === posReceiver 一鍵試打 ===
-    [1/3] 店號 account / target 前綴 milksha → c030020
+    [1/3] 店號 account → a17；target 前綴 → milksha
     [2/3] timeStmp（台北時間，10 分鐘內有效）→ 2026-10-15-10-06-07:0365
     [2/3] Request JSON →
-    {"isEncrypt": false, "serviceSpecialData_Json": {"target": "milkshac030020", ...}, ...}
+    {"isEncrypt": false, "serviceSpecialData_Json": {"target": "milkshaa17", ...}, ...}
     [3/3] POST https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
     HTTP 狀態: 200
     外層 isOK → True
@@ -243,8 +258,8 @@ info:
     內層 information → 資料顯示成功
     ```
 
-    若為「資料顯示成功」，可到試點看板網址目視確認號碼是否更新：  
-    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
+    若內層 `isSuccess: true`（「資料顯示成功」），可到看板 URL 目視確認號碼是否更新：  
+    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=<店號>`（例 `store=a17`）
 
     ### 出錯怎麼辦
 
@@ -255,14 +270,14 @@ info:
     |----------|----------|--------|
     | timeStmp 格式錯誤 | 時間字串不符合 `YYYY-MM-DD-HH-mm-ss:XXXX`。 | 用腳本自動產生；勿複製舊範例時間。 |
     | timeStmp 已過期 | 時間與伺服器相差超過 10 分鐘。 | 重新執行腳本產生新時間。 |
-    | 找不到目標叫號機 | `account` 在系統中不存在或未建檔。 | 確認試點 `STORE` 為 `c030020` 且店號已開通叫號。 |
-    | 目標叫號機尚未連線 | 看板網頁未開或未連上雲端。 | 先開試點看板 URL 再重跑；不影響「Request 已受理」。 |
-    | 叫號資料格式錯誤 | 整包 JSON、`source_type` 不合法、`timeStmp`，或 `target` 不等於 `milksha` + `account`。 | 確認 `target` 為 `milkshac030020`；對照 OpenAPI 範例。**單筆號碼不合規**通常仍回「資料顯示成功」（該筆不上板），見 `number` 欄。 |
+    | 找不到目標叫號機 | `account` 在系統中不存在或未建檔。 | 確認 `STORE` 店號已開通叫號。 |
+    | 目標叫號機尚未連線 | 看板未開、未連線，或頁面不在前景導致心跳停止。 | 開啟看板 URL、保持頁面在前景、等待約 30 秒後重跑；內層 `isSuccess` 為 `false`，號碼未上板。 |
+    | 叫號資料格式錯誤 | 整包 JSON、`source_type` 不合法、`timeStmp`、`target` 為空，或 `target` 字尾與 `account` 不符。 | 確認 `target` 以 `STORE` 為字尾（例 `{TARGET_PREFIX}{STORE}` 或僅 `STORE`）；對照 OpenAPI 範例。**單筆號碼不合規**通常仍回「資料顯示成功」（該筆不上板），見 `number` 欄。 |
     | 終端機：`python3` / `py` 找不到 | 未安裝 Python 或未加入 PATH。 | 安裝 Python 3.9+ 並重開終端機。 |
     | `URLError` / SSL / 連線逾時 | 公司防火牆、無網路、DNS 問題。 | 換網路或請 IT 放行 `*.cloudfunctions.net`。 |
 
     - 跑法：`python3 pos_receiver_test.py`（Windows 可用 `py pos_receiver_test.py`）。
-    - 成功：外層 `isOK: true`，且內層 `isSuccess: true` 並顯示「資料顯示成功」（或 `false` +「目標叫號機尚未連線」亦表示已送達伺服器）；再到看板 URL 目視確認。
+    - 成功上板：外層 `isOK: true`，且內層 **`isSuccess: true`** 並顯示「資料顯示成功」；再到看板 URL 目視確認。
     - 整批覆寫：每次送出的 `number_content` 就是看板上的完整名單；`number_content: []` 會清空看板。
 
     ---
@@ -273,13 +288,13 @@ info:
     未出現在本批的號碼會從看板移除。  
     `number_content: []` 表示清空。
 
-    試點門市：`account` = `c030020`，`target` = `milkshac030020`。
+    店號與 target：`account` 為門市店號；`target` 須以 `account` 為字尾（前綴任意，例 `milkshaa17`、`dotecha17`、`a17`）。
 
     選填欄位：`serviceSpecialData_Json_Md5Hash` 與 `signature` 可省略或留空；伺服器不驗證。
 
     ## 訂單來源與 `source_type` 前綴
 
-    看板依 `source_type` **完整字串**判斷來源與狀態（`*_Preparing`＝準備中，`*_OK`＝可取餐）。下表為五種來源在 API 與看板上的對照與號碼格式（v1.4.5）：
+    看板依 `source_type` **完整字串**判斷來源與狀態（`*_Preparing`＝準備中，`*_OK`＝可取餐）。下表為五種來源在 API 與看板上的對照與號碼格式（v1.4.6）：
 
     | 來源名稱（看板） | `source_type` 前綴 | 號碼格式（`number` 字串） | 看板來源圖示 |
     |------------------|--------------------|---------------------------|--------------|
@@ -292,6 +307,12 @@ info:
     圖示僅提供你訂、Uber Eats、foodpanda 三種；門市與 Udd 僅顯示號碼，不顯示平台圖示（設計如此）。
 
     ## 變更紀錄
+
+    **v1.4.6**
+    - `account` 說明為門市店號；看板 URL 改為 `store=<店號>` 模板（例 `a17`）。
+    - `target` 規則：`target` 須以 `account` 為字尾（大小寫一致）；前綴任意、不可為空；不符回「叫號資料格式錯誤」。
+    - 釐清「目標叫號機尚未連線」為 `isSuccess: false`（未上板）；curl／Python 範例改為可替換店號（預設前綴 `milksha`）。
+    - 補上看板須保持前景、開板後約 30 秒再送號、心跳離線約 120 秒等操作提醒。
 
     **v1.4.5**
     - 補上五來源名稱、`source_type` 前綴與號碼格式對照表；說明你訂為 `From_milksha_point_`。
@@ -326,9 +347,9 @@ paths:
       summary: 推送整批叫號資料到指定門市看板
       description: |
         - HTTP 狀態碼一律為 200（含驗證失敗）。
-        - `isOK: true`：Request 已處理完畢；`isSuccess`（內層 JSON）才表示號碼是否顯示。
-        - 「找不到目標叫號機」「目標叫號機尚未連線」「叫號資料格式錯誤」皆為 `isOK: true` + `isSuccess: false`。
-        - `target` 必須等於 `'milksha' + account`（試點：`milkshac030020`）。
+        - `isOK: true`：Request 已處理完畢；內層 **`isSuccess`** 才表示號碼是否顯示。
+        - 「找不到目標叫號機」「目標叫號機尚未連線」「叫號資料格式錯誤」皆為 `isOK: true` + `isSuccess: false`（尚未連線時號碼不會上板）。
+        - `target` 須以 `account` 為字尾（大小寫須一致）；前綴任意、不可為空（例店號 `a17` → `milkshaa17`）。
         - `serviceSpecialData_Json_Md5Hash` 與 `signature` 為選填，可省略或留空；伺服器不驗證。
       requestBody:
         required: true
@@ -480,8 +501,10 @@ components:
           example: Milksha
         account:
           type: string
-          description: 門市帳號（店號）。試點為 `c030020`。
-          example: c030020
+          description: |
+            門市帳號（店號），與看板 URL 的 `store` 相同。例 `c030020`（試點）、`a17`（測試店）。
+            `serviceSpecialData_Json.target` 須以本欄值為字尾（大小寫須完全一致）。
+          example: a17
         timeStmp:
           type: string
           description: |
@@ -509,8 +532,11 @@ components:
       properties:
         target:
           type: string
-          description: 目標叫號機；必須等於 `milksha` + `account`。
-          example: milkshac030020
+          description: |
+            目標叫號機；必須以 `account`（店號）為**字尾**，且與店號**大小寫完全一致**。
+            前綴任意（例 `milksha`、`dotech`、`compose`），亦可僅為店號本身；**不可為空字串**。
+            字尾與 `account` 不符時回「叫號資料格式錯誤」。
+          example: milkshaa17
         data:
           type: object
           required:
@@ -634,9 +660,9 @@ x-response-messages:
     | 資料顯示成功 | true | true | 看板在線且 Request 已受理；合規號碼已更新顯示（不合規單筆號碼已捨棄不上板，仍回此訊息）。 |
     | 目標叫號機尚未連線 | true | false | 驗證通過，看板未連線；不更新畫面。 |
     | 找不到目標叫號機 | true | false | `account` 在系統中不存在或未建檔。 |
-    | 叫號資料格式錯誤 | true | false | 整包 Request 結構或必填欄位錯誤、`source_type` 不合法、timeStmp 等整包驗證失敗，或 `target` 不等於 `milksha` + `account`（**單筆 `number` 不合規不屬此項**，見 `number` 欄）。 |
+    | 叫號資料格式錯誤 | true | false | 整包 Request 結構或必填欄位錯誤、`source_type` 不合法、timeStmp 等整包驗證失敗，`target` 為空，或 `target` 字尾與 `account` 不符（**單筆 `number` 不合規不屬此項**，見 `number` 欄）。 |
     | timeStmp 格式錯誤 | — | false | timeStmp 格式不符。 |
     | timeStmp 已過期 | — | false | 與伺服器時間差過大。 |
     | 入口 A 未啟用 | — | false | 接收端暫停此入口。 |
 
-    判讀順序：HTTP 200 → 外層 isOK（已處理）→ 解析 JSON 字串 → 內層 isSuccess（是否上板）+ information。
+    判讀順序：HTTP 200 → 外層 isOK（已處理）→ 解析 JSON 字串 → **內層 isSuccess（是否上板，以此為準）** + information。
