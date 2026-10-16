@@ -423,6 +423,72 @@ test('no 30-minute auto stop: still running after 2h fake clock', function () {
   assert.equal(Sim.MAX_RUN_MS, undefined);
 });
 
+test('host onPageHide does not stop continuous simulation', function () {
+  const { Host } = loadSimulation();
+  let now = 5000;
+  const tickets = [];
+  const host = Host.createStoreSimulationHost({
+    now: function () {
+      return now;
+    },
+    rng: function () {
+      return 0.42;
+    },
+    storeId: function () {
+      return 'zz-qa-store-a';
+    },
+    projectId: function () {
+      return 'milksha-qms-dev';
+    },
+    getTickets: function () {
+      return tickets.slice();
+    },
+    setTickets: function (list) {
+      tickets.length = 0;
+      list.forEach(function (t) {
+        tickets.push(t);
+      });
+    },
+    sendBoard: function () {
+      return Promise.resolve({ isSuccess: true });
+    },
+    showBanner: function () {},
+    onStatus: function () {},
+  });
+  host.start('normal');
+  assert.equal(host.isRunning(), true);
+  host.onPageHide();
+  assert.equal(host.isRunning(), true, 'page hide must not auto-stop store simulation');
+  host.dispose();
+});
+
+test('10m fake clock yields non-store sources on simulated ticket list', function () {
+  const { Sim } = loadSimulation();
+  const MB = loadMilkshaBoard();
+  const rng = mulberry32(20261016);
+  const tenMin = 10 * 60 * 1000;
+  const state = Sim.createSimulationState();
+  Sim.startOrSwitchSimulation(state, 'peak', 0, [], rng);
+  let now = 0;
+  const sourceCounts = { store: 0, point: 0, fp: 0, uber: 0, udd: 0 };
+  while (now < tenMin) {
+    Sim.reconcileSimulation(state, now, rng);
+    const wake = Sim.nextWakeAtMs(state, now);
+    if (wake == null) {
+      break;
+    }
+    now = Math.min(tenMin, wake);
+  }
+  (state.records || []).forEach(function (rec) {
+    const sk = rec.sourceKey || 'store';
+    sourceCounts[sk] = (sourceCounts[sk] || 0) + 1;
+    assert.equal(MB.normalizeBoardDisplayNumber(rec.no, sk), rec.no);
+  });
+  assert.ok(sourceCounts.store > 0);
+  assert.ok(sourceCounts.udd > 0, 'udd should appear within 10m peak simulation');
+  assert.ok(sourceCounts.uber > 0, 'uber should appear within 10m peak simulation');
+});
+
 test('store-simulation module has no store blocklist or max-run constants', function () {
   const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
   const host = fs.readFileSync(path.join(ROOT, 'controller/store-simulation-host.js'), 'utf8');

@@ -676,10 +676,18 @@
     }
     const nextStr = String(next);
     document.getElementById('fld-no').value = nextStr;
-    const quickNo = document.getElementById('fld-quick-no');
-    if (quickNo) {
-      quickNo.value = nextStr;
+  }
+
+  function readQuickSendStatus() {
+    const sel = document.getElementById('fld-quick-status');
+    if (sel && (sel.value === 'preparing' || sel.value === 'ready')) {
+      return sel.value;
     }
+    const legacy = document.getElementById('fld-status');
+    if (legacy && (legacy.value === 'preparing' || legacy.value === 'ready')) {
+      return legacy.value;
+    }
+    return 'ready';
   }
 
   function readQuickSendSourceKey() {
@@ -1190,11 +1198,15 @@
     return storeSimulationHost && storeSimulationHost.isFrozen && storeSimulationHost.isFrozen();
   }
 
+  function simulationRunningKeepsLocalTickets() {
+    return storeSimulationHost && storeSimulationHost.isRunning && storeSimulationHost.isRunning();
+  }
+
   async function refreshBoardLists() {
     if (!transport) return;
     const doc = await transport.readBoard();
     if (doc && doc.data) {
-      if (simulationFrozenKeepsLocalTickets()) {
+      if (simulationFrozenKeepsLocalTickets() || simulationRunningKeepsLocalTickets()) {
         lastBoardSeq = Number(doc.data.seq) || lastBoardSeq;
         window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
         renderTicketLists({ tickets: tickets });
@@ -2036,7 +2048,7 @@
     }
     const ticket = {
       no: no,
-      status: 'ready',
+      status: readQuickSendStatus(),
       sourceKey: sourceKey,
       updatedAt: new Date().toISOString(),
     };
@@ -2095,12 +2107,6 @@
     pushLog({ summary: '持續模擬門市 · 已停止' });
   });
 
-  window.addEventListener('pagehide', function () {
-    stopStoreSimulation('page_hide');
-  });
-  window.addEventListener('beforeunload', function () {
-    stopStoreSimulation('page_hide');
-  });
   document.addEventListener('visibilitychange', function () {
     if (storeSimulationHost) {
       storeSimulationHost.onVisibilityChange();
