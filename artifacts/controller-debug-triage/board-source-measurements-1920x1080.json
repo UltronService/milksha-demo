@@ -1,0 +1,55 @@
+{
+  "viewport": "1920x1080",
+  "measurements": {
+    "udd": {
+      "itemId": "udd:5678",
+      "fontFamily": "Arial, Arimo, sans-serif",
+      "fontWeight": "400",
+      "fontSizePx": 70,
+      "iconWidthPx": null,
+      "iconHeightPx": null,
+      "iconBoxWidthPx": null,
+      "gapNumberToIconPx": null
+    },
+    "uber": {
+      "itemId": "uber:A1B2C",
+      "fontFamily": "Arial, Arimo, sans-serif",
+      "fontWeight": "400",
+      "fontSizePx": 70,
+      "iconWidthPx": 54,
+      "iconHeightPx": 54,
+      "iconBoxWidthPx": 54,
+      "gapNumberToIconPx": -297
+    },
+    "fp": {
+      "itemId": "fp:#6405",
+      "fontFamily": "Arial, Arimo, sans-serif",
+      "fontWeight": "400",
+      "fontSizePx": 70,
+      "iconWidthPx": 54,
+      "iconHeightPx": 54,
+      "iconBoxWidthPx": 54,
+      "gapNumberToIconPx": -270
+    },
+    "point": {
+      "itemId": "point:091",
+      "fontFamily": "Arial, Arimo, sans-serif",
+      "fontWeight": "400",
+      "fontSizePx": 70,
+      "iconWidthPx": 54,
+      "iconHeightPx": 54,
+      "iconBoxWidthPx": 54,
+      "gapNumberToIconPx": -189
+    },
+    "store": {
+      "itemId": "store:1234",
+      "fontFamily": "Arial, Arimo, sans-serif",
+      "fontWeight": "400",
+      "fontSizePx": 70,
+      "iconWidthPx": null,
+      "iconHeightPx": null,
+      "iconBoxWidthPx": null,
+      "gapNumberToIconPx": null
+    }
+  }
+}

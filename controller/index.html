@@ -55,6 +55,12 @@
             <label class="quick-send-label">來源
               <select id="fld-quick-source" data-testid="fld-quick-source"></select>
             </label>
+            <label class="quick-send-label">狀態
+              <select id="fld-quick-status" data-testid="fld-quick-status">
+                <option value="preparing">準備中</option>
+                <option value="ready" selected>請取餐</option>
+              </select>
+            </label>
             <label class="quick-send-label">號碼
               <input id="fld-quick-no" value="2001" inputmode="text" autocomplete="off" data-testid="fld-quick-no" />
             </label>
@@ -234,6 +240,9 @@
           <button type="button" id="btn-slow" data-testid="btn-slow" data-requires-connect="1" data-dev-command="1">模擬變慢</button>
           <button type="button" id="btn-cable-pull" data-testid="btn-cable-pull" data-requires-connect="1">拔線測試（暫停 API）</button>
           <button type="button" id="btn-cable-restore" data-testid="btn-cable-restore" data-requires-connect="1">接回線路</button>
+          <p class="hint zone-hint" data-testid="net-sim-hint">
+            「模擬斷網」送 devCommand 給<strong>看板</strong>（看板停止同步並顯示離線）。「拔線測試」只暫停<strong>本控制端</strong>的 API，看板不受影響。看板端可用網址參數 <code>?boardSimOffline=1</code>（開發站）模擬看板斷線。
+          </p>
         </div>
       </section>
 

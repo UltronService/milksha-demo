@@ -202,7 +202,7 @@
     }
 
     function onPageHide() {
-      stop('page_hide');
+      /* Continuous simulation must not auto-stop on tab navigation or bfcache. */
     }
 
     function onVisibilityChange() {

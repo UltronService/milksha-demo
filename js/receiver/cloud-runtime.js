@@ -275,7 +275,7 @@
       const uploadHalted = isUploadHalted();
       let offline = false;
       if (simulateOffline) {
-        offline = false;
+        offline = true;
       } else if (uploadHalted) {
         offline = false;
       } else if (offlineOverride === true) {
@@ -1230,10 +1230,12 @@
       if (type === 'simulate_offline') {
         simulateOffline = true;
         setSimulatedOfflineFlag(true, demoApi);
+        syncCloudGuestStatusUi(true);
       } else if (type === 'restore') {
         simulateOffline = false;
         networkDelayMs = 0;
         setSimulatedOfflineFlag(false, demoApi);
+        syncCloudGuestStatusUi(false);
         suppressRingOnNextApply = true;
         try {
           const boardSnap = await transport.readBoard();
@@ -1654,6 +1656,17 @@
       isSimulatedOffline: function () {
         return simulateOffline;
       },
+      enterSimulateOffline: function () {
+        simulateOffline = true;
+        setSimulatedOfflineFlag(true, demoApi);
+        syncCloudGuestStatusUi(true);
+      },
+      exitSimulateOffline: function () {
+        simulateOffline = false;
+        networkDelayMs = 0;
+        setSimulatedOfflineFlag(false, demoApi);
+        syncCloudGuestStatusUi(false);
+      },
       sendHeartbeat: function () {
         return sendHeartbeat();
       },
@@ -1687,6 +1700,17 @@
       };
       api.waitBoardRecoveryForTests = function () {
         return boardRecoveryInFlight || Promise.resolve();
+      };
+      api.runDevCommandForTests = async function (cmd) {
+        const row = cmd && typeof cmd === 'object' ? cmd : {};
+        await handleCommand(
+          {
+            id: row.id || 'test-cmd',
+            type: row.type || '',
+            params: row.params || {},
+          },
+          row.deviceData || null,
+        );
       };
     }
     return api;

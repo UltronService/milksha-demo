@@ -610,6 +610,13 @@
         },
       });
       cloud.start();
+      if (
+        devHooks &&
+        (params.get('boardSimOffline') === '1' || params.get('boardSimOffline') === 'true') &&
+        typeof cloud.enterSimulateOffline === 'function'
+      ) {
+        cloud.enterSimulateOffline();
+      }
       root.receiveBoard = cloud.receiveBoard;
       root.receiverCloud = cloud;
       if (mode === 'local' && homeBoard) {
