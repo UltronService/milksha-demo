@@ -47,7 +47,7 @@ npx --yes serve -l 4173 .
 | 角色 | 說明 |
 |------|------|
 | 控制端 | `/controller/` → 連線方式選 **雲端模式** → 填雲端設定與存取碼 → 連線 |
-| 看板（簡易網址） | `/receiver-demo/?store=s120030&mode=cloud` |
+| 看板（簡易網址） | `/?store=s120030`（亦可用舊格式 `?mode=cloud&store=s120030`） |
 | 看板（首次設定） | 控制端按 **產生看板連結**，機上盒掃 QR 或開設定連結 |
 
 店長試用步驟見 [docs/OWNER-TRIAL.md](docs/OWNER-TRIAL.md)。  

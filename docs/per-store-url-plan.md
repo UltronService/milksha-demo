@@ -34,7 +34,7 @@
 
 ### 控制端
 
-- 產生連結／QR：`https://…/milksha-demo/?store=<店號>&mode=cloud`（device 預設 stb-01 可省略）。
+- 產生連結／QR：`https://…/milksha-demo/?store=<店號>`（有 `store` 即雲端模式；舊格式 `&mode=cloud` 仍可用；device 預設 stb-01 可省略）。
 
 ### 假雲端（本 repo）
 

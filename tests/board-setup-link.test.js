@@ -14,6 +14,7 @@ test('board bootstrap does not read access code from query string', function () 
 
 test('home board index wires cloud sync scripts', function () {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.match(html, /js\/receiver\/board-boot-mode\.js\?v=/);
   assert.match(html, /js\/receiver\/cloud-boot\.js\?v=/);
   assert.match(html, /js\/receiver\/cloud-runtime\.js\?v=/);
   assert.match(html, /js\/transport\/local-cloud-shim\.js\?v=/);

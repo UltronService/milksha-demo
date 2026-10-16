@@ -27,7 +27,9 @@ info:
        看板約每 **15 秒**送出一筆心跳；關閉看板網頁後，若超過約 **120 秒**未再收到心跳，`posReceiver` 會回「目標叫號機尚未連線」（號碼不會上板）。
        試點門市 `c030020` 看板網址：
 
-       `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
+       `https://ultronservice.github.io/milksha-demo/?store=c030020`
+
+       （舊格式 `?mode=cloud&store=c030020` 仍可使用。）
 
     2. 送第一筆 Request
        - 方法：`POST`
@@ -244,7 +246,7 @@ info:
     ```
 
     若為「資料顯示成功」，可到試點看板網址目視確認號碼是否更新：  
-    `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
+    `https://ultronservice.github.io/milksha-demo/?store=c030020`（舊格式 `?mode=cloud&store=c030020` 仍可使用）
 
     ### 出錯怎麼辦
 
