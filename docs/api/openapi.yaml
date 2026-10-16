@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.3"
+  version: "1.4.4"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -276,6 +276,18 @@ info:
 
     選填欄位：`serviceSpecialData_Json_Md5Hash` 與 `signature` 可省略或留空；伺服器不驗證。
 
+    ## 變更紀錄
+
+    **v1.4.4**
+    - **Udd 號碼規則**：改與門市相同，為恰好 4 位數字（`0-9`）；例 `1502`。v1.4.3 文件曾列為同 Uber Eats 之 5 位十六進位，已不再適用。
+    - 不合規 Udd 單筆仍**捨棄、不上板**；同一次 Request 內其餘合規號碼照常顯示，回應仍為「資料顯示成功」。
+
+    **v1.4.3**
+    - 釐清五來源號碼格式；單筆 `number` 不合規時捨棄該筆，整包仍可能回「資料顯示成功」。
+
+    **v1.4.2**
+    - 一鍵試打（Python）段落錯誤對照表用語修正。
+
     [下載 OpenAPI 規格（openapi.yaml）](./openapi.yaml)
 
 servers:
@@ -340,6 +352,8 @@ paths:
                           number: "#6407"
                         - source_type: From_milksha_point_Preparing
                           number: "091"
+                        - source_type: From_Udd_OK
+                          number: "1502"
                       newsTicker_content: []
                       newsTickerSpeed: 0
                   merchant_id: Milksha
@@ -521,13 +535,13 @@ components:
           description: |
             顯示號碼，必須為 JSON 字串（不可送數字型別）。
 
-            五來源號碼規則（v1.4.3）：
+            五來源號碼規則（v1.4.4）：
             - 門市：恰好 4 位數字（例 `1488`）。
             - 迷點：恰好 3 位數字；保留前導 0（例 `007`、`091`）。
             - Uber Eats：恰好 5 位十六進位字元 `0-9A-F`；儲存與顯示為大寫（例 `BFBEF`；送 `bfbef` 亦視為 `BFBEF`）。
             - foodpanda：必須為 `#` 加恰好 4 位數字；`#` 保留顯示（例 `#6405`；不可只送 `6405`）。
-            - Udd：同 Uber Eats（恰好 5 位十六進位大寫）。
-            - 同一 `source_type` + 同一正規化號碼只保留一筆（例同來源重送 `DDDDD` 與 `ddddd` 視為重複）；不同來源可同號並存。
+            - Udd：同門市（恰好 4 位數字 `0-9`；例 `1502`）。舊版 5 位十六進位或英數格式不再接受。
+            - 同一 `source_type` + 同一正規化號碼只保留一筆（Uber Eats 例：同來源重送 `BFBEF` 與 `bfbef` 視為重複）；不同來源可同號並存。
 
             **不合規單筆號碼：**  
             `number_content` 中某一筆 `number` 不符上列規則時，**該筆捨棄、不上板**；同一次 Request 內其餘合規號碼仍照常顯示。  
