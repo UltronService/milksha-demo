@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.4"
+  version: "1.4.5"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -18,12 +18,13 @@ info:
     > 待測試沒有問題後，會再提供正式環境的 URL。
 
     > ⚠️ 試點測試安全提醒  
-    > 送 Request 前，請先確認試點看板目前沒有正在使用的營業內容。  
-    > 測試請僅使用店號 `c030020`；請勿對其他真實門市發送測試 Request。
+    > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
+    > 文件範例以試點店號 `c030020` 為例；請勿對未開通叫號的真實門市發送測試 Request。
 
     1. 開啟試點看板
        請門市先開啟叫號螢幕（瀏覽器看板）。
-       看板網頁在瀏覽器開著即視為在線；號碼送出後通常幾秒內會出現在畫面上。
+       看板網頁在瀏覽器開著且持續向雲端送出心跳時，POS 才會判定為在線；號碼送出後通常幾秒內會出現在畫面上。
+       看板約每 **15 秒**送出一筆心跳；關閉看板網頁後，若超過約 **120 秒**未再收到心跳，`posReceiver` 會回「目標叫號機尚未連線」（號碼不會上板）。
        試點門市 `c030020` 看板網址：
 
        `https://ultronservice.github.io/milksha-demo/?mode=cloud&store=c030020`
@@ -77,8 +78,8 @@ info:
     > 待測試沒有問題後，會再提供正式環境的 URL。
 
     > ⚠️ 試點測試安全提醒  
-    > 送 Request 前，請先確認試點看板目前沒有正在使用的營業內容。  
-    > 測試請僅使用店號 `c030020`；請勿對其他真實門市發送測試 Request。
+    > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
+    > 文件範例以試點店號 `c030020` 為例；請勿對未開通叫號的真實門市發送測試 Request。
 
     若您剛接這支 API，固定 `timeStmp` 的 curl 容易因過期而失敗。  
     下面是一支 Python 3.9+ 腳本（只用標準函式庫），會組好 JSON、自動產生 `timeStmp` 並 POST。
@@ -276,7 +277,27 @@ info:
 
     選填欄位：`serviceSpecialData_Json_Md5Hash` 與 `signature` 可省略或留空；伺服器不驗證。
 
+    ## 訂單來源與 `source_type` 前綴
+
+    看板依 `source_type` **完整字串**判斷來源與狀態（`*_Preparing`＝準備中，`*_OK`＝可取餐）。下表為五種來源在 API 與看板上的對照與號碼格式（v1.4.5）：
+
+    | 來源名稱（看板） | `source_type` 前綴 | 號碼格式（`number` 字串） | 看板來源圖示 |
+    |------------------|--------------------|---------------------------|--------------|
+    | 門市 | `From_Store_` | 恰好 4 位數字（例 `1488`） | 無 |
+    | 你訂 | `From_milksha_point_` | 恰好 3 位數字；保留前導 0（例 `091`） | 有（你訂） |
+    | Uber Eats | `From_UberEat_` | 恰好 5 位十六進位 `0-9A-F`；顯示為大寫（例 `C7458`） | 有 |
+    | foodpanda | `From_FoodPanda_` | `#` 加恰好 4 位數字（例 `#6407`） | 有 |
+    | Udd | `From_Udd_` | 同門市：恰好 4 位數字（例 `1502`） | 無 |
+
+    圖示僅提供你訂、Uber Eats、foodpanda 三種；門市與 Udd 僅顯示號碼，不顯示平台圖示（設計如此）。
+
     ## 變更紀錄
+
+    **v1.4.5**
+    - 補上五來源名稱、`source_type` 前綴與號碼格式對照表；說明你訂為 `From_milksha_point_`。
+    - `timeStmp`：未來時間容忍度改為與過期相同，皆為與伺服器相差 **10 分鐘（600 秒）** 內（實測 `milksha-qms-dev`）。
+    - 補上看板心跳（約 15 秒）與 `posReceiver` 離線判定（約 120 秒無心跳）說明。
+    - 試點安全提醒改為共用測試門市之通用文案。
 
     **v1.4.4**
     - **Udd 號碼規則**：改與門市相同，為恰好 4 位數字（`0-9`）；例 `1502`。v1.4.3 文件曾列為同 Uber Eats 之 5 位十六進位，已不再適用。
@@ -466,7 +487,7 @@ components:
           description: |
             台北時間戳：`YYYY-MM-DD-HH-mm-ss:XXXX`。
             冒號後為毫秒，左側補 0 至 4 位（0–999 有效；1–4 位數字，值 0–9999，>999 時毫秒取 mod 1000）。
-            與伺服器時間差超過 10 分鐘拒絕；允許約 60 秒未來時間。
+            與伺服器時間相差須在 **10 分鐘（600 秒）** 內；過舊或過新（含未來時間）超出此範圍時拒絕（常見內層訊息為「叫號資料格式錯誤」或「timeStmp 已過期」）。
           example: "2026-10-14-15-30-00:0123"
         serviceSpecialData_Json_Md5Hash:
           type: string
@@ -521,14 +542,15 @@ components:
         source_type:
           type: string
           description: |
-            訂單來源＋狀態，完整字串比對。共 10 種：
-            `From_Store_Preparing` / `From_Store_OK`、
-            `From_milksha_point_Preparing` / `From_milksha_point_OK`、
-            `From_FoodPanda_Preparing` / `From_FoodPanda_OK`、
-            `From_UberEat_Preparing` / `From_UberEat_OK`、
-            `From_Udd_Preparing` / `From_Udd_OK`。
+            訂單來源＋狀態，完整字串比對。共 10 種（五來源 × 準備中／可取餐）：
+            `From_Store_Preparing` / `From_Store_OK`（門市）、
+            `From_milksha_point_Preparing` / `From_milksha_point_OK`（**你訂**）、
+            `From_FoodPanda_Preparing` / `From_FoodPanda_OK`（foodpanda）、
+            `From_UberEat_Preparing` / `From_UberEat_OK`（Uber Eats）、
+            `From_Udd_Preparing` / `From_Udd_OK`（Udd）。
             `*_Preparing` → 準備中；`*_OK` → 可取餐（請取餐）。
             同號同來源已為 `*_OK` 時，再送 `*_Preparing` 看板維持請取餐，不回退。
+            來源名稱、前綴與號碼格式見文件開頭「訂單來源與 source_type 前綴」表。
           example: From_Store_OK
         number:
           type: string
@@ -541,6 +563,7 @@ components:
             - Uber Eats：恰好 5 位十六進位字元 `0-9A-F`；儲存與顯示為大寫（例 `BFBEF`；送 `bfbef` 亦視為 `BFBEF`）。
             - foodpanda：必須為 `#` 加恰好 4 位數字；`#` 保留顯示（例 `#6405`；不可只送 `6405`）。
             - Udd：同門市（恰好 4 位數字 `0-9`；例 `1502`）。舊版 5 位十六進位或英數格式不再接受。
+            - 看板圖示：僅你訂、Uber Eats、foodpanda 顯示平台圖示；門市與 Udd 不顯示圖示。
             - 同一 `source_type` + 同一正規化號碼只保留一筆（Uber Eats 例：同來源重送 `BFBEF` 與 `bfbef` 視為重複）；不同來源可同號並存。
 
             **不合規單筆號碼：**  

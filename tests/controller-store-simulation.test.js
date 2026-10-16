@@ -91,6 +91,21 @@ test('allocateNumberForSource: ~1000 draws per non-store source match cloud rule
   }
 });
 
+test('regression: legacy Udd alnum simulator numbers are rejected before push', function () {
+  const { Sim } = loadSimulation();
+  const legacySamples = ['U0K18', '29U9KT', 'BFBEF', 'AB12'];
+  legacySamples.forEach(function (badNo) {
+    const check = Sim.validateTicketsForBoardPush([
+      { no: badNo, status: 'preparing', sourceKey: 'udd' },
+    ]);
+    assert.equal(check.ok, false, 'udd ticket must not use legacy alnum: ' + badNo);
+    assert.equal(check.reason, 'invalid-number');
+  });
+  const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
+  assert.equal(src.includes('randomAlnumNumber'), false);
+  assert.equal(src.includes('randomDigitString(4, rng)'), true);
+});
+
 test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
   const { Sim } = loadSimulation();
   assert.equal(
