@@ -289,7 +289,12 @@
       const preferCloud =
         QMS.Transport.CloudSettings.prefersDefaultCloudMode &&
         QMS.Transport.CloudSettings.prefersDefaultCloudMode();
-      mode = preferCloud ? 'cloud' : 'local';
+      const resolveHomeMode = QMS.Receiver.resolveHomeBoardBootMode;
+      if (resolveHomeMode) {
+        mode = resolveHomeMode(params, { prefersDefaultCloudMode: preferCloud });
+      } else {
+        mode = preferCloud ? 'cloud' : 'local';
+      }
     }
     if (!homeBoard && mode !== 'local' && mode !== 'firestore' && mode !== 'cloud') {
       return;

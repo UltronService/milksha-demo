@@ -253,7 +253,7 @@
   function updateBoardLinks() {
     const device = document.getElementById('fld-device').value.trim() || 'stb-01';
     const store = storeId();
-    let simple = siteBaseUrl() + '?store=' + encodeURIComponent(store) + '&mode=cloud';
+    let simple = siteBaseUrl() + '?store=' + encodeURIComponent(store);
     if (document.getElementById('fld-device').value.trim()) {
       simple += '&device=' + encodeURIComponent(device);
     }
