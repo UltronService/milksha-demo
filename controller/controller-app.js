@@ -2079,6 +2079,16 @@
           return;
         }
         tickets.splice(ticketCountBefore);
+        if (transportUsesDevCommandNumbers()) {
+          const devMsg =
+            CmdErrors && CmdErrors.devCommandUserMessage
+              ? CmdErrors.devCommandUserMessage(e, {})
+              : '';
+          if (devMsg) {
+            presentDevCommandError(e, {});
+            return;
+          }
+        }
         presentConnectError(e);
       });
   }
