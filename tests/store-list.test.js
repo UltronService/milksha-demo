@@ -66,6 +66,13 @@ test('store id format validation', function () {
   assert.equal(S.isValidStoreIdFormat('zz-qa-UPPER'), false);
 });
 
+test('literal test store a17 is valid; short a1 and a18 are not', function () {
+  const S = loadStoreList();
+  assert.equal(S.isValidStoreIdFormat('a17'), true);
+  assert.equal(S.isValidStoreIdFormat('a1'), false);
+  assert.equal(S.isValidStoreIdFormat('a18'), false);
+});
+
 test('resolveStoreAccessUserMessage maps 403 codes', function () {
   const S = loadStoreList();
   assert.equal(
