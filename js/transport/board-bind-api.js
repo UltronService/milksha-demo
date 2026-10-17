@@ -76,6 +76,5 @@
 
   QMS.Transport.BoardBindApi = {
     requestBoardAutoPair: requestBoardAutoPair,
-    requestBoardBind: requestBoardAutoPair,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

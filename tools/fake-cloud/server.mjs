@@ -101,6 +101,9 @@ const boardAutoPairBodiesLog = [];
 const BOARD_AUTO_PAIR_FIRST_WINDOW_MS = 10 * 60 * 1000;
 /** @type {() => number} */
 let boardAutoPairNowMs = () => Date.now();
+/** @type {{ at: number, name: string, detail?: string }[]} */
+const authBootEvents = [];
+let lastBoardAutoPairCustomToken = '';
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -430,6 +433,8 @@ const server = http.createServer(async (req, res) => {
       boardAutoPairReadCount = 0;
       boardAutoPairBodiesLog.length = 0;
       boardAutoPairNowMs = () => Date.now();
+      authBootEvents.length = 0;
+      lastBoardAutoPairCustomToken = '';
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -468,11 +473,12 @@ const server = http.createServer(async (req, res) => {
       }
       return json(res, 200, { ok: true, nowMs: boardAutoPairNowMs() });
     }
-    if (url.pathname === '/test/boardBindCount' && req.method === 'GET') {
-      return json(res, 200, { count: boardAutoPairRequestCount });
-    }
-    if (url.pathname === '/test/boardBindBodies' && req.method === 'GET') {
-      return json(res, 200, { bodies: boardAutoPairBodiesLog.slice() });
+    if (url.pathname === '/test/authBootOrder' && req.method === 'GET') {
+      return json(res, 200, {
+        events: authBootEvents.slice(),
+        devLoginCount: devLoginRequestCount,
+        lastBoardAutoPairCustomToken: lastBoardAutoPairCustomToken,
+      });
     }
     if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
       return json(res, 200, { count: listStoresRequestCount });
@@ -534,6 +540,7 @@ const server = http.createServer(async (req, res) => {
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       devLoginRequestCount += 1;
+      authBootEvents.push({ at: Date.now(), name: 'devLogin' });
       const body = await readBody(req);
       const sid = String(body.storeId || '').trim();
       if (!isValidStoreIdFormat(sid)) {
@@ -589,6 +596,14 @@ const server = http.createServer(async (req, res) => {
       }
       const idToken =
         customToken && customToken.startsWith('fake-') ? customToken : 'fake-id-token';
+      authBootEvents.push({
+        at: Date.now(),
+        name: 'signInWithCustomToken',
+        detail:
+          lastBoardAutoPairCustomToken && customToken === lastBoardAutoPairCustomToken
+            ? 'pair_token'
+            : 'other_token',
+      });
       return json(res, 200, {
         idToken,
         refreshToken: 'fake-refresh',
@@ -648,7 +663,8 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      if (name === 'boardAutoPair' || name === 'boardAutoPair/' || name === 'boardBind' || name === 'boardBind/') {
+      if (name === 'boardAutoPair' || name === 'boardAutoPair/') {
+        authBootEvents.push({ at: Date.now(), name: 'boardAutoPair' });
         boardAutoPairRequestCount += 1;
         boardAutoPairBodiesLog.push({ ...body });
         const deviceId = String(body.deviceId || body.machineId || '').trim();
@@ -730,6 +746,7 @@ const server = http.createServer(async (req, res) => {
           if (!customToken) {
             return json(res, 500, apiError('internal_error', 'token mint failed'));
           }
+          lastBoardAutoPairCustomToken = customToken;
           return json(res, 200, {
             ok: true,
             storeId: readStoreId,
@@ -774,6 +791,7 @@ const server = http.createServer(async (req, res) => {
         if (!customToken) {
           return json(res, 500, apiError('internal_error', 'token mint failed'));
         }
+        lastBoardAutoPairCustomToken = customToken;
         return json(res, 200, {
           ok: true,
           storeId: resolvedStoreId,

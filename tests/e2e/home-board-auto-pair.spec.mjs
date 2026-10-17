@@ -45,6 +45,17 @@ async function boardAutoPairBodiesFromCloud() {
   return json.bodies || [];
 }
 
+async function authBootOrderFromCloud() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/authBootOrder`);
+  return res.json();
+}
+
+async function devLoginCountFromCloud() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginCount`);
+  const json = await res.json();
+  return json.count;
+}
+
 async function registerStore(storeId, name) {
   await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/registerStore`, {
     method: 'POST',
@@ -182,6 +193,27 @@ test.describe('home board auto-pair', () => {
     await registerStore('zz-qa-store-a', 'QA測試門市A');
     await registerStore('zz-qa-ci-store', 'CI測試門市');
     await registerStore('zz-qa-long-name', LONG_STORE_NAME);
+  });
+
+  test('boot order: boardAutoPair before signIn; login uses pair customToken not devLogin', async ({
+    browser,
+  }) => {
+    const { ctx, page } = await openCloudBoard(browser, 'zz-qa-store-a', {
+      clockIso: CLOCK_2026_TAIPEI_1429,
+    });
+    const boot = await authBootOrderFromCloud();
+    const names = boot.events.map((e) => e.name);
+    const pairIdx = names.indexOf('boardAutoPair');
+    const signInIdx = names.indexOf('signInWithCustomToken');
+    expect(pairIdx).toBeGreaterThanOrEqual(0);
+    expect(signInIdx).toBeGreaterThan(pairIdx);
+    expect(names.indexOf('devLogin')).toBe(-1);
+    expect(await devLoginCountFromCloud()).toBe(0);
+    const signInEv = boot.events.find((e) => e.name === 'signInWithCustomToken');
+    expect(signInEv && signInEv.detail).toBe('pair_token');
+    expect(boot.lastBoardAutoPairCustomToken).toBeTruthy();
+    await expect(page.locator('.milksha-zone.ready').first()).toBeVisible();
+    await ctx.close();
   });
 
   test('bind uses brand+storeNumber+deviceId without IP; numbers still work', async ({ browser }) => {
