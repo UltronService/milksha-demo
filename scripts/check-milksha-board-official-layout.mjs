@@ -55,13 +55,32 @@ function startServer(siteRoot) {
   });
 }
 
+async function disposePlaywrightSession(browser, server) {
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (_err) {
+      // ignore close errors after failed launch
+    }
+  }
+  if (server) {
+    await new Promise(function (resolve) {
+      server.close(function () {
+        resolve(undefined);
+      });
+    });
+  }
+}
+
 /**
  * @returns {Promise<{ ok: boolean, fontPx: number, failures: string[] }>}
  */
 export async function runOfficialBoardLayoutCheck() {
   const { siteRoot, base } = prepareSite();
   const server = await startServer(siteRoot);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
@@ -126,11 +145,8 @@ export async function runOfficialBoardLayoutCheck() {
     return { ok: failures.length === 0, fontPx: expectedFont, failures: failures };
   }, FONT_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return result;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
