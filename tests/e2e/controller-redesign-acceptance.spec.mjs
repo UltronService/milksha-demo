@@ -77,8 +77,10 @@ test('redesign: failed send shows error in send area only', async ({ browser }) 
   await page.waitForSelector('[data-testid="btn-send-numbers"]');
   await page.selectOption('[data-testid="fld-quick-source"]', 'store');
   await page.fill('[data-testid="fld-quick-no"]', '12');
-  await page.locator('[data-testid="btn-send-numbers"]').click();
-  await expect(page.locator('[data-testid="quick-send-error"]')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('[data-testid="btn-send-numbers"]')).toBeDisabled();
+  const ruleNote = page.locator('[data-testid="quick-send-rule-note"]');
+  await expect(ruleNote).toBeVisible({ timeout: 5000 });
+  await expect(ruleNote).toHaveClass(/is-error/);
   await expect(page.locator('[data-testid="quick-send-success"]')).toBeHidden();
   await ctx.close();
 });

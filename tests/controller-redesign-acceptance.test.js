@@ -137,10 +137,10 @@ test('acceptance 10: disconnected header pill label is 未連線', function () {
   assert.match(V.formatConnectionPillLabel({ connected: true, boardOnline: true }), /已連線/);
 });
 
-test('acceptance 11: tap targets at least 48px and send errors use quick-send-error', function () {
+test('acceptance 11: tap targets at least 48px and send errors use quick-send-rule-note', function () {
   const css = readUtf8('controller/controller.css');
   assert.match(css, /--tap-min:\s*48px/);
   assert.match(css, /min-height:\s*var\(--tap-min\)/);
   const V = loadControllerView();
-  assert.equal(V.quickSendFailureSurface(), 'quick-send-error');
+  assert.equal(V.quickSendFailureSurface(), 'quick-send-rule-note');
 });

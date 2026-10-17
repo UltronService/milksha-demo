@@ -49,12 +49,12 @@ test('landscape art baseline uses 70px number font for both zones', function () 
   assert.equal(art.NUM_FONT_PX, OFFICIAL_NUM_FONT_PX);
 });
 
-test('foodpanda requires hash + 4 digits on board', function () {
+test('foodpanda: 4–6 digits, hash stripped on board', function () {
   const { MB } = loadBoardStack();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('#1234567', 'fp'), null);
 });
 
 test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', function () {
@@ -68,9 +68,9 @@ test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', 
   assert.match(pointHtml, new RegExp(icons.SOURCE_ICON_SRC.point.replace(/\./g, '\\.')));
   assert.match(pointHtml, /milksha-board-icon-box/);
 
-  const fpHtml = MB.renderNumberChip({ id: 'fp:#6405', sourceKey: 'fp', number: '#6405' });
+  const fpHtml = MB.renderNumberChip({ id: 'fp:6405', sourceKey: 'fp', number: '6405' });
   assert.match(fpHtml, /foodpanda\.png/);
-  assert.match(fpHtml, />#6405</);
+  assert.match(fpHtml, />6405</);
 
   const uberHtml = MB.renderNumberChip({ id: 'uber:BFBEF', sourceKey: 'uber', number: 'BFBEF' });
   assert.match(uberHtml, /ubereats\.png/);
@@ -105,7 +105,7 @@ test('PR #74 widest compliant stress: all chips inside cream bands', async funct
   assert.equal(result.ok, true, result.failures.join('\n'));
 });
 
-test('production board @ 1920×1080: 70px Arial Regular, icons, foodpanda #6405', async function () {
+test('production board @ 1920×1080: 70px Arial Regular, icons, foodpanda 6405', async function () {
   const { runOfficialBoardLayoutCheck } = await import('../scripts/check-milksha-board-official-layout.mjs');
   const result = await runOfficialBoardLayoutCheck();
   assert.equal(result.fontPx, 70);
