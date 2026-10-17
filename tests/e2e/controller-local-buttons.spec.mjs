@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 const ZONE_TOGGLES = [
+  'zone-toggle-test-tools',
   'zone-toggle-connect',
   'zone-toggle-pos',
   'zone-toggle-net',
@@ -68,6 +69,12 @@ async function expectWorksOrVisibleReason(page, testId) {
     return { status: 'works', testId, note: 'download' };
   }
   await btn.click();
+  if (testId === 'btn-clear-now') {
+    const modal = page.locator('[data-testid="clear-board-modal"]');
+    if (await modal.isVisible()) {
+      await page.locator('[data-testid="btn-clear-confirm"]').click();
+    }
+  }
   await page.waitForTimeout(400);
   const after = await logCount(page);
   const bannerVisible = await banner.isVisible();

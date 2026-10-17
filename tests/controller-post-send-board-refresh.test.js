@@ -40,10 +40,11 @@ async function simulateQuickSendAfterPush(refreshFn, pushThrows, opts) {
   const ticketCountBefore = tickets.length;
   tickets.push({ no: '2002', status: 'ready' });
   let alertMessage = '';
+  let quickSendError = '';
   const H = loadBoardRefreshHelper();
   const src = fs.readFileSync(path.join(ROOT, 'controller/controller-app.js'), 'utf8');
   const usesHelper = src.includes('refreshBoardIgnoringSupersededAbort(refreshBoardLists)');
-  const usesDevCmdAlert = src.includes('presentDevCommandError(e, {})');
+  const usesQuickSendError = src.includes('setQuickSendValidationError(quickMsg)');
   try {
     if (pushThrows) {
       throw pushThrows;
@@ -55,19 +56,17 @@ async function simulateQuickSendAfterPush(refreshFn, pushThrows, opts) {
     }
   } catch (e) {
     tickets.splice(ticketCountBefore);
-    if (cloudMode && usesDevCmdAlert && CmdErrors && CmdErrors.devCommandUserMessage) {
+    if (cloudMode && usesQuickSendError && CmdErrors && CmdErrors.devCommandUserMessage) {
       const devMsg = CmdErrors.devCommandUserMessage(e, {});
-      if (devMsg) {
-        alertMessage = devMsg;
-        return { tickets, alertMessage };
-      }
+      quickSendError = devMsg || String(e.message || '');
+      return { tickets, alertMessage, quickSendError };
     }
     alertMessage =
       CmdErrors && CmdErrors.connectUserMessage
         ? CmdErrors.connectUserMessage(e)
         : String(e.message || '');
   }
-  return { tickets, alertMessage };
+  return { tickets, alertMessage, quickSendError };
 }
 
 /** Mirrors pushNumbersViaDevCommand post-devCommand refresh (production wiring). */
@@ -120,9 +119,10 @@ test('real push_numbers failure still surfaces error and rolls back local ticket
   const CmdErrors = loadCmdErrors();
   const ui = await simulateQuickSendAfterPush(async function () {}, devErr, { cloudMode: true });
   assert.equal(ui.tickets.length, 1);
-  assert.equal(ui.alertMessage, DEVCMD_FAIL);
+  assert.equal(ui.quickSendError, DEVCMD_FAIL);
+  assert.equal(ui.alertMessage, '');
   assert.equal(CmdErrors.devCommandUserMessage(devErr), DEVCMD_FAIL);
-  assert.notEqual(ui.alertMessage, CONNECT_CLOUD);
+  assert.notEqual(ui.quickSendError, CONNECT_CLOUD);
 });
 
 test('non-abort board refresh failure after successful push does not fail push_numbers', async function () {
