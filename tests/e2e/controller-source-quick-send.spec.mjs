@@ -44,9 +44,11 @@ test('invalid quick send shows red error and does not add board cell', async ({ 
 
   await controller.selectOption('[data-testid="fld-quick-source"]', 'store');
   await controller.fill('[data-testid="fld-quick-no"]', 'abc');
-  await controller.click('[data-testid="btn-send-numbers"]');
-  await expect(controller.locator('[data-testid="quick-send-error"]')).toBeVisible();
-  await expect(controller.locator('[data-testid="quick-send-error"]')).toContainText(/4 位數字/);
+  const ruleNote = controller.locator('[data-testid="quick-send-rule-note"]');
+  await expect(controller.locator('[data-testid="btn-send-numbers"]')).toBeDisabled();
+  await expect(ruleNote).toBeVisible();
+  await expect(ruleNote).toHaveClass(/is-error/);
+  await expect(ruleNote).toContainText(/4 位數字/);
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0);
   await ctx.close();
 });

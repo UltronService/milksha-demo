@@ -368,11 +368,26 @@
     if (pauseCloud && usesOutboundApi(id)) {
       return '拔線測試中，API 已暫停';
     }
+    if (id === 'btn-send-numbers' && isQuickSendSendBlocked()) {
+      return '';
+    }
     return '';
   }
 
   function syncActionButtonStates() {
     document.querySelectorAll('main button[type="button"][id]').forEach(function (btn) {
+      if (btn.id === 'btn-send-numbers' && isQuickSendSendBlocked()) {
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+        const next = btn.nextElementSibling;
+        const reasonEl =
+          next && next.classList && next.classList.contains('action-block-reason') ? next : null;
+        if (reasonEl) {
+          reasonEl.textContent = '';
+          reasonEl.hidden = true;
+        }
+        return;
+      }
       const reason = getActionBlockReason(btn);
       const next = btn.nextElementSibling;
       const reasonEl = next && next.classList && next.classList.contains('action-block-reason') ? next : null;
@@ -815,6 +830,113 @@
   }
 
   const SendNumberModule = window.QMS.Controller.SendNumber;
+  let quickSendNumberPristine = true;
+  let quickSendTrackedSourceKey = SendNumberModule ? SendNumberModule.DEFAULT_SOURCE_KEY : 'store';
+
+  function quickSendNumberOnBoard(sourceKey, normalizedNo) {
+    const key = sourceKey || 'store';
+    const no = String(normalizedNo || '');
+    for (let i = 0; i < tickets.length; i += 1) {
+      const row = tickets[i];
+      if ((row.sourceKey || 'store') === key && String(row.no) === no) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function buildQuickSendPresentationForField() {
+    const quickEl = document.getElementById('fld-quick-no');
+    if (!quickEl || !SendNumberModule || !SendNumberModule.buildQuickSendFieldPresentation) {
+      return null;
+    }
+    const sourceKey = readQuickSendSourceKey();
+    const validated = SendNumberModule.validateQuickSendNumber(sourceKey, quickEl.value);
+    const duplicateOnBoard =
+      validated.ok && quickSendNumberOnBoard(sourceKey, validated.normalized);
+    return SendNumberModule.buildQuickSendFieldPresentation({
+      sourceKey: sourceKey,
+      rawValue: quickEl.value,
+      duplicateOnBoard: duplicateOnBoard,
+    });
+  }
+
+  function isQuickSendSendBlocked() {
+    const presentation = buildQuickSendPresentationForField();
+    if (!presentation) {
+      return false;
+    }
+    return !presentation.valid || presentation.sendDisabled;
+  }
+
+  function syncQuickSendFieldUi() {
+    const quickEl = document.getElementById('fld-quick-no');
+    const noteEl = document.getElementById('quick-send-rule-note');
+    const legacyErr = document.getElementById('quick-send-error');
+    const presentation = buildQuickSendPresentationForField();
+    if (!quickEl || !noteEl || !presentation) {
+      return;
+    }
+    quickEl.classList.toggle('is-invalid', presentation.inputInvalid);
+    if (presentation.inputInvalid) {
+      quickEl.setAttribute('aria-invalid', 'true');
+    } else {
+      quickEl.removeAttribute('aria-invalid');
+    }
+    const noteText = presentation.errorText || presentation.ruleNoteText;
+    noteEl.textContent = noteText;
+    noteEl.classList.toggle('is-error', Boolean(presentation.errorText));
+    if (legacyErr) {
+      legacyErr.hidden = true;
+      legacyErr.textContent = '';
+    }
+  }
+
+  function applyQuickSendSourceSwitch(newSourceKey) {
+    const quickEl = document.getElementById('fld-quick-no');
+    if (!quickEl || !SendNumberModule || !SendNumberModule.resolveQuickSendValueOnSourceChange) {
+      return;
+    }
+    const resolved = SendNumberModule.resolveQuickSendValueOnSourceChange({
+      previousSourceKey: quickSendTrackedSourceKey,
+      newSourceKey: newSourceKey,
+      currentValue: quickEl.value,
+      pristine: quickSendNumberPristine,
+    });
+    quickEl.value = resolved.nextValue;
+    quickSendNumberPristine = resolved.pristine;
+    quickSendTrackedSourceKey = newSourceKey;
+    if (resolved.selectAll) {
+      quickEl.focus();
+      quickEl.select();
+    }
+    syncQuickSendFieldUi();
+    syncActionButtonStates();
+  }
+
+  function initQuickSendFieldUi() {
+    const quickEl = document.getElementById('fld-quick-no');
+    const sourceSel = document.getElementById('fld-quick-source');
+    if (!quickEl || !SendNumberModule) {
+      return;
+    }
+    quickSendTrackedSourceKey = readQuickSendSourceKey();
+    quickEl.value = SendNumberModule.defaultQuickSendNumber(quickSendTrackedSourceKey);
+    quickSendNumberPristine = true;
+    syncQuickSendFieldUi();
+    if (sourceSel) {
+      sourceSel.addEventListener('change', function () {
+        hideQuickSendSuccess();
+        applyQuickSendSourceSwitch(readQuickSendSourceKey());
+      });
+    }
+    quickEl.addEventListener('input', function () {
+      quickSendNumberPristine = false;
+      hideQuickSendSuccess();
+      syncQuickSendFieldUi();
+      syncActionButtonStates();
+    });
+  }
 
   function buildConfig(mode) {
     const m = mode || document.getElementById('fld-mode').value;
@@ -1315,6 +1437,7 @@
       window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
       renderTicketLists(doc.data);
       tickClock();
+      syncQuickSendFieldUi();
     }
   }
 
@@ -2148,10 +2271,15 @@
     if (SendNumberModule && SendNumberModule.validateQuickSendNumber) {
       const validated = SendNumberModule.validateQuickSendNumber(sourceKey, rawNo || allocateOrderNumber());
       if (!validated.ok) {
-        setQuickSendValidationError(validated.message);
+        syncQuickSendFieldUi();
+        syncActionButtonStates();
         return;
       }
-      setQuickSendValidationError('');
+      if (quickSendNumberOnBoard(sourceKey, validated.normalized)) {
+        syncQuickSendFieldUi();
+        syncActionButtonStates();
+        return;
+      }
       no = validated.normalized;
       const quickEl = document.getElementById('fld-quick-no');
       if (quickEl) {
@@ -2213,18 +2341,6 @@
   document.getElementById('btn-send-numbers').addEventListener('click', function () {
     sendQuickDemoNumber();
   });
-  ['fld-quick-no', 'fld-quick-source'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', function () {
-        setQuickSendValidationError('');
-      });
-      el.addEventListener('change', function () {
-        setQuickSendValidationError('');
-      });
-    }
-  });
-
   document.getElementById('btn-gen-peak').addEventListener('click', function () {
     startStoreSimulation('peak');
   });
@@ -2405,6 +2521,7 @@
   }
   initSourceSelect();
   initQuickSendSourceSelect();
+  initQuickSendFieldUi();
   initActionBlockReasons();
   initMobileZones();
   syncCloudUi();

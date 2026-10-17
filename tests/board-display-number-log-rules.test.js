@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Approved production log display rules (replaces legacy 3–6 / optional # rules).
+ * Cloud board display normalization (controller + board shared rules).
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -49,54 +49,46 @@ test('store: exactly 4 digits', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('12345', 'store'), null);
 });
 
-test('Uber Eats: exactly 5 hex digits, uppercase', function () {
+test('Uber Eats: 4–6 alnum, uppercase', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('ddddd', 'uber'), 'DDDDD');
-  assert.equal(MB.normalizeBoardDisplayNumber('A2C9E', 'uber'), 'A2C9E');
-  assert.equal(MB.normalizeBoardDisplayNumber('BFBEF', 'uber'), 'BFBEF');
-  assert.equal(MB.normalizeBoardDisplayNumber('GGGGG', 'uber'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('A2C9', 'uber'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('A2C9EF', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
+  assert.equal(MB.normalizeBoardDisplayNumber('AB12', 'uber'), 'AB12');
+  assert.equal(MB.normalizeBoardDisplayNumber('abc', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ABCDEFG', 'uber'), null);
 });
 
-test('Udd: same as store — exactly 4 digits', function () {
+test('Udd: 4–6 alnum uppercase', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('1234', 'udd'), '1234');
-  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'udd'), '0912');
-  assert.equal(MB.normalizeBoardDisplayNumber('BFBEF', 'udd'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('AB12', 'udd'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('123', 'udd'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ab12', 'udd'), 'AB12');
+  assert.equal(MB.normalizeBoardDisplayNumber('abc', 'udd'), null);
 });
 
-test('Udd partition drops BFBEF and AB12, accepts 1234', function () {
+test('Udd partition drops short invalid, accepts AB12', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
-    { source_type: 'From_Udd_OK', number: 'BFBEF' },
+    { source_type: 'From_Udd_OK', number: 'abc' },
     { source_type: 'From_Udd_Preparing', number: 'AB12' },
-    { source_type: 'From_Udd_Preparing', number: '1234' },
   ]);
   assert.equal(parts.ready.length, 0);
   assert.equal(parts.preparing.length, 1);
-  assert.equal(parts.preparing[0].number, '1234');
-  assert.equal(parts.preparing[0].sourceKey, 'udd');
+  assert.equal(parts.preparing[0].number, 'AB12');
 });
 
-test('foodpanda: hash + exactly 4 digits only', function () {
+test('foodpanda: 4–6 digits, hash stripped', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('#8888', 'fp'), '#8888');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
   assert.equal(MB.normalizeBoardDisplayNumber('#640', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#64055', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#1234567', 'fp'), null);
 });
 
-test('你訂 point: exactly 3 digits with leading zeros', function () {
+test('你訂 point: 3–4 digits with leading zeros', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('888', 'point'), '888');
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
-  assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
-  assert.equal(MB.normalizeBoardDisplayNumber('8888', 'point'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
   assert.equal(MB.normalizeBoardDisplayNumber('88', 'point'), null);
 });
 
@@ -112,16 +104,16 @@ function mulberry32(seed) {
 
 const CLOUD_SOURCE_PATTERNS = {
   store: /^\d{4}$/,
-  point: /^\d{3}$/,
-  fp: /^#\d{4}$/,
-  uber: /^[0-9A-F]{5}$/,
-  udd: /^\d{4}$/,
+  point: /^\d{3,4}$/,
+  fp: /^\d{4,6}$/,
+  uber: /^[0-9A-Z]{4,6}$/,
+  udd: /^[0-9A-Z]{4,6}$/,
 };
 
 test('~1000 simulated numbers per source pass cloud display rules', function () {
   const MB = loadMilkshaBoard();
-  const hexPool = '0123456789ABCDEF';
-  const rng = mulberry32(20261015);
+  const alnumPool = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const rng = mulberry32(20261017);
   const perSource = 1000;
 
   for (let i = 0; i < perSource; i += 1) {
@@ -129,24 +121,31 @@ test('~1000 simulated numbers per source pass cloud display rules', function () 
     assert.equal(MB.normalizeBoardDisplayNumber(storeNo, 'store'), storeNo);
     assert.match(storeNo, CLOUD_SOURCE_PATTERNS.store);
 
-    const pointNo = String(Math.floor(rng() * 1000)).padStart(3, '0');
+    const pointLen = rng() < 0.5 ? 3 : 4;
+    const pointNo = String(Math.floor(rng() * Math.pow(10, pointLen))).padStart(pointLen, '0');
     assert.equal(MB.normalizeBoardDisplayNumber(pointNo, 'point'), pointNo);
     assert.match(pointNo, CLOUD_SOURCE_PATTERNS.point);
 
     let uber = '';
-    for (let h = 0; h < 5; h += 1) {
-      uber += hexPool.charAt(Math.floor(rng() * hexPool.length));
+    const uberLen = 4 + Math.floor(rng() * 3);
+    for (let h = 0; h < uberLen; h += 1) {
+      uber += alnumPool.charAt(Math.floor(rng() * alnumPool.length));
     }
     const uberNorm = MB.normalizeBoardDisplayNumber(uber.toLowerCase(), 'uber');
     assert.match(uberNorm, CLOUD_SOURCE_PATTERNS.uber);
 
-    const uddNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
-    assert.equal(MB.normalizeBoardDisplayNumber(uddNo, 'udd'), uddNo);
-    assert.match(uddNo, CLOUD_SOURCE_PATTERNS.udd);
+    let udd = '';
+    const uddLen = 4 + Math.floor(rng() * 3);
+    for (let u = 0; u < uddLen; u += 1) {
+      udd += alnumPool.charAt(Math.floor(rng() * alnumPool.length));
+    }
+    const uddNorm = MB.normalizeBoardDisplayNumber(udd.toLowerCase(), 'udd');
+    assert.match(uddNorm, CLOUD_SOURCE_PATTERNS.udd);
 
-    const fpNo = '#' + String(Math.floor(rng() * 10000)).padStart(4, '0');
-    assert.equal(MB.normalizeBoardDisplayNumber(fpNo, 'fp'), fpNo);
-    assert.match(fpNo, CLOUD_SOURCE_PATTERNS.fp);
+    const fpLen = 4 + Math.floor(rng() * 3);
+    const fpNo = String(Math.floor(rng() * Math.pow(10, fpLen))).padStart(fpLen, '0');
+    const fpNorm = MB.normalizeBoardDisplayNumber('#' + fpNo, 'fp');
+    assert.match(fpNorm, CLOUD_SOURCE_PATTERNS.fp);
   }
 });
 

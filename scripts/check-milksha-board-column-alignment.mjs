@@ -16,15 +16,15 @@ const PR74_BASELINE_TOL_PX = 2;
 /** Four sources, varying number widths (5-char Uber, hash fp, point, store). */
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
   { source_type: 'From_UberEat_Preparing', number: 'A2C9E' },
-  { source_type: 'From_FoodPanda_Preparing', number: '#6406' },
+  { source_type: 'From_FoodPanda_Preparing', number: '6406' },
   { source_type: 'From_milksha_point_Preparing', number: '097' },
   { source_type: 'From_Store_Preparing', number: '2218' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
-  { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
+  { source_type: 'From_FoodPanda_Preparing', number: '6405' },
   { source_type: 'From_milksha_point_Preparing', number: '096' },
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_UberEat_Preparing', number: 'C3D4E' },
-  { source_type: 'From_FoodPanda_Preparing', number: '#1234' },
+  { source_type: 'From_FoodPanda_Preparing', number: '1234' },
 ];
 
 function prepareSite() {
@@ -416,24 +416,24 @@ export async function captureFullBoardScreenshot(options) {
 export function buildFullBoardMixedPayload() {
   const prepNos = [
     { sourceKey: 'uber', no: 'A2C9E' },
-    { sourceKey: 'fp', no: '#6406' },
+    { sourceKey: 'fp', no: '6406' },
     { sourceKey: 'point', no: '097' },
     { sourceKey: 'store', no: '2218' },
     { sourceKey: 'uber', no: 'BFBEF' },
-    { sourceKey: 'fp', no: '#6405' },
+    { sourceKey: 'fp', no: '6405' },
     { sourceKey: 'point', no: '096' },
     { sourceKey: 'store', no: '2217' },
     { sourceKey: 'uber', no: 'C3D4E' },
-    { sourceKey: 'fp', no: '#1234' },
+    { sourceKey: 'fp', no: '1234' },
   ];
   const readyNos = [
     { sourceKey: 'store', no: '8801' },
     { sourceKey: 'point', no: '802' },
-    { sourceKey: 'fp', no: '#8803' },
+    { sourceKey: 'fp', no: '8803' },
     { sourceKey: 'uber', no: 'D4E5F' },
     { sourceKey: 'store', no: '8804' },
     { sourceKey: 'point', no: '805' },
-    { sourceKey: 'fp', no: '#8806' },
+    { sourceKey: 'fp', no: '8806' },
     { sourceKey: 'uber', no: 'E5F6A' },
     { sourceKey: 'store', no: '8807' },
     { sourceKey: 'point', no: '808' },
@@ -457,27 +457,27 @@ export function buildFullBoardMixedPayload() {
 export function buildWorstCaseStressPayload() {
   const prepNos = [
     { sourceKey: 'uber', no: 'DDDDD' },
-    { sourceKey: 'fp', no: '#8888' },
+    { sourceKey: 'fp', no: '888888' },
     { sourceKey: 'point', no: '888' },
     { sourceKey: 'store', no: '8888' },
     { sourceKey: 'uber', no: 'BBBBB' },
-    { sourceKey: 'fp', no: '#7777' },
+    { sourceKey: 'fp', no: '777777' },
     { sourceKey: 'point', no: '777' },
     { sourceKey: 'store', no: '7777' },
     { sourceKey: 'uber', no: 'EEEEE' },
-    { sourceKey: 'fp', no: '#6666' },
+    { sourceKey: 'fp', no: '666666' },
   ];
   const readyNos = [
     { sourceKey: 'uber', no: 'FFFFF' },
-    { sourceKey: 'fp', no: '#5555' },
+    { sourceKey: 'fp', no: '555555' },
     { sourceKey: 'point', no: '555' },
     { sourceKey: 'store', no: '5555' },
     { sourceKey: 'uber', no: 'AAAAA' },
-    { sourceKey: 'fp', no: '#4444' },
+    { sourceKey: 'fp', no: '444444' },
     { sourceKey: 'point', no: '444' },
     { sourceKey: 'store', no: '4444' },
     { sourceKey: 'uber', no: 'CCCCC' },
-    { sourceKey: 'fp', no: '#3333' },
+    { sourceKey: 'fp', no: '333333' },
   ];
   const prefix = {
     store: 'From_Store_',
@@ -627,9 +627,9 @@ export function buildRefLayoutComparisonPayload() {
     { source_type: 'From_UberEat_Preparing', number: 'A1902' },
     { source_type: 'From_milksha_point_Preparing', number: '903' },
     { source_type: 'From_milksha_point_Preparing', number: '904' },
-    { source_type: 'From_FoodPanda_Preparing', number: '#1905' },
-    { source_type: 'From_FoodPanda_Preparing', number: '#1906' },
-    { source_type: 'From_FoodPanda_Preparing', number: '#1907' },
+    { source_type: 'From_FoodPanda_Preparing', number: '1905' },
+    { source_type: 'From_FoodPanda_Preparing', number: '1906' },
+    { source_type: 'From_FoodPanda_Preparing', number: '1907' },
   ];
   const ready = [
     { source_type: 'From_milksha_point_OK', number: '798' },
@@ -639,9 +639,9 @@ export function buildRefLayoutComparisonPayload() {
     { source_type: 'From_UberEat_OK', number: 'B2902' },
     { source_type: 'From_milksha_point_OK', number: '803' },
     { source_type: 'From_milksha_point_OK', number: '804' },
-    { source_type: 'From_FoodPanda_OK', number: '#2905' },
-    { source_type: 'From_FoodPanda_OK', number: '#2906' },
-    { source_type: 'From_FoodPanda_OK', number: '#2907' },
+    { source_type: 'From_FoodPanda_OK', number: '2905' },
+    { source_type: 'From_FoodPanda_OK', number: '2906' },
+    { source_type: 'From_FoodPanda_OK', number: '2907' },
   ];
   return prep.concat(ready);
 }

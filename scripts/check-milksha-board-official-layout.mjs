@@ -14,21 +14,21 @@ const ICON_BOX_FACTOR = 0.8;
 const SAMPLE_PAYLOAD = [
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_milksha_point_Preparing', number: '096' },
-  { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
+  { source_type: 'From_FoodPanda_Preparing', number: '6405' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
   { source_type: 'From_Store_OK', number: '2217' },
   { source_type: 'From_milksha_point_OK', number: '096' },
-  { source_type: 'From_FoodPanda_OK', number: '#6405' },
+  { source_type: 'From_FoodPanda_OK', number: '6405' },
   { source_type: 'From_UberEat_OK', number: 'BFBEF' },
 ];
 
 function prepareSite() {
-  const siteRoot = '/tmp/milksha-official-layout-site';
+  const siteRoot = join('/tmp', 'milksha-official-layout-' + process.pid);
   const dest = join(siteRoot, 'milksha-demo');
   rmSync(siteRoot, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
   cpSync(rootDir, dest, { recursive: true, filter: (src) => !src.includes('node_modules') });
-  return { siteRoot, base: `http://127.0.0.1:8772/milksha-demo/` };
+  return { siteRoot };
 }
 
 function startServer(siteRoot) {
@@ -50,7 +50,11 @@ function startServer(siteRoot) {
         res.end('not found');
       }
     });
-    server.listen(8772, '127.0.0.1', () => resolve(server));
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address();
+      const port = typeof addr === 'object' && addr ? addr.port : 0;
+      resolve({ server: server, base: `http://127.0.0.1:${port}/milksha-demo/` });
+    });
   });
 }
 
@@ -58,8 +62,8 @@ function startServer(siteRoot) {
  * @returns {Promise<{ ok: boolean, fontPx: number, failures: string[] }>}
  */
 export async function runOfficialBoardLayoutCheck() {
-  const { siteRoot, base } = prepareSite();
-  const server = await startServer(siteRoot);
+  const { siteRoot } = prepareSite();
+  const { server, base } = await startServer(siteRoot);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
@@ -118,9 +122,9 @@ export async function runOfficialBoardLayoutCheck() {
         failures.push('icon slot overflow hidden');
       }
     });
-    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:#6405"] .milksha-num');
-    if (!fp || fp.textContent !== '#6405') {
-      failures.push('foodpanda display expected #6405 got ' + (fp ? fp.textContent : 'missing'));
+    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:6405"] .milksha-num');
+    if (!fp || fp.textContent !== '6405') {
+      failures.push('foodpanda display expected 6405 got ' + (fp ? fp.textContent : 'missing'));
     }
     return { ok: failures.length === 0, fontPx: expectedFont, failures: failures };
   }, FONT_PX);

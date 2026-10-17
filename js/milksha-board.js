@@ -154,9 +154,9 @@
   }
 
   const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
-  const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
-  const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
+  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
+  const BOARD_NUMBER_DIGIT_4_TO_6 = /^\d{4,6}$/;
+  const BOARD_NUMBER_ALNUM_4_TO_6 = /^[A-Za-z0-9]{4,6}$/;
   const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
@@ -173,8 +173,8 @@
   }
 
   /**
-   * Board display guard (production log rules):
-   * store/udd 4 digits; point 3 digits; fp #+4 digits; uber 5 hex.
+   * Board display guard — matches cloud normalization:
+   * store 4 digits; point 3–4 digits; fp 4–6 digits (# stripped); uber/udd 4–6 alnum uppercase.
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
@@ -184,24 +184,28 @@
       return null;
     }
     const key = sourceKey || 'store';
-    const trimmed = raw.trim();
-    if (key === 'store' || key === 'udd') {
+    let working = raw;
+    if (key === 'fp') {
+      working = working.replace(/#/g, '');
+    }
+    const trimmed = working.trim();
+    if (trimmed.length > 6) {
+      return null;
+    }
+    if (key === 'store') {
       return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
     }
     if (key === 'point') {
-      return BOARD_NUMBER_THREE_DIGIT.test(trimmed) ? trimmed : null;
+      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
     }
     if (key === 'fp') {
-      return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
+      return BOARD_NUMBER_DIGIT_4_TO_6.test(trimmed) ? trimmed : null;
     }
-    if (key === 'uber') {
-      if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
+    if (key === 'uber' || key === 'udd') {
+      if (!BOARD_NUMBER_ALNUM_4_TO_6.test(trimmed)) {
         return null;
       }
       return trimmed.toUpperCase();
-    }
-    if (trimmed.length > 6) {
-      return null;
     }
     if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
       return null;
@@ -509,6 +513,13 @@
     function useLandscapeArtGrid() {
       const cfg = layoutConfig();
       return orientation === 'landscape' && cfg.split === 'row' && Boolean(landscapeArtLayout());
+    }
+
+    function applyChipOverflowFitNow() {
+      const fit = QMS.Board && QMS.Board.ChipOverflowFit;
+      if (fit && typeof fit.applyBoardOverflowFit === 'function') {
+        fit.applyBoardOverflowFit(boardEl);
+      }
     }
 
     function logSound(itemId) {
@@ -844,20 +855,24 @@
           animator.cancelAll(boardEl);
         }
         renderBoard();
+        applyChipOverflowFitNow();
       } else {
         animator.cancelAll(boardEl);
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          const clearPrep = animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          const clearReady = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
+          });
+          Promise.all([clearPrep, clearReady]).then(function () {
+            applyChipOverflowFitNow();
           });
         } else {
           const prepTurn = prevPrepPage !== prepPage;
@@ -887,6 +902,7 @@
             if (readyTurn) {
               updateZonePageIndicator(readyZone, readyPage, readyPages);
             }
+            applyChipOverflowFitNow();
           });
         }
       }
@@ -907,6 +923,7 @@
       const zone = boardEl.querySelector(zoneSel);
       if (!zone) {
         renderBoard();
+        applyChipOverflowFitNow();
         lastRenderedPrep = prepItems.slice();
         lastRenderedReady = readyItems.slice();
         lastRenderedPrepPage = prepPage;
@@ -919,6 +936,7 @@
         : zone.querySelectorAll('.milksha-num-cell');
       if (cellEls.length !== PAGE_SIZE) {
         renderBoard();
+        applyChipOverflowFitNow();
         if (zoneKey === 'prep') {
           lastRenderedPrepPage = page;
         } else {
@@ -951,6 +969,7 @@
             PAGE_SIZE,
           );
           updateZonePageIndicator(zone, currentPage, pagesNow);
+          applyChipOverflowFitNow();
           return undefined;
         });
       } else {
@@ -964,6 +983,7 @@
             el.innerHTML = '';
           }
         }
+        applyChipOverflowFitNow();
       }
       updateZonePageIndicator(zone, page, totalPages);
       if (zoneKey === 'prep') {
@@ -1349,6 +1369,7 @@
         boardAnimator.cancelAll(boardEl);
       }
       renderBoard();
+      applyChipOverflowFitNow();
       lastRenderedPrep = prepItems.slice();
       lastRenderedReady = readyItems.slice();
       lastRenderedPrepPage = prepPage;
@@ -1379,6 +1400,7 @@
 
     applyScale();
     renderBoard();
+    applyChipOverflowFitNow();
     lastRenderedPrep = prepItems.slice();
     lastRenderedReady = readyItems.slice();
     lastRenderedPrepPage = prepPage;

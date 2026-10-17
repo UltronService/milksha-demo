@@ -63,14 +63,16 @@ test('milksha point keeps leading zero on short numeric codes', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
 });
 
-test('foodpanda requires # plus four digits', function () {
+test('foodpanda accepts 4–6 digits with optional hash stripped on display', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '12345');
+  assert.equal(MB.normalizeBoardDisplayNumber('#1234567', 'fp'), null);
 });
 
 test('uber alphanumeric normalizes to uppercase', function () {
@@ -123,5 +125,5 @@ test('cloud-shaped delivery sample tickets partition to four ready numbers', fun
   const parts = MB.partitionNumberContent(nc);
   assert.equal(parts.ready.length, 4);
   const nums = parts.ready.map((r) => r.number).sort();
-  assert.equal(nums.join(','), '#6406,578,7112,C7458');
+  assert.equal(nums.join(','), '578,6406,7112,C7458');
 });
