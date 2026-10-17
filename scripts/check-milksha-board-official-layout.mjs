@@ -7,6 +7,7 @@ import { cpSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
+import { gotoLayoutHarness } from './check-milksha-board-column-alignment.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FONT_PX = 70;
@@ -62,7 +63,7 @@ export async function runOfficialBoardLayoutCheck() {
   const server = await startServer(siteRoot);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     window.QMS.runtime.applyPayload(rows, { silent: true });
   }, SAMPLE_PAYLOAD);
