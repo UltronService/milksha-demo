@@ -2,7 +2,7 @@
 
 - **分支：** `cursor/controller-default-number-5dd5`（PR #95）
 - **調查紅測：** `1898fcd`
-- **修正 HEAD：** （push 後由 CI 為準，見下方連結）
+- **修正 HEAD：** `7e55484`
 - **店別：** 僅 `zz-qa-ci-store` 政策；本測 `mode=local` fake cloud
 - **Asset version：** `20261017b`
 
@@ -72,3 +72,13 @@ docker run --rm -v "$PWD":/work -w /work \
 **What：** 僅縮超出欄寬的單格；號碼／圖示／間距同比例（min 75%）；新增／換頁算一次。  
 **Why：** 六碼 Uber＋圖示在 1080p／4K 溢出欄界。  
 **How to test：** 上方 Playwright＋`npm test`。
+
+### controller-redesign-acceptance #8 放寬（總監核准）
+
+| 項目 | 說明 |
+|------|------|
+| **放寬哪個測試** | `acceptance 8: board receiver entry files untouched on this branch` |
+| **為什麼** | PR #95 必須新增看板欄寬溢出模組，否則無法在 `js/board/` 內實作 `ChipOverflowFit` |
+| **放行檔案（白名單，無萬用字元）** | 僅 `js/board/chip-overflow-fit.js`；其餘 `js/board/*` 與 `receiver/*` 仍須對 `origin/main` 零 diff |
+
+**與 PR #97 合併注意：** PR #97（分支 `cursor/board-auto-pair-a19b`）也會放寬同一個 acceptance #8。兩邊若先後合併，`BOARD_JS_PATH_WHITELIST` 會衝突；**後合併者須合併兩邊白名單檔名**（保留 PR #95 的 `js/board/chip-overflow-fit.js` 與 PR #97 新增之檔案）。

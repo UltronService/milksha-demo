@@ -8,6 +8,32 @@ const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
 
+/**
+ * PR #95 explicit whitelist (no globs). PR #97 (cursor/board-auto-pair-a19b) may add paths — merge both lists when rebasing.
+ * @type {readonly string[]}
+ */
+const BOARD_JS_PATH_WHITELIST = Object.freeze(['js/board/chip-overflow-fit.js']);
+
+/**
+ * @param {string[]} touchedPaths
+ * @param {readonly string[]} whitelist
+ * @returns {string[]}
+ */
+function forbiddenBoardPathHits(touchedPaths, whitelist) {
+  const forbiddenPrefixes = ['js/board/', 'receiver/'];
+  return touchedPaths.filter(function (p) {
+    if (whitelist.indexOf(p) >= 0) {
+      return false;
+    }
+    for (let i = 0; i < forbiddenPrefixes.length; i += 1) {
+      if (p.startsWith(forbiddenPrefixes[i])) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
 function readUtf8(rel) {
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
 }
@@ -119,6 +145,16 @@ test('acceptance 7: core controller test zones and actions remain in HTML', func
   }
 });
 
+test('acceptance 8 guard: whitelisted chip-overflow-fit only; other js/board paths fail', function () {
+  const hits = forbiddenBoardPathHits(
+    ['js/board/chip-overflow-fit.js', 'js/board/other-module.js', 'receiver/demo.js'],
+    BOARD_JS_PATH_WHITELIST,
+  );
+  assert.deepEqual(hits, ['js/board/other-module.js', 'receiver/demo.js']);
+  const allowedOnly = forbiddenBoardPathHits(['js/board/chip-overflow-fit.js'], BOARD_JS_PATH_WHITELIST);
+  assert.deepEqual(allowedOnly, []);
+});
+
 test('acceptance 8: board receiver entry files untouched on this branch', function () {
   const { execSync } = require('node:child_process');
   const diff = execSync('git diff origin/main --name-only', { cwd: ROOT, encoding: 'utf8' });
@@ -126,9 +162,8 @@ test('acceptance 8: board receiver entry files untouched on this branch', functi
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  const forbiddenPrefixes = ['js/board/', 'receiver/'];
-  const hits = touched.filter((p) => forbiddenPrefixes.some((pre) => p.startsWith(pre)));
-  assert.equal(hits.length, 0, `Board code paths must not change: ${hits.join(', ')}`);
+  const hits = forbiddenBoardPathHits(touched, BOARD_JS_PATH_WHITELIST);
+  assert.equal(hits.length, 0, `Board code paths must not change (outside whitelist): ${hits.join(', ')}`);
 });
 
 test('acceptance 10: disconnected header pill label is 未連線', function () {
