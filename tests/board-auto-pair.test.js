@@ -35,33 +35,60 @@ function memoryStorage() {
   };
 }
 
-test('buildBoardBindRequest has brand store machine only', function () {
+test('buildAutoPairRequest initial has brand storeNumber deviceId only', function () {
   const AP = loadAutoPair();
-  const built = AP.buildBoardBindRequest({
-    brandId: 'milksha',
-    storeId: 'zz-qa-store-a',
-    machineId: 'm-1',
+  const built = AP.buildAutoPairRequest({
+    brand: 'Milksha',
+    storeNumber: 'zz-qa-store-a',
+    deviceId: 'stb-01',
     clientIp: '1.2.3.4',
   });
   assert.equal(built.ok, true);
-  assert.equal(built.body.brandId, 'milksha');
-  assert.equal(built.body.storeId, 'zz-qa-store-a');
-  assert.equal(built.body.machineId, 'm-1');
+  assert.equal(built.mode, 'initial');
+  assert.equal(built.body.brand, 'Milksha');
+  assert.equal(built.body.storeNumber, 'zz-qa-store-a');
+  assert.equal(built.body.deviceId, 'stb-01');
   assert.equal(built.body.clientIp, undefined);
 });
 
-test('shouldSendBoardBind is false after bind record saved', function () {
+test('buildAutoPairRequest read uses storeId and deviceId', function () {
+  const AP = loadAutoPair();
+  const built = AP.buildAutoPairRequest({
+    mode: 'read',
+    storeId: 'zz-qa-ci-store',
+    deviceId: 'stb-01',
+  });
+  assert.equal(built.ok, true);
+  assert.equal(built.mode, 'read');
+  assert.equal(built.body.storeId, 'zz-qa-ci-store');
+  assert.equal(built.body.deviceId, 'stb-01');
+});
+
+test('hasBindRecord true after bind record saved', function () {
   const AP = loadAutoPair();
   const local = memoryStorage();
-  assert.equal(AP.shouldSendBoardBind(local, 'milksha', 'zz-qa-store-a'), true);
+  assert.equal(AP.hasBindRecord(local), false);
   AP.writeBindRecord(local, {
-    brandId: 'milksha',
     storeId: 'zz-qa-store-a',
-    machineId: 'm-1',
+    deviceId: 'stb-01',
     storeName: 'QA A',
     storeNumber: 'zz-qa-store-a',
   });
-  assert.equal(AP.shouldSendBoardBind(local, 'milksha', 'zz-qa-store-a'), false);
+  assert.equal(AP.hasBindRecord(local), true);
+});
+
+test('shouldActivateBindHint false when hint-ever set even if isFirstBind', function () {
+  const AP = loadAutoPair();
+  const local = memoryStorage();
+  local.setItem(AP.STORAGE_HINT_EVER, '1');
+  assert.equal(AP.shouldActivateBindHint(true, local), false);
+  assert.equal(AP.shouldActivateBindHint(false, local), false);
+});
+
+test('resolveApiBrand maps milksha to Milksha', function () {
+  const AP = loadAutoPair();
+  assert.equal(AP.resolveApiBrand({ brandId: 'milksha' }), 'Milksha');
+  assert.equal(AP.resolveApiBrand({ brandId: 'zz-qa' }), 'zz-qa');
 });
 
 test('formatBindHintText uses Taipei clock without seconds', function () {

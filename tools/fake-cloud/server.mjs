@@ -91,12 +91,16 @@ function isAllowedDevLoginStore(storeId) {
 }
 let devLoginRequestCount = 0;
 let listStoresRequestCount = 0;
-/** @type {Map<string, { brandId: string, storeId: string, firstBindAt: number }>} */
-const boardBindByMachine = new Map();
-let boardBindRequestCount = 0;
+/** @type {Map<string, { storeId: string, firstPairedAtMs: number }>} */
+const boardAutoPairByDevice = new Map();
+let boardAutoPairRequestCount = 0;
+let boardAutoPairInitialCount = 0;
+let boardAutoPairReadCount = 0;
 /** @type {object[]} */
-const boardBindBodiesLog = [];
-const BOARD_BIND_FIRST_WINDOW_MS = 10 * 60 * 1000;
+const boardAutoPairBodiesLog = [];
+const BOARD_AUTO_PAIR_FIRST_WINDOW_MS = 10 * 60 * 1000;
+/** @type {() => number} */
+let boardAutoPairNowMs = () => Date.now();
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -420,9 +424,12 @@ const server = http.createServer(async (req, res) => {
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
       listStoresRequestCount = 0;
-      boardBindByMachine.clear();
-      boardBindRequestCount = 0;
-      boardBindBodiesLog.length = 0;
+      boardAutoPairByDevice.clear();
+      boardAutoPairRequestCount = 0;
+      boardAutoPairInitialCount = 0;
+      boardAutoPairReadCount = 0;
+      boardAutoPairBodiesLog.length = 0;
+      boardAutoPairNowMs = () => Date.now();
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -441,11 +448,31 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
     }
+    if (url.pathname === '/test/boardAutoPairCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairRequestCount });
+    }
+    if (url.pathname === '/test/boardAutoPairInitialCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairInitialCount });
+    }
+    if (url.pathname === '/test/boardAutoPairReadCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairReadCount });
+    }
+    if (url.pathname === '/test/boardAutoPairBodies' && req.method === 'GET') {
+      return json(res, 200, { bodies: boardAutoPairBodiesLog.slice() });
+    }
+    if (url.pathname === '/test/boardAutoPairNow' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (body && Number.isFinite(Number(body.nowMs))) {
+        const fixed = Number(body.nowMs);
+        boardAutoPairNowMs = () => fixed;
+      }
+      return json(res, 200, { ok: true, nowMs: boardAutoPairNowMs() });
+    }
     if (url.pathname === '/test/boardBindCount' && req.method === 'GET') {
-      return json(res, 200, { count: boardBindRequestCount });
+      return json(res, 200, { count: boardAutoPairRequestCount });
     }
     if (url.pathname === '/test/boardBindBodies' && req.method === 'GET') {
-      return json(res, 200, { bodies: boardBindBodiesLog.slice() });
+      return json(res, 200, { bodies: boardAutoPairBodiesLog.slice() });
     }
     if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
       return json(res, 200, { count: listStoresRequestCount });
@@ -621,6 +648,142 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
+      if (name === 'boardAutoPair' || name === 'boardAutoPair/' || name === 'boardBind' || name === 'boardBind/') {
+        boardAutoPairRequestCount += 1;
+        boardAutoPairBodiesLog.push({ ...body });
+        const deviceId = String(body.deviceId || body.machineId || '').trim();
+        if (!deviceId) {
+          return json(res, 400, apiError('invalid_body', 'deviceId required'));
+        }
+        if (deviceId.length > 128) {
+          return json(res, 400, apiError('invalid_body', 'deviceId too long'));
+        }
+        if (body.clientIp != null || body.ip != null || body.externalIp != null) {
+          return json(res, 400, apiError('invalid_body', 'ip fields not accepted'));
+        }
+
+        const now = boardAutoPairNowMs();
+        const readStoreId = String(body.storeId || '').trim();
+        const hasReadPath = Boolean(readStoreId) && !body.brand && !body.storeNumber && !body.brandId;
+
+        async function mintPairToken(storeId) {
+          if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+            try {
+              const { mintCustomToken } = await import('../emulator-qa/admin.mjs');
+              return await mintCustomToken({
+                storeId,
+                role: 'device',
+                deviceId,
+              });
+            } catch (e) {
+              return null;
+            }
+          }
+          return `fake-${storeId}-device`;
+        }
+
+        function pairNotFound() {
+          return json(res, 200, { ok: false, information: '找不到目標叫號機' });
+        }
+
+        function resolveStoreIdFromInitial(brand, storeNumber) {
+          const sn = String(storeNumber || '').trim();
+          if (!sn) {
+            return null;
+          }
+          if (
+            isValidStoreIdFormat(sn) &&
+            (STORE_ID_ZZ_QA_RE.test(sn) ||
+              STORE_ID_LETTER_SIX_DIGITS_RE.test(sn) ||
+              KNOWN_LITERAL_STORE_IDS.has(sn))
+          ) {
+            return sn;
+          }
+          const b = String(brand || body.brandId || '').trim();
+          if (b === 'zz-qa') {
+            return 'zz-qa-' + sn.toLowerCase();
+          }
+          if ((b === 'Milksha' || b === 'milksha') && STORE_ID_LETTER_SIX_DIGITS_RE.test(sn)) {
+            return sn;
+          }
+          return null;
+        }
+
+        if (hasReadPath) {
+          boardAutoPairReadCount += 1;
+          if (!isValidStoreIdFormat(readStoreId)) {
+            return pairNotFound();
+          }
+          const entry = boardAutoPairByDevice.get(deviceId);
+          if (!entry || entry.storeId !== readStoreId) {
+            return pairNotFound();
+          }
+          if (!isStoreRegistered(readStoreId)) {
+            return pairNotFound();
+          }
+          const storeEntry = storeRegistry.get(readStoreId);
+          let isFirstBind = false;
+          if (now - entry.firstPairedAtMs < BOARD_AUTO_PAIR_FIRST_WINDOW_MS) {
+            isFirstBind = true;
+          }
+          const customToken = await mintPairToken(readStoreId);
+          if (!customToken) {
+            return json(res, 500, apiError('internal_error', 'token mint failed'));
+          }
+          return json(res, 200, {
+            ok: true,
+            storeId: readStoreId,
+            storeName: storeEntry && storeEntry.name ? storeEntry.name : readStoreId,
+            storeNumber: readStoreId,
+            isFirstBind,
+            customToken,
+          });
+        }
+
+        boardAutoPairInitialCount += 1;
+        const brand = String(body.brand || body.brandId || '').trim();
+        const storeNumber = String(body.storeNumber || body.storeId || '').trim();
+        if (!brand || !storeNumber) {
+          return json(res, 400, apiError('invalid_body', 'brand and storeNumber required'));
+        }
+        const resolvedStoreId = resolveStoreIdFromInitial(brand, storeNumber);
+        if (!resolvedStoreId || !isValidStoreIdFormat(resolvedStoreId)) {
+          return pairNotFound();
+        }
+        if (!isStoreRegistered(resolvedStoreId)) {
+          return pairNotFound();
+        }
+        const storeEntry = storeRegistry.get(resolvedStoreId);
+        if (!storeEntry) {
+          return pairNotFound();
+        }
+        let entry = boardAutoPairByDevice.get(deviceId);
+        let isFirstBind = false;
+        if (!entry) {
+          isFirstBind = true;
+          entry = { storeId: resolvedStoreId, firstPairedAtMs: now };
+          boardAutoPairByDevice.set(deviceId, entry);
+        } else if (entry.storeId !== resolvedStoreId) {
+          entry = { storeId: resolvedStoreId, firstPairedAtMs: now };
+          boardAutoPairByDevice.set(deviceId, entry);
+          isFirstBind = true;
+        } else if (now - entry.firstPairedAtMs < BOARD_AUTO_PAIR_FIRST_WINDOW_MS) {
+          isFirstBind = true;
+        }
+        const customToken = await mintPairToken(resolvedStoreId);
+        if (!customToken) {
+          return json(res, 500, apiError('internal_error', 'token mint failed'));
+        }
+        return json(res, 200, {
+          ok: true,
+          storeId: resolvedStoreId,
+          storeName: storeEntry && storeEntry.name ? storeEntry.name : resolvedStoreId,
+          storeNumber: resolvedStoreId,
+          isFirstBind,
+          customToken,
+        });
+      }
+
       const auth = requireAuth(req);
       if (!auth.ok) return json(res, auth.status, auth.body);
 
@@ -668,43 +831,6 @@ const server = http.createServer(async (req, res) => {
           serverTime: now,
           onlineWindowSec: 180,
           stores,
-        });
-      }
-
-      if (name === 'boardBind' || name === 'boardBind/') {
-        boardBindRequestCount += 1;
-        boardBindBodiesLog.push({ ...body });
-        const brandId = String(body.brandId || '').trim();
-        const bindStoreId = String(body.storeId || '').trim();
-        const machineId = String(body.machineId || '').trim();
-        if (!brandId || !bindStoreId || !machineId) {
-          return json(res, 400, apiError('invalid_request', 'brandId, storeId, machineId required'));
-        }
-        if (body.clientIp != null || body.ip != null || body.externalIp != null) {
-          return json(res, 400, apiError('invalid_request', 'ip fields not accepted'));
-        }
-        if (!isValidStoreIdFormat(bindStoreId)) {
-          return json(res, 403, apiError('store_id_invalid', 'invalid store id format'));
-        }
-        const reg = registerStore(bindStoreId);
-        if (!reg.ok) {
-          return json(res, 403, apiError(reg.code, reg.message));
-        }
-        const storeEntry = reg.store || storeRegistry.get(bindStoreId);
-        const now = Date.now();
-        let entry = boardBindByMachine.get(machineId);
-        let isFirstBind = false;
-        if (!entry) {
-          isFirstBind = true;
-          entry = { brandId, storeId: bindStoreId, firstBindAt: now };
-          boardBindByMachine.set(machineId, entry);
-        } else if (now - entry.firstBindAt <= BOARD_BIND_FIRST_WINDOW_MS) {
-          isFirstBind = true;
-        }
-        return json(res, 200, {
-          storeName: storeEntry && storeEntry.name ? storeEntry.name : bindStoreId,
-          storeNumber: bindStoreId,
-          isFirstBind,
         });
       }
 

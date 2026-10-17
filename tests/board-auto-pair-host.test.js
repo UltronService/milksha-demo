@@ -99,11 +99,12 @@ function loadHostStack() {
   };
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'board-auto-pair.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'transport', 'board-bind-api.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'board-auto-pair-host.js'), 'utf8'), sandbox);
   sandbox.QMS.Transport = {
     BoardBindApi: {
-      requestBoardBind: async function () {
-        throw new Error('bind should not run');
+      requestBoardAutoPair: async function () {
+        throw new Error('pair should not run');
       },
     },
   };
@@ -117,11 +118,20 @@ function startHostWithHint(sandbox, clockStartMs) {
   AP.writeBindRecord(local, {
     brandId: 'milksha',
     storeId: 's1',
-    machineId: 'm1',
+    deviceId: 'm1',
     storeName: '店',
     storeNumber: 's1',
   });
   AP.markBindHintSessionActive(local, session);
+  sandbox.QMS.Transport.BoardBindApi.requestBoardAutoPair = async function () {
+    return {
+      storeId: 's1',
+      storeName: '店',
+      storeNumber: 's1',
+      isFirstBind: false,
+      customToken: 'fake-s1-device',
+    };
+  };
   let clockMs = clockStartMs;
   const timers = [];
   let nextId = 1;
@@ -150,8 +160,12 @@ function startHostWithHint(sandbox, clockStartMs) {
     localStorage: local,
     sessionStorage: session,
     brandId: 'milksha',
-    storeId: 's1',
+    storeNumber: 's1',
+    deviceId: 'm1',
     cloudApi: {},
+    signInWithCustomToken: async function () {
+      return 'token';
+    },
     now: function () {
       return new Date(clockMs);
     },
@@ -182,11 +196,20 @@ test('host minute timer updates suffix only on Taipei minute boundary', function
   AP.writeBindRecord(local, {
     brandId: 'milksha',
     storeId: 's1',
-    machineId: 'm1',
+    deviceId: 'm1',
     storeName: '店',
     storeNumber: 's1',
   });
   AP.markBindHintSessionActive(local, session);
+  sandbox.QMS.Transport.BoardBindApi.requestBoardAutoPair = async function () {
+    return {
+      storeId: 's1',
+      storeName: '店',
+      storeNumber: 's1',
+      isFirstBind: false,
+      customToken: 'fake-s1-device',
+    };
+  };
   let clockMs = taipei1459;
   const timers = [];
   let nextId = 1;
@@ -212,9 +235,15 @@ test('host minute timer updates suffix only on Taipei minute boundary', function
   sandbox.QMS.Board.AutoPairHost.startBoardAutoPair({
     window: win,
     document: sandbox.document,
+    localStorage: local,
+    sessionStorage: session,
     brandId: 'milksha',
-    storeId: 's1',
+    storeNumber: 's1',
+    deviceId: 'm1',
     cloudApi: {},
+    signInWithCustomToken: async function () {
+      return 'token';
+    },
     now: function () {
       return new Date(clockMs);
     },

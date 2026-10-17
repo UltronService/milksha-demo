@@ -21,14 +21,26 @@ const LONG_STORE_NAME = '北北基桃超長門市名稱驗收用'.repeat(6);
 
 const IP_KEYS = ['clientIp', 'ip', 'externalIp', 'clientIP', 'externalIP'];
 
-async function boardBindCount() {
-  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardBindCount`);
+async function boardAutoPairCount() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardAutoPairCount`);
   const json = await res.json();
   return json.count;
 }
 
-async function boardBindBodiesFromCloud() {
-  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardBindBodies`);
+async function boardAutoPairInitialCount() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardAutoPairInitialCount`);
+  const json = await res.json();
+  return json.count;
+}
+
+async function boardAutoPairReadCount() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardAutoPairReadCount`);
+  const json = await res.json();
+  return json.count;
+}
+
+async function boardAutoPairBodiesFromCloud() {
+  const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardAutoPairBodies`);
   const json = await res.json();
   return json.bodies || [];
 }
@@ -76,11 +88,17 @@ async function openCloudBoard(browser, storeId, options = {}) {
   }
   await installBundledCloudRouteShim(page);
   await page.goto(`${BASE}/?mode=cloud&store=${storeId}`);
+  if (options.expectBootError) {
+    await page.waitForSelector('.boot-error-card', { timeout: 45000 });
+    return { ctx, page };
+  }
   await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
-  await page.waitForFunction(
-    () => localStorage.getItem('milksha:board-bind-record') !== null,
-    { timeout: 45000 },
-  );
+  if (!options.skipBindRecordWait) {
+    await page.waitForFunction(
+      () => localStorage.getItem('milksha:board-bind-record') !== null,
+      { timeout: 45000 },
+    );
+  }
   return { ctx, page };
 }
 
@@ -166,18 +184,19 @@ test.describe('home board auto-pair', () => {
     await registerStore('zz-qa-long-name', LONG_STORE_NAME);
   });
 
-  test('bind uses brand+store+machine without IP; numbers still work', async ({ browser }) => {
+  test('bind uses brand+storeNumber+deviceId without IP; numbers still work', async ({ browser }) => {
     const { ctx, page } = await openCloudBoard(browser, 'zz-qa-store-a', {
       clockIso: CLOCK_2026_TAIPEI_1429,
     });
-    expect(await boardBindCount()).toBe(1);
-    const bindBodies = await boardBindBodiesFromCloud();
+    expect(await boardAutoPairInitialCount()).toBe(1);
+    expect(await boardAutoPairReadCount()).toBe(0);
+    const bindBodies = await boardAutoPairBodiesFromCloud();
     expect(bindBodies.length).toBeGreaterThanOrEqual(1);
     for (const body of bindBodies) {
       assertNoIpFields(body);
-      expect(body.brandId).toBeTruthy();
-      expect(body.storeId).toBe('zz-qa-store-a');
-      expect(body.machineId).toBeTruthy();
+      expect(body.brand).toBe('Milksha');
+      expect(body.storeNumber).toBe('zz-qa-store-a');
+      expect(body.deviceId).toBeTruthy();
     }
     await page.evaluate(() => {
       window.QMS.runtime.applyPayload([{ source_type: 'From_Store_OK', number: '1234' }]);
@@ -186,16 +205,64 @@ test.describe('home board auto-pair', () => {
     await ctx.close();
   });
 
-  test('reload does not send second bind', async ({ browser }) => {
+  test('reload uses read path; initial bind only once', async ({ browser }) => {
     const { ctx, page } = await openCloudBoard(browser, 'zz-qa-store-a', {
       clearStorageOnce: true,
       clockIso: CLOCK_2026_TAIPEI_1429,
     });
-    expect(await boardBindCount()).toBe(1);
+    expect(await boardAutoPairInitialCount()).toBe(1);
     await page.reload();
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
     await page.clock.fastForward(2000);
-    expect(await boardBindCount()).toBe(1);
+    expect(await boardAutoPairInitialCount()).toBe(1);
+    expect(await boardAutoPairReadCount()).toBe(1);
+    const bodies = await boardAutoPairBodiesFromCloud();
+    const readBodies = bodies.filter((b) => b.storeId && !b.brand);
+    expect(readBodies.length).toBeGreaterThanOrEqual(1);
+    expect(readBodies[0].deviceId).toBeTruthy();
+    await ctx.close();
+  });
+
+  test('read within 10m may return isFirstBind but hint hidden when hint-ever', async ({ browser }) => {
+    await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/boardAutoPairNow`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nowMs: Date.parse(CLOCK_2026_TAIPEI_1429) }),
+    });
+    const { ctx, page } = await openCloudBoard(browser, 'zz-qa-ci-store', {
+      clearStorageOnce: true,
+      clockIso: CLOCK_2026_TAIPEI_1429,
+    });
+    expect(await boardAutoPairInitialCount()).toBe(1);
+    await expect(page.locator('#milksha-board-bind-hint')).toBeVisible();
+    const record = await page.evaluate(() => localStorage.getItem('milksha:board-bind-record'));
+    const ctx2 = await isolatedCloudContext(browser);
+    const page2 = await ctx2.newPage();
+    await page2.clock.install({ time: new Date(CLOCK_2026_TAIPEI_1429) });
+    await installBundledCloudRouteShim(page2);
+    await page2.addInitScript((rec) => {
+      localStorage.setItem('milksha:board-bind-record', rec);
+      localStorage.setItem('milksha:board-bind-hint-ever', '1');
+    }, record);
+    await page2.goto(`${BASE}/?mode=cloud&store=zz-qa-ci-store`);
+    await page2.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
+    await page2.clock.fastForward(1500);
+    await expect(page2.locator('#milksha-board-bind-hint')).toBeHidden();
+    expect(await boardAutoPairReadCount()).toBe(1);
+    await ctx.close();
+    await ctx2.close();
+  });
+
+  test('ok false shows boot error and does not save bind record', async ({ browser }) => {
+    const { ctx, page } = await openCloudBoard(browser, 'zz-qa-not-registered', {
+      expectBootError: true,
+      skipBindRecordWait: true,
+    });
+    await expect(page.locator('.boot-error-card')).toContainText('找不到目標叫號機');
+    const record = await page.evaluate(() => localStorage.getItem('milksha:board-bind-record'));
+    expect(record).toBeNull();
+    await expect(page.locator('#milksha-board-bind-hint')).toBeHidden();
+    expect(await boardAutoPairCount()).toBe(1);
     await ctx.close();
   });
 
@@ -226,35 +293,40 @@ test.describe('home board auto-pair', () => {
     await ctx.close();
   });
 
-  test('hint survives reload; new session hides permanently without extra bind', async ({ browser }) => {
+  test('hint survives reload; new session hides permanently without extra initial bind', async ({ browser }) => {
     const { ctx, page } = await openCloudBoard(browser, 'zz-qa-ci-store', {
       clearStorageOnce: true,
       clockIso: CLOCK_2026_TAIPEI_1429,
     });
-    const countAfterFirst = await boardBindCount();
-    expect(countAfterFirst).toBe(1);
+    const initialAfterFirst = await boardAutoPairInitialCount();
+    expect(initialAfterFirst).toBe(1);
     await expect(page.locator('#milksha-board-bind-hint')).toBeVisible();
     await page.reload();
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
     await expect(page.locator('#milksha-board-bind-hint')).toBeVisible();
-    expect(await boardBindCount()).toBe(countAfterFirst);
+    expect(await boardAutoPairInitialCount()).toBe(initialAfterFirst);
     const ctx2 = await isolatedCloudContext(browser);
     const page2 = await ctx2.newPage();
     await page2.clock.install({ time: new Date(CLOCK_2026_TAIPEI_1429) });
     await installBundledCloudRouteShim(page2);
-    const record = await page.evaluate(() => localStorage.getItem('milksha:board-bind-record'));
-    await page2.addInitScript((rec) => {
-      localStorage.setItem('milksha:board-bind-record', rec);
-    }, record);
+    const stash = await page.evaluate(() => ({
+      record: localStorage.getItem('milksha:board-bind-record'),
+      hintEver: localStorage.getItem('milksha:board-bind-hint-ever'),
+    }));
+    await page2.addInitScript((data) => {
+      localStorage.setItem('milksha:board-bind-record', data.record);
+      if (data.hintEver) {
+        localStorage.setItem('milksha:board-bind-hint-ever', data.hintEver);
+      }
+    }, stash);
     await page2.goto(`${BASE}/?mode=cloud&store=zz-qa-ci-store`);
     await page2.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
     await page2.clock.fastForward(1500);
     await expect(page2.locator('#milksha-board-bind-hint')).toBeHidden();
-    expect(await boardBindCount()).toBe(countAfterFirst);
+    expect(await boardAutoPairInitialCount()).toBe(initialAfterFirst);
     await page2.reload();
     await page2.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 45000 });
     await expect(page2.locator('#milksha-board-bind-hint')).toBeHidden();
-    expect(await boardBindCount()).toBe(countAfterFirst);
     await ctx.close();
     await ctx2.close();
   });
@@ -264,7 +336,7 @@ test.describe('home board auto-pair', () => {
       clockIso: CLOCK_2026_TAIPEI_1429,
     });
     await expect(page.locator('#milksha-board-bind-hint')).toBeVisible();
-    const beforeClear = await boardBindCount();
+    const beforeClear = await boardAutoPairInitialCount();
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -276,14 +348,14 @@ test.describe('home board auto-pair', () => {
       { timeout: 45000 },
     );
     await expect(page.locator('#milksha-board-bind-hint')).toBeVisible();
-    expect(await boardBindCount()).toBe(beforeClear + 1);
+    expect(await boardAutoPairInitialCount()).toBe(beforeClear + 1);
     await ctx.close();
   });
 
   test('two boards same store both show bind hint and numbers', async ({ browser }) => {
     const a = await openCloudBoard(browser, 'zz-qa-store-a', { clockIso: CLOCK_2026_TAIPEI_1429 });
     const b = await openCloudBoard(browser, 'zz-qa-store-a', { clockIso: CLOCK_2026_TAIPEI_1429 });
-    expect(await boardBindCount()).toBe(2);
+    expect(await boardAutoPairInitialCount()).toBe(2);
     await expect(a.page.locator('#milksha-board-bind-hint')).toBeVisible();
     await expect(b.page.locator('#milksha-board-bind-hint')).toBeVisible();
     const payload = [{ source_type: 'From_Store_OK', number: '5678' }];

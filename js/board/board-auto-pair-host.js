@@ -1,5 +1,5 @@
 /**
- * Board auto-pair host: cloud bind orchestration + hint UI timer.
+ * Board auto-pair host: cloud pair orchestration + hint UI timer.
  */
 (function (root) {
   'use strict';
@@ -20,6 +20,23 @@
     win.__milkshaBoardAutoPairBindWarned = true;
     try {
       win.console.warn('[board-auto-pair] bind failed', err && err.message ? err.message : err);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  /**
+   * @param {typeof root} win
+   * @param {string} message
+   */
+  function showPairBootError(win, message) {
+    const text = String(message || '').trim() || '找不到目標叫號機';
+    if (QMS.showBootError) {
+      QMS.showBootError(text);
+      return;
+    }
+    try {
+      win.console.error('[board-auto-pair]', text);
     } catch (e) {
       /* ignore */
     }
@@ -99,21 +116,20 @@
     const AutoPair = QMS.Board.AutoPair;
     const BoardBindApi = QMS.Transport && QMS.Transport.BoardBindApi;
     if (!AutoPair || !BoardBindApi) {
-      return { stop: function () {} };
+      return { stop: function () {}, whenPaired: Promise.resolve() };
     }
     if (win.__milkshaBoardAutoPairController) {
       return win.__milkshaBoardAutoPairController;
     }
 
-    const brandId = String(opts.brandId || '').trim();
-    const storeId = String(opts.storeId || '').trim();
+    const brandPack = opts.brandPack || opts.brand || null;
+    const brandId = String(
+      opts.brandId || (brandPack && brandPack.brandId) || '',
+    ).trim();
+    const storeNumber = String(opts.storeNumber || opts.storeId || '').trim();
     const cloudApi = opts.cloudApi;
-    const ensureAuth =
-      typeof opts.ensureAuth === 'function'
-        ? opts.ensureAuth
-        : function () {
-            return Promise.resolve();
-          };
+    const signInWithCustomToken =
+      typeof opts.signInWithCustomToken === 'function' ? opts.signInWithCustomToken : null;
     const nowFn = typeof opts.now === 'function' ? opts.now : function () {
       return new Date();
     };
@@ -168,16 +184,34 @@
       stage.style.setProperty('--milksha-bind-hint-font', hintPx + 'px');
     }
 
-    function onBindSuccess(result, machineId) {
+    function restoreHintFromRecord() {
+      const record = AutoPair.readBindRecord(local);
+      if (!record || !AutoPair.shouldShowBindHint(local, session)) {
+        return;
+      }
+      hintState = {
+        storeName: record.storeName,
+        storeNumber: record.storeNumber,
+      };
+      applyHintFontFromBoard();
+      syncHintVisibility();
+      armMinuteTimer();
+    }
+
+    /**
+     * @param {object} result
+     * @param {string} deviceId
+     */
+    function onPairSuccess(result, deviceId) {
       const record = {
         brandId: brandId,
-        storeId: storeId,
-        machineId: machineId,
+        storeId: result.storeId,
+        deviceId: deviceId,
         storeName: result.storeName,
         storeNumber: result.storeNumber,
       };
       AutoPair.writeBindRecord(local, record);
-      if (result.isFirstBind) {
+      if (AutoPair.shouldActivateBindHint(result.isFirstBind, local)) {
         AutoPair.markBindHintSessionActive(local, session);
         hintState = {
           storeName: result.storeName,
@@ -189,41 +223,70 @@
       }
     }
 
-    function runBind() {
-      if (stopped || !brandId || !storeId || !cloudApi) {
-        return Promise.resolve();
+    function handlePairFailure(err) {
+      warnBindFailedOnce(win, err);
+      if (err && err.pairOkFalse) {
+        showPairBootError(win, err.message || '找不到目標叫號機');
+        return;
       }
-      if (!AutoPair.shouldSendBoardBind(local, brandId, storeId)) {
-        const record = AutoPair.readBindRecord(local);
-        if (record && AutoPair.shouldShowBindHint(local, session)) {
-          hintState = {
-            storeName: record.storeName,
-            storeNumber: record.storeNumber,
-          };
-          applyHintFontFromBoard();
-          syncHintVisibility();
-          armMinuteTimer();
+      const msg =
+        err && err.response && err.response.message
+          ? String(err.response.message)
+          : err && err.message
+            ? String(err.message)
+            : '找不到目標叫號機';
+      showPairBootError(win, msg);
+    }
+
+    function runPair() {
+      if (stopped || !cloudApi) {
+        return Promise.resolve(null);
+      }
+      const deviceId = String(opts.deviceId || AutoPair.getOrCreateDeviceId(local)).trim();
+      const record = AutoPair.readBindRecord(local);
+      let payload;
+      if (AutoPair.hasBindRecord(local) && record) {
+        payload = {
+          mode: 'read',
+          storeId: String(record.storeId || '').trim(),
+          deviceId: deviceId,
+        };
+      } else {
+        const apiBrand = AutoPair.resolveApiBrand(
+          brandPack || { brandId: brandId },
+        );
+        if (!apiBrand || !storeNumber) {
+          return Promise.resolve(null);
         }
-        return Promise.resolve();
+        payload = {
+          brand: apiBrand,
+          storeNumber: storeNumber,
+          deviceId: deviceId,
+        };
       }
-      const machineId = AutoPair.getOrCreateMachineId(local);
-      return ensureAuth()
-        .then(function () {
-          return BoardBindApi.requestBoardBind(cloudApi, {
-            brandId: brandId,
-            storeId: storeId,
-            machineId: machineId,
+      return BoardBindApi.requestBoardAutoPair(cloudApi, payload)
+        .then(function (result) {
+          if (!signInWithCustomToken) {
+            const err = new Error('signInWithCustomToken missing');
+            err.status = 500;
+            throw err;
+          }
+          return signInWithCustomToken(result.customToken).then(function () {
+            onPairSuccess(result, deviceId);
+            return result;
           });
         })
-        .then(function (result) {
-          onBindSuccess(result, machineId);
-        })
         .catch(function (err) {
-          warnBindFailedOnce(win, err);
+          handlePairFailure(err);
+          throw err;
         });
     }
 
-    runBind();
+    const whenPaired = runPair().catch(function () {
+      return null;
+    });
+
+    restoreHintFromRecord();
 
     const resizeHandler = function () {
       applyHintFontFromBoard();
@@ -242,6 +305,8 @@
           win.__milkshaBoardAutoPairController = null;
         }
       },
+      whenPaired: whenPaired,
+      runPairForTests: runPair,
       refreshHintForTests: function () {
         syncHintVisibility();
       },
@@ -258,5 +323,6 @@
     ensureHintElement: ensureHintElement,
     startBoardAutoPair: startBoardAutoPair,
     warnBindFailedOnce: warnBindFailedOnce,
+    showPairBootError: showPairBootError,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

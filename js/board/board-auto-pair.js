@@ -1,5 +1,5 @@
 /**
- * Board auto-pair (bind) — pure logic: storage, hint visibility, formatting.
+ * Board auto-pair — pure logic: storage, hint visibility, formatting, request shapes.
  */
 (function (root) {
   'use strict';
@@ -7,20 +7,40 @@
   const QMS = (root.QMS = root.QMS || {});
   QMS.Board = QMS.Board || {};
 
-  const STORAGE_MACHINE_ID = 'milksha:board-machine-id';
+  const STORAGE_DEVICE_ID = 'milksha:board-machine-id';
   const STORAGE_BIND_RECORD = 'milksha:board-bind-record';
   const STORAGE_HINT_EVER = 'milksha:board-bind-hint-ever';
   const SESSION_HINT_ACTIVE = 'milksha:board-bind-hint-session';
 
   const MIN_YEAR_FOR_CLOCK = 2026;
   const HINT_PREFIX = '已綁定：';
+  const MAX_DEVICE_ID_LEN = 128;
+
+  /**
+   * @param {object} brandPack
+   * @returns {string}
+   */
+  function resolveApiBrand(brandPack) {
+    const pack = brandPack && typeof brandPack === 'object' ? brandPack : {};
+    const id = String(pack.brandId || '').trim();
+    if (!id) {
+      return '';
+    }
+    if (id === 'milksha') {
+      return 'Milksha';
+    }
+    if (id === 'zz-qa') {
+      return 'zz-qa';
+    }
+    return id;
+  }
 
   /**
    * @param {Storage|null|undefined} storage
    * @param {() => string} [createId]
    * @returns {string}
    */
-  function getOrCreateMachineId(storage, createId) {
+  function getOrCreateDeviceId(storage, createId) {
     const store = storage || null;
     const gen =
       createId ||
@@ -34,16 +54,21 @@
       return gen();
     }
     try {
-      const existing = store.getItem(STORAGE_MACHINE_ID);
+      const existing = store.getItem(STORAGE_DEVICE_ID);
       if (existing && String(existing).trim()) {
         return String(existing).trim();
       }
       const id = gen();
-      store.setItem(STORAGE_MACHINE_ID, id);
+      store.setItem(STORAGE_DEVICE_ID, id);
       return id;
     } catch (e) {
       return gen();
     }
+  }
+
+  /** @deprecated use getOrCreateDeviceId */
+  function getOrCreateMachineId(storage, createId) {
+    return getOrCreateDeviceId(storage, createId);
   }
 
   /**
@@ -86,26 +111,68 @@
 
   /**
    * @param {Storage|null|undefined} storage
-   * @param {string} brandId
-   * @param {string} storeId
    * @returns {boolean}
    */
-  function shouldSendBoardBind(storage, brandId, storeId) {
+  function hasBindRecord(storage) {
     const record = readBindRecord(storage);
-    if (!record) {
+    return Boolean(record && String(record.storeId || '').trim());
+  }
+
+  /**
+   * @param {object} input
+   * @returns {{ ok: true, mode: 'initial'|'read', body: object } | { ok: false, message: string }}
+   */
+  function buildAutoPairRequest(input) {
+    const src = input && typeof input === 'object' ? input : {};
+    const deviceId = String(src.deviceId || '').trim();
+    if (!deviceId) {
+      return { ok: false, message: 'deviceId required' };
+    }
+    if (deviceId.length > MAX_DEVICE_ID_LEN) {
+      return { ok: false, message: 'deviceId too long' };
+    }
+    if (src.mode === 'read' || src.storeId) {
+      const storeId = String(src.storeId || '').trim();
+      if (!storeId) {
+        return { ok: false, message: 'storeId required for read' };
+      }
+      return { ok: true, mode: 'read', body: { storeId: storeId, deviceId: deviceId } };
+    }
+    const brand = String(src.brand || '').trim();
+    const storeNumber = String(src.storeNumber || '').trim();
+    if (!brand) {
+      return { ok: false, message: 'brand required' };
+    }
+    if (!storeNumber) {
+      return { ok: false, message: 'storeNumber required' };
+    }
+    return {
+      ok: true,
+      mode: 'initial',
+      body: { brand: brand, storeNumber: storeNumber, deviceId: deviceId },
+    };
+  }
+
+  /**
+   * @param {boolean} isFirstBind
+   * @param {Storage|null|undefined} local
+   * @returns {boolean}
+   */
+  function shouldActivateBindHint(isFirstBind, local) {
+    if (!isFirstBind) {
+      return false;
+    }
+    if (!local) {
       return true;
     }
-    const store = String(storeId || '').trim();
-    const recordStore = String(record.storeId || '').trim();
-    if (!store || recordStore !== store) {
+    try {
+      if (local.getItem(STORAGE_HINT_EVER) === '1') {
+        return false;
+      }
+    } catch (e) {
       return true;
     }
-    const brand = String(brandId || '').trim();
-    const recordBrand = String(record.brandId || '').trim();
-    if (brand && recordBrand && brand !== recordBrand) {
-      return true;
-    }
-    return false;
+    return true;
   }
 
   /**
@@ -196,11 +263,6 @@
 
   /**
    * @param {object} opts
-   * @param {string} opts.storeName
-   * @param {string} opts.storeNumber
-   * @param {Date} opts.now
-   * @param {number} [opts.minYearForTime]
-   * @param {(d: Date) => string} [opts.formatYmdHm]
    * @returns {string}
    */
   function formatBindHintText(opts) {
@@ -241,45 +303,23 @@
     return Math.max(14, Math.round(n / 4));
   }
 
-  /**
-   * @param {object} body
-   * @returns {{ ok: true, body: object } | { ok: false, message: string }}
-   */
-  function buildBoardBindRequest(body) {
-    const src = body && typeof body === 'object' ? body : {};
-    const brandId = String(src.brandId || '').trim();
-    const storeId = String(src.storeId || '').trim();
-    const machineId = String(src.machineId || '').trim();
-    if (!brandId) {
-      return { ok: false, message: 'brandId required' };
-    }
-    if (!storeId) {
-      return { ok: false, message: 'storeId required' };
-    }
-    if (!machineId) {
-      return { ok: false, message: 'machineId required' };
-    }
-    return {
-      ok: true,
-      body: {
-        brandId: brandId,
-        storeId: storeId,
-        machineId: machineId,
-      },
-    };
-  }
-
   QMS.Board.AutoPair = {
-    STORAGE_MACHINE_ID: STORAGE_MACHINE_ID,
+    STORAGE_DEVICE_ID: STORAGE_DEVICE_ID,
+    STORAGE_MACHINE_ID: STORAGE_DEVICE_ID,
     STORAGE_BIND_RECORD: STORAGE_BIND_RECORD,
     STORAGE_HINT_EVER: STORAGE_HINT_EVER,
     SESSION_HINT_ACTIVE: SESSION_HINT_ACTIVE,
     MIN_YEAR_FOR_CLOCK: MIN_YEAR_FOR_CLOCK,
     HINT_PREFIX: HINT_PREFIX,
+    MAX_DEVICE_ID_LEN: MAX_DEVICE_ID_LEN,
+    resolveApiBrand: resolveApiBrand,
+    getOrCreateDeviceId: getOrCreateDeviceId,
     getOrCreateMachineId: getOrCreateMachineId,
     readBindRecord: readBindRecord,
     writeBindRecord: writeBindRecord,
-    shouldSendBoardBind: shouldSendBoardBind,
+    hasBindRecord: hasBindRecord,
+    buildAutoPairRequest: buildAutoPairRequest,
+    shouldActivateBindHint: shouldActivateBindHint,
     shouldShowBindHint: shouldShowBindHint,
     markBindHintSessionActive: markBindHintSessionActive,
     taipeiCalendarYear: taipeiCalendarYear,
@@ -287,6 +327,5 @@
     msUntilNextTaipeiMinute: msUntilNextTaipeiMinute,
     formatBindHintText: formatBindHintText,
     bindHintFontPx: bindHintFontPx,
-    buildBoardBindRequest: buildBoardBindRequest,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

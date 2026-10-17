@@ -27,23 +27,54 @@ function loadBoardBindApi() {
   return sandbox.QMS.Transport;
 }
 
-test('requestBoardBind posts brand store machine via cloudApi', async function () {
+test('requestBoardAutoPair posts brand storeNumber deviceId via cloudApi', async function () {
   const Transport = loadBoardBindApi();
   let posted = null;
   const api = {
-    boardBind: async function (body) {
+    boardAutoPair: async function (body) {
       posted = body;
-      return { storeName: 'QA門市', storeNumber: 'zz-qa-store-a', isFirstBind: true };
+      return {
+        ok: true,
+        storeId: 'zz-qa-store-a',
+        storeName: 'QA門市',
+        storeNumber: 'store-a-num',
+        isFirstBind: true,
+        customToken: 'tok-1',
+      };
     },
   };
-  const result = await Transport.BoardBindApi.requestBoardBind(api, {
-    brandId: 'milksha',
-    storeId: 'zz-qa-store-a',
-    machineId: 'machine-a',
+  const result = await Transport.BoardBindApi.requestBoardAutoPair(api, {
+    brand: 'Milksha',
+    storeNumber: 'zz-qa-store-a',
+    deviceId: 'stb-01',
   });
-  assert.equal(posted.brandId, 'milksha');
-  assert.equal(posted.storeId, 'zz-qa-store-a');
-  assert.equal(posted.machineId, 'machine-a');
+  assert.equal(posted.brand, 'Milksha');
+  assert.equal(posted.storeNumber, 'zz-qa-store-a');
+  assert.equal(posted.deviceId, 'stb-01');
   assert.equal(result.isFirstBind, true);
   assert.equal(result.storeName, 'QA門市');
+  assert.equal(result.storeNumber, 'store-a-num');
+  assert.equal(result.customToken, 'tok-1');
+});
+
+test('requestBoardAutoPair ok false throws pairOkFalse', async function () {
+  const Transport = loadBoardBindApi();
+  const api = {
+    boardAutoPair: async function () {
+      return { ok: false, information: '找不到目標叫號機' };
+    },
+  };
+  await assert.rejects(
+    () =>
+      Transport.BoardBindApi.requestBoardAutoPair(api, {
+        brand: 'Milksha',
+        storeNumber: 'missing',
+        deviceId: 'stb-01',
+      }),
+    (err) => {
+      assert.equal(err.pairOkFalse, true);
+      assert.match(err.message, /找不到目標叫號機/);
+      return true;
+    },
+  );
 });

@@ -1,44 +1,21 @@
-# 看板自動配對（規格 1–4）自測報告
-
-## PR
-
-https://github.com/UltronService/milksha-demo/pull/97
-
-分支：`cursor/board-auto-pair-a19b`
-
-## 測試清單
-
-| # | 項目 | 結果 |
-|---|------|------|
-| 1 | 僅品牌＋店號＋機台編號綁定（無 IP），號碼照常顯示 | 通過 |
-| 2 | 已綁定後重新載入不再送綁定 | 通過 |
-| 3 | 右下小字格式「已綁定：門市＋店號 YYYY-MM-DD HH:MM」 | 通過 |
-| 4 | 台灣時間、整分鐘、無秒（含 23:59→00:00 單元測） | 通過 |
-| 5 | UI 1080p／4K 版面（右下 16px、字高≥14、不蓋號碼） | 通過 |
-| 6 | 重新載入後小字仍在 | 通過 |
-| 7 | 新 session（模擬 APK 重啟）小字消失且不再出現 | 通過 |
-| 8 | 同店兩台看板各自綁定、皆顯示號碼 | 通過 |
-| 補 | 年份早於 2026 不顯示時間 | 通過（單元測） |
-| 補 | 清除 storage 後再綁、雲端回第一次則小字再出現 | 通過 |
-
-## 截圖
-
-- `artifacts/auto-pair/screenshots/bind-hint-1080p.png`
-- `artifacts/auto-pair/screenshots/bind-hint-4k.png`
-
-## 執行方式
-
-```bash
-npm test
-npx playwright test home-board-auto-pair.spec.mjs
-```
-
-## 真雲端 E2E
-
-尚未執行（待 qms-platform `boardBind` 部署至 milksha-qms-dev 並提供 API 文件後，再以 `zz-qa-ci-store`／`zz-qa-store-a` 補一條）。
+# Auto-pair 對齊 boardAutoPair（2026-10-17）
 
 ## 變更摘要
+- 前端改為 `POST boardAutoPair`（無 Bearer）：初次 `{ brand, storeNumber, deviceId }`；有本地紀錄 `{ storeId, deviceId }`。
+- 成功後 `customToken` → `signInWithCustomToken`，再啟動 cloud runtime（早於 devLogin）。
+- 小字：`isFirstBind` + `shouldActivateBindHint`（`hint-ever`）+ `sessionStorage` 顯示旗標；`storeName`／`storeNumber` 用 API 回傳。
+- fake-cloud：`boardAutoPair`、10 分鐘窗、`ok:false`、initial/read 計數、`/test/boardAutoPairNow`。
 
-- 新增 `board-auto-pair` 模組：機台 UUID、綁定紀錄、session／local 小字生命週期、整分鐘台灣時鐘。
-- 雲端邊界：`board-bind-api.js` + `cloud-api.boardBind`；fake-cloud 提供 `boardBind` mock。
-- 看板啟動：`cloud-boot` 在 home cloud 模式完成登入後觸發配對與右下提示 UI。
+## 手動驗收（UAT）
+1. 清站存後開 `/?mode=cloud&store=zz-qa-store-a` → 右下角出現「已綁定：門市名＋店號＋時間」。
+2. F5 同頁 → 小字仍顯示；Network 僅 read 路徑（無 brand/storeNumber）。
+3. 新開無痕（帶同 bind record + hint-ever）→ 小字不出現。
+4. 未註冊門市 → 全頁「找不到目標叫號機」，無 bind record。
+
+## 真雲端 e2e
+待 dev 部署 `boardAutoPair` 後再跑（zz-qa-backend／stb-01）。
+
+## 與核准規格需 PM 確認
+- **acceptance 8**（`controller-redesign-acceptance.test.js`）仍要求 `js/board/*` 零 diff；本分支必然失敗，非功能回歸。
+- **站牌 brand.json 為 milksha** 但 QA 門市為 `zz-qa-*`：初次仍送 `brand: "Milksha"` + `storeNumber` 為完整 storeId（依後端「storeNumber 已是合法 storeId 則直接用」）。
+- **fake-cloud 初次配對** 僅接受已 `/test/registerStore` 的門市（不自動建店），與「找不到叫號機」語意一致；真雲端 profile 規則以 cloud 為準。
