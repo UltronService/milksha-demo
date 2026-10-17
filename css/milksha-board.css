@@ -63,6 +63,7 @@
   text-overflow: ellipsis;
   min-width: 0;
   flex: 0 1 auto;
+  max-width: 9em;
 }
 
 .milksha-board-bind-hint__suffix {

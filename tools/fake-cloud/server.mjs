@@ -94,6 +94,8 @@ let listStoresRequestCount = 0;
 /** @type {Map<string, { brandId: string, storeId: string, firstBindAt: number }>} */
 const boardBindByMachine = new Map();
 let boardBindRequestCount = 0;
+/** @type {object[]} */
+const boardBindBodiesLog = [];
 const BOARD_BIND_FIRST_WINDOW_MS = 10 * 60 * 1000;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
@@ -420,6 +422,7 @@ const server = http.createServer(async (req, res) => {
       listStoresRequestCount = 0;
       boardBindByMachine.clear();
       boardBindRequestCount = 0;
+      boardBindBodiesLog.length = 0;
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -440,6 +443,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/test/boardBindCount' && req.method === 'GET') {
       return json(res, 200, { count: boardBindRequestCount });
+    }
+    if (url.pathname === '/test/boardBindBodies' && req.method === 'GET') {
+      return json(res, 200, { bodies: boardBindBodiesLog.slice() });
     }
     if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
       return json(res, 200, { count: listStoresRequestCount });
@@ -667,6 +673,7 @@ const server = http.createServer(async (req, res) => {
 
       if (name === 'boardBind' || name === 'boardBind/') {
         boardBindRequestCount += 1;
+        boardBindBodiesLog.push({ ...body });
         const brandId = String(body.brandId || '').trim();
         const bindStoreId = String(body.storeId || '').trim();
         const machineId = String(body.machineId || '').trim();

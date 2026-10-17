@@ -10,6 +10,22 @@
   const HINT_ID = 'milksha-board-bind-hint';
 
   /**
+   * @param {typeof root} win
+   * @param {unknown} err
+   */
+  function warnBindFailedOnce(win, err) {
+    if (win.__milkshaBoardAutoPairBindWarned) {
+      return;
+    }
+    win.__milkshaBoardAutoPairBindWarned = true;
+    try {
+      win.console.warn('[board-auto-pair] bind failed', err && err.message ? err.message : err);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  /**
    * @param {Document} doc
    * @returns {HTMLElement|null}
    */
@@ -203,11 +219,7 @@
           onBindSuccess(result, machineId);
         })
         .catch(function (err) {
-          try {
-            win.console.warn('[board-auto-pair] bind failed', err && err.message ? err.message : err);
-          } catch (e) {
-            /* ignore */
-          }
+          warnBindFailedOnce(win, err);
         });
     }
 
@@ -245,5 +257,6 @@
     HINT_ID: HINT_ID,
     ensureHintElement: ensureHintElement,
     startBoardAutoPair: startBoardAutoPair,
+    warnBindFailedOnce: warnBindFailedOnce,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
