@@ -671,7 +671,25 @@
           return;
         }
         startCloudRuntime(root.QMS.runtime);
-        runEnsureIdToken();
+        runEnsureIdToken().then(function () {
+          if (transportMode !== 'cloud') {
+            return;
+          }
+          const brand = root.QMS.runtime && root.QMS.runtime.brand;
+          const Host = QMS.Board && QMS.Board.AutoPairHost;
+          if (!brand || !Host || !Host.startBoardAutoPair) {
+            return;
+          }
+          Host.startBoardAutoPair({
+            window: root,
+            brandId: brand.brandId,
+            storeId: creds.storeId,
+            cloudApi: transport.cloudApi,
+            ensureAuth: function () {
+              return runEnsureIdToken();
+            },
+          });
+        });
         return;
       }
       if (!root.receiverDemo) {

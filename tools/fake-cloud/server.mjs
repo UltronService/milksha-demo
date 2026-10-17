@@ -59,7 +59,12 @@ function registerStore(storeId, opts) {
     return { ok: false, code: 'store_not_allowed', message: 'store denied' };
   }
   if (storeRegistry.has(id)) {
-    return { ok: true, store: storeRegistry.get(id) };
+    const existing = storeRegistry.get(id);
+    if (opts && opts.name && String(opts.name).trim()) {
+      existing.name = String(opts.name).trim();
+      storeRegistry.set(id, existing);
+    }
+    return { ok: true, store: existing };
   }
   if (storeRegistry.size >= STORE_REGISTRY_MAX) {
     return { ok: false, code: 'dev_store_registry_full', message: 'registry full' };
@@ -86,6 +91,10 @@ function isAllowedDevLoginStore(storeId) {
 }
 let devLoginRequestCount = 0;
 let listStoresRequestCount = 0;
+/** @type {Map<string, { brandId: string, storeId: string, firstBindAt: number }>} */
+const boardBindByMachine = new Map();
+let boardBindRequestCount = 0;
+const BOARD_BIND_FIRST_WINDOW_MS = 10 * 60 * 1000;
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -409,6 +418,8 @@ const server = http.createServer(async (req, res) => {
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
       listStoresRequestCount = 0;
+      boardBindByMachine.clear();
+      boardBindRequestCount = 0;
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -426,6 +437,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/boardBindCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardBindRequestCount });
     }
     if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
       return json(res, 200, { count: listStoresRequestCount });
@@ -648,6 +662,42 @@ const server = http.createServer(async (req, res) => {
           serverTime: now,
           onlineWindowSec: 180,
           stores,
+        });
+      }
+
+      if (name === 'boardBind' || name === 'boardBind/') {
+        boardBindRequestCount += 1;
+        const brandId = String(body.brandId || '').trim();
+        const bindStoreId = String(body.storeId || '').trim();
+        const machineId = String(body.machineId || '').trim();
+        if (!brandId || !bindStoreId || !machineId) {
+          return json(res, 400, apiError('invalid_request', 'brandId, storeId, machineId required'));
+        }
+        if (body.clientIp != null || body.ip != null || body.externalIp != null) {
+          return json(res, 400, apiError('invalid_request', 'ip fields not accepted'));
+        }
+        if (!isValidStoreIdFormat(bindStoreId)) {
+          return json(res, 403, apiError('store_id_invalid', 'invalid store id format'));
+        }
+        const reg = registerStore(bindStoreId);
+        if (!reg.ok) {
+          return json(res, 403, apiError(reg.code, reg.message));
+        }
+        const storeEntry = reg.store || storeRegistry.get(bindStoreId);
+        const now = Date.now();
+        let entry = boardBindByMachine.get(machineId);
+        let isFirstBind = false;
+        if (!entry) {
+          isFirstBind = true;
+          entry = { brandId, storeId: bindStoreId, firstBindAt: now };
+          boardBindByMachine.set(machineId, entry);
+        } else if (now - entry.firstBindAt <= BOARD_BIND_FIRST_WINDOW_MS) {
+          isFirstBind = true;
+        }
+        return json(res, 200, {
+          storeName: storeEntry && storeEntry.name ? storeEntry.name : bindStoreId,
+          storeNumber: bindStoreId,
+          isFirstBind,
         });
       }
 
