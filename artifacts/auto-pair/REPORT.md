@@ -2,7 +2,7 @@
 
 ## PR
 
-（推送後由 CI 填入 PR 連結）
+https://github.com/UltronService/milksha-demo/pull/97
 
 分支：`cursor/board-auto-pair-a19b`
 
