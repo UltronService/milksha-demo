@@ -36,7 +36,7 @@ npm test → 全 suite 302 項；其中 10 項失敗為 main 上既有 PR #74 �
 
 ## PR
 
-（推送後由 Cloud Agent 填入連結）
+https://github.com/UltronService/milksha-demo/pull/99 （**DRAFT**，請勿合併）
 
 ## 如何開啟頁面
 
