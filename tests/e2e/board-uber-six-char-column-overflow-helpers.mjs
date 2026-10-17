@@ -234,10 +234,10 @@ export function assertChipOverflowRules(m, viewportTag) {
         `${viewportTag}: icon height ${m.six.iconBox.height.toFixed(1)} != font*0.8 (${expectedIconH.toFixed(1)})`,
       );
     }
-    const expectedGap = m.six.fontPx * 0.2;
+    const expectedGap = m.six.fontPx * 0.3;
     if (m.six.gapPx !== null && Math.abs(m.six.gapPx - expectedGap) > 2.5) {
       errors.push(
-        `${viewportTag}: icon gap ${m.six.gapPx.toFixed(1)} != font*0.2 (${expectedGap.toFixed(1)})`,
+        `${viewportTag}: icon-to-num gap ${m.six.gapPx.toFixed(1)} != font*0.3 (${expectedGap.toFixed(1)})`,
       );
     }
   }

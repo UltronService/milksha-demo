@@ -56,7 +56,7 @@ async function sampleScaleInvocationsDuringIdle(page, frames) {
   }, frames);
 }
 
-test.describe('PR #95: uber 6-char + icon column overflow (red)', () => {
+test.describe('PR #95: uber 6-char + icon column overflow', () => {
   for (const viewport of OVERFLOW_VIEWPORTS) {
     test(`${viewport.tag}: bounding boxes + screenshot (4-char beside 6-char)`, async ({ page }) => {
       const artDir = pr95OverflowArtifactsDir();
@@ -80,6 +80,43 @@ test.describe('PR #95: uber 6-char + icon column overflow (red)', () => {
       expect(Math.abs(m.four.cellIndex - m.six.cellIndex)).toBe(1);
     });
   }
+
+  test('only six-char chip shrinks; four-char stays base font', async ({ page }) => {
+    await openBoardForOverflow(page);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await seedFourAndSixReady(page);
+    const m = await measureReadyLeftColumnChips(page);
+    expect(m.ok).toBe(true);
+    expect(m.four.fontPx).toBe(m.baseFontPx);
+    expect(m.six.fontPx).toBeLessThan(m.four.fontPx);
+    expect(m.six.chipScale).toBeLessThan(1);
+    expect(m.four.chipScale).toBeLessThanOrEqual(1.001);
+  });
+
+  test('min-scale failure logs once per item across redraws', async ({ page }) => {
+    await openBoardForOverflow(page);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.evaluate(() => {
+      const art = window.QMS.Board.LandscapeArtLayout;
+      const orig = art.columnInnerRectsBoard.bind(art);
+      art.columnInnerRectsBoard = function (zone) {
+        const rows = orig(zone);
+        return [
+          { left: rows[0].left, right: rows[0].left + 40 },
+          rows[1],
+        ];
+      };
+      window.QMS.Board.ChipOverflowFit.resetFailureLog();
+    });
+    const payload = [{ source_type: 'From_UberEat_OK', number: UBER_SIX }];
+    await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), payload);
+    await page.waitForTimeout(100);
+    await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), payload);
+    await page.waitForTimeout(100);
+    const logged = await page.evaluate(() => window.QMS.Board.ChipOverflowFit.getFailureLoggedIds());
+    expect(logged.length).toBe(1);
+    expect(logged[0]).toMatch(/^uber:/);
+  });
 
   test('scale fit API: no recompute every idle frame after payload', async ({ page }) => {
     await openBoardForOverflow(page);

@@ -515,6 +515,13 @@
       return orientation === 'landscape' && cfg.split === 'row' && Boolean(landscapeArtLayout());
     }
 
+    function applyChipOverflowFitNow() {
+      const fit = QMS.Board && QMS.Board.ChipOverflowFit;
+      if (fit && typeof fit.applyBoardOverflowFit === 'function') {
+        fit.applyBoardOverflowFit(boardEl);
+      }
+    }
+
     function logSound(itemId) {
       if (!win.__milkshaSoundLog) {
         win.__milkshaSoundLog = [];
@@ -848,20 +855,24 @@
           animator.cancelAll(boardEl);
         }
         renderBoard();
+        applyChipOverflowFitNow();
       } else {
         animator.cancelAll(boardEl);
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          const clearPrep = animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          const clearReady = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
+          });
+          Promise.all([clearPrep, clearReady]).then(function () {
+            applyChipOverflowFitNow();
           });
         } else {
           const prepTurn = prevPrepPage !== prepPage;
@@ -891,6 +902,7 @@
             if (readyTurn) {
               updateZonePageIndicator(readyZone, readyPage, readyPages);
             }
+            applyChipOverflowFitNow();
           });
         }
       }
@@ -911,6 +923,7 @@
       const zone = boardEl.querySelector(zoneSel);
       if (!zone) {
         renderBoard();
+        applyChipOverflowFitNow();
         lastRenderedPrep = prepItems.slice();
         lastRenderedReady = readyItems.slice();
         lastRenderedPrepPage = prepPage;
@@ -923,6 +936,7 @@
         : zone.querySelectorAll('.milksha-num-cell');
       if (cellEls.length !== PAGE_SIZE) {
         renderBoard();
+        applyChipOverflowFitNow();
         if (zoneKey === 'prep') {
           lastRenderedPrepPage = page;
         } else {
@@ -955,6 +969,7 @@
             PAGE_SIZE,
           );
           updateZonePageIndicator(zone, currentPage, pagesNow);
+          applyChipOverflowFitNow();
           return undefined;
         });
       } else {
@@ -968,6 +983,7 @@
             el.innerHTML = '';
           }
         }
+        applyChipOverflowFitNow();
       }
       updateZonePageIndicator(zone, page, totalPages);
       if (zoneKey === 'prep') {
@@ -1353,6 +1369,7 @@
         boardAnimator.cancelAll(boardEl);
       }
       renderBoard();
+      applyChipOverflowFitNow();
       lastRenderedPrep = prepItems.slice();
       lastRenderedReady = readyItems.slice();
       lastRenderedPrepPage = prepPage;
@@ -1383,6 +1400,7 @@
 
     applyScale();
     renderBoard();
+    applyChipOverflowFitNow();
     lastRenderedPrep = prepItems.slice();
     lastRenderedReady = readyItems.slice();
     lastRenderedPrepPage = prepPage;

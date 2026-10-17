@@ -131,6 +131,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+.milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-num-cell--overflow-fit {
+  width: auto;
+}
+
+.milksha-board.milksha-board--landscape-art .milksha-board-chip--overflow-fit {
+  --milksha-icon-slot-w: calc(var(--milksha-num-font) * var(--milksha-chip-fit-scale, 1));
+  --milksha-icon-box: calc(var(--milksha-num-font) * 0.8 * var(--milksha-chip-fit-scale, 1));
+  --milksha-icon-gap: calc(var(--milksha-num-font) * 0.2 * var(--milksha-chip-fit-scale, 1));
+  --milksha-icon-cap-h: calc(var(--milksha-num-font) * 58 / 81 * var(--milksha-chip-fit-scale, 1));
+  max-width: 100%;
+}
+
+.milksha-board.milksha-board--landscape-art .milksha-board-chip--overflow-fit .milksha-num {
+  font-size: calc(var(--milksha-num-font) * var(--milksha-chip-fit-scale, 1));
+}
+
+.milksha-board.milksha-board--landscape-art .milksha-board-chip--overflow-fit.milksha-board-chip--with-icon .milksha-num,
+.milksha-board.milksha-board--landscape-art .milksha-board-chip--overflow-fit.milksha-board-chip--with-slot .milksha-num {
+  margin-left: calc(var(--milksha-num-font) * 0.2 * var(--milksha-chip-fit-scale, 1));
+}
+
 .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-board-chip--with-icon,
 .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-board-chip--with-slot {
   justify-content: flex-start;
