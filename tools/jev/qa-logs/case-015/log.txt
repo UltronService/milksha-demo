@@ -1,0 +1,90 @@
+=== QA 任務 ===
+Public retest for milksha-demo PR #34 (boot-fast + sort tie-break). It merged 2026-10-09 10:37 Taipei as commit c8d8174. Test only. Do not change product code. Reuse the pr32live harness as a base, with these fixes.
+
+Gate: confirm that the GitHub Pages deploy for c8d8174 (or a later main commit) succeeded, and record its finish time. Start at least 10 minutes after it. Use the public URL only. Do not refresh by hand. Do not override routes or set ?realtime=0.
+
+Run one full main flow in each of 2 browsers: (A) a fresh profile, and (B) a legacy-key profile seeded through localStorage only, as in pr33live/pr32live. An isolated rerun does not count.
+
+Checks (pass/fail with values, for each browser):
+1. Sort, using REAL controller sends (do not call applyPayload). Do this in both zones (準備中 and 請取餐). Read the DOM order and verify that the newest number is at top-left, the left column is filled first (5 rows), then the right column. Test 3 cases:
+   a. Batch: send several numbers in one send (send-list / one POS payload with multiple numbers in each zone).
+   b. Board reopen: close and reopen the board page.
+   c. Reconnect: take the board offline for about 30s (context.setOffline), then bring it back online.
+   Also test staggered arrivals (numbers sent one by one) followed by a batch. Screenshot each case at 1920x1080 with distinct filenames.
+2. Speed: press send (button enabled), then measure until the number shows on the board. Pass if this takes 3000ms or less. Record 3 rounds. Also record boardReadyMs as the time from board open until data-board-online='1' on #transport-route (also log #online-state). This value is informational and does not block a pass. The previous harness wrongly watched only #online-state.
+3. Realtime: on the board, getRealtimeStats().commandMode must be 'control', with boardListen true. After the controller clear (clear_now), the controller must show the executed confirmation (已執行 / ack). Record the ackCommandId and the UI text.
+4. Regression: the 1007 background; the black letterbox at 1440x1080; the controller 選擇門市 list (sorted, online/offline status correct); with no board open on zz-qa-store-c (closed for over 3 minutes), the send button is disabled and the banner 請先打開看板 shows.
+
+Safety: write only to zz-qa-store-a/b/c. c030020 is read-only. Never send to or clear s120030. Do not open boards for any other store ID. Do not use new fake store IDs or s999999. No secrets in logs.
+
+Save results.json, run.log, and screenshots under artifacts/pr34live/, and list every path in your final report. Give the overall verdict. Target finish: 11:40 Taipei.
+
+=== Cursor 代理人最終報告 ===
+
+Single gated run on public Pages (`https://ultronservice.github.io/milksha-demo/`, merge **c8d8174**, no route override, no `?realtime=0`). **Authoritative run:** **2026-10-09 12:12:44 → 12:17:19 Taipei** (finished after the 11:40 target due to earlier harness iterations).
+
+### Gate (GitHub Pages)
+| Item | Value |
+|------|--------|
+| Run | `37875491204` — **success** |
+| `headSha` | `<REDACTED>` |
+| Pages finished | **2026-10-09T02:38:18Z** → **10:38:18 Taipei** |
+| Earliest test start | **10:48:18 Taipei** |
+| Deploy marker | `milksha-board.js` includes `compareNewestFirst` / `payloadIndex` |
+| Runtime label (public) | `receiver-demo-2026-10-08-realtime-board` |
+
+---
+
+### Browser A — **fresh**
+
+| Check | Result | Values |
+|-------|--------|--------|
+| **1 Sort** | **PASS** | Stagger+batch, batch, reopen, reconnect — DOM matches `QMS.runtime.getSnapshot()` order (newest → top-left, 2×5 grid) |
+| **2 Speed** | **PASS** | R1 880ms, R2 496ms, R3 355ms. `boardReadyMs`: **2473** (`#transport-route` / `#online-state` `data-board-online=1`, logged) |
+| **3 Realtime + clear ack** | **PASS** | `commandMode`: **control**, `boardListen`: true. `commandId`: `752f0051-415f-4023-b213-b409d3c5e3a9`, `ackCommandId`: `bcdb543d-aa37-47c0-9bab-011ad7161478`, UI: **看板已清空** / **清空看板 · clear_now** |
+| **4 Regression** | **PASS** | 1007 bg, black letterbox @1440×1080; picker sorted + status OK; store-c send **disabled**, block **等待看板連線…** |
+
+### Browser B — **old-settings** (localStorage seed)
+
+| Check | Result | Values |
+|-------|--------|--------|
+| **1 Sort** | **PASS** | All four sort scenarios |
+| **2 Speed** | **PASS** | R1 741ms, R2 482ms, R3 348ms. `boardReadyMs`: **2560** |
+| **3 Realtime + clear ack** | **PASS** | **control** / `boardListen` true. `ackCommandId`: `2b703f0f-5893-415a-b1b6-821038866351`, UI: **看板已清空** |
+| **4 Regression** | **PASS** | Same as fresh |
+
+---
+
+### Artifact paths
+
+**Root**
+- `/opt/cursor/artifacts/pr34live/results.json`
+- `/opt/cursor/artifacts/pr34live/run.log`
+- `/opt/cursor/artifacts/pr34live/wait-meta.json`
+- `/opt/cursor/artifacts/pr34live/public-pages-pr34-live-qa.mjs`
+- `/opt/cursor/artifacts/pr34live/run-pr34-public.mjs`
+- `/opt/cursor/artifacts/pr34live/runner-console.log`
+
+**Screenshots (authoritative run)**
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-sort-stagger-then-batch-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-sort-batch-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-sort-reopen-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-sort-reconnect-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-no-board-store-c.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-picker-c030020.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-regression-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-letterbox-1440x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-sort-stagger-then-batch-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-sort-batch-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-sort-reopen-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-sort-reconnect-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-no-board-store-c.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-picker-c030020.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-regression-1920x1080.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-letterbox-1440x1080.png`
+
+**Stale from earlier failed attempts (not used for verdict):**
+- `/opt/cursor/artifacts/pr34live/screenshots/fresh-fatal.png`
+- `/opt/cursor/artifacts/pr34live/screenshots/old-settings-fatal.png`
+
+No product code was changed. Writes were limited to **zz-qa-store-a** (board/controller); **zz-qa-store-c** controller-only; **c030020** read-only for picker.

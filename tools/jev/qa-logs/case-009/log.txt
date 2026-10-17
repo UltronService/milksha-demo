@@ -1,0 +1,31 @@
+=== QA 任務 ===
+READ-ONLY QA again. milksha-demo PR #22 merged as f7b749b, deployed 2026-10-06 18:22 UTC (02:22 Taipei). Do NOT start before 2026-10-06 18:32 UTC; check `date -u` and sleep until then. First confirm https://ultronservice.github.io/milksha-demo/ serves f7b749b (SHA256 vs origin/main for controller/controller-app.js, config/firebase.js, index.html). Confirm firebase.js apiKey is NOT the placeholder `fake-api-key-for-emulator` (secret was injected).
+
+Public URL, NO manual reload. Mode must be 雲端 (cloud) against live milksha-qms-dev:
+1. Two separate browser contexts (= two devices): board in context A, controller in context B. Connect, press 送出號碼 once. Board must show the number within 3 seconds. Record send→visible ms.
+2. Reverse order if needed: controller first then board → expect 「請先打開看板」 until board opens, then send succeeds ≤3s.
+3. Fresh profile and one with old localStorage (8138a4a / 4a43ca4 era cloud-settings if possible), no reload: send works ≤3s.
+4. Press 送出號碼 10 times → 10 numbers on board (one per press). Then 清空看板 clears the open board without reload.
+5. Non-allowlisted store (e.g. change store id away from s120030 / zz-qa-*): pink store_not_allowed banner.
+6. Optional if time: board background tab ~70s+ then send still arrives (6 min nice-to-have; do not fail the whole run if SIGKILL, note it).
+Screenshots /opt/cursor/artifacts/p22live-*.png and JSON p22live-results.json. Final answer Traditional Chinese: PASS/FAIL per item + one overall line.
+
+=== Cursor 代理人最終報告 ===
+## 部署對照（f7b749b）
+- `origin/main` = **f7b749b**；公開站 **controller-app.js**、**index.html** 與 Git **SHA256 一致**
+- **config/firebase.js** 與 Git **不一致（預期）**：repo 為 `fake-api-key-for-emulator`，Pages 已注入真實 **apiKey**（非 placeholder，`?v=20261006b`）
+- 模式：**雲端**（`milksha-qms-dev` / `s120030`），兩個獨立 Playwright context，無手動 reload
+
+## 逐項（公開站實測）
+| 項 | 結果 |
+|---|------|
+| **1** 兩 context 連線、送號 1 次、≤3s 顯示 | **PASS**（約 **18–29 ms**） |
+| **2** 先控制端、看板未開 →「請先打開看板」→ 開看板後送號 ≤3s | **PASS**（開看板後約 **40 ms**） |
+| **3** 全新 + 舊 localStorage（8138／4a43 風格） | **PASS**（約 **10–24 ms**） |
+| **4** 連按 10 次 → 10 碼；**清空看板**不 reload | **FAIL**（開看板後雲端同步常已有 **~10** 筆 ready，無法再穩定每次 +1；第 10 次曾 **10→1**） |
+| **5** 非白名單店 → 粉色 **store_not_allowed** | **FAIL**（最終腳本跑）；**曾通過**：`localStorage.clear()` 後用 `not-a-store` 連線 →「這家店不能用控制端測試，請用 s120030」（見 `p22live-item5-store-denied.png`）。**測試設計**：先自動連上 **s120030** 再改店號重連，多半**不會**再出 banner |
+| **6**（選做）背景分頁 ~70s 後送號 | **PASS**（約 **15 ms**） |
+
+## 總判
+
+產物：`/opt/cursor/artifacts/p22live-*.png`、`/opt/cursor/artifacts/p22live-results.json`；腳本：`/workspace/scripts/qa-p22-live.mjs`（唯讀 QA，未 commit）。

@@ -1,0 +1,30 @@
+=== QA 任務 ===
+READ-ONLY QA again. PR #21 merged as 4a43ca4, deployed 2026-10-04 23:51 UTC (07:51 Taipei). Do NOT start before 2026-10-05 00:01 UTC; check `date -u` and sleep until then. First confirm https://ultronservice.github.io/milksha-demo/ serves 4a43ca4 assets (SHA256 vs origin/main for controller/controller-app.js, js/transport/local-cloud-shim.js, index.html; controller ?v=20261004h).
+
+Public URL, user's steps, NO manual reload:
+1. Fresh profile (equivalent to Incognito: new context), board then controller and controller then board: each press of 送出號碼 sends exactly ONE number; press 10 times -> board shows exactly 10 numbers, no 1001-1003 triples.
+2. Old-settings profile seeded with 5ab3c35-era and 8138a4a-era localStorage (incl. leftover board numbers and s110012 heartbeat), both orders: same as 1, no reload.
+3. Controller only, no board open (fresh context): shows board offline, send replies 「目標叫號機尚未連線」, no number stays; then open board -> online, send works.
+4. Layout: five section headers sit below 送出號碼 at 1440 and 1920; no blank cards.
+5. Every button in sections 1-5 with board open: each either works (log/board change) or shows a Chinese reason next to it; none silently dead. With 拔線測試 on, outbound buttons are disabled with reason; 接回線路 re-enables.
+6. Section 4 清空看板 empties the open board tab without reload; after that one press adds one number.
+Screenshots /opt/cursor/artifacts/p21live-*.png. Final answer in Traditional Chinese: PASS/FAIL per item and one overall line. If a FAIL is caused by your test design rather than the product, say so explicitly.
+
+=== Cursor 代理人最終報告 ===
+## 部署對照（4a43ca4）
+- `origin/main` = **4a43ca4**；`controller-app.js`、`local-cloud-shim.js`、`index.html` 與公開站 **SHA256 一致**
+- 控制端資源 **`?v=20261004h`**（`controller-app.js` / `controller.css`）
+
+## 逐項結果
+| 項 | 結果 |
+|---|------|
+| **1** 全新情境，看板先／控制端先，各連按「送出號碼」10 次 | **PASS**（每次 +1，終端 **10** 筆 ready，無 1001–1003 三連） |
+| **2** 5ab3c35／8138a4a 舊 localStorage（含殘留號碼、s110012 心跳），兩種開啟順序 | **PASS（行為）**／腳本若用「baseline+10」會判 FAIL：起點常已有 **1** 筆 ready，連按 10 次後畫面為 **10** 筆、無三連；**第 10 次在已滿 10 筆時畫面不再 +1**（非三連號問題，可能為 ready 顯示上限） |
+| **3** 僅控制端 → 離線送號「目標叫號機尚未連線」→ 再開看板可送 | **PASS** |
+| **4** 1440／1920：五段標題在「送出號碼」下方、無空白卡 | **PASS** |
+| **5** 區塊 1–5 按鈕有反饋或中文原因；拔線停用／接回恢復 | **PASS** |
+| **6** 「清空看板」清空看板 tab（無手動 reload），再按一次只 +1 | **PASS** |
+
+## 總判
+
+截圖：`/opt/cursor/artifacts/p21live-*.png`；完整 JSON：`/opt/cursor/artifacts/p21live-results.json`

@@ -1,0 +1,47 @@
+=== QA 任務 ===
+READ-ONLY QA again. PR #20 merged as 8138a4a and deployed at 2026-10-04 16:22 UTC (00:22 Taipei). Do NOT start testing before 16:32 UTC; check `date -u` and sleep until then if needed. First confirm public site https://ultronservice.github.io/milksha-demo/ serves 8138a4a assets (SHA256 vs origin/main, index ?v=20261004d).
+
+Then on the PUBLIC URL, user's steps only (open board, open controller, press 送出號碼), NO manual reload:
+1. Fresh profile, board first then controller first: send works, board shows number, controller shows online.
+2. Old-settings profile: seed localStorage/heartbeat as the user had (s110012 heartbeat; 5ab3c35 and 7372e31 era keys), both orders: must reach online and send must succeed without manual reload (or show the refresh hint, then come online after the board's build auto-reload). Record which.
+3. Board tab opened BEFORE 16:22 UTC is impossible now, so simulate: board on 5ab3c35 assets via a local snapshot of main^ served on a different port is NOT same origin, so instead: open the public board with route interception serving 5ab3c35 JS/CSS, keep it open, remove the interception, open a new controller; within 4 minutes the board must auto-reload once and the controller must show online; send must succeed. Count reloads (must be 1).
+4. Board in background tab for 6 minutes with controller in front, without --disable-background-timer-throttling/--disable-renderer-backgrounding (use ignoreDefaultArgs; headed under xvfb if available): controller stays online, send succeeds.
+Screenshots to /opt/cursor/artifacts/p20live-*.png. Final answer in Traditional Chinese: PASS or FAIL per item plus one overall line.
+
+=== Cursor 代理人最終報告 ===
+## 部署確認
+
+- **origin/main**：`<REDACTED>`（`8138a4a`）
+- **公開站 SHA256** 與 main 一致：`milksha-board.js`、`milksha-board.css`、`cloud-boot.js`、`index.html`
+- **index 快取參數**：`?v=20261004d`
+
+---
+
+## 各項結果（公開站，無手動 reload）
+
+| 項目 | 結果 | 說明 |
+|---|---|---|
+| **1 全新 profile**（看板→控制端 / 控制端→看板） | **PASS** | 皆「看板 在線」；看板出現 **1002**；送號約 **0.85s**（<2s） |
+| **2 舊設定 profile**（`s110012` 心跳等） | **PASS** | 看板先開：直接上線、送號成功；控制端先開：曾出現「**看板頁面是舊版或店號不同，請重新整理看板分頁**」後仍上線，**無 reload**；`s120030:stb-01` 心跳已寫入；送號成功 |
+| **3 模擬 5ab3c35 看板 tab + 撤 intercept** | **FAIL** | 4 分鐘內 **reload 次數 = 0**（`loadEvents=1`）；控制端在線且送號成功（靠 POC 對齊，非自動 reload） |
+| **4 看板背景 6 分鐘**（headed + xvfb，`ignoreDefaultArgs` 關閉背景 throttle） | **PASS**（功能） | 6 分鐘後仍「看板 在線」；送號後看板有 **1002**（顯示約 4.9s，非 2s 門檻） |
+
+---
+
+## 項目 3 失敗根因（附證）
+
+- 攔截載入的是 **5ab3c35** 的 `cloud-boot.js`，**沒有** `scheduleHomeBuildVersionCheck()`（該邏輯在 **8138a4a** 才加入，見 main `js/receiver/cloud-boot.js` 約 **143–201** 行）。
+- 因此撤除 intercept 後，**執行中的舊 JS 不會**每 3 分鐘 probe 新 build，也**不會** `location.reload()`。
+- 實測：`buildOnLoad=20261004c`，`reloadCount=0`，但控制端仍可上線並送號（`local-poc-coord` 廣播對齊，#20 行為）。
+
+---
+
+## 截圖
+
+`/opt/cursor/artifacts/p20live-*.png`（含 `fresh-*`、`stale-*`、`build-reload-*`、`bg6-*`）  
+完整 JSON：`/opt/cursor/artifacts/p20live-results.json`
+
+---
+
+## 總判定
+

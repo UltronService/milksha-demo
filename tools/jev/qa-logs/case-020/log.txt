@@ -1,0 +1,42 @@
+=== QA 任務 ===
+New QA task: public retest of milksha-demo PR #49 (merged 14:59 Taipei as 8fe441f; controller no red alert on 409 stale_list, re-reads today_board). Store zz-qa-store-a only. Same rules and same script as pr45live (reuse artifacts/pr45live/run-public-pr45.mjs, extend it). Real public URL, no route overrides. Artifacts in artifacts/pr49live/ and ALSO copy them to /cursor/stores/self/artifacts/pr49live/ at the end.
+1. Wait for Pages deploy of 8fe441f (or later main) to succeed and 10 minutes to pass. Confirm public controller-app.js / controller-command-errors.js contain isStaleListConflict.
+2. Pre-flight clear_now + 60s foreign-write watch.
+3. Fresh and legacy profile, each the full #45 flow (3 sets of 5 burst + 10@1s + 5@300ms, clear_now between). PASS, zero tolerance: 0 red/error banners (250ms sampling); controller ticket list never loses a sent number unexpectedly (list count == board count after each set settles); board shows every sent number, 4-digit, no duplicates, no multi-chip cells; no number reused within a set. Also count: HTTP 409 stale_list responses seen (network), log lines 'stale_list', any 500s.
+4. Latency: record every press-to-board time; list how many exceed 3s and in which phase (burst/1s/300ms). Treat >3s as a separate finding, not the #49 verdict.
+5. Regression: manual send, 選擇門市.
+6. Teardown: clear_now, board empty.
+Report PASS/FAIL first. Must finish by 15:50 Taipei; if not done by then, report what is done and stop.
+
+=== Cursor 代理人最終報告 ===
+**FAIL** (strict end-of-set check: controller list **20** vs board cells **10** every set on both profiles; oldest half not on board DOM).
+
+
+### Deploy
+- Pages deploy **success** (main `8fe441f`); tests after **10+ min** post **Last-Modified** `Sun, 11 Oct 2026 07:04:23 GMT`.
+- Public **`controller-app.js`** and **`controller-command-errors.js`** both contain **`isStaleListConflict`** (`deploy-check.json`).
+
+### Pre-flight
+- `clear_now` + **60s**: no foreign writes.
+
+### Flow (#45-style, both profiles)
+- **3×** (5 burst + 10@1s + 5@300ms), `clear_now` between sets.
+- **Banners:** **0** hits both profiles.
+- **Number reuse in set:** none flagged.
+- **List/board (strict):** each set — list **20**, board **10**, missing oldest **5** (e.g. `2001–2005`); integrity otherwise OK (4-digit, no dup/multi-chip in visible cells).
+
+### Latency (separate; not #49 verdict)
+| Profile | min–max (ms) | >3s | phases |
+|--------|----------------|-----|--------|
+| fresh | 562–1048 | **0** | — |
+| legacy | 566–5781 | **2** | **1s×1**, **300ms×1** |
+
+### Regression
+- Manual add ticket: **OK**; **選擇門市**: **OK**.
+
+### Teardown
+- `clear_now`, board **empty**.
+
+### Artifacts
+- `/workspace/artifacts/pr49live/`
+- `/cursor/stores/self/artifacts/pr49live/` (`results.json`, `REPORT.md`, `run-public-pr45.mjs`, `deploy-check.json`, `watch-60s.json`, `run.log`, `screenshots/`)

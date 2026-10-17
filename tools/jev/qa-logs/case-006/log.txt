@@ -1,0 +1,85 @@
+=== QA 任務 ===
+You are QA. READ-ONLY: do not commit, push, open PRs, comment, or change any settings. Never press 送出號碼 more than needed. Work only on the PUBLIC site https://ultronservice.github.io/milksha-demo/ .
+
+TIMING: Do not start the live tests before 2026-10-04 06:15 UTC (14:15 Taipei). If earlier, prepare scripts and wait.
+
+0. Confirm main HEAD full sha (expect 7372e31...) and confirm the public site is serving that build (compare a versioned asset / file content to main).
+
+User's steps (follow exactly, NO manual reload anywhere): 1) open board https://ultronservice.github.io/milksha-demo/ 2) in the SAME Chrome (same browser context, new tab) open https://ultronservice.github.io/milksha-demo/controller/ 3) press 送出號碼 (do not press any connect button) 4) the board must show the number within 2 seconds. Record controller status text (expect 看板在線), time from press to number on board, and screenshots of both tabs.
+
+Scenario A, fresh browser: brand-new persistent Chromium profile. Run the 4 steps. Also run once with controller opened first, then board.
+
+Scenario B, browser with old settings: build a persistent profile that carries real old state on the public origin. Use Playwright route interception so that requests to https://ultronservice.github.io/milksha-demo/** are served from the OLD commit files (checkout a3971ef = PR #17 build, the one the user used; also repeat separately with 09bc0a1 = PR #16 build). With the old build loaded on the real origin, use board and controller the way a user would (open both, let them store settings, send a number) so the old localStorage (old box/STB id etc.) is written. Close the pages. Then remove interception (real network, same profile) and run the 4 steps without any reload. Inspect localStorage before and after to confirm the old id existed and is now s120030/stb-01. Run both orders (board first, controller first).
+
+Pass = every scenario shows the number on the board within 2 s with no reload. If anything fails, give the exact symptom, screenshot, console errors, and localStorage dump.
+
+Final report: HEAD sha, deployed sha check, a table of scenario / order / controller status / ms to show / pass-fail, screenshot paths under /opt/cursor/artifacts/, and a single verdict PASS or FAIL with reason.
+
+=== Cursor 代理人最終報告 ===
+## 部署與 HEAD
+
+| 項目 | 值 |
+|---|---|
+| **origin/main HEAD** | `<REDACTED>`（短碼 `7372e31`） |
+| **公開站內容 vs main** | `js/milksha-demo.js`、`controller/controller-app.js`、`js/receiver/cloud-boot.js` 三者 **SHA256 與 origin/main 一致**（`deploy.allMatch: true`） |
+
+---
+
+## 測試結果表（公開站，無手動 reload；僅按一次「送出號碼」）
+
+| 情境 | 開啟順序 | 控制端狀態（含「看板在線」） | 按下→看板出號 (ms) | 結果 |
+|---|---|---|---:|---|
+| A 全新瀏覽器 | 看板→控制端 | 已連線（本機連動）· **看板 在線** · … | 50 | **PASS** |
+| A 全新瀏覽器 | 控制端→看板 | 已連線（本機連動）· **看板 在線** · … | 66 | **PASS** |
+| B 舊版 a3971ef 殘留 | 看板→控制端 | 已連線（本機連動）· **看板 在線** · … | 33 | **PASS** |
+| B 舊版 a3971ef 殘留 | 控制端→看板 | 已連線（本機連動）· **看板 在線** · … | 28 | **PASS** |
+| B 舊版 09bc0a1 殘留 | 看板→控制端 | 已連線（本機連動）· **看板 在線** · … | 51 | **PASS** |
+| B 舊版 09bc0a1 殘留 | 控制端→看板 | 已連線（本機連動）· **看板 在線** · … | 76 | **PASS** |
+
+- 看板可見號碼：示範組 **1001 / 1002 / 1003**（以 **1002** 量測延遲）。
+- 各情境 **console 無 error/warning**。
+
+---
+
+## Scenario B：localStorage（摘要）
+
+**a3971ef 種子後（舊 build 攔截）**  
+- 已有 `milksha:local:board:s120030`、`milksha:local:device:s120030:stb-01`、`milksha:deviceId=stb-01`。  
+- 換成真實網路 + 現行 build 後仍為 **s120030 / stb-01**，叫號成功。
+
+**09bc0a1 種子後（舊 build）**  
+- `lsBefore`：僅連線紀錄，`叫號失敗 · 未設定 POS 金鑰`，尚無 board 相關 key。  
+- `lsAfter`（現行 build、四步驟後）：`milksha:deviceId=stb-01`，`milksha:local:board:s120030`、`milksha:local:device:s120030:stb-01` 正常寫入。
+
+> **種子階段說明（非四步驟驗收）**：`09bc0a1` 無「送出號碼」、無本機自動連線；種子時依該版 UI 按 **連線** + **自動產生（一般）**。四步驟驗收仍只按 **送出號碼**、不按連線。
+
+---
+
+## 截圖路徑（`/opt/cursor/artifacts/`）
+
+| 情境 | 看板 | 控制端 |
+|---|---|---|
+| A board-first | `A-fresh-board-first-board.png` | `A-fresh-board-first-controller.png` |
+| A controller-first | `A-fresh-controller-first-board.png` | `A-fresh-controller-first-controller.png` |
+| B a3971ef board-first | `B-a3971ef-live-board-first-board.png` | `B-a3971ef-live-board-first-controller.png` |
+| B a3971ef controller-first | `B-a3971ef-live-controller-first-board.png` | `B-a3971ef-live-controller-first-controller.png` |
+| B 09bc0a1 board-first | `B-09bc0a1-live-board-first-board.png` | `B-09bc0a1-live-board-first-controller.png` |
+| B 09bc0a1 controller-first | `B-09bc0a1-live-controller-first-board.png` | `B-09bc0a1-live-controller-first-controller.png` |
+
+原始 JSON：`/opt/cursor/artifacts/qa-public-results.json`、`deploy-sha-check.json`。
+
+---
+
+## 判定
+
+
+---
+
+## UAT（PM 手動複驗）
+
+1. 開 Chrome 無痕（或清掉 `ultronservice.github.io` 網站資料）。  
+2. 開 `https://ultronservice.github.io/milksha-demo/`。  
+3. **同一視窗新分頁** 開 `https://ultronservice.github.io/milksha-demo/controller/`。  
+4. **只按一次**「送出號碼」（不按連線）。  
+5. 2 秒內看板應出現 1001–1003；控制端應含「看板 在線」。  
+6. 再測「先控制端、再看板」順序，結果應相同。

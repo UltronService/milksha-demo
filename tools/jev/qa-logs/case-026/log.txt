@@ -1,0 +1,52 @@
+=== QA 任務 ===
+Correction: 1346ms is UNDER the 3s limit, so latency passes. The only open item is 'five sources separate cells not stable'. Finish by 09:40 Taipei. zz-qa-store-a only, clear_now at end, no git.
+1. Say exactly what was observed in each failing run: which numbers were missing, merged or glued into one cell, and from the board DOM or the cloud tickets.
+2. Decide whether it is a product bug or a harness bug (timing, wrong selector, sends overlapping, pagination). Compare the cloud today_board tickets with the board DOM.
+3. Re-run 5 rounds: clear_now, then send the 5 sources from the public controller (one per send, 1.5s apart), then wait 3s and check that the board has 5 separate cells with the right text. Do this in both the stale and fresh browsers.
+4. Also run once on the same store/Uber number (e.g. 1234 store + 1234 Uber) and expect 2 cells.
+Report PASS/FAIL, a per-round table, the cause, and the evidence path. Note: clear_now then a POS resend bringing numbers back is a known, deferred issue, and the 'send again after clear' test is skipped by the owner. If the instability matches that, say so.
+
+=== Cursor 代理人最終報告 ===
+## Verdict
+
+
+## 1. What failing runs showed
+
+| Context | DOM | Cloud `today_board` (ready) |
+|--------|-----|-----------------------------|
+| Earlier harness (`run-pr64live`) | `5020`, `6407`, `5011` only | N/A — DOM read **after** `clear_now` for legacy, not after batch |
+| Earlier timeouts | Not snapshotted | Not snapshotted — re-wait after clear / tight 5s loop |
+| **5×5 rounds (this run)** | **3 painted**: `5011`, `6407`, `AB13` + **empty grid slots** (not merged text) | **Same 3** every round (round 1 stale: transient all-empty DOM) |
+| **Always missing** | **092**, **C7459** | **092**, **C7459** never in Firestore ready list |
+
+**Dual `1234`:** cache has `From_Store_OK` + `From_UberEat_OK`; DOM has **two** ready cells both showing `1234` (different **y**, same column) — **PASS** for two cells.
+
+## 2. Product vs harness
+
+| | |
+|--|--|
+| **Product** | **Yes.** `artifacts/pr64live/push-trace.json`: on step `uber`, prior `092` is sent as `From_Store_OK`; cloud drops point. Same pattern for Uber on `fp` step. Matches **#65 read-back source** corrupting `sourceType` on accumulated tickets. |
+| **Harness** | Empty `.milksha-num-cell` slots counted as cells; older runs sampled DOM at the wrong time. |
+| **Deferred clear_now→POS** | **No** — no POS; owner-skipped test is separate; this is **multi-ticket push corruption**, not numbers reappearing after clear. |
+
+## 3. Per-round table (protocol: clear_now → 5 sends @ 1.5s → wait 3s)
+
+| Browser | R1 | R2 | R3 | R4 | R5 |
+|---------|----|----|----|----|-----|
+| **stale-61** | FAIL | FAIL | FAIL | FAIL | FAIL |
+| **fresh** | FAIL | FAIL | FAIL | FAIL | FAIL |
+
+**Stable outcome (R2–R5):** DOM + cloud = `5011`, `6407`, `AB13`; missing **092**, **C7459**.
+
+## 4. Dual `1234` (store + Uber)
+
+**PASS** — two separate ready cells + two cache `source_type`s (both browsers).
+
+## Evidence
+
+- `artifacts/pr64live/push-trace.json` — wire vs cloud per send  
+- `artifacts/pr64live/five-rounds-results.json` — full snapshots  
+- `artifacts/pr64live/five-rounds-table.json` — table  
+- `artifacts/pr64live/INVESTIGATION.md`, `ROUND-REPORT.md`  
+
+Teardown: **`clear_now`** + sim stop each session.

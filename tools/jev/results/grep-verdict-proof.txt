@@ -1,0 +1,30 @@
+# Grep 驗證（提交前 qa-logs/*/log.txt）
+
+日期：2026-10-17 UTC
+
+## 作法
+
+依 `fixtures/verdict-line-patterns.json`，每案刪除 **1 行** QA 總判定（對應 index.csv `verdict_source`）。`meta.json` 已移除 `qa_verdict` / `verdict_source`（答案鍵見 `fixtures/answer-key-26.json` 與 `qa-logs/index.csv`）。
+
+## Python 重跑 26 案 pattern（預期：patterns still matching: none）
+
+```
+patterns still matching: none
+```
+
+## 總判定樣式 grep（摘錄）
+
+```
+rg '^## 判定：\*\*(PASS|FAIL|NEEDS)' case-*/log.txt
+→ 僅 case-002 仍含「## 判定：**PASS**（以 CI…）」；該案已刪除的是 **結論** 行（資料集標定的總判定行）。送 jev 前 `maskVerdictInLog` 會再遮罩報告區判定標題。
+
+rg '^\*\*整體' / '^## Overall verdict:' / '^\*\*PR #49 verdict' / '^\*\*Overall public retest: FAIL\*\*'
+→ 0 筆（在 qa-logs 目錄下）
+```
+
+## 機密
+
+```
+rg 'ghp_|gho_|Bearer [A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}' qa-logs
+→ 無匹配
+```

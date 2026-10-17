@@ -1,0 +1,67 @@
+=== QA 任務 ===
+Round 2, still READ-ONLY. The developer pushed fixes to cursor/milksha-board-redesign-2951. git fetch and confirm full HEAD sha starts with 11f8870. Diff 29865ac..HEAD and check:
+1. H1: measure header top gap at 1920x1080 and 1280x720 vs the reference (claimed ~6%, 65px at 1080). Make sure nothing else moved badly (cream boxes still fit, bottom wave, no overflow/clipping with 10 numbers and paging indicator).
+2. M1: header weight 500, numbers 400, same Noto font, no new font files. Just report how it looks vs reference; the font choice is for the director.
+3. L1 page indicator now at cream box bottom-right; L2 docs/milksha-callboard/spec.md updated consistent with E3; L4 new tests/e2e/home-board-layout.spec.mjs: does it actually assert the layout (header gap, columns, 2x5, no clock/tags) or is it weak?
+4. Re-run unit and full e2e on HEAD. Re-run qa-pr16-auth-board.spec.mjs:371 at least 5 times. Confirm guest-clock.spec.mjs:285 and :376 fail identically on main 7372e31 (developer claims both fail on main).
+5. Regression: order (Pick Up newest first, Preparing oldest first), chime (first batch silent, max 3), 6 s paging, receiver-demo unchanged, 4-step flow in fresh and stale-localStorage profiles both orders.
+6. Any removed tests/validation since 29865ac.
+Screenshots to /opt/cursor/artifacts/r2-*.png (empty, numbers, paging, at 1920 and 1280). Final report: sha, status of H1/M1/L1-L5, new issues with severity and file:line, counts (High/Medium/Low, missing checks, removed checks, test issues, doc issues), verdict PASS or NEEDS FIX.
+
+=== Cursor 代理人最終報告 ===
+## Round 2 QA（唯讀）
+
+**SHA：** `<REDACTED>`（`11f8870…` ✓）
+
+**變更範圍（`29865ac..11f8870`）：** `css/milksha-board.css`、`js/milksha-board.js`（`titleTop: 65`）、`docs/milksha-callboard/spec.md` §3/分頁、`tests/e2e/home-board-layout.spec.mjs`（新增）。**無**測試刪除／放寬。
+
+---
+
+### H1 / M1 / L1–L5 狀態
+
+| 項目 | 狀態 |
+|------|------|
+| **H1 標題上緣** | **已修。** 1920×1080／1280×720：`margin-top: 65px`，中文頂約 **61.5px ≈ 5.7%** 畫板高（目標 ~6%）。10 格＋`1/2`：**無 overflow**；波浪仍在左欄底；奶油框內號碼與指示器未裁切。 |
+| **M1 字型** | **符合程式：** 標題 `font-weight: 500`、號碼 `400`、族系 Noto Sans CJK TC／TC／Sans；**無新字型檔**。視覺仍為無襯線、較參考稿 serif 輕；**交由導演定案**。 |
+| **L1 分頁指示器** | **已修。** `position: absolute; right: 14px; bottom: 10px`（`css/milksha-board.css:154-165`），截圖右下角 `1/2`。 |
+| **L2 規格書** | **已修。** `spec.md` §3 改為無 overlay、連續鈴聲、最多 3 響，與 E3 一致。 |
+| **L4 layout E2E** | **有覆蓋但不強：** 雙欄、標題文案、無 tag／空板 hint、20 格、overflow、11 ready 時 `1/2`；**弱點：** 標題僅 `ratio >= 0.04`（`home-board-layout.spec.mjs:75`，未鎖 ~6%）；**未驗** 時鐘、2×5 填序、6s 換頁、準備中排序。 |
+| **L5 guest-clock** | **環境既有：** `:285` base/head **同敗**（Roboto vs DejaVu）；`:376` base/head **皆過** — 開發者「兩個都在 main 失敗」**僅一半成立**。 |
+
+---
+
+### 截圖
+
+`/opt/cursor/artifacts/r2-{empty,numbers,paging}-{1920,1280}.png`  
+量測：`/opt/cursor/artifacts/r2-measurements.json`
+
+---
+
+### 測試
+
+| 套件 | 結果 |
+|------|------|
+| Unit | **119** pass |
+| E2E 全量 | **74** pass / **1** fail / **3** skip |
+| `qa-pr16-auth-board.spec.mjs:371` ×5 | **5/5 pass** |
+| 回歸 | `home-board-layout`、`home-board-local-poc`、`home-board-stale-storage`（含雙向 stale）**全過** |
+
+**分頁／排序（實測）：** p1 `7213→7204`，p2 `7203→7200`；約 6.1s 換頁。  
+**鈴聲：** 單元 `milksha-board.test.js` 仍覆蓋首包靜音、max 3、無 overlay。  
+**receiver-demo：** 與 `main` HTML **一致**。
+
+---
+
+### 新問題
+
+| 嚴重度 | 位置 | 說明 |
+|--------|------|------|
+| Low | `tests/e2e/home-board-layout.spec.mjs:75` | 標題上緣門檻過低（4%），難防 H1 再退化 |
+| Low | `tests/e2e/guest-clock.spec.mjs:285` | CI 字型假設；與本 PR 無關 |
+
+**計數：** High **0** · Medium **0** · Low **2** · 缺漏檢查 **1**（6s 換頁 E2E）· 移除檢查 **0** · 測試問題 **1** · 文件問題 **0**
+
+---
+
+
+H1／L1／L2 已達 Round 1 要求；回歸與 E2E（除既有 guest-clock :285）通過。M1 視覺交由導演；建議後續把 layout E2E 標題門檻提高到 ~5% 並補 6s 換頁斷言（非合併阻擋項）。

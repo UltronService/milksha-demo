@@ -12,7 +12,7 @@ import { evaluateQaLogForCompare, CHOICE_UNABLE } from '../lib/jev-compare-clien
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const toolRoot = join(__dirname, '..');
 
-const logsDir = process.env.JEV_QA_LOGS_DIR ?? '/tmp/jev-qa-logs';
+const logsDir = process.env.JEV_QA_LOGS_DIR ?? join(toolRoot, 'qa-logs');
 const answerKeyPath =
   process.env.JEV_ANSWER_KEY_PATH ?? join(toolRoot, 'fixtures/answer-key-26.json');
 const outDir = process.env.JEV_COMPARE_RESULTS_DIR ?? join(toolRoot, 'results');

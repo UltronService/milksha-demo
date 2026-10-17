@@ -1,0 +1,83 @@
+=== QA 任務 ===
+New task: public-URL acceptance for milksha-demo #43 (board number rules), merged as f9d0513 at 08:15 Taipei. QA only: do not change any code. HARD ETA: report by 09:15 Taipei. If one blocker lasts more than 30 minutes, stop and report it.
+
+KNOWN ISSUE, do not fail on it: numbers in the ready zone (請取餐) can get stuck at opacity 0 after rapid sends. For this test, judge chips by DOM text and attributes, not by opacity.
+
+Gates:
+1. Confirm the Pages deploy for f9d0513 succeeded. Start at least 10 minutes after it finished.
+2. Confirm the live js/milksha-board.js contains normalizeBoardDisplayNumber and that it accepts strings only. A JSON number must return null.
+
+Stores: zz-qa-store-a only. Never use zz-qa-ci-store. Never touch s120030. c030020 is read-only. Do not create stores.
+
+Checks. Run the full flow once in a fresh browser and once in a browser seeded with old localStorage keys. Use 1920x1080. Use the public URL with ?mode=cloud&store=zz-qa-store-a.
+
+A. Board guard on the public bundle. Call window.QMS.runtime.applyPayload with this mixed list:
+- valid strings: '0012', '1002'
+- JSON number: 1001
+- '12345', '123', 'AB12', '', ' '
+- the duplicate '1002' twice in the ready zone
+- '3003' in both preparing and ready
+Expected:
+- only the valid 4-digit strings render
+- the duplicate appears once
+- '3003' appears only in ready
+- the invalid rows are dropped, but their valid siblings still render
+After that, restore the board with a clear or a real-cloud resync.
+
+B. Real cloud through the controller UI. Send numbers with btn-send-numbers. Every number on the board must be exactly 4 digits. Each send must reach the board within 3 seconds.
+
+C. Peak simulation for 5 minutes, then normal for 3 minutes. Sample once per second and check:
+- every chip's text is exactly 4 digits
+- no duplicate numbers in a list
+- no number in both zones
+- no cell with more than one chip
+Zero tolerance.
+
+D. Regression: sorting is newest first, the 「選擇門市」 store picker works, and a simulation stops when you press stop.
+
+At the end, stop the simulation, send clear_now, and confirm the board is empty.
+
+Save the results under artifacts/pr43live/: results.json, run.log and screenshots.
+
+Report:
+- PASS or FAIL for each check
+- times in Taipei
+- confirmation that the board is empty at the end
+
+=== Cursor 代理人最終報告 ===
+
+**Deploy:** `f9d0513` — Pages finished **2026-10-11 08:14:43** (Taipei); testing started after **+10 min**.  
+**Live bundle:** `normalizeBoardDisplayNumber` on Pages — **strings only** (`norm(1001)` → `null`, `norm('0012')` → `'0012'`).  
+**Run (Taipei):** **08:24:43** → **08:41:32**  
+**Artifacts:** `/opt/cursor/artifacts/pr43live/` (`results.json`, `run.log`, `REPORT.md`, `screenshots/`)
+
+**Teardown:** Simulation stopped, `clear_now` on **zz-qa-store-a** — **board empty** (fresh + old-settings).
+
+---
+
+### Gates
+
+| Gate | Result |
+|------|--------|
+| Pages deploy `f9d0513` | **PASS** |
+| Live `normalizeBoardDisplayNumber` (JSON number → `null`) | **PASS** |
+
+---
+
+### Checks (each profile: **fresh** and **old-settings**)
+
+| Check | Result | Notes |
+|-------|--------|--------|
+| **A** Board guard (`applyPayload` mixed list) | **PASS** | Prep `0012`; ready `1002` + `3003` once each; invalid dropped; duplicate ready collapsed |
+| **B** Controller `btn-send-numbers` | **PASS** | All chips 4-digit; latency **797–984 ms** (fresh sample) |
+| **C** Peak 5 min + normal 3 min @ 1 Hz | **PASS** | **0** violation flags (text/attrs; opacity ignored per known issue) |
+| **D** Sort / 「選擇門市」 / sim stop | **PASS** | Newest-first after sends `4203→4202→4201` → `['4201','4202','4203']`; picker lists `c030020`; stop holds send count |
+
+---
+
+### Screenshots
+
+- `screenshots/fresh-checkB.png`, `fresh-checkD.png`, `fresh-teardown-empty.png`
+- `screenshots/old-settings-checkB.png`, `old-settings-checkD.png`, `old-settings-teardown-empty.png`
+
+**Overall: PASS** for both profiles on all checks A–D.

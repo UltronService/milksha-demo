@@ -1,0 +1,41 @@
+=== QA 任務 ===
+#64 merged 08:26 Taipei as 5ebc6ef. Public retest, finish by 08:58 Taipei. No git activity; zz-qa-store-a only; never s120030; clear_now at end.
+1. Poll the public Pages site until the asset ?v= changes from 20261013a (expect 20261013c or newer). Record the deploy time. Then wait until 10 minutes after the deploy.
+2. Legacy/stale-cache browser: reuse the persistent profile you warmed on 20261013a (stale-61 equivalent, or the one you used for pr64). Do not clear the cache or reload first. Open the public controller and board, then record every js/css ?v= value. All must be the new version, and the source picker must be visible.
+3. Fresh browser: same check.
+4. In both browsers, send one number per source from the public controller using the source picker (store, 迷點, Uber, foodpanda, Udd). Each must show on the public board within 3s, with the correct format and separate cells. Ignore read-back source (known bug, #65).
+5. Run the legacy plain 4-digit store send too.
+Report PASS/FAIL with a one-sentence reason, the ?v= per browser, send-to-board ms, and the deploy time. Artifacts in artifacts/pr64live/. If the deploy hasn't appeared by 08:45, report that instead.
+
+=== Cursor 代理人最終報告 ===
+## Verdict
+
+
+## Deploy
+
+- **`20261013c`** first seen at **`Last-Modified` → 2026-10-14 08:26:03 Taipei** (before 08:45).
+- Harness waited **10 minutes** after that timestamp (`artifacts/pr64live/poll.json`).
+
+## `?v=` (no cache clear on stale `profiles/stale-61`)
+
+| Browser | All js/css `?v=` | Picker |
+|---------|------------------|--------|
+| **Stale** | **`20261013c` only** (71 assets) | Yes |
+| **Fresh** | **`20261013c` only** (71) | Yes |
+
+## Send → board (ms), isolated send after `clear_now`
+
+| Source | Stale | Fresh |
+|--------|-------|-------|
+| store `5011` | 789 | 892 |
+| 迷點 `092` | 785 | 790 |
+| Uber → `C7459` | **1346** | 930 |
+| foodpanda → `6407` | 915 | 806 |
+| Udd → `AB13` | 845 | 928 |
+
+Legacy store **`5020`** after clear: **~750ms** (stale).  
+**Separate cells** (five sources on board together): **not stable** in final harness runs.
+
+Teardown: **`clear_now`** + sim stop attempted.
+
+Artifacts: `artifacts/pr64live/` (`REPORT.md`, `results.json`, `results-summary.json`, `poll.json`, logs).
