@@ -670,8 +670,39 @@
           root.setTimeout(waitBoardSurface, 30);
           return;
         }
-        startCloudRuntime(root.QMS.runtime);
-        runEnsureIdToken();
+        const brand = root.QMS.runtime && root.QMS.runtime.brand;
+        const Host = QMS.Board && QMS.Board.AutoPairHost;
+        if (transportMode === 'cloud' && brand && Host && Host.startBoardAutoPair) {
+          const pairCtl = Host.startBoardAutoPair({
+            window: root,
+            brandPack: brand,
+            storeNumber: creds.storeId,
+            deviceId: creds.deviceId,
+            cloudApi: transport.cloudApi,
+            signInWithCustomToken: function (token) {
+              if (!transport.session || !transport.session.signInWithCustomToken) {
+                return Promise.reject(new Error('auth session missing'));
+              }
+              return transport.session.signInWithCustomToken(token);
+            },
+          });
+          pairCtl.whenPaired
+            .then(function (pairResult) {
+              if (!pairResult || !pairResult.storeId) {
+                return;
+              }
+              creds.storeId = pairResult.storeId;
+              clearOtherReceiverCaches(creds.storeId);
+              startCloudRuntime(root.QMS.runtime);
+              return runEnsureIdToken();
+            })
+            .catch(function () {
+              /* boot error already shown */
+            });
+        } else {
+          startCloudRuntime(root.QMS.runtime);
+          runEnsureIdToken();
+        }
         return;
       }
       if (!root.receiverDemo) {
