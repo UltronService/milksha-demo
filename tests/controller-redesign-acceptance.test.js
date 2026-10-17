@@ -8,6 +8,45 @@ const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
 
+/** 總監核准：自動配對相關看板檔可與 main diff；其餘 js/board/* 仍須零 diff。 */
+const BOARD_AUTO_PAIR_DIFF_WHITELIST = [
+  'js/board/board-auto-pair.js',
+  'js/board/board-auto-pair-host.js',
+];
+
+const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
+
+/**
+ * @param {string[]} touchedPaths paths changed vs integration base
+ * @param {string[]} boardWhitelist explicit js/board files allowed to differ
+ * @returns {string[]} violating paths
+ */
+function boardReceiverDiffViolations(touchedPaths, boardWhitelist) {
+  const violations = [];
+  for (let i = 0; i < touchedPaths.length; i += 1) {
+    const p = touchedPaths[i];
+    if (p.indexOf(RECEIVER_DIFF_FORBIDDEN_PREFIX) === 0) {
+      violations.push(p);
+      continue;
+    }
+    if (p.indexOf('js/board/') === 0 && boardWhitelist.indexOf(p) < 0) {
+      violations.push(p);
+    }
+  }
+  return violations;
+}
+
+function gitDiffNameOnlyAgainstMain() {
+  const { execSync } = require('node:child_process');
+  const diff = execSync('git diff origin/main --name-only', { cwd: ROOT, encoding: 'utf8' });
+  return diff
+    .split('\n')
+    .map(function (l) {
+      return l.trim();
+    })
+    .filter(Boolean);
+}
+
 function readUtf8(rel) {
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
 }
@@ -119,16 +158,56 @@ test('acceptance 7: core controller test zones and actions remain in HTML', func
   }
 });
 
-test('acceptance 8: board receiver entry files untouched on this branch', function () {
-  const { execSync } = require('node:child_process');
-  const diff = execSync('git diff origin/main --name-only', { cwd: ROOT, encoding: 'utf8' });
-  const touched = diff
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const forbiddenPrefixes = ['js/board/', 'receiver/'];
-  const hits = touched.filter((p) => forbiddenPrefixes.some((pre) => p.startsWith(pre)));
-  assert.equal(hits.length, 0, `Board code paths must not change: ${hits.join(', ')}`);
+test('acceptance 8: only board auto-pair whitelist may differ under js/board or receiver/', function () {
+  const touched = gitDiffNameOnlyAgainstMain();
+  const hits = boardReceiverDiffViolations(touched, BOARD_AUTO_PAIR_DIFF_WHITELIST);
+  assert.equal(
+    hits.length,
+    0,
+    `Board/receiver paths outside auto-pair whitelist must not change: ${hits.join(', ')}`,
+  );
+});
+
+test('acceptance 8b: whitelist policy flags any non-listed js/board file in a diff', function () {
+  const sample = [
+    'js/board/board-auto-pair.js',
+    'js/board/board-auto-pair-host.js',
+    'js/board/today-board.js',
+    'receiver/cloud-boot.js',
+  ];
+  const hits = boardReceiverDiffViolations(sample, BOARD_AUTO_PAIR_DIFF_WHITELIST);
+  assert.deepEqual(hits.sort(), ['js/board/today-board.js', 'receiver/cloud-boot.js'].sort());
+  assert.deepEqual(
+    boardReceiverDiffViolations(
+      ['js/board/board-auto-pair.js', 'js/board/board-auto-pair-host.js'],
+      BOARD_AUTO_PAIR_DIFF_WHITELIST,
+    ),
+    [],
+  );
+});
+
+test('acceptance 8c: every other js/board file has zero diff vs main on this branch', function () {
+  const touched = new Set(gitDiffNameOnlyAgainstMain());
+  const boardDir = path.join(ROOT, 'js', 'board');
+  const allBoardFiles = fs
+    .readdirSync(boardDir)
+    .filter(function (name) {
+      return name.endsWith('.js');
+    })
+    .map(function (name) {
+      return 'js/board/' + name;
+    });
+  const outsideWhitelist = allBoardFiles.filter(function (rel) {
+    return BOARD_AUTO_PAIR_DIFF_WHITELIST.indexOf(rel) < 0;
+  });
+  const unexpected = outsideWhitelist.filter(function (rel) {
+    return touched.has(rel);
+  });
+  assert.equal(
+    unexpected.length,
+    0,
+    `Non-whitelist board files must have zero diff: ${unexpected.join(', ')}`,
+  );
 });
 
 test('acceptance 10: disconnected header pill label is 未連線', function () {
