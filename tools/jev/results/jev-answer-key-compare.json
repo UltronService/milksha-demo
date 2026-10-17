@@ -1,0 +1,266 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-10-17T01:25:15.396Z",
+    "case_count": 26,
+    "api_errors": 0,
+    "accuracy_vs_answer_key": 0.7307692307692307,
+    "match_count": 19,
+    "unable_count": 2,
+    "answer_key_path": "/workspace/tools/jev/fixtures/answer-key-26.json",
+    "logs_dir": "/tmp/jev-qa-logs",
+    "confusion_matrix_rows_answer_key": {
+      "通過": {
+        "通過": 13,
+        "不通過": 4,
+        "無法判斷": 2
+      },
+      "不通過": {
+        "通過": 1,
+        "不通過": 6,
+        "無法判斷": 0
+      },
+      "無法判斷": {
+        "通過": 0,
+        "不通過": 0,
+        "無法判斷": 0
+      }
+    },
+    "usage_input_tokens": 56497
+  },
+  "rows": [
+    {
+      "case": "case-001",
+      "answer_key": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.51,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 判不通過，標籤為通過"
+    },
+    {
+      "case": "case-002",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.74,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-003",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.92,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-004",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.98,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-005",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.86,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-006",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.72,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-007",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.86,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-008",
+      "answer_key": "通過",
+      "jev_answer": "無法判斷",
+      "confidence": 0.33,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 選無法判斷，標籤有明確通過/不通過"
+    },
+    {
+      "case": "case-009",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.69,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-010",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.74,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-011",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.16,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-012",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.53,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-013",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.35,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-014",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.06,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-015",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.31,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-016",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.77,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-017",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.3,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-018",
+      "answer_key": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.09,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 判不通過，標籤為通過"
+    },
+    {
+      "case": "case-019",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.41,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-020",
+      "answer_key": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.79,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 判不通過，標籤為通過"
+    },
+    {
+      "case": "case-021",
+      "answer_key": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.79,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-022",
+      "answer_key": "不通過",
+      "jev_answer": "通過",
+      "confidence": 0.61,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 判通過，標籤為不通過"
+    },
+    {
+      "case": "case-023",
+      "answer_key": "通過",
+      "jev_answer": "無法判斷",
+      "confidence": 0.19,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 選無法判斷，標籤有明確通過/不通過"
+    },
+    {
+      "case": "case-024",
+      "answer_key": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.22,
+      "match": false,
+      "error": "",
+      "mismatch_reason": "jev 判不通過，標籤為通過"
+    },
+    {
+      "case": "case-025",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.92,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    },
+    {
+      "case": "case-026",
+      "answer_key": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.91,
+      "match": true,
+      "error": "",
+      "mismatch_reason": ""
+    }
+  ]
+}
