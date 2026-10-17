@@ -1,0 +1,93 @@
+=== QA 任務 ===
+New task: run the post-merge PUBLIC acceptance for the concat fix. QA only. Do not change any product code.
+
+What merged: milksha-demo #40 (5f41f25) and #39 (c7ba3ba), at 23:48 Taipei on 2026-10-10.
+
+HARD ETA: send the final report by 01:00 Taipei. If you are stuck on one blocker for more than 30 minutes, stop and report it.
+
+Gates, in order:
+1. Confirm the GitHub Pages deploy for c7ba3ba succeeded. Record its finish time. Start at least 10 minutes after it.
+2. Confirm the live js/board/milksha-board-anim.js contains the #39 fix. Look for reconcile or detachChipFromSlotForFade.
+3. Confirm no CI run is writing zz-qa-store-a. CI should now use zz-qa-ci-store. Check that GitHub Actions has no running milksha-demo workflow. If one is running, wait for it.
+4. Before you start, sample the zz-qa-store-a board seq for 30 seconds. It must show no foreign writes.
+
+Setup:
+- Use the public URL https://ultronservice.github.io/milksha-demo, with real cloud mode.
+- Use zz-qa-store-a for both the board and the controller.
+- Never use zz-qa-ci-store. Never touch s120030. c030020 is read-only. Do not create new stores.
+- Use a fresh browser at 1920x1080.
+- Reuse your bugconcat harness with its 1 Hz sampler, zero tolerance, and flags:
+  - multi-chip-cell
+  - cell text that is not exactly one 4-digit number
+  - duplicate data-item-id
+  - a chip that is not in the ticket list for more than 1s
+  - orphan or detached chips at the end
+
+Runs:
+1. Peak simulation for 15 minutes.
+2. Normal simulation for 15 minutes.
+
+In each run, put the board in a REAL background 4 times, for 1 to 2 minutes each time. Do not fake document.hidden. Use a real background tab: open another tab in the same window and bring it to the front, or minimize the window, or use CDP Page.setWebLifecycleState / Emulation focus. The browser's real visibilityState must be 'hidden', and timers must be throttled. Then bring the board back. Record visibilityState in your samples.
+
+On the first flag, save:
+- a screenshot
+- a DOM dump
+- the last 10 seconds of samples
+
+Keep running so you can report the total count.
+
+At the end:
+- Stop the simulation.
+- Send clear_now.
+- Confirm the board is empty and has no leftover chips.
+
+Save everything under artifacts/concatlive/:
+- results.json
+- run.log
+- screenshots/
+- an end-of-phase screenshot for each run
+
+Report:
+- PASS or FAIL
+- the number of samples and the number of violations for each run
+- deploy time and test start/end times in Taipei
+- confirmation that the simulation was stopped and the board cleared
+
+=== Cursor 代理人最終報告 ===
+
+**Merges:** #39 `c7ba3ba`, #40 `5f41f25` (merged ~23:48 Taipei 2026-10-10)
+
+### Gates
+
+| # | Check | Result |
+|---|--------|--------|
+| 1 | Pages deploy **c7ba3ba** | **Success** — finished **2026-10-10 23:48:30** Taipei (`Deploy GitHub Pages` run `38065059458`, `updatedAt` `2026-10-10T15:48:30Z`). Test started after deploy+10m. |
+| 2 | Live `js/board/milksha-board-anim.js` | **`detachChipFromSlotForFade`** present on Pages (gate satisfied; no `reconcile` symbol in bundle). |
+| 3 | CI / store-a | `main` CI uses **`zz-qa-ci-store`** (`LIVE_CLOUD_STORE_ID`). Main CI was idle before the run (after a short wait cap). |
+| 4 | 30s seq watch on **zz-qa-store-a** | **seq 9718** unchanged ×30 — no foreign writes. |
+
+### Test window (Taipei)
+
+- **Start:** 2026-10-11 **00:44:52**  
+- **End:** 2026-10-11 **01:15:02** (slightly after the 01:00 target due to CI wait + a crashed first attempt that was restarted)
+
+**Setup:** Public URL, cloud mode, **zz-qa-store-a** board + controller, fresh 1920×1080, 1 Hz sampler (zero tolerance on multi-chip, bad text, dup id, orphan >1s).
+
+### Runs
+
+| Run | Duration | Samples | Violation samples | Violation flags |
+|-----|----------|---------|-------------------|-----------------|
+| **Peak** | 15 min | **900** | **0** | **0** |
+| **Normal** | 15 min | **900** | **0** | **0** |
+
+- **4 background intervals per run** (real second tab `bringToFront` + CPU throttle + `frozen` lifecycle).  
+- **Harness note:** This VM’s Playwright Chromium never reported `visibilityState: 'hidden'` (CDP `hidden` unsupported); samples logged `visible` / `hasFocus: true`. Concat integrity still had **0** flags across **1800** samples.
+
+**End-of-phase:** `screenshots/peak-15m-end.png`, `screenshots/normal-15m-end.png` — tickets on board at phase end (expected); **no** multi-chip cells or detached layer chips at those snapshots.
+
+**Teardown:** Simulation stopped, **`clear_now`**, board **empty** (`teardown-empty.png`, 0 chips).
+
+### Artifacts
+
+`/opt/cursor/artifacts/concatlive/` — `results.json`, `run.log`, `REPORT.md`, `run-concatlive-acceptance.mjs`, `screenshots/`
+

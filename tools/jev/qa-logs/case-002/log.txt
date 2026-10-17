@@ -1,0 +1,64 @@
+=== QA 任務 ===
+Stop the base e2e comparison now (kill all playwright processes). CI on 012f5a4 is the source of truth. Do not run more tests. Write your final report immediately: 3-step timings, unit/e2e counts head vs base, removed/skipped/loosened tests with file:line, security notes on local signing, and severity counts (High/Medium/Low, missing checks, removed checks, test issues, doc issues). Keep the repo clean.
+
+=== Cursor 代理人最終報告 ===
+
+**HEAD**：`<REDACTED>`  
+**CI** [37172671013](https://github.com/UltronService/milksha-demo/actions/runs/37172671013)：`headSha=012f5a4`，**74 passed**（單元 **116** + e2e **74**）。  
+Base e2e 已中止；Playwright 已結束；工作區 **git clean**。
+
+---
+
+### 三步 POC 時序（單 context、8877 靜態、`/` + `/controller/`、未按連線）
+
+| 情境 | 第 1 次送出→看板出號 | 第 2 次送出 |
+|------|----------------------|------------|
+| 先看板再 controller | **62 ms** | **23 ms** |
+| 看板 reload 後 | **41 ms** | **30 ms** |
+| 先 controller 再看板 | **60 ms** | **28 ms** |
+
+號碼：1002 / 1001 / 1003；載入即已連線且「看板 在線」。截圖：`/opt/cursor/artifacts/controller-on-load-1920x1080.png`、`home-board-after-send-1920x1080.png`；`poc-timings.json`。
+
+---
+
+### 測試數量 head vs base
+
+| | **09bc0a1** | **012f5a4** |
+|--|-------------|-------------|
+| 單元 | **114 pass** | **116 pass** |
+| E2E（列舉） | **73** | **74** |
+| E2E（CI） | — | **74 pass**（準） |
+
+**新增**：`tests/e2e/home-board-local-poc.spec.mjs`（整檔）；單元 `tests/board-setup-link.test.js`、`tests/local-cloud-shim-target.test.js` 增測。  
+**移除 / 改名 / skip 既有用例**：無。
+
+**放寬 / 調整（非刪測）**
+
+- `js/transport/local-cloud-shim.js:193-199` — `posSignSecret` 空則不驗簽（僅 local shim）。
+- `tests/local-cloud-shim-target.test.js:95-125` — 單元覆蓋「無 secret + 裝置在線可收單」。
+- `tests/e2e/controller-actions.spec.mjs:215-216` — require-connect 改 `?mode=cloud`（更嚴，非放寬）。
+- `tests/e2e/harness.mjs:274-377` — 展開 controller zone（UI 適配，斷言未放寬）。
+
+**「70+3 skip」說明**：未設 `MILKSHA_E2E_ARTIFACTS` 時 `tests/e2e/board-viewport-screenshots.spec.mjs:72,91,113` 三條 `test.skip`；CI 有 ART → **74 條全跑**，與 log「74 passed」一致。
+
+---
+
+### Local 簽章 / 安全
+
+- `controller/controller-app.js:373-374,450` — 僅 `local` 使用 `local-poc-unsigned`；cloud/firestore 仍須設定 POS 金鑰。
+- Local 路徑：`localStorage` + `BroadcastChannel`，**不**對 Firestore/Functions 送該 key。
+- `config-resolve-production.test.js`（`ultronservice.github.io`）— 惡意 `gateway` / `mode=firestore` 不啟用 emulator；`mode=cloud` 仍要完整 `CloudSettings`。
+- `/` 無 query 時 `js/receiver/cloud-boot.js:157-159` 預設本機連動（同瀏覽器 demo，非用該 key 打真雲）。
+
+---
+
+### 嚴重度統計
+
+| 類別 | High | Medium | Low |
+|------|------|--------|-----|
+| 產品 / 安全缺陷 | 0 | 0 | 0 |
+| **missing checks** | — | — | 1（base 全量 e2e 未在本機跑完，依 CI） |
+| **removed checks** | 0 | 0 | 0 |
+| **test issues** | 0 | 0 | 0（以 CI 74/74 為準） |
+| **doc issues** | 0 | 0 | 1（PR「70+3」與 CI「74 passed」易混淆） |
+

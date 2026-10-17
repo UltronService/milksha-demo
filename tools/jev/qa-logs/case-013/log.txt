@@ -1,0 +1,80 @@
+=== QA 任務 ===
+Public retest for milksha-demo PR #33 (board background), merged 2026-10-09 03:53 Taipei as commit 7fb4f9c on main. Test only. Do not change product code. Do not open a PR unless a harness script needs a fix.
+
+Steps:
+1. Confirm that the GitHub Pages deploy for 7fb4f9c (or a later main commit) finished successfully. Record the deploy finish time. Start testing at least 10 minutes after that time. Use the public URL only. Do not refresh by hand. Do not override routes.
+2. Run one full main flow in each of 2 browsers: (A) a fresh profile, and (B) a legacy-key profile seeded through localStorage only (same seeding as the pr25live/pr27 runs). An isolated rerun does not count as a pass.
+3. At 1920x1080 and at 3840x2160, check and screenshot each item:
+   a. The new background image (milksha-board-bg-1007) shows correctly. The prep side has no old waves SVG.
+   b. The number font is Arial (record the computed font-family).
+   c. 準備中 and 請取餐 each show a 2-column x 5-row grid.
+   d. The newest number is at top-left, then the left column fills down, then the right column.
+   e. With more than 10 numbers in one zone, the zone pages (record what page 2 shows and the page interval).
+   f. 4K scales uniformly 2x with no overflow outside the cream boxes.
+4. At a non-16:9 viewport (for example 1440x1080 and 1920x1200), the letterbox bars are black #000. Sample the pixel colors.
+5. Speed: press send (button enabled) on the controller, then measure until the number shows on the board. Pass if this takes 3s or less in both browsers. Record boardReadyMs separately from sendToDisplayMs.
+6. The controller 選擇門市 list still loads from listStores, shows online/offline, and sorts by store ID. Do not open boards for any store ID other than zz-qa-*.
+
+Safety: write only to zz-qa-* stores (e.g. zz-qa-store-a / zz-qa-store-b). c030020 is read-only. Never send to or clear s120030. Do not use new fake store IDs or s999999. No secrets in logs or reports.
+
+Report: give each item as pass or fail with the measured values, then the overall verdict. Save results.json plus all screenshots under artifacts/pr33live/ and list every artifact path in your final report so I can copy them out. Target finish: 04:45 Taipei.
+
+=== Cursor 代理人最終報告 ===
+## PR #33 public retest (`7fb4f9c`)
+
+### Deploy & timing
+| | |
+|--|--|
+| **GitHub Pages** | Run [37835308437](https://github.com/UltronService/milksha-demo/actions/runs/37835308437) — **success** |
+| **Commit** | `7fb4f9c` |
+| **Deploy finished** | **2026-10-08T19:53:44Z** → **2026-10-09 03:53:44 Taipei** |
+| **Test gate** | ≥10 min after deploy → not before **04:03:44 Taipei** |
+| **Authoritative test start** | **2026-10-08T20:24:30Z** → **2026-10-09 04:24:30 Taipei** |
+| **Target** | https://ultronservice.github.io/milksha-demo/ (no route override, no manual refresh) |
+| **Asset check** | Public `milksha-board.js` includes `milksha-board-bg-1007`; no `prep-waves` in deployed JS |
+
+---
+
+### Results (single full run: fresh + old-settings)
+
+| Item | **fresh** | **old-settings** |
+|------|-----------|------------------|
+| **3a** Background `milksha-board-bg-1007`, no prep waves | **PASS** (`bgHas1007`, `prepWavesCount: 0`) | **PASS** |
+| **3b** Number font Arial | **PASS** — `Arial, Arimo, sans-serif` @ 1080p & 4K | **PASS** (same) |
+| **3c** 準備中 / 請取餐 2×5 grids | **PASS** (`cellCount: 10` each) | **PASS** |
+| **3d** Newest top-left, left column down | **PASS** (`topLeftNewest`, `leftColumnMonotonicDown`) | **PASS** |
+| **3e** Paging (>10 ready) | **PASS** — page **2/2** shows **`2012`** (11th newest); interval **6000 ms** | **PASS** (same pattern) |
+| **3f** 4K uniform 2×, no cream overflow | **PASS** — scale **1** / **2**, `overflow4k: false` | **PASS** |
+| **4** Letterbox bars `#000` | **PASS** — stage + sampled pixels `rgb(0, 0, 0)` @ **1440×1080** & **1920×1200** | **PASS** |
+| **5** Send speed (≤3000 ms) | **PASS** — `boardReadyMs` **859**, `sendToDisplayMs` **760** | **PASS** — `boardReadyMs` **1248**, `sendToDisplayMs` **574** |
+| **6** Controller `listStores` picker | **PASS** — sorted `c030020`, `s120030`, `s999999`; online/offline matches API | **PASS** |
+
+
+---
+
+### Artifact paths (copy-out)
+
+**Metadata & harness**
+- `/opt/cursor/artifacts/pr33live/results.json`
+- `/opt/cursor/artifacts/pr33live/wait-meta.json`
+- `/opt/cursor/artifacts/pr33live/run.log`
+- `/opt/cursor/artifacts/pr33live/run-pr33-public.mjs`
+- `/opt/cursor/artifacts/pr33live/public-pages-pr33-live-qa.mjs`
+
+**Screenshots** (`/opt/cursor/artifacts/pr33live/screenshots/`)
+- `fresh-picker-c030020.png`
+- `fresh-board-1920x1080.png`
+- `fresh-board-3840x2160.png`
+- `fresh-board-ready-page2.png`
+- `fresh-letterbox-1440x1080.png`
+- `fresh-letterbox-1920x1200.png`
+- `old-settings-picker-c030020.png`
+- `old-settings-board-1920x1080.png`
+- `old-settings-board-3840x2160.png`
+- `old-settings-board-ready-page2.png`
+- `old-settings-letterbox-1440x1080.png`
+- `old-settings-letterbox-1920x1200.png`
+
+*(Earlier failed attempts left `fresh-fatal-*.png` / `old-settings-fatal-*.png` in the same folder; the passing run is the set above.)*
+
+**Safety:** Writes/clears only on **`zz-qa-store-a`**; controller picker on **`c030020`** read-only; no **`s120030`** sends; no new store IDs opened.

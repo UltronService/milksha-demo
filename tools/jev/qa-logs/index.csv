@@ -1,0 +1,27 @@
+case_id,project,pr,commit,date_taipei,qa_verdict,verdict_source,agent_id
+case-001,milksha-cloud,#2,df0463c,,通過,QA 驗收代理人最終報告總判定行：判定：PASS（對話第 1 輪）,bc-22af8b3a-ecd1-5d3b-a65e-8e3d6016e965
+case-002,milksha-demo,#17,012f5a4,,通過,QA 驗收代理人最終報告總判定行：結論：POC 與 CI 均滿足驗收（對話第 2 輪）,bc-444d0de4-c867-5b65-940f-591e5628726d
+case-003,milksha-demo,#16,1667ac0,,不通過,QA 驗收代理人最終報告總判定行：判定：NEEDS FIXES（對話第 1 輪）,bc-4fd5a79f-1622-5369-addf-268d1f18e6f3
+case-004,milksha-demo,#19,29865ac,2026-10-04,不通過,QA 驗收代理人最終報告總判定行：判定：NEEDS FIX（對話第 1 輪）,bc-c72ca71e-c233-5171-9421-20f1291aceb5
+case-005,milksha-demo,#19,11f8870,2026-10-04,通過,QA 驗收代理人最終報告總判定行：判定：PASS（對話第 2 輪）,bc-c72ca71e-c233-5171-9421-20f1291aceb5
+case-006,milksha-demo,#17,7372e31,2026-10-04,通過,QA 驗收代理人最終報告總判定行：判定 PASS（公開站）（對話第 1 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-007,milksha-demo,#20,8138a4a,2026-10-05,不通過,QA 驗收代理人最終報告總判定行：總判定 整體：FAIL（對話第 4 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-008,milksha-demo,#21,4a43ca4,2026-10-05,通過,QA 驗收代理人最終報告總判定行：總判 整體 PASS（對話第 5 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-009,milksha-demo,#22,f7b749b,2026-10-07,不通過,QA 驗收代理人最終報告總判定行：總判 整體 FAIL（對話第 6 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-010,milksha-demo,#22,f7b749b,2026-10-07,通過,QA 驗收代理人最終報告總判定行：重測總判 可接受，A PASS、B PASS（對話第 7 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-011,milksha-demo,#23,ada3679,2026-10-07,通過,QA 驗收代理人最終報告總判定行：Item A 重測 PASS（對話第 9 輪）,bc-bbb1befe-289c-5bfd-a618-5204dac29462
+case-012,milksha-demo,#25,6ef1359,2026-10-09,通過,QA 驗收代理人最終報告總判定行：Overall PASS（對話第 5 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-013,milksha-demo,#33,7fb4f9c,2026-10-09,通過,QA 驗收代理人最終報告總判定行：Overall verdict: PASS（對話第 7 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-014,milksha-demo,#32,5765abf,2026-10-09,通過,QA 驗收代理人最終報告總判定行：Overall verdict PASS（對話第 8 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-015,milksha-demo,#34,c8d8174,2026-10-09,通過,QA 驗收代理人最終報告總判定行：Overall verdict PASS（對話第 9 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-016,milksha-demo,#35,c601df6,2026-10-09,通過,QA 驗收代理人最終報告總判定行：overall PASS（對話第 10 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-017,milksha-demo,#37,9d0a6ee,2026-10-10,通過,QA 驗收代理人最終報告總判定行：overall PASS（對話第 11 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-018,milksha-demo,,5f41f25,2026-10-10,通過,QA 驗收代理人最終報告總判定行：concat fix public acceptance PASS（對話第 15 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-019,milksha-demo,#43,f9d0513,2026-10-11,通過,QA 驗收代理人最終報告總判定行：PASS（對話第 17 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-020,milksha-demo,#49,8fe441f,2026-10-11,通過,QA 驗收代理人最終報告總判定行：PR #49 verdict PASS（對話第 22 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-021,milksha-demo,#46,4146812,2026-10-11,通過,QA 驗收代理人最終報告總判定行：Overall verdict PASS（對話第 26 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-022,milksha-demo,#59,fd9f2ef,2026-10-12,不通過,QA 驗收代理人最終報告總判定行：Overall public retest: FAIL（對話第 40 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-023,milksha-cloud,#23,0577cff,2026-10-13,通過,QA 驗收代理人最終報告總判定行：Verdict PASS（對話第 59 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-024,milksha-demo,#64,4d314b9,2026-10-14,通過,QA 驗收代理人最終報告總判定行：Verdict PASS（對話第 60 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-025,milksha-demo,#64,5ebc6ef,2026-10-14,不通過,QA 驗收代理人最終報告總判定行：Verdict FAIL（對話第 61 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
+case-026,milksha-demo,#64,5ebc6ef,2026-10-14,不通過,QA 驗收代理人最終報告總判定行：Verdict FAIL（對話第 62 輪）,bc-f240fa90-2465-5a40-8d6c-2b87fa0d2b54
