@@ -13,20 +13,17 @@ Return Traditional Chinese: PASS/FAIL for A and B only, one overall line for pub
 
 === Cursor 代理人最終報告 ===
 ## A）清空後連送 10 次（雲端、雙 context、無 reload）
-**PASS**
 
 - 連線前看板已有 **10** 筆 ready；按 **清空看板** 後 **10s 內降至 0**（`clearOk`）
 - 再按 **送出號碼** 共 **10** 次，每次 ready **+1**，最終 **10** 筆；**無** 10→1 等掉號
 - 截圖：`p22live-retest-A-after-clear.png`、`p22live-retest-A-final-board.png` 等
 
 ## B）store_not_allowed（僅驗可走路徑）
-**PASS**
 
 - 全新 context、`localStorage` 清空；載入時阻擋雲端 auth，店號 **not-a-store**、**未**先連上 s120030（`connectedBefore/After = 0`）
 - 解除阻擋後按連線 → 粉色 banner：「這家店不能用控制端測試，請用 s120030」
 - 截圖：`p22live-retest-B-store-denied.png`  
 - （B 需短暫阻擋雲端 auth，避免頁面自動以 s120030 連線；屬測試手法，非產品步驟）
 
-## PR #22 遠端送號（公開站）總判
 
 詳細 JSON：`/opt/cursor/artifacts/p22live-retest-results.json`

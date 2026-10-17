@@ -10,7 +10,6 @@ Your #23 run tested the wrong shape. Actual PR #23 (merged 0577cff, deployed mil
 Also re-check: >6 chars dropped, 1KB cap and auth 401/403 still hold. Report PASS/FAIL per item + send->board ms. Artifacts artifacts/cloud23b/. Finish by 23:20 Taipei.
 
 === Cursor 代理人最終報告 ===
-## Verdict
 
 
 ## Per-item (send → public board)

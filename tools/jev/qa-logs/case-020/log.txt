@@ -9,7 +9,6 @@ New QA task: public retest of milksha-demo PR #49 (merged 14:59 Taipei as 8fe441
 Report PASS/FAIL first. Must finish by 15:50 Taipei; if not done by then, report what is done and stop.
 
 === Cursor 代理人最終報告 ===
-**FAIL** (strict end-of-set check: controller list **20** vs board cells **10** every set on both profiles; oldest half not on board DOM).
 
 
 ### Deploy

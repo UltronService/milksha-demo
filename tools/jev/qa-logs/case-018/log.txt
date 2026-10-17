@@ -91,4 +91,3 @@ Report:
 
 `/opt/cursor/artifacts/concatlive/` — `results.json`, `run.log`, `REPORT.md`, `run-concatlive-acceptance.mjs`, `screenshots/`
 
-**Overall: PASS** — no concat-class violations under peak/normal continuous simulation on the public bundle after #39/#40.

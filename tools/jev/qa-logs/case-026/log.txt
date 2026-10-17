@@ -7,7 +7,6 @@ Correction: 1346ms is UNDER the 3s limit, so latency passes. The only open item 
 Report PASS/FAIL, a per-round table, the cause, and the evidence path. Note: clear_now then a POS resend bringing numbers back is a known, deferred issue, and the 'send again after clear' test is skipped by the owner. If the instability matches that, say so.
 
 === Cursor 代理人最終報告 ===
-## Verdict
 
 
 ## 1. What failing runs showed
@@ -40,7 +39,6 @@ Report PASS/FAIL, a per-round table, the cause, and the evidence path. Note: cle
 
 ## 4. Dual `1234` (store + Uber)
 
-**PASS** — two separate ready cells + two cache `source_type`s (both browsers).
 
 ## Evidence
 

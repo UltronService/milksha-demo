@@ -80,4 +80,3 @@ Report:
 - `screenshots/fresh-checkB.png`, `fresh-checkD.png`, `fresh-teardown-empty.png`
 - `screenshots/old-settings-checkB.png`, `old-settings-checkD.png`, `old-settings-teardown-empty.png`
 
-**Overall: PASS** for both profiles on all checks A–D.

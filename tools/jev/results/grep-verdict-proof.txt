@@ -1,30 +1,54 @@
-# Grep 驗證（提交前 qa-logs/*/log.txt）
+# Grep / audit 驗證（qa-logs/*/log.txt）
 
-日期：2026-10-17 UTC
+日期：2026-10-17（第二輪：清除所有報告區判定承載行）
 
-## 作法
+## 刪除作法
 
-依 `fixtures/verdict-line-patterns.json`，每案刪除 **1 行** QA 總判定（對應 index.csv `verdict_source`）。`meta.json` 已移除 `qa_verdict` / `verdict_source`（答案鍵見 `fixtures/answer-key-26.json` 與 `qa-logs/index.csv`）。
+1. **主判定行**：`verdict-line-patterns.json`（每案 1 行，對應 index `verdict_source`）— 已在第一輪完成。
+2. **報告區其餘判定行**：`lib/strip-verdict-from-log.mjs` 刪除 `=== Cursor 代理人最終報告 ===` 之後所有判定承載行（判定／總判／Verdict 標題、獨立 **PASS**/**FAIL**、**Overall:**、**Verdict file:** 等）。
+3. **表頭中性化**（非結論文字，僅欄位名）：case-004 `結論`→`說明`；case-016 `Verdict`→`Outcome`。
 
-## Python 重跑 26 案 pattern（預期：patterns still matching: none）
-
-```
-patterns still matching: none
-```
-
-## 總判定樣式 grep（摘錄）
+## 本輪額外刪除（18 行）
 
 ```
-rg '^## 判定：\*\*(PASS|FAIL|NEEDS)' case-*/log.txt
-→ 僅 case-002 仍含「## 判定：**PASS**（以 CI…）」；該案已刪除的是 **結論** 行（資料集標定的總判定行）。送 jev 前 `maskVerdictInLog` 會再遮罩報告區判定標題。
+case-002  ## 判定：**PASS**（以 CI `012f5a4` 為準）
+case-006  ## 判定
+case-007  ## 總判定
+case-008  ## 總判
+case-009  ## 總判
+case-010  **PASS**（2 行）、## PR #22 遠端送號（公開站）總判
+case-016  **Verdict file:** … overallVerdict: "PASS"
+case-018  **Overall: PASS** — …
+case-019  **Overall: PASS** for both profiles …
+case-020  **FAIL** (strict end-of-set check …)
+case-021  **Note:** … Overall verdict updated to **PASS** …
+case-023  ## Verdict
+case-024  ## Verdict
+case-025  ## Verdict
+case-026  ## Verdict、**PASS** — two separate ready cells …
+```
 
-rg '^\*\*整體' / '^## Overall verdict:' / '^\*\*PR #49 verdict' / '^\*\*Overall public retest: FAIL\*\*'
-→ 0 筆（在 qa-logs 目錄下）
+## 自動 audit（預期 ok: true）
+
+```bash
+cd tools/jev && node scripts/audit-qa-log-verdicts.mjs
+```
+
+```
+{ "ok": true, "report_verdict_carrier_lines": 0 }
+```
+
+## 手動 rg（報告區判定標題／總判／獨立 PASS-FAIL 句）
+
+```bash
+cd tools/jev/qa-logs
+rg '^## 判定|^## 總判|^## 總判定|^## Verdict|^\*\*(PASS|FAIL)\*\*\s*$|^\*\*Overall|^\*\*Verdict file' case-*/log.txt
+# → 無輸出（exit 1）
 ```
 
 ## 機密
 
-```
-rg 'ghp_|gho_|Bearer [A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}' qa-logs
-→ 無匹配
+```bash
+rg 'ghp_|gho_|Bearer [A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}' .
+# → 無匹配
 ```

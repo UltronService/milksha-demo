@@ -70,7 +70,6 @@ Final report: HEAD sha, deployed sha check, a table of scenario / order / contro
 
 ---
 
-## 判定
 
 
 ---

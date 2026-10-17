@@ -8,7 +8,6 @@
 Report PASS/FAIL with a one-sentence reason, the ?v= per browser, send-to-board ms, and the deploy time. Artifacts in artifacts/pr64live/. If the deploy hasn't appeared by 08:45, report that instead.
 
 === Cursor 代理人最終報告 ===
-## Verdict
 
 
 ## Deploy

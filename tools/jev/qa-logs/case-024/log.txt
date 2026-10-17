@@ -8,7 +8,6 @@ QA of milksha-demo PR #64 (controller source picker) at head 4d314b9. Finish by 
 Report PASS/FAIL with a one-sentence reason, the skip list, test counts and Ponytail. Artifacts in artifacts/pr64/.
 
 === Cursor 代理人最終報告 ===
-## Verdict
 
 
 ## Skips vs `main` (loosened)

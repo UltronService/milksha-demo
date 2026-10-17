@@ -22,7 +22,6 @@ Public retest for **PR #46** (`4146812`, asset **`20261011b`**, store **`zz-qa-s
 | **5. Regression** | **PASS** — indicator **16/16** (prep+ready `2/2` at 4K after 11+11 fill); **選擇門市** list OK; **0** latencies **>3 s** |
 | **6. Teardown** | **PASS** — `clear_now`, board empty |
 
-**Note:** The first full harness run logged `indicatorOk: false` because the indicator was checked **after** peak (single-page board → no indicator DOM). Regression was re-measured **after column-fill, before peak**; `run-public-pr46live.mjs` is fixed for that order. Overall verdict updated to **PASS** in `results.json`.
 
 **Artifacts:** `artifacts/pr46live/` → copied to `/cursor/stores/self/artifacts/pr46live/` (**excluding** `profile-old`). Summary: `REPORT.md`, `results.json`, screenshots, logs.
 

@@ -2,7 +2,6 @@
 Stop the base e2e comparison now (kill all playwright processes). CI on 012f5a4 is the source of truth. Do not run more tests. Write your final report immediately: 3-step timings, unit/e2e counts head vs base, removed/skipped/loosened tests with file:line, security notes on local signing, and severity counts (High/Medium/Low, missing checks, removed checks, test issues, doc issues). Keep the repo clean.
 
 === Cursor 代理人最終報告 ===
-## 判定：**PASS**（以 CI `012f5a4` 為準）
 
 **HEAD**：`<REDACTED>`  
 **CI** [37172671013](https://github.com/UltronService/milksha-demo/actions/runs/37172671013)：`headSha=012f5a4`，**74 passed**（單元 **116** + e2e **74**）。  

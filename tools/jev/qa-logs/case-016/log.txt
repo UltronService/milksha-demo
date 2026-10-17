@@ -42,13 +42,12 @@ Save everything under artifacts/pr35live/ (screenshots/, contact-sheets/, videos
 **Profiles:** (A) fresh, (B) legacy `localStorage` (same seed as pr34live) — one continuous flow per profile at **1920×1080** and **3840×2160**.  
 **Stores:** board `zz-qa-store-a`; controller-only `zz-qa-store-c`; `c030020` read-only for picker; no `s120030` writes.
 
-**Verdict file:** `/opt/cursor/artifacts/pr35live/results.json` → `overallVerdict: "PASS"`
 
 ---
 
 ### Checks (PASS/FAIL) — all four runs passed
 
-| # | Criterion | Verdict | Evidence (all contexts) |
+| # | Criterion | Outcome | Evidence (all contexts) |
 |---|-----------|---------|-------------------------|
 | **1** | New order → 準備中 (~0.3s fade-in + slide) | **PASS** | `opacityAnimRuns: 1`; chips **opaque after settle**; contact sheets `*-check1-new-prep.jpg` (computed opacity often stays `1` during WAAPI — frames on sheets) |
 | **2** | 準備中 → 請取餐 (fade + **#88a040** ~3s) | **PASS** | `highlightSeen: true`; `opacityAnimRuns: 2`; sheets `*-check2-prep-to-ready.jpg` |

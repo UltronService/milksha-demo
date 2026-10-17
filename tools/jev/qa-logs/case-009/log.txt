@@ -26,6 +26,5 @@ Screenshots /opt/cursor/artifacts/p22live-*.png and JSON p22live-results.json. F
 | **5** 非白名單店 → 粉色 **store_not_allowed** | **FAIL**（最終腳本跑）；**曾通過**：`localStorage.clear()` 後用 `not-a-store` 連線 →「這家店不能用控制端測試，請用 s120030」（見 `p22live-item5-store-denied.png`）。**測試設計**：先自動連上 **s120030** 再改店號重連，多半**不會**再出 banner |
 | **6**（選做）背景分頁 ~70s 後送號 | **PASS**（約 **15 ms**） |
 
-## 總判
 
 產物：`/opt/cursor/artifacts/p22live-*.png`、`/opt/cursor/artifacts/p22live-results.json`；腳本：`/workspace/scripts/qa-p22-live.mjs`（唯讀 QA，未 commit）。

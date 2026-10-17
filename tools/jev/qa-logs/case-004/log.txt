@@ -51,7 +51,7 @@ Final report: sha, a table of issues with severity High/Medium/Low and file:line
 
 ### 開發者三題
 
-| 問題 | 結論 |
+| 問題 | 說明 |
 |------|------|
 | **1. 排序** | **符合 E1。** 依序送入 7200–7213：`請取餐` p1 = 7213→7204（新→舊），p2 = 7203→7200；`準備中` 7200→…；與 main 相同 `readyAt` 降序 / `firstSeenAt` 升序（`js/milksha-board.js:572-593`）。2×5 填法：左欄 0–4、右欄 5–9（`layoutPageGrid` + `gridPositionsForCells`），與參考閱讀順序一致。 |
 | **2. 鈴聲** | **符合 E3。** 首包靜音、僅新 ready、單次最多 3 響（VM：`played:3`, gaps ~30ms、無 `.milksha-ov`）。main 的 2.8s 間隔來自 `OVERLAY_TOTAL_MS=2800` 全螢幕 overlay 佇列（`main:js/milksha-board.js`）；`docs/milksha-callboard/spec.md` §3 仍寫約 2.8s overlay — **文件未更新**，但 **E3 明確移除 overlay**，home 改為連續鈴聲為預期行為變更。 |

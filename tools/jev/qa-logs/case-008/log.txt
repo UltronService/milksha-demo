@@ -25,6 +25,5 @@ Screenshots /opt/cursor/artifacts/p21live-*.png. Final answer in Traditional Chi
 | **5** 區塊 1–5 按鈕有反饋或中文原因；拔線停用／接回恢復 | **PASS** |
 | **6** 「清空看板」清空看板 tab（無手動 reload），再按一次只 +1 | **PASS** |
 
-## 總判
 
 截圖：`/opt/cursor/artifacts/p21live-*.png`；完整 JSON：`/opt/cursor/artifacts/p21live-results.json`

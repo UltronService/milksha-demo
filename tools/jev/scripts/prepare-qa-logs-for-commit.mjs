@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { redactSensitive } from '../lib/redact-sensitive.mjs';
+import { stripVerdictLinesFromLog } from '../lib/strip-verdict-from-log.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const toolRoot = join(__dirname, '..');
@@ -12,7 +13,7 @@ const patternsRaw = JSON.parse(
 );
 
 /** @type {Record<string, string>} */
-const patterns = Object.fromEntries(
+const primaryPatterns = Object.fromEntries(
   Object.entries(patternsRaw).filter(([k]) => k.startsWith('case-')),
 );
 
@@ -27,8 +28,8 @@ function listCases() {
  * @param {string} caseId
  * @param {string} text
  */
-function stripVerdictLine(caseId, text) {
-  const reSrc = patterns[caseId];
+function stripPrimaryVerdictLine(caseId, text) {
+  const reSrc = primaryPatterns[caseId];
   if (!reSrc) {
     throw new Error(`no verdict pattern for ${caseId}`);
   }
@@ -44,7 +45,7 @@ function stripVerdictLine(caseId, text) {
     out.push(line);
   }
   if (removed !== 1) {
-    throw new Error(`${caseId}: expected to remove 1 verdict line, removed ${removed}`);
+    throw new Error(`${caseId}: expected to remove 1 primary verdict line, removed ${removed}`);
   }
   return out.join('\n');
 }
@@ -60,15 +61,29 @@ function scrubMeta(caseDir) {
   writeFileSync(metaPath, `${JSON.stringify(meta, null, 1)}\n`, 'utf8');
 }
 
+/** @type {Array<{ case: string, line: string }>} */
+const allRemoved = [];
+
 for (const caseId of listCases()) {
   const caseDir = join(logsRoot, caseId);
   const logPath = join(caseDir, 'log.txt');
   let text = readFileSync(logPath, 'utf8');
-  text = stripVerdictLine(caseId, text);
+  text = stripPrimaryVerdictLine(caseId, text);
+  const { text: stripped, removed } = stripVerdictLinesFromLog(text);
+  text = stripped;
+  for (const line of removed) {
+    allRemoved.push({ case: caseId, line });
+  }
   text = redactSensitive(text);
   writeFileSync(logPath, text, 'utf8');
   scrubMeta(caseDir);
-  process.stderr.write(`${caseId} stripped\n`);
+  process.stderr.write(`${caseId}: primary + ${removed.length} report line(s)\n`);
 }
+
+writeFileSync(
+  join(logsRoot, '..', 'fixtures', 'last-verdict-lines-removed.json'),
+  `${JSON.stringify({ removed: allRemoved }, null, 2)}\n`,
+  'utf8',
+);
 
 console.log('ok');
