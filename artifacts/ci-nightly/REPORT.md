@@ -2,7 +2,7 @@
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
 - **稽核時間（台北）：** 2026-10-18
-- **新 head：** `2d2f6cbf9371701f20cf84116855b54511581c9e`
+- **新 head：** `58acffc`（還原 commit `2d2f6cb`）
 
 ## 6. `git diff origin/main...HEAD` 放寬檢查（tests / playwright.config.js）
 
