@@ -1,0 +1,39 @@
+# origin/main + 16-shard PR-tier CI — run 39105020723 (PR #100)
+# Unique failing tests (36)
+
+board-cell-peak-simulation.spec.mjs:34:3 › board cell integrity under peak simulation › 3-min peak run: sampled cells, detached drain, no dup numbers
+board-empty-hint-states.spec.mjs:36:3 › guest board empty hint states › guest header shows store name only
+board-empty-hint-states.spec.mjs:45:3 › guest board empty hint states › both-empty shows centered hint
+board-empty-hint-states.spec.mjs:56:3 › guest board empty hint states › one-empty hides hint and leaves other column blank
+board-empty-hint-states.spec.mjs:72:3 › guest board empty hint states › none-empty hides hint immediately
+board-empty-state.spec.mjs:7:1 › guest board empty state keeps zone headers and hint
+board-no-connection-ui.spec.mjs:156:3 › guest board never shows connection status › offline with numbers keeps display without connection hint
+cloud-qa-checklist.spec.mjs:48:3 › PR22 cloud QA checklist (fake-cloud routed as prod) › network cable pull and restore without duplicate ready numbers
+cloud-qa-checklist.spec.mjs:76:3 › PR22 cloud QA checklist (fake-cloud routed as prod) › section buttons respond or show Chinese banner in cloud mode
+controller-command-errors.spec.mjs:42:1 › controller | devCommand error alerts and in-flight lock
+controller-connect-errors.spec.mjs:33:1 › controller connect 401 shows access code alert
+controller-connect-errors.spec.mjs:54:1 › controller connect 403 invalid_access_code shows forbidden alert
+controller-connect-errors.spec.mjs:73:1 › controller connect 403 forbidden shows permission alert
+controller-connect-errors.spec.mjs:89:1 › controller connect 403 forbidden does not retry devLogin
+controller-connect-errors.spec.mjs:109:1 › controller connect network error shows cloud retry alert
+controller-post-send-board-read-abort.spec.mjs:167:3 › controller post-send today_board read abort (fake-cloud) › push_numbers HTTP 500 still shows error and rolls back local ready list
+controller-quick-send-resend.spec.mjs:35:1 › store simulation keeps running while board paginates ready zone
+controller-simulate-offline-board.spec.mjs:24:3 › controller simulate_offline on guest board › 模擬斷網 shows 離線 on board and restore clears it
+controller-source-quick-send.spec.mjs:4:1 › local quick send: store 1234 and uber 1234 are two ready cells
+controller-store-picker-evidence.spec.mjs:121:3 › controller store picker evidence (fake-cloud) › 3c two minutes: devLogin and listStores counts with store switch
+controller-store-picker.spec.mjs:80:3 › controller cloud store picker › new store appears within poll window after board heartbeat
+controller-store-simulation.spec.mjs:26:1 › continuous simulation normal: board sync and stop
+controller-store-simulation.spec.mjs:44:1 › peak simulation can switch from normal without duplicate run
+forbidden-store-then-qa-isolation.spec.mjs:24:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends
+fresh-browser-pause-heartbeat.spec.mjs:24:3 › fresh browser 連線暫停 with existing session › boxHeartbeat 403 store_not_allowed shows pause without new devLogin
+home-board-art-alignment.spec.mjs:186:3 › landscape art grid aligns to reference at 1920
+home-board-art-alignment.spec.mjs:186:3 › landscape art grid aligns to reference at 3840
+home-board-clear-then-push-stale-command.spec.mjs:21:3 › clear then push (stale pending clear must not wipe board) › fake-cloud: clear_now then push_numbers leaves numbers after device poll
+home-board-cloud-recovery.spec.mjs:24:3 › home board cloud recovery › B-N07: 60s blocked routes recover within 30s without manual resync
+home-board-cloud-recovery.spec.mjs:100:3 › home board cloud recovery › clear while board offline then empty after reconnect
+home-board-quick-send-one.spec.mjs:42:1 › ten quick sends yield ten ready numbers; clear board works
+home-board-stale-storage.spec.mjs:72:1 › stale cloud settings on home board migrate to bundled and connect cloud
+home-board-ten-send-clear.spec.mjs:106:3 › local-link fresh context: ten quick sends then 清空看板 (board tab not reloaded)
+home-board-ten-send-clear.spec.mjs:106:3 › local-link localStorage seeded 5ab3c35-style: ten quick sends then 清空看板 (board tab not reloaded)
+home-board-ten-send-clear.spec.mjs:106:3 › local-link localStorage seeded 8138a4a-style: ten quick sends then 清空看板 (board tab not reloaded)
+main-5501-local-baseline.spec.mjs:28:1 › main baseline | no chime for ready while offline on reconnect (local)
