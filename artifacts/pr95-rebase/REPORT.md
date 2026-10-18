@@ -1,7 +1,7 @@
 # PR #95 — merge `origin/main` @ `2f9b2bf`（#98 CI 分層）
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/95
-- **新 HEAD:** `0f0ae4c`（`cursor/controller-default-number-5dd5`）
+- **新 HEAD:** `3e8e193`（`cursor/controller-default-number-5dd5`）
 - **QA：** 重驗符合（2026-10-18）
 - **合併方式:** `git merge origin/main`（無 force push）
 - **資產版本:** `20261017f`（高於 main `20261017d`）
