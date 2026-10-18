@@ -2,6 +2,11 @@ name: Main spec triple probe
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - cursor/ci-npm-test-playwright-order-ce9c
+    paths:
+      - .github/workflows/ci-main-spec-triple-probe.yml
 
 jobs:
   cloud-remote-ten-main:
