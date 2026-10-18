@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 迷客夏 POS 叫號推送 API（posReceiver）
-  version: "1.4.6"
+  version: "1.4.7"
   license:
     name: Proprietary
     url: https://ultronservice.github.io/milksha-demo/docs/api/
@@ -13,9 +13,9 @@ info:
   description: |
     ## 對接步驟
 
-    > ⚠️ 測試環境 URL（非正式上線）  
-    > 目前文件中的 URL（`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`）並非正式環境，僅供上線前測試。  
-    > 待測試沒有問題後，會再提供正式環境的 URL。
+    > **送號網址**  
+    > - **正式環境**：`https://asia-east1-milksha-qms-prod.cloudfunctions.net/posReceiver`  
+    > - **測試環境**：`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`
 
     > ⚠️ 試點測試安全提醒  
     > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
@@ -37,7 +37,15 @@ info:
 
     2. 送第一筆 Request
        - 方法：`POST`
-       - URL：
+       - URL（請依環境選用；完整路徑見上方「送號網址」）：
+
+       **正式環境**
+
+       ```
+       https://asia-east1-milksha-qms-prod.cloudfunctions.net/posReceiver
+       ```
+
+       **測試環境**
 
        ```
        https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver
@@ -87,9 +95,9 @@ info:
 
     ## 一鍵試打（Python）
 
-    > ⚠️ 測試環境 URL（非正式上線）  
-    > 目前文件中的 URL（`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`）並非正式環境，僅供上線前測試。  
-    > 待測試沒有問題後，會再提供正式環境的 URL。
+    > **送號網址**  
+    > - **正式環境**：`https://asia-east1-milksha-qms-prod.cloudfunctions.net/posReceiver`  
+    > - **測試環境**：`https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver`
 
     > ⚠️ 試點測試安全提醒  
     > 測試用門市帳號可能由迷客夏、POS 廠商或整合方共用；送 Request 前請先確認該門市看板目前沒有他人正在使用的營業內容，避免覆寫他人測試資料。  
@@ -131,7 +139,8 @@ info:
     STORE = "a17"  # 您的店號（account）；例 c030020、a17
     TARGET_PREFIX = "milksha"  # 前綴可任意；target = TARGET_PREFIX + STORE，須以 STORE 為字尾（不可留空 target）
     MERCHANT_ID = "Milksha"
-    # 以下為測試環境 URL，非正式上線；正式 URL 待測試通過後由迷客夏另行提供。
+    # 送號網址：正式 https://asia-east1-milksha-qms-prod.cloudfunctions.net/posReceiver
+    # 以下預設為測試環境（整合測試用）。
     POS_RECEIVER_URL = (
         "https://asia-east1-milksha-qms-dev.cloudfunctions.net/posReceiver"
     )
@@ -282,7 +291,7 @@ info:
 
     ---
 
-    達鈦 POS 向測試環境推送整批叫號名單的 HTTP API。
+    達鈦 POS 向正式或測試環境推送整批叫號名單的 HTTP API。
 
     整批覆寫：每次 Request 的 `number_content` 為該門市看板上的完整名單。  
     未出現在本批的號碼會從看板移除。  
@@ -307,6 +316,10 @@ info:
     圖示僅提供你訂、Uber Eats、foodpanda 三種；門市與 Udd 僅顯示號碼，不顯示平台圖示（設計如此）。
 
     ## 變更紀錄
+
+    **v1.4.7**
+    - 補上正式環境送號網址（`milksha-qms-prod`）；測試環境網址保留，並在文件中標示「正式／測試」。
+    - `posReceiver` 端點說明：系統閒置一段時間後，第一批號碼可能晚約 4 秒才上看板（已知現象，非故障）。
 
     **v1.4.6**
     - `account` 說明為門市店號；看板 URL 改為 `store=<店號>` 模板（例 `a17`）。
@@ -333,6 +346,8 @@ info:
     [下載 OpenAPI 規格（openapi.yaml）](./openapi.yaml)
 
 servers:
+  - url: https://asia-east1-milksha-qms-prod.cloudfunctions.net
+    description: 正式環境
   - url: https://asia-east1-milksha-qms-dev.cloudfunctions.net
     description: 測試環境
 
@@ -351,6 +366,7 @@ paths:
         - 「找不到目標叫號機」「目標叫號機尚未連線」「叫號資料格式錯誤」皆為 `isOK: true` + `isSuccess: false`（尚未連線時號碼不會上板）。
         - `target` 須以 `account` 為字尾（大小寫須一致）；前綴任意、不可為空（例店號 `a17` → `milkshaa17`）。
         - `serviceSpecialData_Json_Md5Hash` 與 `signature` 為選填，可省略或留空；伺服器不驗證。
+        - 系統閒置一段時間後，第一批號碼可能會晚約 **4 秒**才上看板；這是已知現象，不是故障。
       requestBody:
         required: true
         content:
