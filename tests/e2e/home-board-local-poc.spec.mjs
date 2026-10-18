@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('home board local POC: one button send shows numbers and board online', async ({ browser }) => {
   const ctx = await freshContext(browser);
@@ -23,7 +23,7 @@ test('home board local POC: one button send shows numbers and board online', asy
   await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
   await waitForReceiverOnline(board, 'local');
 
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
 
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
   await expect(board.locator('.milksha-prep .milksha-num')).toHaveCount(0);

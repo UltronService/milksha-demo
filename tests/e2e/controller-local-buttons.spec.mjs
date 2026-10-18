@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 const ZONE_TOGGLES = [
   'zone-toggle-test-tools',
@@ -145,12 +145,12 @@ test('local-link: section buttons work or show inline block reason', async ({ br
 test('local-link: cable pull disables outbound actions with visible reason', async ({ browser }) => {
   const { ctx, controller } = await openLocalPocController(browser);
   await expandAllZones(controller);
-  await controller.click('[data-testid="btn-cable-pull"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-cable-pull');
   await expect(controller.locator('[data-testid="user-banner"]')).toContainText('拔線測試');
   const add = controller.locator('[data-testid="btn-add-ticket"]');
   await expect(add).toBeDisabled();
   await expect(controller.locator('[data-testid="btn-add-ticket-block-reason"]')).toContainText('拔線測試');
-  await controller.click('[data-testid="btn-cable-restore"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-cable-restore');
   await expect(add).toBeEnabled();
   await ctx.close();
 });
@@ -158,7 +158,7 @@ test('local-link: cable pull disables outbound actions with visible reason', asy
 test('local-link: empty pickup scan shows banner reason', async ({ browser }) => {
   const { ctx, controller } = await openLocalPocController(browser);
   await expandAllZones(controller);
-  await controller.click('[data-testid="btn-pickup-scan"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-pickup-scan');
   await expect(controller.locator('[data-testid="user-banner"]')).toContainText('請輸入');
   await ctx.close();
 });

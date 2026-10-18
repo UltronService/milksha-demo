@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { connectController, resetCloudState, urlsForMode } from './harness.mjs';
+import { clickControllerDevButton, connectController, fillControllerDevField, resetCloudState, selectControllerDevField, urlsForMode } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -61,20 +61,20 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
 
   await receiver.setViewportSize(VIEW);
-  await controller.click('#btn-clear-board');
+  await clickControllerDevButton(controller, 'btn-clear-board');
   await expect(receiver.locator('#rcv-empty-board-hint')).toBeVisible({ timeout: 15000 });
   await receiver.screenshot({ path: `${ART}/board-empty-1920.png`, fullPage: false });
   for (let i = 0; i < 12; i += 1) {
-    await controller.fill('#fld-no', String(7100 + i));
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.selectOption('#fld-source', 'store');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', String(7100 + i));
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await selectControllerDevField(controller, 'fld-source', 'store');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
   }
   for (let i = 0; i < 18; i += 1) {
-    await controller.fill('#fld-no', String(8100 + i));
-    await controller.selectOption('#fld-status', 'preparing');
-    await controller.selectOption('#fld-source', 'store');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', String(8100 + i));
+    await selectControllerDevField(controller, 'fld-status', 'preparing');
+    await selectControllerDevField(controller, 'fld-source', 'store');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
   }
   await expect(receiver.locator('.rcv-ready .rcv-num').filter({ hasText: /\S/ })).toHaveCount(12, {
     timeout: 30000,
@@ -90,13 +90,13 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
   await openNetZone(controller);
 
   await rejectDevCommand(controller, 403, { code: 'forbidden', message: 'no permission for this store' });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403);
   await controller.screenshot({ path: `${ART}/controller-alert-403-1920.png`, fullPage: false });
   await controller.getByTestId('command-error-close').click();
 
   await rejectDevCommand(controller, 401, { code: 'invalid_token', message: 'login expired, please sign in again' });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401);
   await controller.locator('details').filter({ hasText: '詳細內容' }).click();
   await controller.screenshot({ path: `${ART}/controller-alert-401-detail-1920.png`, fullPage: false });
@@ -110,7 +110,7 @@ test('PR review screenshots at 1920x1080', async ({ browser }) => {
         }),
     );
   });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.locator('#btn-restore')).toBeDisabled();
   await controller.screenshot({ path: `${ART}/controller-command-in-flight-1920.png`, fullPage: false });
   await controller.evaluate(() => window.__releaseDevCommand());

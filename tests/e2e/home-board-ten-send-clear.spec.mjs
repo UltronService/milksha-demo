@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 function todayBusinessDate() {
   const d = new Date();
@@ -78,11 +78,11 @@ async function openBoardAndController(ctx) {
 async function assertTenSendsAndClear(board, controller) {
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 8000 });
   for (let i = 0; i < 10; i += 1) {
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(i + 1, { timeout: 8000 });
   }
   await controller.locator('[data-testid="zone-toggle-special"]').click();
-  await controller.click('[data-testid="btn-clear-now"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-clear-now');
   await expect(controller.locator('[data-testid="user-banner"]')).toContainText('看板已清空', { timeout: 8000 });
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 8000 });
   const boardKeyEmpty = await board.evaluate(() => {

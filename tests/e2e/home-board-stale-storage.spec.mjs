@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, waitForReceiverOnline } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STALE_SEED = () => {
@@ -20,7 +20,7 @@ const STALE_SEED = () => {
 };
 
 async function assertPocFlow(board, controller) {
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 5000 });
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
   const deviceDoc = await board.evaluate(() => {

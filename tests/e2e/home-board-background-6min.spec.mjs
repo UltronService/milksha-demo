@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const ART = '/opt/cursor/artifacts/pr23-qa';
@@ -24,7 +24,7 @@ test('board background 6 min then resync send', async ({ browser }) => {
     `${ART}/background-6min.json`,
     JSON.stringify({ hiddenMs, workerKilled: false, ok: true }, null, 2),
   );
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 15000 });
   await ctx.close();
 });

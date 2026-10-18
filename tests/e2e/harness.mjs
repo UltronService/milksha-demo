@@ -482,6 +482,15 @@ export async function clickControllerDevButton(page, elementId) {
   await btn.click();
 }
 
+export async function clickControllerDevButtonByTestId(page, testId) {
+  const loc = page.locator(`[data-testid="${testId}"]`);
+  const id = await loc.getAttribute('id');
+  if (!id) {
+    throw new Error(`clickControllerDevButtonByTestId: [data-testid="${testId}"] has no id`);
+  }
+  await clickControllerDevButton(page, id);
+}
+
 export async function fillControllerDevField(page, fieldId, value) {
   await ensureZonesExpandedForElement(page, fieldId);
   const field = page.locator(`#${fieldId}`);

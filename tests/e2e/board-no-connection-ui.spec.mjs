@@ -2,12 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  ensureCloudRunning,
-} from './harness.mjs';
+import { clickControllerDevButton, connectController, ensureCloudRunning, fillControllerDevField, resetCloudState, selectControllerDevField, urlsForMode } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -173,14 +168,14 @@ test.describe('guest board never shows connection status', () => {
     await controller.goto(ctrl);
     await connectController(controller, 'local');
     await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
-    await controller.fill('#fld-no', '9401');
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '9401');
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '9401' })).toBeVisible({
       timeout: 15000,
     });
     await openNetZone(controller);
-    await controller.click('#btn-offline');
+    await clickControllerDevButton(controller, 'btn-offline');
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '9401' })).toBeVisible();
     await assertGuestBoardHasNoConnectionUi(receiver);
     await ctx.close();

@@ -2,13 +2,7 @@
  * Baseline from main @ 6ef1359 — local mode offline reconnect 5501 (not part of default CI).
  */
 import { test, expect } from '@playwright/test';
-import {
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  freshContext,
-  waitForReceiverOnline,
-} from './harness.mjs';
+import { clickControllerDevButton, connectController, fillControllerDevField, freshContext, resetCloudState, selectControllerDevField, urlsForMode, waitForReceiverOnline } from './harness.mjs';
 
 async function openSession(browser) {
   await resetCloudState();
@@ -30,21 +24,21 @@ test('main baseline | no chime for ready while offline on reconnect (local)', as
   await receiver.evaluate(() => {
     window.__rcvTelemetry.ringCount = 0;
   });
-  await controller.fill('#fld-no', '5501');
-  await controller.selectOption('#fld-status', 'preparing');
-  await controller.click('#btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '5501');
+  await selectControllerDevField(controller, 'fld-status', 'preparing');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });
-  await controller.click('#btn-offline');
+  await clickControllerDevButton(controller, 'btn-offline');
   await receiver.waitForFunction(
     () => window.receiverCloud && window.receiverCloud.isSimulatedOffline && window.receiverCloud.isSimulatedOffline(),
     { timeout: 10000 },
   );
   const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
-  await controller.click('#btn-one-ready');
+  await clickControllerDevButton(controller, 'btn-one-ready');
   await controller.waitForTimeout(2000);
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });

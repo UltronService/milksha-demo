@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE = 'zz-qa-store-a';
@@ -33,9 +25,9 @@ test.describe('clear then push (stale pending clear must not wipe board)', () =>
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
     await expandControllerZone(ctrl, 'sec-special');
-    await ctrl.click('#btn-clear-now');
+    await clickControllerDevButton(ctrl, 'btn-clear-now');
     await expect(ctrl.locator('#log-list li').first()).toContainText(/clear_now|清空/, { timeout: 12000 });
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 8000 });
 
     await board.waitForTimeout(6500);

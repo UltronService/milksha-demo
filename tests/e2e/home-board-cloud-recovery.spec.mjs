@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
@@ -33,7 +25,7 @@ test.describe('home board cloud recovery', () => {
     await controller.goto(BASE + '/controller/');
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     const numLoc = board.locator('.milksha-ready .milksha-num').first();
     await expect(numLoc).toBeVisible({ timeout: 20000 });
     const baselineNum = (await numLoc.innerText()).trim();
@@ -41,7 +33,7 @@ test.describe('home board cloud recovery', () => {
     const blockPattern = /firestore\.googleapis\.com|cloudfunctions\.net|run\.app/;
     await board.route(blockPattern, (route) => route.abort('failed'));
     await expandControllerZone(controller, 'sec-special');
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     const expectedNo = (await controller.locator('#fld-quick-no').inputValue()).trim();
     expect(expectedNo.length).toBeGreaterThan(0);
     expect(expectedNo).not.toEqual(baselineNum);
@@ -76,7 +68,7 @@ test.describe('home board cloud recovery', () => {
       timeout: 30000,
     });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 20000,
     });
@@ -109,7 +101,7 @@ test.describe('home board cloud recovery', () => {
     await controller.goto(BASE + '/controller/');
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 20000,
     });
@@ -117,7 +109,7 @@ test.describe('home board cloud recovery', () => {
     await boardCtx.setOffline(true);
     await board.waitForTimeout(2000);
     await expandControllerZone(controller, 'sec-special');
-    await controller.click('[data-testid="btn-clear-now"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-clear-now');
     await boardCtx.setOffline(false);
     await board.evaluate(() => window.receiverCloud.scheduleCloudResync('test'));
     await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: /\S/ })).toHaveCount(0, {
@@ -139,7 +131,7 @@ test.describe('home board cloud recovery', () => {
     await controller.goto(BASE + '/controller/');
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     const firstNum = await board.locator('.milksha-ready .milksha-num').first().innerText();
     expect(firstNum.trim().length).toBeGreaterThan(0);
 
@@ -193,7 +185,7 @@ test.describe('home board cloud recovery', () => {
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await board.clock.fastForward('00:00:25');
     await board.waitForTimeout(2000);
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 10000 });
     await boardCtx.close();
     await ctrlCtx.close();

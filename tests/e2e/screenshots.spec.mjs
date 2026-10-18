@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync, readFileSync } from 'node:fs';
-import {
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  guestBoardStyleFingerprint,
-  expandControllerZone,
-  installBundledCloudRouteShim,
-} from './harness.mjs';
+import { clickControllerDevButton, connectController, expandControllerZone, fillControllerDevField, guestBoardStyleFingerprint, installBundledCloudRouteShim, resetCloudState, selectControllerDevField, urlsForMode } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -68,20 +61,20 @@ test('save controller and board screenshots', async ({ browser }) => {
     { source: 'udd', no: '7105', status: 'preparing' },
   ];
   for (const row of sourceRows) {
-    await controller.selectOption('#fld-source', row.source);
-    await controller.fill('#fld-no', row.no);
-    await controller.selectOption('#fld-status', row.status);
-    await controller.click('#btn-add-ticket');
+    await selectControllerDevField(controller, 'fld-source', row.source);
+    await fillControllerDevField(controller, 'fld-no', row.no);
+    await selectControllerDevField(controller, 'fld-status', row.status);
+    await clickControllerDevButton(controller, 'btn-add-ticket');
   }
   await receiver.setViewportSize({ width: 1366, height: 768 });
   await expect(receiver.locator('.rcv-tag', { hasText: '熊貓' })).toBeVisible({ timeout: 15000 });
   await receiver.screenshot({ path: `${ART}/board-sources-1366.png`, fullPage: false });
 
-  await controller.click('#btn-gen-normal');
+  await clickControllerDevButton(controller, 'btn-gen-normal');
   await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num').first()).toBeVisible({
     timeout: 30000,
   });
-  await controller.click('#btn-sim-stop');
+  await clickControllerDevButton(controller, 'btn-sim-stop');
 
   await receiver.setViewportSize({ width: 1366, height: 768 });
   await receiver.waitForTimeout(500);
@@ -91,10 +84,10 @@ test('save controller and board screenshots', async ({ browser }) => {
     fullPage: false,
   });
 
-  await controller.click('#btn-offline');
+  await clickControllerDevButton(controller, 'btn-offline');
   await controller.waitForTimeout(2000);
-  await controller.fill('#fld-no', '4999');
-  await controller.click('#btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '4999');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '4999' })).toHaveCount(0, {
     timeout: 8000,
   });
@@ -165,7 +158,7 @@ test('save cloud mode screenshots', async ({ browser }) => {
     const linkBlock = document.getElementById('board-link-block');
     if (linkBlock) linkBlock.hidden = false;
   });
-  await controller.click('#btn-gen-board-link');
+  await clickControllerDevButton(controller, 'btn-gen-board-link');
   await expect(controller.locator('#board-setup-qr')).toBeVisible();
   await controller.setViewportSize({ width: 1440, height: 900 });
   await controller.screenshot({ path: `${ART}/controller-cloud-settings.png`, fullPage: false });

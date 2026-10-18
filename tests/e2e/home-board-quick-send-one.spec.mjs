@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('one quick send click adds exactly one ready number', async ({ browser }) => {
   const ctx = await freshContext(browser);
@@ -27,7 +27,7 @@ test('one quick send click adds exactly one ready number', async ({ browser }) =
     };
   });
 
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 8000 });
   await expect(board.locator('.milksha-prep .milksha-num')).toHaveCount(0);
 
@@ -58,12 +58,11 @@ test('ten quick sends yield ten ready numbers; clear board works', async ({ brow
   await board.evaluate(() => window.QMS.runtime.applyPayload([]));
 
   for (let i = 0; i < 10; i += 1) {
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(i + 1, { timeout: 8000 });
   }
 
-  await controller.locator('[data-testid="zone-toggle-pos"]').click();
-  await controller.click('[data-testid="btn-clear-board"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-clear-board');
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 8000 });
   await ctx.close();
 });
