@@ -833,12 +833,13 @@
   let quickSendNumberPristine = true;
   let quickSendTrackedSourceKey = SendNumberModule ? SendNumberModule.DEFAULT_SOURCE_KEY : 'store';
 
-  function quickSendNumberOnBoard(sourceKey, normalizedNo) {
+  function quickSendNumberOnBoard(sourceKey, normalizedNo, targetStatus) {
     const key = sourceKey || 'store';
+    const status = targetStatus || readQuickSendStatus();
     const no = String(normalizedNo || '');
     for (let i = 0; i < tickets.length; i += 1) {
       const row = tickets[i];
-      if ((row.sourceKey || 'store') === key && String(row.no) === no) {
+      if ((row.sourceKey || 'store') === key && String(row.no) === no && row.status === status) {
         return true;
       }
     }
@@ -852,8 +853,9 @@
     }
     const sourceKey = readQuickSendSourceKey();
     const validated = SendNumberModule.validateQuickSendNumber(sourceKey, quickEl.value);
+    const targetStatus = readQuickSendStatus();
     const duplicateOnBoard =
-      validated.ok && quickSendNumberOnBoard(sourceKey, validated.normalized);
+      validated.ok && quickSendNumberOnBoard(sourceKey, validated.normalized, targetStatus);
     return SendNumberModule.buildQuickSendFieldPresentation({
       sourceKey: sourceKey,
       rawValue: quickEl.value,
@@ -2275,7 +2277,7 @@
         syncActionButtonStates();
         return;
       }
-      if (quickSendNumberOnBoard(sourceKey, validated.normalized)) {
+      if (quickSendNumberOnBoard(sourceKey, validated.normalized, readQuickSendStatus())) {
         syncQuickSendFieldUi();
         syncActionButtonStates();
         return;
