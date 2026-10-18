@@ -91,6 +91,8 @@ function isAllowedDevLoginStore(storeId) {
 }
 let devLoginRequestCount = 0;
 let listStoresRequestCount = 0;
+let controllerDocGetBoard = 0;
+let controllerDocGetDevice = 0;
 /** @type {Map<string, { storeId: string, firstPairedAtMs: number }>} */
 const boardAutoPairByDevice = new Map();
 let boardAutoPairRequestCount = 0;
@@ -427,6 +429,8 @@ const server = http.createServer(async (req, res) => {
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
       listStoresRequestCount = 0;
+      controllerDocGetBoard = 0;
+      controllerDocGetDevice = 0;
       boardAutoPairByDevice.clear();
       boardAutoPairRequestCount = 0;
       boardAutoPairInitialCount = 0;
@@ -452,6 +456,13 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/controllerDocGetCounts' && req.method === 'GET') {
+      return json(res, 200, {
+        board: controllerDocGetBoard,
+        device: controllerDocGetDevice,
+        combined: controllerDocGetBoard + controllerDocGetDevice,
+      });
     }
     if (url.pathname === '/test/boardAutoPairCount' && req.method === 'GET') {
       return json(res, 200, { count: boardAutoPairRequestCount });
@@ -979,6 +990,11 @@ const server = http.createServer(async (req, res) => {
       const docAuth = requireAuth(req);
       if (!docAuth.ok) return json(res, docAuth.status, docAuth.body);
       const rel = decodeURIComponent(url.pathname.slice(docPrefix.length)).replace(/\/$/, '');
+      if (rel.endsWith('/board/today_board')) {
+        controllerDocGetBoard += 1;
+      } else if (/\/devices\/[^/]+$/.test(rel) && !rel.includes('/control/')) {
+        controllerDocGetDevice += 1;
+      }
       let data = docs.get(rel);
       if (data) {
         if (rel.endsWith('/board/today_board')) {

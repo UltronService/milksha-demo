@@ -1,0 +1,1265 @@
+{
+  "label": "branch-b2e36a1",
+  "siteRoot": "/workspace",
+  "store": "zz-qa-store-a",
+  "device": "stb-01",
+  "passed": false,
+  "samples": [
+    {
+      "at": "2026-10-18T15:20:28.469Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:28.149Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:31.690Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:28.149Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:34.905Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:28.149Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:38.122Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 4,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:37.476Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:41.346Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 4,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:37.476Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:44.763Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 6,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:43.164Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:47.978Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 8,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:46.157Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:51.195Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 10,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:49.157Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:54.411Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 13,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:53.648Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:20:57.632Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 16,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:20:57.624Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:00.849Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 18,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:00.619Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:04.070Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 20,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:03.651Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:07.285Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 23,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:07.141Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:10.500Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 26,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:10.144Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:13.714Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 28,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:13.146Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:16.928Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 30,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:16.169Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:20.143Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 32,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:19.175Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:23.356Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 34,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:22.932Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:26.572Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 37,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:25.169Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:29.790Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 39,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:28.152Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:33.005Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 41,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:31.161Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:36.222Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 43,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:34.169Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:39.439Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 46,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:37.562Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:42.657Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 49,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:42.618Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:45.870Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 51,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:45.628Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:49.085Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 54,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:49.155Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:52.299Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 56,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:52.333Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:55.513Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 59,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:55.178Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:21:58.726Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 61,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:21:58.160Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:01.942Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 63,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:01.205Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:05.159Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 65,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:04.162Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:08.375Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 68,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:07.568Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:11.595Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 70,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:10.158Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:14.817Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 72,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:13.152Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:18.033Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 74,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:16.140Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:21.248Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 76,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:19.165Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:24.466Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 79,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:23.589Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    },
+    {
+      "at": "2026-10-18T15:22:27.681Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 82,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:27.631Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    }
+  ],
+  "consoleLines": [
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:28.149Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:28.149Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:28.149Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":4,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:37.476Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":4,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:37.476Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":6,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:43.164Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":8,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:46.157Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":10,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:49.157Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":13,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:53.648Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":16,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:20:57.624Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":18,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:00.619Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":20,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:03.651Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":23,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:07.141Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":26,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:10.144Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":28,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:13.146Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":30,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:16.169Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":32,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:19.175Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":34,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:22.932Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":37,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:25.169Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":39,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:28.152Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":41,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:31.161Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":43,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:34.169Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":46,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:37.562Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":49,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:42.618Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":51,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:45.628Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":54,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:49.155Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":56,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:52.333Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":59,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:55.178Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":61,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:21:58.160Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":63,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:01.205Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":65,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:04.162Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":68,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:07.568Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":70,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:10.158Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":72,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:13.152Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":74,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:16.140Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":76,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:19.165Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":79,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:23.589Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":82,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:27.631Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}"
+  ]
+}

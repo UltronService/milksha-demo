@@ -1,0 +1,18 @@
+=== main run 1 ===
+(node:11397) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 cloud-remote-send.spec.mjs:41:3 › cloud remote send (isolated contexts) › controller before board opened shows hint then send works after board (2.5s)
+
+  1 passed (3.4s)
+=== main run 2 ===
+(node:11535) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 cloud-remote-send.spec.mjs:41:3 › cloud remote send (isolated contexts) › controller before board opened shows hint then send works after board (2.6s)
+
+  1 passed (3.4s)
+=== main run 3 ===
+(node:11666) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 cloud-remote-send.spec.mjs:41:3 › cloud remote send (isolated contexts) › controller before board opened shows hint then send works after board (2.6s)
+
+  1 passed (3.4s)

@@ -1,0 +1,34 @@
+{
+  "label": "main-2f9b2bf",
+  "siteRoot": "/workspace/artifacts/controller-no-poll/main-worktree",
+  "store": "zz-qa-store-a",
+  "device": "stb-01",
+  "passed": true,
+  "samples": [
+    {
+      "at": "2026-10-18T15:22:38.497Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": {
+        "lastSeen": "2026-10-18T15:22:38.321Z",
+        "online": true,
+        "appVersion": "receiver-demo-2026-10-08-realtime-board"
+      },
+      "restError": "",
+      "navigatorOnLine": true
+    }
+  ],
+  "consoleLines": [
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:38.321Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}"
+  ]
+}
