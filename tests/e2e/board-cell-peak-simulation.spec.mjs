@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline, expandControllerZone } from './harness.mjs';
 import { primeBoardForAnimation, sampleIntegrityForDuration } from './board-animation-helpers.mjs';
 
 const PEAK_RUN_MS = Number(process.env.BOARD_PEAK_INTEGRITY_MS || 180000);
@@ -34,7 +34,7 @@ test.describe('board cell integrity under peak simulation', () => {
   test('3-min peak run: sampled cells, detached drain, no dup numbers', async ({ browser }) => {
     test.setTimeout(PEAK_RUN_MS + 120000);
     const { ctx, board, controller } = await openLocalPocController(browser);
-    await controller.locator('[data-testid="zone-toggle-pos"]').click();
+    await expandControllerZone(controller, 'sec-pos');
     await controller.click('[data-testid="btn-gen-peak"]');
     await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/尖峰|運行/, { timeout: 10000 });
     const stats = await sampleIntegrityForDuration(board, PEAK_RUN_MS, 250);

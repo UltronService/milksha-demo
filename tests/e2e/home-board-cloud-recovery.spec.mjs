@@ -7,6 +7,7 @@ import {
   installBundledCloudRouteShim,
   isolatedCloudContext,
   expandControllerZone,
+  clickControllerDevButton,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -116,8 +117,8 @@ test.describe('home board cloud recovery', () => {
 
     await boardCtx.setOffline(true);
     await board.waitForTimeout(2000);
-    await expandControllerZone(controller, 'sec-special');
-    await controller.click('[data-testid="btn-clear-now"]');
+    await clickControllerDevButton(controller, 'btn-clear-now');
+    await controller.locator('[data-testid="btn-clear-confirm"]').click();
     await boardCtx.setOffline(false);
     await board.evaluate(() => window.receiverCloud.scheduleCloudResync('test'));
     await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: /\S/ })).toHaveCount(0, {

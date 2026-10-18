@@ -1,50 +1,62 @@
 # CI nightly split — implementation report
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head commit:** `6ac3e32` (`fix(ci): shard Playwright via testDir; testIgnore live-cloud specs`)
-- **整體 CI 結論（最新 run）：** **不通過**（unit 綠；e2e 多 shard 失敗或 15m 逾時）
-- **最新 CI run：** https://github.com/UltronService/milksha-demo/actions/runs/39095700095
-- **完成時間（台北）：** 2026-10-18 12:17
+- **Head commit:** `61e9305` → 下一輪 push 含 zone 點擊修正與 12 shard
+- **整體 CI 結論：** run `39100018110` **不通過**（unit 綠；e2e 多 shard 失敗／逾時取消）
+- **上一輪失敗 run（分類基準）：** https://github.com/UltronService/milksha-demo/actions/runs/39095700095
+- **報告更新（台北）：** 2026-10-18
 
-## PR CI 耗時（run `39095700095`）
+## Run `39095700095` 失敗分類
 
-| Job | 結果 | 耗時（約） |
-|-----|------|------------|
-| unit | success | 1m 53s |
-| e2e (1) | failure | 8m 14s |
-| e2e (2) | failure | 11m 40s |
-| e2e (3) | failure | 7m 6s |
-| e2e (4) | cancelled（15m 逾時） | 15m 18s |
-| e2e (5) | cancelled（15m 逾時） | 15m 16s |
-| e2e (6) | failure | 14m 20s |
-| e2e (7) | cancelled（15m 逾時） | 15m 4s |
-| e2e (8) | cancelled（15m 逾時） | 15m 17s |
-| **Workflow 牆鐘** | failure | **~15m**（符合 15m 上限，但 e2e 未全過） |
+| 類別 | Jobs | 說明 |
+|------|------|------|
+| **(a) 15m 逾時取消** | e2e (4)(5)(7)(8) | job `timeout-minutes: 15` 內未跑完；`fail-fast: false` 仍會因逾時結束 |
+| **(b) 測試 assertion／互動失敗** | e2e (1)(2)(3)(6) | 見下表 |
 
-## Nightly workflow
+### (b) 主要失敗 spec（摘要）
 
-- **檔案：** `.github/workflows/ci-nightly.yml`（cron `0 20 * * *` UTC = 04:00 台北；`workflow_dispatch`；`LIVE_CLOUD_STORE_ID: zz-qa-ci-store`；含 4 支 live-cloud spec）
-- **手動觸發：** Cloud Agent token **403**，無法 `workflow_dispatch`；需合併至 `main` 後由負責人在 Actions 手動跑，或授權 `actions:write`
-- **預期：** 與 main 相同 2 項 live-cloud 失敗為已知；本次未驗證執行結果
+| Shard | 代表失敗 | 根因（本輪修復方向） |
+|-------|----------|----------------------|
+| 1 | `board-animation-*` 等 | 連線／互動逾時連鎖 |
+| 2 | `board-empty-hint-states` | 測試工具區未展開即點 `#btn-connect`／POS 按鈕 |
+| 3 | `cloud-qa-checklist` | 同上 + 清空看板需確認 modal |
+| 6 | `controller-source-quick-send` | Uber 範例用 4 碼 `1234`（規則要 5 hex） |
+| 6 | `home-board-art-alignment` | 待 CI 重跑驗證（字型 job 已裝 Roboto） |
 
-## PLAN 七條 ↔ 測試／實作
+## 假設（3–5）
 
-| # | 項目 | 狀態 | 對應 |
-|---|------|------|------|
-| 1 | PR 僅本機／假雲端；守門 | 已實作 | `tests/ci-test-tier-manifest.json`、`tests/ci-test-tier-assignment.test.js`、`tests/ci-pr-workflow-guard.test.js`、`MILKSHA_CI_TIER=pr`、`installPrTierNetworkGuard`（經 `installBundledCloudRouteShim`） |
-| 2 | Live cloud 移 nightly | 已實作 | `.github/workflows/ci-nightly.yml`；`ci.yml` 已移除 `e2e-live-cloud` |
-| 3 | PR ≤15m：shard + 瀏覽器快取 | 部分 | 8 shard 平行 + `~/.cache/ms-playwright` cache + job `timeout-minutes: 15`；牆鐘 ~15m，**e2e 仍失敗**（慢測試分片不均／部分 spec 失敗） |
-| 4 | 測試檔完整指派 | 已實作 | `tests/ci-test-tier-assignment.test.js`（含 `home-board-auto-pair-live-cloud.spec.mjs` → nightly） |
-| 5 | cpSync `.git` ENOENT | 已實作 | `scripts/lib/copy-site-for-playwright.mjs`、`tests/site-copy-for-playwright.test.js`；column/official layout 改用唯一 tmp |
-| 6 | 不改 board/controller 產品碼 | 符合 | 僅 workflow、playwright.config、`tests/e2e/harness.mjs`、scripts/tests 守門 |
-| 7 | Playwright 先於 `npm test` | 已保留 | `ci.yml` unit job；`tests/ci-pr-workflow-guard.test.js` |
+1. **分片不均**：`home-board-background-6min`、`forbidden-store-then-qa-isolation` 等單檔 >3m，8 shard 仍讓部分 job 貼 15m → **增至 12 shard**。
+2. **Controller  redesign 收合區**：`sec-test-tools` 預設收合，Playwright 直接 `page.click` 會等到逾時 → **改點 zone-toggle 展開**，`toBeVisible` 後再點（禁止 DOM/evaluate 強開）。
+3. **quick-send 測試資料**：Uber `1234` 不符合 5 hex → 本機與 CI 皆只出現 1 格 → **改 `AB12C`**（非放寬門檻）。
+4. **PR tier 守門**：`installPrTierNetworkGuard` 與 fake-cloud proxy 順序曾疑慮；proxy 路徑下本機假雲端應可通 → shim **僅保留 proxy**（守門仍可在 page 層單獨安裝）。
+5. **main 既有**：`board-empty-hint` 在 `origin/main` 亦因收合區無法點連線而失敗 → **屬 harness／互動問題，非 copy-site／shard 回歸**。
 
-## 本機驗證
+## 本輪變更（總監必做）
 
-- `npx playwright install chromium` 後 `npm test`：**334 passed**（含新守門／指派／site-copy 測試）
+- `expandControllerZone`／`clickControllerDevButton` 等：**只點** `data-testid="zone-toggle-*"`，展開後 `expect` 目標 `toBeVisible` 再操作。
+- 回歸：`tests/controller-zone-expand-harness.test.js`（靜態禁止 `body.hidden`／`aria-expanded` 強改）、`tests/e2e/controller-zone-expand-guard.spec.mjs`（未展開點擊必失敗）。
+- **12 shard**（`ci-test-tier-manifest.json` + `ci.yml`）。
+- E2E 修正：`controller-source-quick-send`、`board-empty-hint-states`、`cloud-qa-checklist`（不含產品碼）。
 
-## 後續建議（未實作）
+## PR CI 耗時目標
 
-- 將 e2e shard 增至 **12** 或對 `home-board-background-6min` / `pr23-login-count` 做 **shard 平衡**（仍不移到 nightly）
-- 調查 run `39095700095` 各 shard 失敗 spec（非僅 15m cancel）
-- 合併後由負責人觸發 nightly 並確認僅 2 項已知失敗
+- Workflow 牆鐘 ≤ **15m**；各 e2e job `timeout-minutes: 15`；目標最慢 shard **~10m**（12 分片）。
+
+## 本機驗證（本輪）
+
+- `npm test`：**338 passed**
+- Playwright 抽樣：`board-empty-hint-states`、`cloud-qa-checklist`、`controller-source-quick-send`、`controller-zone-expand-guard`、connect-errors → **通過**
+
+## 最新 CI run
+
+| 項目 | 值 |
+|------|-----|
+| Head SHA | _(CI 跑完後填)_ |
+| Run URL | _(CI 跑完後填)_ |
+| 結論 | _(pass/fail)_ |
+| unit 耗時 | |
+| e2e shard 1–12 耗時 | |
+
+## Nightly
+
+- `.github/workflows/ci-nightly.yml`（04:00 台北；`zz-qa-ci-store`）；PR 不跑 live-cloud spec。

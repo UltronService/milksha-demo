@@ -7,6 +7,9 @@ import {
   connectController,
   resetCloudState,
   ensureCloudRunning,
+  fillControllerDevField,
+  selectControllerDevField,
+  clickControllerDevButton,
 } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
@@ -173,9 +176,9 @@ test.describe('guest board never shows connection status', () => {
     await controller.goto(ctrl);
     await connectController(controller, 'local');
     await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
-    await controller.fill('#fld-no', '9401');
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '9401');
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '9401' })).toBeVisible({
       timeout: 15000,
     });
