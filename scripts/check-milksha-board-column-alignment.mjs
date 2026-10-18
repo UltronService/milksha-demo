@@ -13,6 +13,52 @@ const TOL_PX = 1;
 const CREAM_BOUNDS_TOL_PX = 1;
 const PR74_BASELINE_TOL_PX = 2;
 
+/** Offline layout probes: demo payload + local transport (never default cloud auto-pair). */
+export const BOARD_LAYOUT_HARNESS_QUERY = 'demo=0&mode=local';
+
+/**
+ * @param {string} base
+ * @returns {string}
+ */
+export function boardLayoutHarnessUrl(base) {
+  return base + '?' + BOARD_LAYOUT_HARNESS_QUERY;
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<void>}
+ */
+export async function assertLayoutHarnessAvoidsCloudAutoPair(page) {
+  const url = new URL(page.url());
+  if (url.searchParams.get('mode') !== 'local' || url.searchParams.get('demo') !== '0') {
+    throw new Error('layout harness must use demo=0&mode=local, got ' + url.search);
+  }
+  const state = await page.evaluate(() => {
+    const root = document.getElementById('board-root');
+    return {
+      bootError: Boolean(root && root.classList.contains('boot-error-stage')),
+      autoPairStarted: Boolean(window.__milkshaBoardAutoPairController),
+    };
+  });
+  if (state.bootError) {
+    throw new Error('layout harness opened boot-error surface');
+  }
+  if (state.autoPairStarted) {
+    throw new Error('layout harness must not start board auto-pair (cloud boot)');
+  }
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} base
+ * @returns {Promise<void>}
+ */
+export async function gotoLayoutHarness(page, base) {
+  await page.goto(boardLayoutHarnessUrl(base), { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await assertLayoutHarnessAvoidsCloudAutoPair(page);
+}
+
 /** Four sources, varying number widths (5-char Uber, hash fp, point, store). */
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
   { source_type: 'From_UberEat_Preparing', number: 'A2C9E' },
@@ -80,8 +126,7 @@ export async function runCreamColumnBoundsCheck(options) {
   const server = await startServer(siteRoot, port);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     if (off) {
@@ -204,8 +249,7 @@ export async function runColumnAlignmentCheck(options) {
   const server = await startServer(siteRoot, port);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     if (off) {
@@ -326,8 +370,7 @@ export async function captureFullBoardScreenshot(options) {
   const server = await startServer(siteRoot, port);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     const paused = document.getElementById('milksha-cloud-paused');
@@ -505,8 +548,7 @@ export async function measurePr74BaselineCoords(options) {
   const server = await startServer(siteRoot, port);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
     window.QMS.runtime.applyPayload(rows, { silent: true });
@@ -571,8 +613,7 @@ export async function measureRefUiIconAnchors(options) {
   const server = await startServer(siteRoot, port);
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
     window.QMS.runtime.applyPayload(rows, { silent: true });
@@ -670,4 +711,26 @@ export async function runPr74BaselineCheck(options) {
     }
   });
   return { ok: failures.length === 0, tolPx: tol, rows: rows, failures: failures };
+}
+
+/**
+ * Smoke: layout harness must not enter cloud auto-pair boot (regression for PR #97).
+ * @returns {Promise<{ ok: true }>}
+ */
+export async function verifyLayoutHarnessBootIsolation() {
+  const { siteRoot, base, port } = prepareSite();
+  const server = await startServer(siteRoot, port);
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+    await gotoLayoutHarness(page, base);
+    return { ok: true };
+  } finally {
+    await browser.close();
+    await new Promise(function (r) {
+      server.close(function () {
+        r(undefined);
+      });
+    });
+  }
 }

@@ -501,6 +501,7 @@
       authHeaders: authHeaders,
       refreshIdToken: refreshIdToken,
       devLogin: devLogin,
+      signInWithCustomToken: signInWithCustomToken,
       clearStored: clearStored,
       resetAuthRetryState: function () {
         authStopped = false;

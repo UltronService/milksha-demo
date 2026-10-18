@@ -15,6 +15,7 @@
     const boxHeartbeatName = config.boxHeartbeatFunctionName || 'boxHeartbeat';
     const posReceiverName = config.posReceiverFunctionName || 'posReceiver';
     const boxUploadName = config.boxUploadFunctionName || 'boxUpload';
+    const boardAutoPairName = config.boardAutoPairFunctionName || 'boardAutoPair';
 
     function fnUrl(name) {
       const base = config.functionsBaseUrl || '';
@@ -115,6 +116,9 @@
       },
       boxUpload: function (body) {
         return postJson(boxUploadName, body, true);
+      },
+      boardAutoPair: function (body) {
+        return postJson(boardAutoPairName, body, false);
       },
     };
   }

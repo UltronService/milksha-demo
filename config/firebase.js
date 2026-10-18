@@ -20,6 +20,7 @@
     posReceiverFunctionName: 'posReceiver',
     boxHeartbeatFunctionName: 'boxHeartbeat',
     boxUploadFunctionName: 'boxUpload',
+    boardAutoPairFunctionName: 'boardAutoPair',
     receiveLogsPathTemplate: 'stores/{storeId}/receive_logs',
     commandsPathTemplate: 'stores/{storeId}/commands',
     ingestEventsPathTemplate: 'stores/{storeId}/ingest_events',

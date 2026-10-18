@@ -37,6 +37,44 @@
   display: none !important;
 }
 
+.milksha-board-bind-hint {
+  position: absolute;
+  right: var(--milksha-bind-hint-inset, 16px);
+  bottom: var(--milksha-bind-hint-inset, 16px);
+  z-index: 12;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.2;
+  font-size: var(--milksha-bind-hint-font, 14px);
+  color: rgba(120, 120, 120, 0.72);
+  pointer-events: none;
+}
+
+.milksha-board-bind-hint[hidden] {
+  display: none !important;
+}
+
+.milksha-board-bind-hint__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 9em;
+}
+
+.milksha-board-bind-hint__suffix {
+  flex: 0 0 auto;
+}
+
+.milksha-board-bind-hint__time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
 .milksha-stage {
   position: relative;
   margin: 0;
