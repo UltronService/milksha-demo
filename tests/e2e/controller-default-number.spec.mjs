@@ -10,7 +10,7 @@ test('switching source fills default and selects all', async ({ browser }) => {
   await page.waitForSelector('[data-testid="fld-quick-source"]');
   await page.selectOption('[data-testid="fld-quick-source"]', 'uber');
   const input = page.locator('[data-testid="fld-quick-no"]');
-  await expect(input).toHaveValue('C7458');
+  await expect(input).toHaveValue('AB12C');
   const selected = await input.evaluate((el) => {
     return {
       start: el.selectionStart,
@@ -33,7 +33,7 @@ test('B5: invalid after switch shows error in rule note, red border, disabled se
   await expect(page.locator('[data-testid="fld-quick-no"]')).toHaveValue('12');
   const note = page.locator('[data-testid="quick-send-rule-note"]');
   await expect(note).toHaveClass(/is-error/);
-  await expect(note).toContainText(/4–6/);
+  await expect(note).toContainText(/5 位十六進位/);
   await expect(page.locator('[data-testid="fld-quick-no"]')).toHaveClass(/is-invalid/);
   const sendBtn = page.locator('[data-testid="btn-send-numbers"]');
   await expect(sendBtn).toBeDisabled();
@@ -47,7 +47,7 @@ test('foodpanda default shows rule note to the right on wide viewport', async ({
   await page.goto(LOCAL_CTRL);
   await page.selectOption('[data-testid="fld-quick-source"]', 'fp');
   const note = page.locator('[data-testid="quick-send-rule-note"]');
-  await expect(note).toContainText('4–6 位數字，# 可有可無');
+  await expect(note).toContainText('# 與 4 位數字');
   const layout = await page.locator('[data-testid="quick-send-number-row"]').evaluate((row) => {
     const input = row.querySelector('#fld-quick-no');
     const noteEl = row.querySelector('#quick-send-rule-note');

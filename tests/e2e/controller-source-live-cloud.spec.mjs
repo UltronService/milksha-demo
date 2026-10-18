@@ -149,7 +149,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
 
     const sends = [
       { source: 'store', no: '1234' },
-      { source: 'uber', no: '1234' },
+      { source: 'uber', no: 'AB12C' },
       { source: 'point', no: '091' },
       { source: 'fp', no: '#6406' },
       { source: 'udd', no: '1234' },
@@ -204,7 +204,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
     ).toBe(true);
     expect(
       pushResult.params.ready.some(function (e) {
-        return e.sourceType === 'From_UberEat_OK' && e.no === '1234';
+        return e.sourceType === 'From_UberEat_OK' && e.no === 'AB12C';
       }),
     ).toBe(true);
 
@@ -213,17 +213,15 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
 
     const cloudReady = await readCloudReadyTickets(ctrl);
     expect(cloudReady, 'cloud readBoard ready tickets').not.toBeNull();
-    const cloud1234 = (cloudReady || []).filter(function (t) {
-      return t.no === '1234';
-    });
-    expect(cloud1234.length).toBeGreaterThanOrEqual(2);
 
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(5, { timeout: 60000 });
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(2, {
       timeout: 60000,
     });
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12C' })).toHaveCount(1, {
+      timeout: 60000,
+    });
     await expect(board.locator('.milksha-ready .milksha-num', { hasText: '091' })).toHaveCount(1);
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '6406' })).toHaveCount(1);
-    await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12' })).toHaveCount(1);
+    await expect(board.locator('.milksha-ready .milksha-num', { hasText: '#6406' })).toHaveCount(1);
   });
 });

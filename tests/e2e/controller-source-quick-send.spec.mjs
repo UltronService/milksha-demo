@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
-test('local quick send: store 1234 and uber 1234 are two ready cells', async ({ browser }) => {
+test('local quick send: store 1234 and uber AB12C are two ready cells', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
@@ -20,10 +20,15 @@ test('local quick send: store 1234 and uber 1234 are two ready cells', async ({ 
   await controller.fill('[data-testid="fld-quick-no"]', '1234');
   await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await controller.selectOption('[data-testid="fld-quick-source"]', 'uber');
-  await controller.fill('[data-testid="fld-quick-no"]', '1234');
+  await controller.fill('[data-testid="fld-quick-no"]', 'AB12C');
   await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
 
-  await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(2, { timeout: 8000 });
+  await expect(board.locator('.milksha-ready .milksha-num', { hasText: '1234' })).toHaveCount(1, {
+    timeout: 8000,
+  });
+  await expect(board.locator('.milksha-ready .milksha-num', { hasText: 'AB12C' })).toHaveCount(1, {
+    timeout: 8000,
+  });
   await ctx.close();
 });
 
