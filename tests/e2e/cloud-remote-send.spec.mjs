@@ -6,7 +6,6 @@ import {
   PORT_SITE,
   installBundledCloudRouteShim,
   isolatedCloudContext,
-  clickControllerDevButtonByTestId,
   expandControllerZone,
 } from './harness.mjs';
 
@@ -98,7 +97,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
       );
     }
     await expandControllerZone(controller, 'sec-special');
-    await clickControllerDevButtonByTestId(controller, 'btn-clear-now');
+    await controller.click('[data-testid="btn-clear-now"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length === 0,
       { timeout: 8000 },

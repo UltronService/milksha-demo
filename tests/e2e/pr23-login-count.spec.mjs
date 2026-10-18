@@ -21,7 +21,6 @@ test.describe('PR23 login rate', () => {
   });
 
   test.beforeEach(async () => {
-    await restartCloud();
     await resetCloudState({ seedDevice: true });
   });
 
@@ -55,8 +54,6 @@ test.describe('PR23 login rate', () => {
 
   test('5 min normal board idle', async ({ browser }) => {
     test.setTimeout(360000);
-    await restartCloud();
-    await resetCloudState({ seedDevice: true });
     const ctx = await isolatedCloudContext(browser);
     const page = await ctx.newPage();
     await installBundledCloudRouteShim(page);

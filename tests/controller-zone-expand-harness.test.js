@@ -13,4 +13,6 @@ test('controller zone expand helpers click toggles (no DOM mutation shortcuts)',
   assert.doesNotMatch(src, /body\.hidden = false/);
   assert.doesNotMatch(src, /setAttribute\('aria-expanded', 'true'\)/);
   assert.doesNotMatch(src, /getElementById\('btn-connect'\)\?\.click\(\)/);
+  assert.match(src, /await expect\(btn\)\.toBeVisible\(\)/);
+  assert.match(src, /confirmClearBoardModalIfOpen/);
 });
