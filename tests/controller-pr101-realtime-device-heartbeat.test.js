@@ -25,3 +25,10 @@ test('board online UI requires deviceOnline from applyDeviceDocument not REST wh
   assert.match(src, /deviceOnline = age < heartbeatTimeoutMs\(\)/);
   assert.match(src, /data-board-online/);
 });
+
+test('tickClock does not re-evaluate deviceOnline (age only on applyDeviceDocument / pollDevice)', function () {
+  const src = fs.readFileSync(path.join(ROOT, 'controller', 'controller-app.js'), 'utf8');
+  const tickBlock = src.match(/function tickClock\(\)[\s\S]*?^  \}/m);
+  assert.ok(tickBlock, 'tickClock');
+  assert.equal(/deviceOnline/.test(tickBlock[0]), false);
+});
