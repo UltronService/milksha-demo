@@ -1,7 +1,8 @@
 # PR #95 — merge `origin/main` @ `2f9b2bf`（#98 CI 分層）
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/95
-- **新 HEAD:** `da07bd3`（`cursor/controller-default-number-5dd5`）
+- **新 HEAD:** 見本 commit（`cursor/controller-default-number-5dd5`）
+- **QA：** 重驗符合（2026-10-18）
 - **合併方式:** `git merge origin/main`（無 force push）
 - **資產版本:** `20261017f`（高於 main `20261017d`）
 - **不合併**
@@ -15,21 +16,34 @@
 
 **main 38 項基準：** `artifacts/ci-nightly/main-baseline-failures-39105020723.txt`（36 + addendum：`cloud-remote-send`、`pr23-login-count`）
 
-### Run `39120102083` 唯一 e2e 失敗（對照 baseline）
+### Run `39120102083` 全部失敗（逐一對照 main 38 項）
 
-| 失敗 spec（摘要） | 在 38 項 baseline |
-|------------------|-------------------|
-| `board-cell-peak-simulation` — 3-min peak | 是 |
-| `cloud-qa-checklist` — network cable pull | 是 |
-| `cloud-remote-send` — ten sends | 是（addendum） |
-| `controller-store-picker` / `controller-store-picker-evidence` | 是 |
-| `home-board-cloud-recovery` — B-N07 | 是 |
-| `home-board-quick-send-one` — ten quick sends | 是 |
-| `home-board-stale-storage` | 是 |
-| `home-board-ten-send-clear` ×3 variants | 是 |
-| `pr23-login-count` — 5 min idle | 是（addendum） |
+**證據 run 結論：紅燈（failure）。**  
+**唯一失敗測試數：14**（含 `home-board-ten-send-clear` 三個 parameterized 標題；**分支獨有 0**）。  
+來源：`gh run view 39120102083 --log-failed` 解析；baseline 檔 `artifacts/ci-nightly/main-baseline-failures-39105020723.txt`（36 + addendum 2 = **38**）。  
+行號若與 baseline 不同，以**測試標題**對應同一 baseline 條目（main 上 spec 曾移位）。
 
-本 run 未再出現 `controller-quick-send-resend.spec.mjs:4:1`（`da07bd3` 依「目標狀態」判斷重複號碼）。
+| # | Shard（failed job） | 失敗測試（Playwright 完整標題） | 對應 baseline 38 項（條目） |
+|---|---------------------|----------------------------------|-----------------------------|
+| 1 | `e2e-pr23-login-rate` | `pr23-login-count.spec.mjs:55:3 › PR23 login rate › 5 min normal board idle` | **2 / 38**（addendum）— `pr23-login-count.spec.mjs:55:3 › … 5 min normal board idle` |
+| 2 | `e2e (2)` | `board-cell-peak-simulation.spec.mjs:34:3 › board cell integrity under peak simulation › 3-min peak run: sampled cells, detached drain, no dup numbers` | **3 / 38** — 同標題 |
+| 3 | `e2e (10)` | `cloud-qa-checklist.spec.mjs:40:3 › PR22 cloud QA checklist (fake-cloud routed as prod) › network cable pull and restore without duplicate ready numbers` | **10 / 38** — 同標題（baseline 記 `…:48:3`） |
+| 4 | `e2e (10)` | `cloud-remote-send.spec.mjs:89:3 › cloud remote send (isolated contexts) › ten sends produce ten numbers and clear works` | **1 / 38**（addendum）— 同標題 |
+| 5 | `e2e (15)` | `controller-post-send-board-read-abort.spec.mjs:160:3 › controller post-send today_board read abort (fake-cloud) › push_numbers HTTP 500 still shows error and rolls back local ready list` | **18 / 38** — 同標題（baseline 記 `…:167:3`） |
+| 6 | `e2e (16)` | `controller-store-picker-evidence.spec.mjs:112:3 › controller store picker evidence (fake-cloud) › 3c two minutes: devLogin and listStores counts with store switch` | **22 / 38** — 同標題（baseline 記 `…:121:3`） |
+| 7 | `e2e (16)` | `controller-store-picker.spec.mjs:71:3 › controller cloud store picker › new store appears within poll window after board heartbeat` | **23 / 38** — 同標題（baseline 記 `…:80:3`） |
+| 8 | `e2e (18)` | `fresh-browser-pause-heartbeat.spec.mjs:24:3 › fresh browser 連線暫停 with existing session › boxHeartbeat 403 store_not_allowed shows pause without new devLogin` | **27 / 38** — 同標題 |
+| 9 | `e2e (20)` | `home-board-cloud-recovery.spec.mjs:16:3 › home board cloud recovery › B-N07: 60s blocked routes recover within 30s without manual resync` | **31 / 38** — 同 B-N07 標題（baseline 記 `…:24:3`） |
+| 10 | `e2e (22)` | `home-board-quick-send-one.spec.mjs:42:1 › ten quick sends yield ten ready numbers; clear board works` | **33 / 38** — 同標題 |
+| 11 | `e2e (22)` | `home-board-stale-storage.spec.mjs:72:1 › stale cloud settings on home board migrate to bundled and connect cloud` | **34 / 38** — 同標題 |
+| 12 | `e2e (23)` | `home-board-ten-send-clear.spec.mjs:106:3 › local-link fresh context: ten quick sends then 清空看板 (board tab not reloaded)` | **35 / 38** — 同標題 |
+| 13 | `e2e (23)` | `home-board-ten-send-clear.spec.mjs:106:3 › local-link localStorage seeded 5ab3c35-style: ten quick sends then 清空看板 (board tab not reloaded)` | **36 / 38** — 同標題 |
+| 14 | `e2e (23)` | `home-board-ten-send-clear.spec.mjs:106:3 › local-link localStorage seeded 8138a4a-style: ten quick sends then 清空看板 (board tab not reloaded)` | **37 / 38** — 同標題 |
+
+**先前摘要表遺漏（已補上）：** 上表 **#5**（`controller-post-send-board-read-abort`）、**#8**（`fresh-browser-pause-heartbeat`）。
+
+本 run **未**出現 `controller-quick-send-resend.spec.mjs:4:1`（`da07bd3` 起依目標狀態判斷重複號碼）。  
+本 run **未**出現 baseline 其餘 24 項中的任一條（例如 `forbidden-store-then-qa-isolation`、`home-board-art-alignment` 等）— 與 main 上 flaky／shard 矩陣一致，不視為分支獨有通過或失敗。
 
 ### 本機驗證
 
@@ -77,7 +91,7 @@
 | 控制端快速送出：無效號碼、跨狀態同號 | 合併曾短暫遺失 rule-note；重複邏輯已調整 |
 | 看板自動配對提示（若店端已開 #97） | main 新行為首次與 overflow 同頁載入 |
 
-不需重跑完整 QA 清單：CI 與本機單元已覆蓋 harness／acceptance 8；e2e 紅燈均屬 main 既有清單。
+**QA 重驗：符合**（總監確認）。不需重跑完整 QA 清單：CI 與本機單元已覆蓋 harness／acceptance 8；e2e 紅燈均屬 main 既有清單。
 
 ## PR 摘要（交接）
 
