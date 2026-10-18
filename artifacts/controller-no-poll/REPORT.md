@@ -26,7 +26,7 @@
 ## CI
 
 - **PR CI run**：https://github.com/UltronService/milksha-demo/actions/runs/39127542087
-- **Head commit**：`67c8298`
+- **Head commit**：`c06f178`
 - **與 main baseline 38 失敗對照**：`artifacts/ci-nightly/main-baseline-failures-39105020723.txt` — PR 新增失敗須為 **0**（允許與 baseline 重疊的既有失敗）。
 
 ## PR
