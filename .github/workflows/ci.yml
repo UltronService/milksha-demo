@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,7 +56,7 @@ jobs:
       - name: E2E (fake-cloud; excludes live-cloud specs)
         run: |
           mapfile -d '' specs < <(find tests/e2e -name '*.spec.mjs' ! -name '*-live-cloud.spec.mjs' -print0)
-          npx playwright test "${specs[@]}" --shard=${{ matrix.shard }}/4
+          npx playwright test "${specs[@]}" --shard=${{ matrix.shard }}/8
         env:
           MILKSHA_CI_TIER: pr
           MILKSHA_E2E_ARTIFACTS: ${{ runner.temp }}/milksha-e2e-artifacts
