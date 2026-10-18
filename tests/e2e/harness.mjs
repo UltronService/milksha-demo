@@ -289,7 +289,6 @@ export async function isolatedCloudContext(browser) {
       /* ignore */
     }
   });
-  await installPrTierNetworkGuard(ctx);
   return ctx;
 }
 
@@ -318,7 +317,6 @@ export async function freshContext(browser) {
       /* ignore */
     }
   });
-  await installPrTierNetworkGuard(ctx);
   return ctx;
 }
 

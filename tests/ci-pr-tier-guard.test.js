@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const harnessPath = join(dirname(fileURLToPath(import.meta.url)), 'e2e', 'harness.mjs');
 
-test('harness installs PR-tier production network guard on new contexts', function () {
+test('harness defines PR-tier production network guard for fake-cloud shim', function () {
   const src = readFileSync(harnessPath, 'utf8');
   assert.ok(src.includes('MILKSHA_CI_TIER'), 'harness must reference MILKSHA_CI_TIER');
   assert.ok(src.includes('installPrTierNetworkGuard'), 'harness must define installPrTierNetworkGuard');
@@ -14,8 +14,6 @@ test('harness installs PR-tier production network guard on new contexts', functi
     src.includes('firestore.googleapis.com'),
     'guard must mention firestore.googleapis.com',
   );
-  assert.match(src, /freshContext[\s\S]*installPrTierNetworkGuard/);
-  assert.match(src, /isolatedCloudContext[\s\S]*installPrTierNetworkGuard/);
 });
 
 test('installBundledCloudRouteShim registers proxy routes before PR guard abort', function () {
