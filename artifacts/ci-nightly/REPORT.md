@@ -1,7 +1,7 @@
 # PR #98 — 測試自查與 CI 紀錄
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head：** _(push 後更新)_
+- **Head：** `2e16c43218216807ddafc121ed378e6428e65720`
 
 ## 2. `origin/main...HEAD` 測試檔變動清單（僅允許項）
 
