@@ -86,9 +86,17 @@
                 <option value="ready" selected>請取餐</option>
               </select>
             </label>
-            <label class="quick-send-label">號碼
-              <input id="fld-quick-no" value="2001" inputmode="text" autocomplete="off" data-testid="fld-quick-no" />
-            </label>
+            <div class="quick-send-number-row" data-testid="quick-send-number-row">
+              <label class="quick-send-label quick-send-number-label">號碼
+                <input id="fld-quick-no" value="2001" inputmode="text" autocomplete="off" data-testid="fld-quick-no" />
+              </label>
+              <p
+                id="quick-send-rule-note"
+                class="quick-send-rule-note"
+                data-testid="quick-send-rule-note"
+                aria-live="polite"
+              ></p>
+            </div>
           </div>
           <p id="quick-send-error" class="quick-send-error" hidden role="alert" data-testid="quick-send-error"></p>
           <div
