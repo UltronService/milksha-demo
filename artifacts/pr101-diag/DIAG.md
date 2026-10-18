@@ -68,7 +68,7 @@ MILKSHA_CI_TIER=pr FONTCONFIG_FILE=tests/e2e/fonts/fontconfig-e2e.conf \
 
 **結論（QA-F1）**：同一店別真雲端下，**main 在線燈正常、分支長期離線** → 屬 **PR 行為回歸**，非「zz-qa-store-a 上 main 也離線」的環境問題。
 
-分支失敗 1 行為摘要（**不含雲端欄位值**）：`connected=1`、realtime listener 已 attach、device snapshot 計數未再增加；同期 REST `readDevice` 可成功但 UI 未轉在線。詳見 `evidence/board-online-branch-qa.json` 與 main 對照 `board-online-main-2f9b2bf-qa.json`。
+分支失敗 1 行為摘要（**不含雲端欄位值**）：`connected=1`、realtime listener 已 attach、device snapshot 計數未再增加；同期 REST `readDevice` 可成功但 UI 未轉在線。詳見本機 `evidence/board-online-*-qa.json`（**不進版控**；`restDeviceShape` 僅布林形狀）。
 
 ---
 
