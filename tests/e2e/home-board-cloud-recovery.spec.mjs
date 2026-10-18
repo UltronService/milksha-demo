@@ -8,6 +8,7 @@ import {
   isolatedCloudContext,
   expandControllerZone,
   clickControllerDevButton,
+  fillControllerDevField,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -41,8 +42,8 @@ test.describe('home board cloud recovery', () => {
 
     const blockPattern = /firestore\.googleapis\.com|cloudfunctions\.net|run\.app/;
     await board.route(blockPattern, (route) => route.abort('failed'));
-    await expandControllerZone(controller, 'sec-special');
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await fillControllerDevField(controller, 'fld-quick-no', '3201');
+    await clickControllerDevButton(controller, 'btn-send-numbers');
     const expectedNo = (await controller.locator('#fld-quick-no').inputValue()).trim();
     expect(expectedNo.length).toBeGreaterThan(0);
     expect(expectedNo).not.toEqual(baselineNum);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, waitForReceiverOnline } from './harness.mjs';
+import { freshContext, PORT_SITE, waitForReceiverOnline, installBundledCloudRouteShim } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STALE_SEED = () => {
@@ -83,6 +83,7 @@ test('stale cloud settings on home board migrate to bundled and connect cloud', 
     );
   });
   const board = await ctx.newPage();
+  await installBundledCloudRouteShim(board);
   await board.goto(`${BASE}/?mode=cloud&store=c030020`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   const pinned = await board.evaluate(() => {

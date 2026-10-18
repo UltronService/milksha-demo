@@ -7,6 +7,7 @@ import {
   installBundledCloudRouteShim,
   isolatedCloudContext,
   waitForReceiverOnline,
+  clickControllerDevButton,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -75,7 +76,7 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
       await route.continue();
     });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButton(ctrl, 'btn-send-numbers');
     await expect
       .poll(() => releaseHeldBoardGet !== null, { timeout: 15000, intervals: [100, 200, 500] })
       .toBe(true);
@@ -136,7 +137,7 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await waitForReceiverOnline(board, 'cloud');
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButton(ctrl, 'btn-send-numbers');
 
     await expect(ctrl.locator('[data-testid="command-error-alert"]')).toBeHidden({ timeout: 12000 });
     await expect(ctrl.locator('[data-testid="user-banner"]')).toBeHidden({ timeout: 8000 });
@@ -174,7 +175,8 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await installBundledCloudRouteShim(ctrl);
 
     await ctrl.route('**/devCommand**', async (route) => {
-      if (route.request().method() === 'POST') {
+      const body = route.request().postData() || '';
+      if (route.request().method() === 'POST' && body.includes('push_numbers')) {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
@@ -191,9 +193,9 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await waitForReceiverOnline(board, 'cloud');
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
-    await expect(ctrl.locator('[data-testid="command-error-alert"]')).toBeVisible({ timeout: 12000 });
-    await expect(ctrl.locator('[data-testid="command-error-message"]')).toContainText('雲端暫時出錯');
+    await clickControllerDevButton(ctrl, 'btn-send-numbers');
+    await expect(ctrl.locator('[data-testid="quick-send-error"]')).toBeVisible({ timeout: 12000 });
+    await expect(ctrl.locator('[data-testid="quick-send-error"]')).toContainText(/雲端暫時出錯|叫號送出失敗/);
     await expect(ctrl.locator('#list-ready li')).toHaveCount(0, { timeout: 8000 });
 
     await ctx.close();

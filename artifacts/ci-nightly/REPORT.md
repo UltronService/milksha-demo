@@ -47,13 +47,24 @@
 - `npm test`：**338 passed**
 - Playwright 抽樣：`board-empty-hint-states`、`cloud-qa-checklist`、`controller-source-quick-send`、`controller-zone-expand-guard`、connect-errors → **通過**
 
+## Run `39100018110`（12 shard，zone 點擊 harness）
+
+| Job | 結果 | 牆鐘 |
+|-----|------|------|
+| unit | success | ~1m53s |
+| e2e (2)(4)(6) | success | &lt;3m |
+| e2e (1)(3)(7)(8)(9)(10)(11) | failure | 2–12m |
+| e2e (5)(12) | cancelled（15m） | 15m+ |
+
+**main 本機亦失敗（不硬修產品碼）：** `fresh-browser-pause-heartbeat.spec.mjs`（`devLoginCalls` 期望 0 實際 1，main 同結果）。
+
 ## 最新 CI run
 
 | 項目 | 值 |
 |------|-----|
-| Head SHA | _(CI 跑完後填)_ |
-| Run URL | _(CI 跑完後填)_ |
-| 結論 | _(pass/fail)_ |
+| Head SHA | _(下一輪 CI)_ |
+| Run URL | |
+| 結論 | |
 | unit 耗時 | |
 | e2e shard 1–12 耗時 | |
 
