@@ -1,0 +1,76 @@
+name: Main spec triple probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/ci-npm-test-playwright-order-ce9c
+    paths:
+      - .github/workflows/ci-main-spec-triple-probe.yml
+
+jobs:
+  cloud-remote-ten-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: PR-tier playwright config (testIgnore live-cloud)
+        run: |
+          node -e "
+          const fs=require('fs');
+          const p='playwright.config.js';
+          let s=fs.readFileSync(p,'utf8');
+          if(!s.includes('testIgnore')) {
+            s=s.replace(\"testDir: 'tests/e2e',\", \"testDir: 'tests/e2e',\\n  testIgnore: ['**/*-live-cloud.spec.mjs'],\");
+            fs.writeFileSync(p,s);
+          }
+          "
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: "main ×3 — cloud-remote-send ten sends (attempt ${{ matrix.attempt }})"
+        run: npx playwright test tests/e2e/cloud-remote-send.spec.mjs -g "ten sends produce ten numbers"
+        env:
+          MILKSHA_CI_TIER: pr
+
+  pr23-five-min-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: PR-tier playwright config (testIgnore live-cloud)
+        run: |
+          node -e "
+          const fs=require('fs');
+          const p='playwright.config.js';
+          let s=fs.readFileSync(p,'utf8');
+          if(!s.includes('testIgnore')) {
+            s=s.replace(\"testDir: 'tests/e2e',\", \"testDir: 'tests/e2e',\\n  testIgnore: ['**/*-live-cloud.spec.mjs'],\");
+            fs.writeFileSync(p,s);
+          }
+          "
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: "main ×3 — pr23 5 min idle (attempt ${{ matrix.attempt }})"
+        run: npx playwright test tests/e2e/pr23-login-count.spec.mjs -g "5 min normal board idle"
+        env:
+          MILKSHA_CI_TIER: pr

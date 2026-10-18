@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  urlsForMode,
-  connectController,
-  resetCloudState,
-  freshContext,
-  guestBoardStyleFingerprint,
-  waitForReceiverOnline,
-  expandControllerZone,
-} from './harness.mjs';
+import { clickControllerDevButton, connectController, expandControllerZone, fillControllerDevField, freshContext, guestBoardStyleFingerprint, resetCloudState, selectControllerDevField, urlsForMode, waitForReceiverOnline } from './harness.mjs';
 
 const MODES = ['local', 'firestore'];
 
@@ -39,9 +31,9 @@ for (const mode of MODES) {
 
   test(`${tag} | connect and add preparing`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2101');
-    await controller.selectOption('#fld-status', 'preparing');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2101');
+    await selectControllerDevField(controller, 'fld-status', 'preparing');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2101', {
       timeout: 15000,
     });
@@ -54,11 +46,11 @@ for (const mode of MODES) {
     await receiver.evaluate(() => {
       window.__rcvTelemetry.ringCount = 0;
     });
-    await controller.fill('#fld-no', '2201');
-    await controller.selectOption('#fld-status', 'preparing');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2201');
+    await selectControllerDevField(controller, 'fld-status', 'preparing');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2201', { timeout: 15000 });
-    await controller.click('#btn-one-ready');
+    await clickControllerDevButton(controller, 'btn-one-ready');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('2201', { timeout: 15000 });
     const rings = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
     expect(rings).toBeGreaterThanOrEqual(1);
@@ -67,12 +59,12 @@ for (const mode of MODES) {
 
   test(`${tag} | pickup scan removes ready`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2301');
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2301');
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('2301', { timeout: 15000 });
-    await controller.fill('#fld-pickup-scan', '2301');
-    await controller.click('#btn-pickup-scan');
+    await fillControllerDevField(controller, 'fld-pickup-scan', '2301');
+    await clickControllerDevButton(controller, 'btn-pickup-scan');
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '2301' })).toHaveCount(0, {
       timeout: 15000,
     });
@@ -81,10 +73,10 @@ for (const mode of MODES) {
 
   test(`${tag} | send empty list`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2401');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2401');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-prep .rcv-num').first()).toHaveText('2401', { timeout: 15000 });
-    await controller.click('#btn-clear-board');
+    await clickControllerDevButton(controller, 'btn-clear-board');
     await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2401' })).toHaveCount(0, {
       timeout: 15000,
     });
@@ -96,32 +88,33 @@ for (const mode of MODES) {
     await controller.locator('#tammy-advanced').evaluate((el) => {
       el.open = true;
     });
-    await controller.click('#btn-send-tammy');
+    await clickControllerDevButton(controller, 'btn-send-tammy');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('1488', { timeout: 15000 });
-    await controller.click('#btn-gen-normal');
+    await expandControllerZone(controller, 'sec-pos');
+    await clickControllerDevButton(controller, 'btn-gen-normal');
     await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num').first()).toBeVisible({
       timeout: 30000,
     });
-    await controller.click('#btn-sim-stop');
-    await controller.click('#btn-gen-peak');
+    await clickControllerDevButton(controller, 'btn-sim-stop');
+    await clickControllerDevButton(controller, 'btn-gen-peak');
     await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num')).not.toHaveCount(0, {
       timeout: 30000,
     });
-    await controller.click('#btn-sim-stop');
+    await clickControllerDevButton(controller, 'btn-sim-stop');
     await ctx.close();
   });
 
   test(`${tag} | bad signature store format`, async ({ browser }) => {
     const { ctx, controller } = await openSession(browser, mode);
-    await controller.click('#btn-bad-sign');
+    await clickControllerDevButton(controller, 'btn-bad-sign');
     await expect(controller.locator('#log-list li').first()).toContainText(/失敗|簽章|isSuccess=false/, {
       timeout: 8000,
     });
-    await controller.click('#btn-bad-store');
+    await clickControllerDevButton(controller, 'btn-bad-store');
     await expect(controller.locator('#log-list li').first()).toContainText(/失敗|找不到|isSuccess=false/, {
       timeout: 8000,
     });
-    await controller.click('#btn-bad-format');
+    await clickControllerDevButton(controller, 'btn-bad-format');
     await expect(controller.locator('#log-list li').first()).toContainText(/失敗|格式|isSuccess=false/, {
       timeout: 8000,
     });
@@ -130,10 +123,10 @@ for (const mode of MODES) {
 
   test(`${tag} | network offline restore slow cable`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2501');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2501');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     const stylesBefore = await guestBoardStyleFingerprint(receiver);
-    await controller.click('#btn-offline');
+    await clickControllerDevButton(controller, 'btn-offline');
     await controller.waitForTimeout(1500);
     const stylesAfter = await guestBoardStyleFingerprint(receiver);
     expect(stylesAfter.stageSimulatedOffline).toBe('0');
@@ -143,39 +136,39 @@ for (const mode of MODES) {
     const guestText = await receiver.locator('[data-testid="rcv-guest-stage"]').innerText();
     expect(guestText).not.toContain('尚未連線');
     expect(guestText).not.toContain('斷線');
-    await controller.click('#btn-cable-pull');
+    await clickControllerDevButton(controller, 'btn-cable-pull');
     await expect(controller.locator('#log-list li').first()).toContainText('拔線', { timeout: 5000 });
-    await controller.click('#btn-cable-restore');
-    await controller.click('#btn-restore');
-    await controller.click('#btn-slow');
+    await clickControllerDevButton(controller, 'btn-cable-restore');
+    await clickControllerDevButton(controller, 'btn-restore');
+    await clickControllerDevButton(controller, 'btn-slow');
     await expect(controller.locator('#log-list li').first()).toContainText('指令 slow', { timeout: 8000 });
     await ctx.close();
   });
 
   test(`${tag} | special clear reload dup late`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2601');
-    await controller.click('#btn-add-ticket');
-    await controller.click('#btn-dup-list');
-    await controller.click('#btn-late-old');
-    await controller.click('#btn-clear-now');
+    await fillControllerDevField(controller, 'fld-no', '2601');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
+    await clickControllerDevButton(controller, 'btn-dup-list');
+    await clickControllerDevButton(controller, 'btn-late-old');
+    await clickControllerDevButton(controller, 'btn-clear-now');
     await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2601' })).toHaveCount(0, {
       timeout: 20000,
     });
-    await controller.click('#btn-reload');
+    await clickControllerDevButton(controller, 'btn-reload');
     await controller.waitForTimeout(4000);
     await ctx.close();
   });
 
   test(`${tag} | order number auto-increment`, async ({ browser }) => {
     const { ctx, receiver, controller } = await openSession(browser, mode);
-    await controller.fill('#fld-no', '2001');
-    await controller.selectOption('#fld-status', 'preparing');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '2001');
+    await selectControllerDevField(controller, 'fld-status', 'preparing');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2001' })).toHaveCount(1, {
       timeout: 15000,
     });
-    await controller.click('#btn-add-ticket');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2002' })).toHaveCount(1, {
       timeout: 15000,
     });
@@ -191,10 +184,10 @@ for (const mode of MODES) {
       { source: 'uber', tag: 'Uber', no: '6203', status: 'ready' },
     ];
     for (const c of cases) {
-      await controller.selectOption('#fld-source', c.source);
-      await controller.fill('#fld-no', c.no);
-      await controller.selectOption('#fld-status', c.status);
-      await controller.click('#btn-add-ticket');
+      await selectControllerDevField(controller, 'fld-source', c.source);
+      await fillControllerDevField(controller, 'fld-no', c.no);
+      await selectControllerDevField(controller, 'fld-status', c.status);
+      await clickControllerDevButton(controller, 'btn-add-ticket');
     }
     if (mode === 'firestore') {
       await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '6201' })).toBeVisible({
@@ -216,7 +209,7 @@ for (const mode of MODES) {
 
   test(`${tag} | logs merge and export hooks`, async ({ browser }) => {
     const { ctx, controller } = await openSession(browser, mode);
-    await controller.click('#btn-refresh-logs');
+    await clickControllerDevButton(controller, 'btn-refresh-logs');
     await expect(controller.locator('#log-list li').first()).toBeVisible({ timeout: 8000 });
     await controller.fill('#log-filter', '連線');
     await expect(controller.locator('#log-list li').first()).toBeVisible();
@@ -239,19 +232,19 @@ async function runOfflineReconnect5501(browser, mode) {
   await receiver.evaluate(() => {
     window.__rcvTelemetry.ringCount = 0;
   });
-  await controller.fill('#fld-no', '5501');
-  await controller.selectOption('#fld-status', 'preparing');
-  await controller.click('#btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '5501');
+  await selectControllerDevField(controller, 'fld-status', 'preparing');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '5501' })).toHaveCount(1, {
     timeout: 15000,
   });
-  await controller.click('#btn-offline');
+  await clickControllerDevButton(controller, 'btn-offline');
   await receiver.waitForFunction(
     () => window.receiverCloud && window.receiverCloud.isSimulatedOffline && window.receiverCloud.isSimulatedOffline(),
     { timeout: 10000 },
   );
   const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
-  await controller.click('#btn-one-ready');
+  await clickControllerDevButton(controller, 'btn-one-ready');
   if (mode === 'firestore') {
     await expect(controller.locator('#btn-one-ready')).toBeEnabled({ timeout: 20000 });
   } else {
@@ -259,7 +252,7 @@ async function runOfflineReconnect5501(browser, mode) {
       timeout: 20000,
     });
   }
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   if (mode === 'firestore') {
     await expect(controller.locator('#btn-restore')).toBeEnabled({ timeout: 15000 });
   }
@@ -281,16 +274,16 @@ test('board | no chime for ready while offline on reconnect (firestore)', async 
 
 test('board | cache after reload and no rechime on reconnect', async ({ browser }) => {
   const { ctx, receiver, controller } = await openSession(browser, 'local');
-  await controller.fill('#fld-no', '2701');
-  await controller.selectOption('#fld-status', 'ready');
-  await controller.click('#btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '2701');
+  await selectControllerDevField(controller, 'fld-status', 'ready');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
   await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('2701', { timeout: 15000 });
   await receiver.reload();
   await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('2701', { timeout: 15000 });
   const ringsBefore = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
-  await controller.click('#btn-offline');
+  await clickControllerDevButton(controller, 'btn-offline');
   await controller.waitForTimeout(2000);
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await controller.waitForTimeout(3000);
   const ringsAfter = await receiver.evaluate(() => window.__rcvTelemetry.ringCount);
   expect(ringsAfter).toBe(ringsBefore);
@@ -299,19 +292,19 @@ test('board | cache after reload and no rechime on reconnect', async ({ browser 
 
 test('board | POS list exact removal and empty clears screen', async ({ browser }) => {
   const { ctx, receiver, controller } = await openSession(browser, 'local');
-  await controller.fill('#fld-no', '2801');
-  await controller.selectOption('#fld-status', 'preparing');
-  await controller.click('#btn-add-ticket');
-  await controller.fill('#fld-no', '2802');
-  await controller.selectOption('#fld-status', 'ready');
-  await controller.click('#btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '2801');
+  await selectControllerDevField(controller, 'fld-status', 'preparing');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
+  await fillControllerDevField(controller, 'fld-no', '2802');
+  await selectControllerDevField(controller, 'fld-status', 'ready');
+  await clickControllerDevButton(controller, 'btn-add-ticket');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2801' })).toHaveCount(1, {
     timeout: 15000,
   });
   await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '2802' })).toHaveCount(1, {
     timeout: 15000,
   });
-  await controller.click('#btn-clear-board');
+  await clickControllerDevButton(controller, 'btn-clear-board');
   await expect(receiver.locator('.rcv-prep .rcv-num', { hasText: '2801' })).toHaveCount(0, {
     timeout: 15000,
   });

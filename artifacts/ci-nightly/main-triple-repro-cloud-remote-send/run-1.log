@@ -1,0 +1,27 @@
+=== main run 1/3 2026-10-18T07:57:19+00:00 ===
+
+Running 1 test using 1 worker
+
+(node:73772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:73772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 cloud-remote-send.spec.mjs:89:3 › cloud remote send (isolated contexts) › ten sends produce ten numbers and clear works (5.8s)
+
+
+  1) cloud-remote-send.spec.mjs:89:3 › cloud remote send (isolated contexts) › ten sends produce ten numbers and clear works 
+
+    TimeoutError: page.waitForFunction: Timeout 5000ms exceeded.
+
+      91 |     for (let i = 0; i < 10; i += 1) {
+      92 |       await controller.click('[data-testid="btn-send-numbers"]');
+    > 93 |       await board.waitForFunction(
+         |                   ^
+      94 |         (n) => document.querySelectorAll('.milksha-ready .milksha-num').length === n,
+      95 |         i + 1,
+      96 |         { timeout: 5000 },
+        at /tmp/mw-main-repro-cloud-remote-send/tests/e2e/cloud-remote-send.spec.mjs:93:19
+
+  1 failed
+    cloud-remote-send.spec.mjs:89:3 › cloud remote send (isolated contexts) › ten sends produce ten numbers and clear works 
+FAIL

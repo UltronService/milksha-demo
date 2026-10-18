@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  ensureCloudRunning,
-  resetCloudState,
-  startSite,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, ensureCloudRunning, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const FULL_BG = process.env.PR22_FULL_QA === '1';
@@ -56,15 +48,15 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.goto(`${BASE}/controller/`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length === 1,
       { timeout: 8000 },
     );
     await expandControllerZone(controller, 'sec-net');
-    await controller.click('#btn-cable-pull');
-    await controller.click('#btn-cable-restore');
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButton(controller, 'btn-cable-pull');
+    await clickControllerDevButton(controller, 'btn-cable-restore');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await board.waitForTimeout(2000);
     const nums = await board.locator('.milksha-ready .milksha-num').allTextContents();
     expect(nums.length).toBe(2);
@@ -84,25 +76,25 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.goto(`${BASE}/controller/`);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await expandControllerZone(controller, 'sec-pos');
-    await controller.click('#btn-add-ticket');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(controller.locator('#log-list li').first()).toContainText(/push_numbers|叫號/, {
       timeout: 12000,
     });
-    await controller.click('#btn-one-ready');
+    await clickControllerDevButton(controller, 'btn-one-ready');
     await expect(controller.locator('#log-list li').first()).toContainText(/一鍵|叫號|沒有|push_numbers/, {
       timeout: 12000,
     });
     await expandControllerZone(controller, 'sec-net');
-    await controller.click('#btn-offline');
+    await clickControllerDevButton(controller, 'btn-offline');
     await expect(controller.locator('#log-list li').first()).toContainText(/指令 simulate_offline|offline/, {
       timeout: 12000,
     });
     await expandControllerZone(controller, 'sec-special');
-    await controller.click('#btn-clear-now');
+    await clickControllerDevButton(controller, 'btn-clear-now');
     await expect(controller.locator('#log-list li').first()).toContainText(/指令 clear_now|清空/, {
       timeout: 12000,
     });
-    await controller.click('#btn-reload');
+    await clickControllerDevButton(controller, 'btn-reload');
     await expect(controller.locator('#log-list li').first()).toContainText(/指令 reload/, { timeout: 12000 });
     await boardCtx.close();
     await ctrlCtx.close();
@@ -123,7 +115,7 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await controller.bringToFront();
     await board.waitForTimeout(idleMs);
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length >= 1,
       { timeout: 8000 },

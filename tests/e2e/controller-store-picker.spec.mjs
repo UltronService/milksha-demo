@@ -1,14 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  PORT_CLOUD,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_CLOUD, PORT_SITE, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, selectControllerDevField, startSite } from './harness.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -118,7 +109,7 @@ test.describe('controller cloud store picker', () => {
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 20000 });
     await expandControllerZone(controller, 'sec-connect');
-    await controller.selectOption('#fld-store', 'c030020');
+    await selectControllerDevField(controller, 'fld-store', 'c030020');
     await controller.waitForTimeout(500);
     await expect(controller.locator('#online-state')).not.toContainText('在線');
     await expect(controller.locator('[data-testid="btn-send-numbers"]')).toBeDisabled();

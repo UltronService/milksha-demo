@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline, expandControllerZone } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('quick send keeps typed number and resend preparing does not demote ready', async ({ browser }) => {
   const ctx = await freshContext(browser);
@@ -18,14 +18,14 @@ test('quick send keeps typed number and resend preparing does not demote ready',
 
   await controller.fill('[data-testid="fld-quick-no"]', '3456');
   await controller.selectOption('[data-testid="fld-quick-status"]', 'ready');
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '3456' })).toBeVisible({
     timeout: 8000,
   });
   await expect(controller.locator('[data-testid="fld-quick-no"]')).toHaveValue('3456');
 
   await controller.selectOption('[data-testid="fld-quick-status"]', 'preparing');
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num').filter({ hasText: '3456' })).toBeVisible();
   await expect(board.locator('.milksha-prep .milksha-num').filter({ hasText: '3456' })).toHaveCount(0);
 
@@ -49,7 +49,7 @@ test('store simulation keeps running while board paginates ready zone', async ({
   await board.evaluate(() => window.QMS.runtime.applyPayload([]));
 
   await expandControllerZone(controller, 'sec-pos');
-  await controller.click('[data-testid="btn-gen-peak"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-gen-peak');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/運行中/, { timeout: 5000 });
 
   const tenMinMs = 10 * 60 * 1000;
@@ -125,6 +125,6 @@ test('store simulation keeps running while board paginates ready zone', async ({
   });
   expect(boardCounts.store).toBeGreaterThan(0);
 
-  await controller.click('[data-testid="btn-sim-stop"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-sim-stop');
   await ctx.close();
 });

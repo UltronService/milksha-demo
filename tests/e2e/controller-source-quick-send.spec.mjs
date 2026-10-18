@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { urlsLocalHomePoc, freshContext, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('local quick send: store 1234 and uber 1234 are two ready cells', async ({ browser }) => {
   const ctx = await freshContext(browser);
@@ -18,10 +18,10 @@ test('local quick send: store 1234 and uber 1234 are two ready cells', async ({ 
 
   await controller.selectOption('[data-testid="fld-quick-source"]', 'store');
   await controller.fill('[data-testid="fld-quick-no"]', '1234');
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await controller.selectOption('[data-testid="fld-quick-source"]', 'uber');
   await controller.fill('[data-testid="fld-quick-no"]', '1234');
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
 
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(2, { timeout: 8000 });
   await ctx.close();
@@ -44,7 +44,7 @@ test('invalid quick send shows red error and does not add board cell', async ({ 
 
   await controller.selectOption('[data-testid="fld-quick-source"]', 'store');
   await controller.fill('[data-testid="fld-quick-no"]', 'abc');
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(controller.locator('[data-testid="quick-send-error"]')).toBeVisible();
   await expect(controller.locator('[data-testid="quick-send-error"]')).toContainText(/4 位數字/);
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0);

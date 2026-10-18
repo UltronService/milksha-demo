@@ -1,14 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  PORT_CLOUD,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_CLOUD, PORT_SITE, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, selectControllerDevField, startSite } from './harness.mjs';
 
 async function readFakeCloudDevLoginCount() {
   const res = await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/devLoginCount`);
@@ -139,7 +130,7 @@ test.describe('controller store picker evidence (fake-cloud)', () => {
     const listStoresAfterBoot = await readFakeCloudListStoresCount();
     await expandControllerZone(page, 'sec-connect');
     await page.waitForTimeout(45000);
-    await page.selectOption('#fld-store', 'c030020');
+    await selectControllerDevField(page, 'fld-store', 'c030020');
     await page.waitForTimeout(5000);
     await page.waitForTimeout(70000);
     const devLoginAfter = await readFakeCloudDevLoginCount();

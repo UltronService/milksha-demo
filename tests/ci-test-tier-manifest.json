@@ -1,0 +1,37 @@
+{
+  "e2eShardCount": 24,
+  "supportPaths": [
+    "tests/fixtures/",
+    "tests/e2e/harness.mjs",
+    "tests/e2e/web-server.mjs",
+    "tests/e2e/global-setup.mjs",
+    "tests/e2e/global-teardown.mjs",
+    "tests/e2e/ring-fit.mjs",
+    "tests/e2e/live-cloud-config.mjs",
+    "tests/e2e/live-cloud-teardown.mjs",
+    "tests/e2e/board-animation-live-setup.mjs",
+    "tests/e2e/realtime-emulator-harness.mjs",
+    "tests/e2e/baseline-6975672.mjs"
+  ],
+  "pr": {
+    "workflowFile": ".github/workflows/ci.yml",
+    "unitGlob": "tests/*.test.js",
+    "e2eGlob": "tests/e2e/*.spec.mjs",
+    "e2eExcludePattern": "*-live-cloud.spec.mjs",
+    "requiredEnv": ["MILKSHA_CI_TIER"],
+    "forbiddenEnv": ["LIVE_CLOUD_STORE_ID"],
+    "jobTimeoutMinutes": 15
+  },
+  "nightly": {
+    "workflowFile": ".github/workflows/ci-nightly.yml",
+    "cronUtc": "0 20 * * *",
+    "liveCloudStoreId": "zz-qa-ci-store",
+    "e2eLiveCloud": [
+      "tests/e2e/board-animation-live-cloud.spec.mjs",
+      "tests/e2e/controller-simulation-live-cloud.spec.mjs",
+      "tests/e2e/controller-source-live-cloud.spec.mjs",
+      "tests/e2e/home-board-auto-pair-live-cloud.spec.mjs"
+    ],
+    "firestoreRules": ["tests/firestore-rules/realtime-board.rules.test.mjs"]
+  }
+}

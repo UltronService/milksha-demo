@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  expandControllerZone,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
@@ -33,13 +25,13 @@ test.describe('controller simulate_offline on guest board', () => {
     await controller.goto(`${BASE}/controller/`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 20000 });
 
     await expandControllerZone(controller, 'sec-net');
-    await controller.click('[data-testid="btn-offline"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-offline');
     await expect(board.locator('#milksha-cloud-offline')).toBeVisible({ timeout: 15000 });
-    await controller.click('[data-testid="btn-restore"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-restore');
     await expect(board.locator('#milksha-cloud-offline')).toBeHidden({ timeout: 15000 });
     await boardCtx.close();
     await ctrlCtx.close();

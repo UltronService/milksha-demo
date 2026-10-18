@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE = 'zz-qa-store-a';
@@ -31,7 +24,7 @@ test.describe('home board before first today_board exists', () => {
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     const t0 = Date.now();
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 3000,
     });

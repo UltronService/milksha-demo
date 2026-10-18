@@ -3,11 +3,12 @@
  * Production board @ 1920×1080: 70px font, 54px icon box, object-fit contain.
  */
 import { chromium } from 'playwright';
-import { cpSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { gotoLayoutHarness } from './check-milksha-board-column-alignment.mjs';
+import { copySiteForPlaywright } from './lib/copy-site-for-playwright.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FONT_PX = 70;
@@ -24,11 +25,7 @@ const SAMPLE_PAYLOAD = [
 ];
 
 function prepareSite() {
-  const siteRoot = '/tmp/milksha-official-layout-site';
-  const dest = join(siteRoot, 'milksha-demo');
-  rmSync(siteRoot, { recursive: true, force: true });
-  mkdirSync(dest, { recursive: true });
-  cpSync(rootDir, dest, { recursive: true, filter: (src) => !src.includes('node_modules') });
+  const { siteRoot } = copySiteForPlaywright(rootDir);
   return { siteRoot, base: `http://127.0.0.1:8772/milksha-demo/` };
 }
 
@@ -55,13 +52,32 @@ function startServer(siteRoot) {
   });
 }
 
+async function disposePlaywrightSession(browser, server) {
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (_err) {
+      // ignore close errors after failed launch
+    }
+  }
+  if (server) {
+    await new Promise(function (resolve) {
+      server.close(function () {
+        resolve(undefined);
+      });
+    });
+  }
+}
+
 /**
  * @returns {Promise<{ ok: boolean, fontPx: number, failures: string[] }>}
  */
 export async function runOfficialBoardLayoutCheck() {
   const { siteRoot, base } = prepareSite();
   const server = await startServer(siteRoot);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
@@ -126,11 +142,8 @@ export async function runOfficialBoardLayoutCheck() {
     return { ok: failures.length === 0, fontPx: expectedFont, failures: failures };
   }, FONT_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return result;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
