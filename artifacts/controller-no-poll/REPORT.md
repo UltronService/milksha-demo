@@ -5,7 +5,7 @@
 | 項目 | 值 |
 |------|-----|
 | **PR** | https://github.com/UltronService/milksha-demo/pull/101 |
-| **Head commit** | `ab3284c` |
+| **Head commit** | `78c4ef5` |
 | **CI run（驗收用）** | https://github.com/UltronService/milksha-demo/actions/runs/39132334019（`ab3284c`，conclusion: failure；§2 對照） |
 | **CI run（前次）** | https://github.com/UltronService/milksha-demo/actions/runs/39129671976（`9ee74de`） |
 
