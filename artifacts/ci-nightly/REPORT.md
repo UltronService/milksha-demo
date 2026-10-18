@@ -1,70 +1,92 @@
 # PR #98 — CI / QA 紀錄
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head:**（見最新 push）
-- **main 36 項基準：** [39105020723](https://github.com/UltronService/milksha-demo/actions/runs/39105020723)
+- **Head:** `9f63d18`（`cursor/ci-npm-test-playwright-order-ce9c`）
+- **main 36 項基準：** [39105020723](https://github.com/UltronService/milksha-demo/actions/runs/39105020723)（清單見 `main-baseline-failures-39105020723.txt`，含 addendum +2）
 
-## 可重現命令（總監 §1）
+## 總監 §1 — main 單 spec ×3（同 CI 環境）
+
+Workflow：[39109842876](https://github.com/UltronService/milksha-demo/actions/runs/39109842876)（checkout **`ref: main`**，`MILKSHA_CI_TIER=pr` + `testIgnore` live-cloud）
+
+| Spec | Run 1 | Run 2 | Run 3 | 結論 |
+|------|-------|-------|-------|------|
+| **cloud-remote-send** — `ten sends produce ten numbers and clear works` | FAIL | FAIL | FAIL | **main 既有**（不擋 PR） |
+| **pr23-login-count** — `5 min normal board idle` | FAIL | FAIL | FAIL | **main 既有**（不擋 PR） |
+
+證據（失敗訊息）：
+
+1. **cloud-remote-send**（3/3 相同）  
+   `TimeoutError: page.waitForFunction: Timeout 5000ms exceeded` — 等待 `.milksha-ready .milksha-num` 數量 `=== n`  
+   - Job 範例：[cloud-remote-ten-main (1)](https://github.com/UltronService/milksha-demo/actions/runs/39109842876/job/117623395484)
+
+2. **pr23 5 min**（3/3 相同）  
+   `expect(counts.devLogin).toBeLessThanOrEqual(4)` — **Received: 101**  
+   - Job 範例：[pr23-five-min-main (1)](https://github.com/UltronService/milksha-demo/actions/runs/39109842876/job/117623395605)
+
+已列入 `main-baseline-failures-39105020723.txt` **ADDENDUM**；分支 spec 已與 `origin/main` 一致，**不需**為此二項放寬 / skip / 改 assertion。
+
+### 可重現命令
 
 ```bash
-# 本機 CI-like（與 Actions 相同 env）
 export MILKSHA_CI_TIER=pr CI=1
 export FONTCONFIG_FILE="$PWD/tests/e2e/fonts/fontconfig-e2e.conf"
-
-# origin/main ×3（腳本會建 worktree + 套用 testIgnore）
 ./scripts/repro-main-triple-spec.sh cloud-remote-send
-./scripts/repro-main-triple-spec.sh pr23-login-count   # 每次 ~5min
-
-# 本分支（同命令，在 repo 根目錄）
-npx playwright test tests/e2e/cloud-remote-send.spec.mjs -g "ten sends produce ten numbers"
-npx playwright test tests/e2e/pr23-login-count.spec.mjs -g "5 min normal board idle"
-
-# GitHub Actions（main @ ref main，各 3 次）
-# workflow: .github/workflows/ci-main-spec-triple-probe.yml
+./scripts/repro-main-triple-spec.sh pr23-login-count
 gh workflow run ci-main-spec-triple-probe.yml --ref cursor/ci-npm-test-playwright-order-ce9c
 ```
 
-### 本機 main ×3（cloud-remote-send ten sends）
-
-| Run | 結果 | 證據 |
-|-----|------|------|
-| 1–3 | **FAIL**（Timeout 5000ms，`length === n`） | `artifacts/ci-nightly/main-triple-repro-cloud-remote-send/run-{1,2,3}.log` |
-
-本機與 CI 可能不一致；**以 Actions `ci-main-spec-triple-probe` 為準**（見下節待填）。
-
-### 分支獨有 — 假設排序（§2）
-
-| # | 假設 | 依據 |
-|---|------|------|
-| 1 | **spec 偏離 main**（`restartCloud` 疊加、clear helper） | 已還原 `pr23` / `cloud-remote-send` 與 `origin/main` 一致 |
-| 2 | **harness `connectController` / zone 展開** 改變全站 controller 預設 UI | 兩 spec 未呼叫 `connectController`；影響間接 |
-| 3 | **`expandControllerZone` DOM 點擊 vs 舊 evaluate 強開** | 僅影測其他檔；此二檔已同 main |
-| 4 | **shard / fake-cloud 計數污染**（pr23 `devLogin`） | 獨立 job 仍紅 → 待 triple main 對照 |
-| 5 | **playwright `testIgnore` live-cloud** | main probe workflow 會注入，與 PR tier 一致 |
+本機 main worktree ×3（cloud-remote）：`artifacts/ci-nightly/main-triple-repro-cloud-remote-send/run-{1,2,3}.log`（同 Timeout 5000ms）。
 
 ## QA 驗收對照（總監 §2）
 
-| 條目 | 證據 |
-|------|------|
-| **(a) 牆鐘 ≤15 分** | [39108756283](https://github.com/UltronService/milksha-demo/actions/runs/39108756283) workflow **~9m 39s** |
-| **(b) 每檔 PR 或 nightly** | `npm test` → `tests/ci-test-tier-assignment.test.js`（`every test file is assigned to exactly one of PR or nightly tiers`） |
-| **(c) PR 不連真雲** | `tests/ci-pr-tier-guard.test.js`（無 `e2e-live-cloud`、無 `LIVE_CLOUD_STORE_ID`）；`harness.mjs` 定義 `installPrTierNetworkGuard`（靜態） |
-| **(d) 失敗沒比 main 多** | 對照 [39105020723](https://github.com/UltronService/milksha-demo/actions/runs/39105020723) 36 項；分支曾多 **pr23**、**cloud-remote-send**（spec 已還原 main，待最新 CI） |
-| **(e) 展開後 toBeVisible** | 單元：`tests/controller-zone-expand-harness.test.js`；e2e：`tests/e2e/controller-zone-expand-guard.spec.mjs`（`POS add-ticket stays hidden…` / `after expandControllerZone clicks, add-ticket is visible`） |
+| 條目 | 結果 | 證據 |
+|------|------|------|
+| **(a) 總時間 ≤15 分** | **通過** | PR CI [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) workflow **11m 13s**；較早綠牆參考 [39108756283](https://github.com/UltronService/milksha-demo/actions/runs/39108756283) **9m 39s** |
+| **(b) 每測試檔 PR 或 nightly** | **通過** | `node --test tests/ci-test-tier-assignment.test.js` — `every test file is assigned to exactly one of PR or nightly tiers`；`tests/ci-test-tier-manifest.json` → `e2eShardCount: 24` |
+| **(c) PR 不連真雲** | **通過** | `tests/ci-pr-tier-guard.test.js`（`installPrTierNetworkGuard`、`firestore.googleapis.com` shim）；`tests/ci-pr-workflow-guard.test.js`（`ci.yml` 無 `e2e-live-cloud` job） |
+| **(d) 失敗沒比 main 多** | **通過** | 本 run **18** 個唯一失敗測試 ⊆ baseline **38**（36 + addendum 2）；無「僅分支」新增項（見下表） |
+| **(e) 展開後才 toBeVisible** | **通過** | 單元：`tests/controller-zone-expand-harness.test.js`；e2e：`POS add-ticket stays hidden until zones are expanded by user toggle`、`after expandControllerZone clicks, add-ticket is visible to the user`（`tests/e2e/controller-zone-expand-guard.spec.mjs`） |
 
-## 最新 PR CI
+### (d) 對照 — PR [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) vs main baseline
+
+| 指標 | 值 |
+|------|-----|
+| Baseline 唯一失敗（36 + pr23 + cloud-remote） | 38 |
+| 本 PR run 唯一失敗 | 18 |
+| `PR_failures ⊆ baseline` | **是** |
+| 僅分支、不在 baseline | **0** |
+
+本 run 失敗清單（spec + 標題，與 log 一致）：
+
+- `board-cell-peak-simulation` — 3-min peak run…
+- `cloud-qa-checklist` — network cable pull and restore…
+- `cloud-remote-send` — ten sends produce ten numbers…（**main addendum**）
+- `controller-post-send-board-read-abort` — push_numbers HTTP 500…
+- `controller-source-quick-send` — store 1234 and uber 1234…
+- `controller-store-picker` — new store appears within poll window…
+- `controller-store-picker-evidence` — 3c two minutes devLogin…
+- `forbidden-store-then-qa-isolation` — zz-deny-test 連線暫停…
+- `fresh-browser-pause-heartbeat` — boxHeartbeat 403…
+- `home-board-art-alignment` — landscape 1920 / 3840
+- `home-board-cloud-recovery` — B-N07…
+- `home-board-quick-send-one` — ten quick sends…
+- `home-board-stale-storage` — stale cloud settings migrate…
+- `home-board-ten-send-clear` — fresh context + 2× localStorage seeded variants
+- `pr23-login-count` — 5 min normal board idle（**獨立 job + main addendum**）
+
+## 最新 PR CI（commit `9f63d18`）
 
 | 項目 | 值 |
-|------|------|
-| Run | _pending push_ |
-| 最慢 shard | 目標 ≤10m（24 shard + PR23 獨立 job） |
-| 失敗 ⊆ main 36？ | _pending_ |
+|------|-----|
+| Run | [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) |
+| Workflow 牆鐘 | **11m 13s** |
+| 最慢 e2e shard | **e2e (19)** ≈ **9m 31s**（571s） |
+| 失敗 job 數 | 12（含 `e2e-pr23-login-rate`） |
+| 失敗 ⊆ main baseline | **是**（見上） |
 
-## main triple probe（Actions）
+**說明：** `e2e-pr23-login-rate` 預期仍紅（main 上同 spec 3/3 失敗）；不視為本 PR 獨有回歸。
 
-| Spec | Run 1 | Run 2 | Run 3 | 連結 |
-|------|-------|-------|-------|------|
-| cloud-remote ten sends | _pending_ | _pending_ | _pending_ | workflow `ci-main-spec-triple-probe` |
-| pr23 5 min | _pending_ | _pending_ | _pending_ | 同上 |
+## 分支工作摘要（非測試放寬）
 
-若任一次 main 失敗 → 列入 main 既有（不擋 PR）；3/3 過 → 分支必修（已還原 spec + 待 CI 驗證）。
+- 24 shard + PR23 獨立 job；harness zone 真實展開 + clear modal；`pr23` / `cloud-remote-send` spec 還原 main。
+- **不合併。**

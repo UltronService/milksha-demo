@@ -1,5 +1,17 @@
 # origin/main + 16-shard PR-tier CI — run 39105020723 (PR #100)
-# Unique failing tests (36)
+# Unique failing tests (36) — shard matrix
+
+# ADDENDUM: isolated spec triple probe on main @ CI (same MILKSHA_CI_TIER=pr + testIgnore)
+# Run: https://github.com/UltronService/milksha-demo/actions/runs/39109842876
+# Each spec run 3/3 FAIL on main ref (not branch harness):
+
+cloud-remote-send.spec.mjs:89:3 › cloud remote send (isolated contexts) › ten sends produce ten numbers and clear works
+# Message (all 3 attempts): TimeoutError page.waitForFunction 5000ms — .milksha-ready .milksha-num length === n
+
+pr23-login-count.spec.mjs:55:3 › PR23 login rate › 5 min normal board idle
+# Message (all 3 attempts): expect(counts.devLogin).toBeLessThanOrEqual(4); Received: 101
+
+# --- original 36 from 39105020723 ---
 
 board-cell-peak-simulation.spec.mjs:34:3 › board cell integrity under peak simulation › 3-min peak run: sampled cells, detached drain, no dup numbers
 board-empty-hint-states.spec.mjs:36:3 › guest board empty hint states › guest header shows store name only
