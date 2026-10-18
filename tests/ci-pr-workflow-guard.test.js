@@ -28,6 +28,10 @@ test('PR workflow sets MILKSHA_CI_TIER and shards e2e', function () {
   assert.ok(yaml.includes('MILKSHA_CI_TIER'), 'ci.yml must set MILKSHA_CI_TIER for e2e');
   assert.ok(yaml.includes('--shard='), 'ci.yml must shard Playwright e2e');
   assert.ok(
+    yaml.includes('npx playwright test --shard='),
+    'ci.yml must shard via default testDir (no explicit live-cloud paths)',
+  );
+  assert.ok(
     yaml.includes(`/${manifest.e2eShardCount}`),
     `ci.yml must use ${manifest.e2eShardCount} shards`,
   );
