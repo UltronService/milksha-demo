@@ -19,7 +19,13 @@ if (PR101_STORE !== 'zz-qa-store-a') {
 }
 
 const outDir = join(ROOT, 'artifacts', 'pr101-diag', 'evidence');
-const evidence = await runDisconnectBannerRepro({ siteRoot, outDir, label });
+const evidence = await runDisconnectBannerRepro({
+  siteRoot,
+  outDir,
+  label,
+  scenario: 'browser-offline-30s',
+  observeAfterMs: 30000,
+});
 
 if (!evidence.passed) {
   console.error('[pr101-dbg] FAIL disconnect banner not shown', label);

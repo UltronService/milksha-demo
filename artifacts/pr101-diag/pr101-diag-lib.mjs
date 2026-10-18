@@ -152,9 +152,48 @@ export async function runBoardOnlineRepro(opts) {
 /**
  * @param {{ siteRoot?: string, outDir: string, label: string }} opts
  */
+/** @param {string} url */
+export function isMilkshaCloudBackendUrl(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname;
+    if (/\.cloudfunctions\.net$/i.test(host)) {
+      return true;
+    }
+    if (/firestore\.googleapis\.com$/i.test(host)) {
+      return true;
+    }
+    if (/\.firebaseio\.com$/i.test(host)) {
+      return true;
+    }
+    if (/identitytoolkit\.googleapis\.com$/i.test(host)) {
+      return true;
+    }
+    if (/securetoken\.googleapis\.com$/i.test(host)) {
+      return true;
+    }
+    if (/googleapis\.com$/i.test(host) && /firestore|firebase/i.test(u.pathname)) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {{ siteRoot?: string, outDir: string, label: string, scenario: 'browser-offline-30s' | 'cloud-block-2.5s', observeAfterMs?: number }} opts
+ */
 export async function runDisconnectBannerRepro(opts) {
   const siteRoot = opts.siteRoot || REPO_ROOT;
   const outDir = opts.outDir;
+  const scenario = opts.scenario || 'browser-offline-30s';
+  const observeAfterMs =
+    Number(opts.observeAfterMs) >= 0
+      ? Number(opts.observeAfterMs)
+      : scenario === 'browser-offline-30s'
+        ? 30000
+        : 30000;
   mkdirSync(outDir, { recursive: true });
   const consoleLines = [];
   const browser = await chromium.launch();
@@ -174,30 +213,79 @@ export async function runDisconnectBannerRepro(opts) {
   await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 180000 });
   await sampleControllerDbg(ctrl);
 
-  await ctx.setOffline(true);
   const offlineSamples = [];
-  const deadline = Date.now() + 45000;
-  while (Date.now() < deadline) {
-    offlineSamples.push({ at: new Date().toISOString(), ...(await sampleControllerDbg(ctrl)) });
-    const row = offlineSamples[offlineSamples.length - 1];
-    if (!row.bannerHidden && /即時同步中斷/.test(row.bannerText || '')) {
-      break;
+  let cloudBlockActive = false;
+
+  if (scenario === 'cloud-block-2.5s') {
+    const blockHandler = async (route) => {
+      const url = route.request().url();
+      if (cloudBlockActive && isMilkshaCloudBackendUrl(url)) {
+        await route.abort('failed');
+        return;
+      }
+      await route.continue();
+    };
+    await ctx.route('**/*', blockHandler);
+    cloudBlockActive = true;
+    console.log('[pr101-dbg] cloud-block start 2500ms');
+    await ctrl.waitForTimeout(2500);
+    cloudBlockActive = false;
+    console.log('[pr101-dbg] cloud-block end');
+    const deadline = Date.now() + observeAfterMs;
+    while (Date.now() < deadline) {
+      offlineSamples.push({
+        at: new Date().toISOString(),
+        scenario,
+        phase: 'after-block',
+        ...(await sampleControllerDbg(ctrl)),
+      });
+      const row = offlineSamples[offlineSamples.length - 1];
+      if (!row.bannerHidden && /即時同步中斷/.test(row.bannerText || '')) {
+        break;
+      }
+      await ctrl.waitForTimeout(2000);
     }
-    await ctrl.waitForTimeout(2000);
+  } else if (scenario === 'browser-offline-30s') {
+    await ctx.setOffline(true);
+    console.log('[pr101-dbg] browser offline sampling 30000ms');
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      offlineSamples.push({
+        at: new Date().toISOString(),
+        scenario,
+        phase: 'browser-offline',
+        ...(await sampleControllerDbg(ctrl)),
+      });
+      const row = offlineSamples[offlineSamples.length - 1];
+      if (!row.bannerHidden && /即時同步中斷/.test(row.bannerText || '')) {
+        break;
+      }
+      await ctrl.waitForTimeout(2000);
+    }
+    console.log('[pr101-dbg] browser offline end');
+  } else {
+    throw new Error('unknown disconnect scenario: ' + scenario);
   }
 
   const last = offlineSamples[offlineSamples.length - 1] || {};
   const passed = !last.bannerHidden && /即時同步中斷/.test(last.bannerText || '');
+  const fileStem =
+    scenario === 'browser-offline-30s'
+      ? `disconnect-browser-offline-30s-${opts.label}`
+      : `disconnect-cloud-block-2.5s-${opts.label}`;
   const evidence = {
     label: opts.label,
+    scenario,
     siteRoot,
     store: PR101_STORE,
     passed,
     offlineSamples,
     consoleLines,
   };
-  writeFileSync(join(outDir, `disconnect-banner-${opts.label}.json`), JSON.stringify(evidence, null, 2));
-  await ctx.setOffline(false);
+  writeFileSync(join(outDir, `${fileStem}.json`), JSON.stringify(evidence, null, 2));
+  if (scenario === 'browser-offline-30s') {
+    await ctx.setOffline(false);
+  }
   await browser.close();
   return evidence;
 }

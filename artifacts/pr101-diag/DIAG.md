@@ -1,35 +1,49 @@
 # PR #101 真雲端 QA 結構化除錯
 
-**Diag HEAD**：見本檔所在 commit（產品碼未修；基於 QA `b2e36a1` 行為）
+**Diag HEAD**：見本檔所在 commit（產品碼未修）。
 
 **範圍**：僅 `zz-qa-store-a` / `stb-01`；不修改 ultron-player-2022 規則；機密 `<REDACTED>`。  
-**原則**：本輪**不修產品碼**，只加重現腳本、live 回歸測試與假設表。
+**原則**：本輪**不修產品碼**；**本 DIAG 不記錄雲端文件欄位值**（僅列問題請後端唯讀查）；細節見 `artifacts/pr101-diag/evidence/*.json`。
 
 ---
 
-## 重現命令（會變紅）
+## 假設清單索引（後端 B1–B4 + QA）
 
-環境：需可連 `milksha-qms-dev`（`config/firebase.js` 由 GitHub Pages 路由注入，API key 不寫入本檔）。
+| ID | 摘要 | 主要對應 |
+|----|------|----------|
+| **B1** | 雲端在線 = `online` + 最後心跳 &lt; 3min | 失敗 1 |
+| **B2** | `online` 排程每 2min 批次 | 失敗 1 |
+| **B3** | 心跳紀錄 300s 節流，不可當最後心跳 | 失敗 1 |
+| **B4** | onSnapshot 與 REST 同 doc、測試店 read（get+listen） | 失敗 1 |
+| **QA-F1** | **先**用 main `2f9b2bf` 在 zz-qa-store-a 確認燈號是否也 offline | 失敗 1 |
+| **QA-F2a** | 整瀏覽器斷網 30s：Firestore SDK 可能僅離線模式、不觸發 onSnapshot error → 無 banner | 失敗 2 |
+| **QA-F2b** | 只擋雲端 URL 2.5s：短斷連是否仍不觸發 error／banner | 失敗 2 |
+
+---
+
+## 重現命令（會變紅／對照）
 
 ```bash
 npx playwright install chromium
 
-# 失敗 1 — 分支：看板在線燈號長期 offline
-node artifacts/pr101-diag/repro-board-online.mjs --label=branch
-
-# 失敗 1 — main 對照（應 PASS）
+# --- 失敗 1（QA-F1：請先跑 main，再跑分支）---
 MILKSHA_SITE_ROOT=$PWD/artifacts/controller-no-poll/main-worktree \
   node artifacts/pr101-diag/repro-board-online.mjs --label=main-2f9b2bf
 
-# 失敗 2 — 分支：斷網後 45s 內無「即時同步中斷…」
-node artifacts/pr101-diag/repro-disconnect-banner.mjs --label=branch
+node artifacts/pr101-diag/repro-board-online.mjs --label=branch
 
-# 失敗 2 — main 對照（main 無此 banner 產品行為，腳本亦 FAIL — 見下表）
-MILKSHA_SITE_ROOT=$PWD/artifacts/controller-no-poll/main-worktree \
-  node artifacts/pr101-diag/repro-disconnect-banner.mjs --label=main-2f9b2bf
+# --- 失敗 2（分支；main 無 banner UX）---
+# (a) 整個瀏覽器斷網 30 秒（斷網期間每 ~2s 取樣）
+node artifacts/pr101-diag/repro-disconnect-browser-offline-30s.mjs --label=branch
+
+# (b) 只擋雲端後端 URL 2.5 秒，之後再觀察 30 秒
+node artifacts/pr101-diag/repro-disconnect-cloud-block-2.5s.mjs --label=branch
+
+# 相容舊名（同 2a）
+node artifacts/pr101-diag/repro-disconnect-banner.mjs --label=branch
 ```
 
-Playwright 回歸（同情境，`playwright.config.js` 預設 **ignore** `*-live-cloud.spec.mjs`，需明確指定檔案）：
+Playwright live 回歸（`playwright.config.js` 預設 ignore `*-live-cloud.spec.mjs`）：
 
 ```bash
 MILKSHA_CI_TIER=pr FONTCONFIG_FILE=tests/e2e/fonts/fontconfig-e2e.conf \
@@ -39,129 +53,117 @@ MILKSHA_CI_TIER=pr FONTCONFIG_FILE=tests/e2e/fonts/fontconfig-e2e.conf \
   npx playwright test tests/e2e/pr101-zz-qa-store-a-realtime-disconnect-live-cloud.spec.mjs
 ```
 
-除錯輸出：腳本與 `sampleControllerDbg` 會打 `[pr101-dbg]`；完整 JSON 落在 `artifacts/pr101-diag/evidence/*.json`（本機實跑產物，可不進版控）。
+`[pr101-dbg]` 輸出；JSON 證據：`artifacts/pr101-diag/evidence/`。
 
 ---
 
-## Main 對照結果（本機實跑）
+## QA-F1：main `2f9b2bf` 真雲端對照（zz-qa-store-a）
 
-| 項目 | 分支（`MILKSHA_SITE_ROOT` = repo HEAD） | main `2f9b2bf` worktree |
-|------|-------------------------------------------|-------------------------|
-| 失敗 1 看板在線燈號 | **FAIL**（120s 內 `data-board-online` 仍 `0`） | **PASS**（數秒內 `1`） |
-| 失敗 2 斷網 banner | **FAIL**（45s 內 banner 仍 `hidden`） | **FAIL**（main 無 realtime 斷線 banner；對照僅供「非 main 既有功能」） |
+**順序**：依 QA 要求，**必先**在 main worktree 跑 `repro-board-online`，再跑分支。
 
-### 失敗 1 關鍵證據（分支 `board-online-branch-*.json` 摘要）
+| 步驟 | Ref | 命令 `--label` | 結果（本輪實跑） |
+|------|-----|----------------|------------------|
+| 1 | main `2f9b2bf` | `main-2f9b2bf-qa` | **PASS** — 120s 窗口內 `data-board-online` 變 `1`（約數秒） |
+| 2 | 分支 PR #101 | `branch-qa` | **FAIL** — 120s 內仍 `data-board-online=0` |
 
-- `connected=1`，`realtimeStats.boardListen/deviceListen=true`，`telemetryRealtime=true`。
-- `readCounts.board` / `readCounts.device` **全程為 1**（僅初次 snapshot，無後續 device 更新計數）。
-- 同期 `transport.readDevice('stb-01')`（REST）回傳 `online: true`、新 `lastSeen`，但 `data-board-online` 仍 `0`。
-- 路徑：`stores/zz-qa-store-a/devices/stb-01`（與 `Paths.deviceDocPath` 一致）。
+**結論（QA-F1）**：同一店別真雲端下，**main 在線燈正常、分支長期離線** → 屬 **PR 行為回歸**，非「zz-qa-store-a 上 main 也離線」的環境問題。
+
+分支失敗 1 行為摘要（**不含雲端欄位值**）：`connected=1`、realtime listener 已 attach、device snapshot 計數未再增加；同期 REST `readDevice` 可成功但 UI 未轉在線。詳見 `evidence/board-online-branch-qa.json` 與 main 對照 `board-online-main-2f9b2bf-qa.json`。
 
 ---
 
-## 後端提供：雲端「看板在線」事實（失敗 1）
-
-以下為後端說明，**納入假設與驗證**（本 repo 未改 rules／排程）：
+## 後端雲端事實 B1–B4（納入假設，非本檔查證資料）
 
 | # | 事實 | 對前端含義 |
 |---|------|------------|
-| B1 | 在線須**同時**滿足：機台文件 **「在線」欄位 = true**，且 **最後心跳在 3 分鐘內** | 僅看 `lastSeen` 或僅看 `online` 都不足；需與 `isRealBoardBoxDevice`（要求 `online`）+ `applyDeviceDocument`（用 `lastSeen` 算 age）對齊 **3 分鐘** 視窗。 |
-| B2 | **「在線」欄位**由排程 **每 2 分鐘批次**更新，**非即時** | 看板已心跳但 `online` 仍 false 的窗口可達 **~2 分鐘**；4s 輪詢會反覆讀到「後來才變 true」；onSnapshot 若只推一次舊快照，UI 可能長期卡在 offline。 |
-| B3 | 心跳**寫入紀錄**有節流（**每 300 秒**一筆），**不可**把紀錄寫入時間當「最後心跳」 | 須確認機台文件上**哪一個欄位**才是 authoritative「最後心跳」（見下方「請後端唯讀查證」）；若 snapshot/REST 混用錯欄位會誤判過期。 |
-| B4 | `onSnapshot` 應與舊輪詢讀**同一份**機台文件；測試店須有 **read** 權限 | 路徑應為 `Paths.deviceDocPath(storeId, deviceId)`（與 `readDevice` REST 相同）；需驗證 `zz-qa-store-a` + controller `devLogin` 身分對該 doc 的 **get + listen** 一致。 |
+| B1 | 在線須 **online** 且最後心跳 **&lt; 3min** | 須對齊 `isRealBoardBoxDevice` + `applyDeviceDocument` 年齡計算 |
+| B2 | **online** 每 **2min** 批次 | 4s REST 可等到更新；onSnapshot 可能只握舊快照 |
+| B3 | 紀錄寫入 **300s** 節流 | 不可把紀錄時間當最後心跳欄位 |
+| B4 | 與舊輪詢 **同一機台 doc** + 測試店 **read** | 路徑 `Paths.deviceDocPath`；get vs listen 權限一致 |
 
-**控制端預設 TTL**：`#fld-heartbeat-timeout` 預設 **120 秒**（`heartbeatTimeoutMs()`），與後端 **3 分鐘**窗口不一致時，可能出現「雲端仍視為在線、前端已視為過期」或相反；對照實測時應記錄表單上的 timeout 值。
+控制端 `#fld-heartbeat-timeout` 預設 **120s**，與雲端 **3min** 是否一致請後端／QA 對表單設定一併確認（本 DIAG 不記錄實際值）。
 
 ---
 
-## 舊 4 秒輪詢 vs `onSnapshot`（失敗 1 特別比對）
+## 舊 4s 輪詢 vs onSnapshot（失敗 1）
 
-| 行為 | main `2f9b2bf`（4s `pollDevice` + REST） | 分支 realtime（device `onSnapshot`，且 `pollDevice` 在 `isActive()` 時 **return**） |
-|------|------------------------------------------|-------------------------------------------------------------------------------------|
-| **何時重算 `deviceOnline`** | 約每 **4s** 呼叫 `pollDevice` → `applyDeviceDocument`，每次用 **`Date.now()`** 與文件內 `lastSeen` 比 `heartbeatTimeoutMs()` | 僅在 **device 文件變更**觸發 snapshot 時呼叫 `applyDeviceDocument`；**文件不變則不重算** |
-| **`tickClock`（1s）** | 只更新時鐘／序號／**顯示用** `lastHeartbeatAt` 文字，**不**重算 `deviceOnline` | 同左 |
-| **對 B2（online 批次 2min）** | 最多等一個 poll 週期（4s）量級即可再次讀到 `online: true`（文件一更新或下一筆 REST 即反映） | 若 snapshot **未再推送**，可能一直停在第一次的 `online: false` |
-| **對 B3（心跳紀錄 300s 節流）** | 每 4s REST `get` 仍會拿到文件當下欄位；**過期判斷用本地時間重算**同一個 `lastSeen` | 若 300s 內文件無欄位變更，**不會**因時間流逝而把已顯示「在線」改「離線」（亦無 4s 重算）— 與 main 行為不同 |
-| **讀取路徑** | `transport.readDevice` → `Paths.deviceDocPath`（Firestore REST） | `controller-realtime-sync.js` → `db.doc(Paths.deviceDocPath(...)).onSnapshot` |
-
-程式依據（分支）：`pollDevice` 在 realtime active 時跳過 REST；`applyDeviceDocument` 內 `deviceOnline = age < heartbeatTimeoutMs()`；`tickClock` 不觸及 `deviceOnline`。
-
-**與本輪證據的關係**：分支在看板已跑、REST 側 `online: true` 時仍 `data-board-online=0`，且 `readCounts.device===1` → 除「不重算過期」外，更可能是 **首次 snapshot 未成功套用** 或 **snapshot 與 REST 欄位/權限不一致**；需與後端唯讀資料交叉驗證。
-
-### 失敗 2 關鍵證據（分支 `disconnect-banner-branch-*.json` 摘要）
-
-- `ctx.setOffline(true)` 後 `navigatorOnLine=false`，REST `readDevice` → `Failed to fetch`。
-- `telemetryRealtime` **仍 true**，`realtime-disconnect-banner` **仍 hidden**。
-- `readCounts` 未增加、未觸發 `onRealtimeState({ connected: false })` 路徑（見 `syncRealtimeDisconnectBanner`）。
+| 行為 | main `2f9b2bf` | 分支 realtime |
+|------|----------------|---------------|
+| 重算 `deviceOnline` | 約每 **4s** `pollDevice` → 每次 `Date.now()` 與 `lastSeen` 比 TTL | 僅 **device 文件變更** 時 `applyDeviceDocument` |
+| `tickClock`（1s） | 不重算 `deviceOnline` | 同左 |
+| 與 B2/B3 | REST 反覆讀 doc + 本地重算過期 | 無 4s REST；無文件變更則不重算 |
 
 ---
 
 ## 失敗 1：看板在線燈號一直 offline
 
-| 排序 | 假設 | 機制 | 現有證據 | 驗證方法 |
-|------|------|------|----------|----------|
-| **1** | **Realtime 停用 4s REST，且 snapshot 未再驅動 `applyDeviceDocument`（與 B2/B4）** | 燈號只靠 `onDeviceDoc`；`pollDevice` 在 `isActive()` 時 return。main 每 4s 仍 REST 重讀同一 doc。 | `readCounts.device===1`；REST 同期 `online:true`；main 數秒 PASS。 | 對照同一時刻 SDK `get(devicePath)` vs REST `readDevice` 欄位；listener 計數是否隨 `online` 批次更新而增加。 |
-| **2** | **缺少「本地時間重算過期」：僅文件變更才重算 age（與 B1/B3）** | main：即使文件不變，每 4s 仍執行 `age < heartbeatTimeoutMs()`。分支：文件 300s 不變則不重算；**亦無法**在 `lastSeen` 不變時隨時間轉 offline。 | `tickClock` 不碰 `deviceOnline`；結構測試已鎖 `pollDevice` skip。 | 修復候選：定時用快取 `lastSeen` 重算或低頻 REST/device `get`（下一輪）；本輪用假資料單測「僅 snapshot 一次 + 時間前進」行為。 |
-| **3** | **`online` 批次延遲 up to ~2min（B2）+ 前端只信第一次 snapshot** | 後端 `online` 非即時；首次 snapshot 可能 `online:false`，之後排程才 true。 | QA 若在剛開看板即看燈號，與 2min 窗口一致；本輪 120s repro 仍 FAIL 暗示非單純 B2。 | 後端提供 `online` 欄位最近更新時間；repro 拉長至 **>3min** 看是否仍 offline。 |
-| **4** | **用錯心跳欄位或誤用節流紀錄時間（B3）** | 雲端 3min 窗口依 **正確** 最後心跳欄位；紀錄表 300s 一筆不能當 heartbeat。 | REST 樣本僅見 `lastSeen`；未確認是否等同後端 authoritative 欄位。 | 後端列出 doc 欄位定義 + `zz-qa-store-a/stb-01` 當下各時間戳；前端比對 `applyDeviceDocument` 讀的 key。 |
-| **5** | **Rules：`listen` 與 REST `get` 不同源或測試店無 listen（B4）** | 路徑應相同：`stores/{store}/devices/{deviceId}`。 | `deviceListen:true` 但可能僅空快照；REST 有 body。 | 後端以 controller 相同 custom token 試 **get + listen**；見下方查證清單。 |
-| **6** | **前端 TTL 120s ≠ 雲端 3min（B1）** | `heartbeatTimeoutMs()` 預設 120s，較雲端寬鬆/嚴格視 `lastSeen` 新舊而定。 | 表單預設需實測截圖。 | repro 時記錄 `#fld-heartbeat-timeout`；必要時暫設 **180** 排除 TTL 假陽性（僅 diag，不改產品）。 |
-
-**與 fake-cloud 差異**：fake-cloud 走 `rest-wake` + `pollDevice`／catch-up，**不會**走假設 1 的「停用 REST」路徑；故 PR CI 未捕獲此真雲端問題。
-
----
-
-## 請後端唯讀查證（`zz-qa-store-a` / `stb-01`）
-
-請後端在 **不改設定** 前提下提供（可打碼 token／內部 id）：
-
-1. **文件路徑確認**：是否為 `stores/zz-qa-store-a/devices/stb-01`（與 `QMS.Transport.Paths.deviceDocPath` 一致）。
-2. **欄位清單與語意**：  
-   - 「在線」布林欄位 **Firestore 欄位名**（是否即 `online`）。  
-   - **最後心跳** authoritative 欄位名（是否即 `lastSeen`；若另有 `lastHeartbeatAt` 等請標明）。  
-   - 若有 **心跳寫入紀錄**／子集合，請說明與機台文件欄位的對應，並註明 **不可** 用紀錄 `createTime` 當心跳。
-3. **單點快照**（repro 時段即可）：`online`、`lastSeen`（及上項欄位）、`appVersion`、`updateTime`／server timestamp。
-4. **排程**：最近一次 **`online` 批次** 執行時間與寫入值；下次預期窗口（2min 週期）。
-5. **節流**：該機台最近一次 **有效心跳更新** 時間（非 300s 紀錄表寫入時間）。
-6. **權限**：controller `devLogin` 對該 doc 的 **read** 是否同時允許 Firestore **get** 與 **listen**（與 REST 代理是否同一視圖）。
-7. **雲端在線判定**：後端程式是否同時檢查 **online=true** 且 **最後心跳 &lt; 3min**（與前端 `isRealBoardBoxDevice` + age 對照）。
-
-取得後填入 `artifacts/pr101-diag/evidence/backend-device-facts.json`（可選）並更新本表「現有證據」欄。
+| 排序 | ID | 假設 | 機制 | 現有證據 | 驗證方法 |
+|------|-----|------|------|----------|----------|
+| 1 | QA-F1 | main 同店也 offline？ | 若 main 也 FAIL 則偏環境／店別；否則偏 PR。 | **main PASS、分支 FAIL**（上表） | 必先跑 main repro |
+| 2 | B4,H1 | Realtime 停 REST + snapshot 未再套用 | `pollDevice` skip；燈號只靠 `onDeviceDoc`。 | 分支 evidence JSON；main PASS | SDK get vs REST 同路徑；listener 計數 |
+| 3 | B1,B3,H2 | 無本地時間重算過期 | main 每 4s 重算 age；snapshot 僅變更時重算。 | 結構測試 `tickClock` | 單測時間推移 + 單次 snapshot |
+| 4 | B2,H3 | `online` 2min 批次 + 只信首次 snapshot | 首次 `online:false` 可卡死至下一推送。 | 120s 分支仍 FAIL | repro &gt;3min；後端答 Q4 |
+| 5 | B3,H4 | 心跳欄位／紀錄時間誤用 | 須用 authoritative 心跳欄位。 | 見 JSON（DIAG 不抄值） | 後端答 Q2–Q3 |
+| 6 | B4,H5 | get/listen 權限或視圖不一致 | REST 與 SDK 不同源。 | listener attach 但計數不增 | 後端答 Q6 |
+| 7 | B1,H6 | 前端 TTL 120s ≠ 雲端 3min | 過期判定與後端不一致。 | 表單預設待記錄 | repro 記錄 `#fld-heartbeat-timeout` |
 
 ---
 
 ## 失敗 2：斷網無「即時同步中斷，正在重試…」
 
-| 排序 | 假設 | 機制 | 現有證據 | 驗證方法 |
-|------|------|------|----------|----------|
-| **1** | **Banner 只聽 `onRealtimeState.connected===false`，不聽 `navigator.onLine`** | `syncRealtimeDisconnectBanner` 僅由 `startCloudRealtimeSync` 的 `onRealtimeState` 觸發；`stopped` 會關 banner。 | 斷網後 `telemetryRealtime` 仍 true、banner hidden。 | 在 `onSnapshot` error callback / `metadata` 打 `[pr101-dbg]`；或 `page.evaluate` 監聽 `window` `offline` 事件是否未被 controller 使用（grep 已無 listener）。 |
-| **2** | **Firestore SDK 斷網後長時間不觸發 error callback** | 已知行為：連線僵死，仍保持 `connected: true` 直到 timeout。 | 45s offline 樣本無 `readCounts` 變化、無 banner。 | 延長 offline 至 2–5min 實測；查 Firebase JS SDK 版本與 `enableNetwork`/`disableNetwork` 行為。 |
-| **3** | **`fromCache` metadata 未處理** | 未讀 `snap.metadata.fromCache` / `hasPendingWrites` 推斷斷線。 | 未實作 metadata 分支（程式碼審查）。 | 在 `controller-realtime-sync.js` snapshot handler 暫加 dbg 印 `metadata`（下一輪）。 |
-| **4** | **Listener 仍「active」但無資料** | `isActive()` 僅看 attach 旗標，不代表網路健康。 | `deviceListen/boardListen` 斷網後仍 true。 | 斷網時呼叫 `getCloudRealtimeStats()` + 強制 `get()` 看 reject 時是否進 `onListenerError`。 |
-| **5** | **斷網測法與 QA「拔線」不同但同類** | Playwright `setOffline` 模擬無網路；拔線同樣不保證 immediate snapshot error。 | 與 QA 描述一致（無 banner）。 | QA 手動拔線 + 保留 `[pr101-dbg]` 樣本對照。 |
+| 排序 | ID | 假設 | 機制 | 現有證據 | 驗證方法 |
+|------|-----|------|------|----------|----------|
+| 1 | **QA-F2** | **SDK 斷網僅離線模式、不觸發 onSnapshot error** | Banner 只聽 `onRealtimeState(connected:false)`，非 `navigator.offline`／`metadata.fromCache`。 | 2a/2b repro **FAIL**；`telemetryRealtime` 仍 true | 2a、2b 命令；暫加 dbg 印 snapshot metadata |
+| 2 | QA-F2a | 整瀏覽器斷網 30s | `setOffline(true)` 30s 內取樣。 | `disconnect-browser-offline-30s-branch-qa.json` | `repro-disconnect-browser-offline-30s.mjs` |
+| 3 | QA-F2b | 只擋雲端 URL 2.5s | `isMilkshaCloudBackendUrl` abort；站點仍本機路由。 | `disconnect-cloud-block-2.5s-branch-qa.json` | `repro-disconnect-cloud-block-2.5s.mjs` |
+| 4 | H3 | `fromCache` 未處理 | 未依 metadata 顯示中斷。 | 程式審查 | dbg metadata |
+| 5 | H4 | `isActive()` 不代表連線健康 | 斷網後 listener 旗標仍 true。 | evidence JSON | 斷網時 `forceRefetch` reject 路徑 |
 
-**Main 對照**：`2f9b2bf` 無 `#realtime-disconnect-banner` 行為；失敗 2 為 **本 PR 新 UX 在真雲端未達標**，非「main 也有 banner」類問題。
+**Main**：`2f9b2bf` 無此 banner；失敗 2 為 **本 PR UX 未達標**。
+
+### 失敗 2 本輪實跑（分支 `branch-qa`）
+
+| 情境 | 結果 |
+|------|------|
+| (a) 瀏覽器斷網 30s | **FAIL** — 期間未出現 banner |
+| (b) 雲端 URL 阻斷 2.5s + 再觀察 30s | **FAIL** — 未出現 banner |
 
 ---
 
-## 已加入的回歸測試（預期在分支 live 跑紅）
+## 請後端唯讀查證（僅問題，請勿要求 agent 填答案）
+
+店別 `zz-qa-store-a`、機台 `stb-01`：
+
+1. 機台文件完整 Firestore 路徑是否與 `Paths.deviceDocPath(storeId, deviceId)` 一致？
+2. 「在線」與「最後心跳」的 **欄位名**各為何？是否存在易與 300s 節流紀錄混淆的欄位？
+3. repro 時段內，上述欄位與 **online 批次排程**、**有效心跳更新** 的因果關係如何解讀（勿用紀錄寫入時間冒充心跳）？
+4. `online` 批次排程週期是否為 2min？與前端應等待的最長窗口建議？
+5. 雲端判定在線是否同時要求 **online=true** 且心跳 **&lt;3min**？
+6. controller `devLogin` 身分對該 doc 的 **Firestore get** 與 **listen** 是否皆允許且內容一致？
+7. 若 REST 代理與 Firestore SDK 讀到不同視圖，常見原因為何（僅說明，不改 rules）？
+
+回覆可存 `artifacts/pr101-diag/evidence/backend-device-facts.json`（由人填，非 agent 寫雲端資料）。
+
+---
+
+## 回歸測試
 
 | 檔案 | 說明 |
 |------|------|
-| `tests/e2e/pr101-zz-qa-store-a-board-online-live-cloud.spec.mjs` | 真雲端 zz-qa-store-a，`data-board-online===1` |
-| `tests/e2e/pr101-zz-qa-store-a-realtime-disconnect-live-cloud.spec.mjs` | 斷網後 banner 文案 |
-| `tests/controller-pr101-realtime-device-heartbeat.test.js` | 結構斷言：`pollDevice` 在 realtime active 時跳過 REST |
+| `tests/e2e/pr101-zz-qa-store-a-board-online-live-cloud.spec.mjs` | 失敗 1 live |
+| `tests/e2e/pr101-zz-qa-store-a-realtime-disconnect-live-cloud.spec.mjs` | 失敗 2a live（30s offline） |
+| `tests/controller-pr101-realtime-device-heartbeat.test.js` | 結構：poll skip、`tickClock` |
 
 ---
 
-## 建議修復方向（**本輪不實作**）
+## 建議修復方向（本輪不實作）
 
-1. **失敗 1**：（候選，未實作）低頻 REST/device `get` 或 **本地定時重算** `lastSeen` age（恢復 main 4s 輪詢的「時間推移」效果）；對齊 **3min** 與 B2 批次 `online`；確認 snapshot 與 REST 同一欄位；listener 收不到更新時 fallback `forceRefetch`。
-2. **失敗 2**：訂閱 `window offline` / Firestore `onSnapshotsInSync` / snapshot `metadata` + listener error，在斷線時設 `cloudRealtimeConnected=false` 並顯示 banner。
+1. **失敗 1**：恢復低頻 device 讀取或本地 age 重算；對齊 B1–B4；snapshot/REST 一致。
+2. **失敗 2**：處理 SDK 離線模式（`offline` 事件、`metadata.fromCache`、listener error 以外路徑）以顯示 banner。
 
 ---
 
 ## 參考
 
-- QA 描述（bc-01c395bf artifacts 不可讀時以 chat 為準）
-- 分支 HEAD 見本 PR 最新 commit（`artifacts/controller-no-poll/REPORT.md` 為前輪 CI 報告）
+- QA `b2e36a1` / PR #101
+- `artifacts/controller-no-poll/REPORT.md`（CI 基準）

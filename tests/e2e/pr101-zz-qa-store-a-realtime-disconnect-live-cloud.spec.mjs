@@ -39,7 +39,7 @@ test.afterEach(async () => {
 });
 
 test.describe('PR101 zz-qa-store-a realtime disconnect banner (live cloud)', () => {
-  test('browser offline shows 即時同步中斷 banner within 45s', async () => {
+  test('browser offline 30s shows 即時同步中斷 banner', async () => {
     test.setTimeout(300000);
     if (STORE !== 'zz-qa-store-a') {
       throw new Error('Refusing store other than zz-qa-store-a');
@@ -62,7 +62,7 @@ test.describe('PR101 zz-qa-store-a realtime disconnect banner (live cloud)', () 
     await sampleControllerDbg(ctrl);
 
     await ctx.setOffline(true);
-    const deadline = Date.now() + 45000;
+    const deadline = Date.now() + 30000;
     let last = null;
     while (Date.now() < deadline) {
       last = await sampleControllerDbg(ctrl);
@@ -71,6 +71,7 @@ test.describe('PR101 zz-qa-store-a realtime disconnect banner (live cloud)', () 
       }
       await ctrl.waitForTimeout(2000);
     }
+    await ctx.setOffline(false);
 
     expect(last, 'offline banner samples').toBeTruthy();
     expect(last.bannerHidden, JSON.stringify(last)).toBe(false);
