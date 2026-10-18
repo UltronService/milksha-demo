@@ -6,7 +6,7 @@ import {
   PORT_SITE,
   installBundledCloudRouteShim,
   isolatedCloudContext,
-  clickControllerDevButton,
+  expandControllerZone,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -32,9 +32,8 @@ test.describe('clear then push (stale pending clear must not wipe board)', () =>
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
-    await clickControllerDevButton(ctrl, 'btn-clear-now');
-    await ctrl.locator('[data-testid="clear-board-modal"]').waitFor({ state: 'visible', timeout: 8000 });
-    await ctrl.locator('[data-testid="btn-clear-confirm"]').click();
+    await expandControllerZone(ctrl, 'sec-special');
+    await ctrl.click('#btn-clear-now');
     await expect(ctrl.locator('#log-list li').first()).toContainText(/clear_now|清空/, { timeout: 12000 });
     await ctrl.click('[data-testid="btn-send-numbers"]');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 8000 });

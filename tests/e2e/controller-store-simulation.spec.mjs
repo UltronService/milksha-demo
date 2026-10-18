@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline, expandControllerZone } from './harness.mjs';
+import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 async function openLocalPocController(browser) {
   const ctx = await freshContext(browser);
@@ -26,7 +26,7 @@ async function openLocalPocController(browser) {
 test('continuous simulation normal: board sync and stop', async ({ browser }) => {
   test.setTimeout(120000);
   const { ctx, board, controller } = await openLocalPocController(browser);
-  await expandControllerZone(controller, 'sec-pos');
+  await controller.locator('[data-testid="zone-toggle-pos"]').click();
   await controller.click('[data-testid="btn-gen-normal"]');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/運行中/, { timeout: 5000 });
   await expect(board.locator('.milksha-prep .milksha-num, .milksha-ready .milksha-num').first()).toBeVisible({
@@ -44,7 +44,7 @@ test('continuous simulation normal: board sync and stop', async ({ browser }) =>
 test('peak simulation can switch from normal without duplicate run', async ({ browser }) => {
   test.setTimeout(120000);
   const { ctx, controller } = await openLocalPocController(browser);
-  await expandControllerZone(controller, 'sec-pos');
+  await controller.locator('[data-testid="zone-toggle-pos"]').click();
   await controller.click('[data-testid="btn-gen-normal"]');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/一般/);
   await controller.click('[data-testid="btn-gen-peak"]');

@@ -6,8 +6,7 @@ import {
   PORT_SITE,
   installBundledCloudRouteShim,
   isolatedCloudContext,
-  clickControllerDevButton,
-  fillControllerDevField,
+  expandControllerZone,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -57,16 +56,15 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.goto(`${BASE}/controller/`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await fillControllerDevField(controller, 'fld-quick-no', '8101');
-    await clickControllerDevButton(controller, 'btn-send-numbers');
+    await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length === 1,
       { timeout: 8000 },
     );
-    await clickControllerDevButton(controller, 'btn-cable-pull');
-    await clickControllerDevButton(controller, 'btn-cable-restore');
-    await fillControllerDevField(controller, 'fld-quick-no', '8102');
-    await clickControllerDevButton(controller, 'btn-send-numbers');
+    await expandControllerZone(controller, 'sec-net');
+    await controller.click('#btn-cable-pull');
+    await controller.click('#btn-cable-restore');
+    await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForTimeout(2000);
     const nums = await board.locator('.milksha-ready .milksha-num').allTextContents();
     expect(nums.length).toBe(2);
@@ -85,33 +83,26 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await board.goto(`${BASE}/`);
     await controller.goto(`${BASE}/controller/`);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await clickControllerDevButton(controller, 'btn-add-ticket');
+    await expandControllerZone(controller, 'sec-pos');
+    await controller.click('#btn-add-ticket');
     await expect(controller.locator('#log-list li').first()).toContainText(/push_numbers|叫號/, {
       timeout: 12000,
     });
-    await clickControllerDevButton(controller, 'btn-one-ready');
+    await controller.click('#btn-one-ready');
     await expect(controller.locator('#log-list li').first()).toContainText(/一鍵|叫號|沒有|push_numbers/, {
       timeout: 12000,
     });
-    await clickControllerDevButton(controller, 'btn-offline');
+    await expandControllerZone(controller, 'sec-net');
+    await controller.click('#btn-offline');
     await expect(controller.locator('#log-list li').first()).toContainText(/指令 simulate_offline|offline/, {
       timeout: 12000,
     });
-    await clickControllerDevButton(controller, 'btn-restore');
-    await controller.waitForFunction(
-      () => {
-        const btn = document.getElementById('btn-clear-now');
-        return Boolean(btn && !btn.disabled);
-      },
-      { timeout: 20000 },
-    );
-    await clickControllerDevButton(controller, 'btn-clear-now');
-    await controller.locator('[data-testid="clear-board-modal"]').waitFor({ state: 'visible', timeout: 8000 });
-    await controller.locator('[data-testid="btn-clear-confirm"]').click();
-    await expect(controller.locator('#log-list li').first()).toContainText(/clear_now|清空看板/, {
+    await expandControllerZone(controller, 'sec-special');
+    await controller.click('#btn-clear-now');
+    await expect(controller.locator('#log-list li').first()).toContainText(/指令 clear_now|清空/, {
       timeout: 12000,
     });
-    await clickControllerDevButton(controller, 'btn-reload');
+    await controller.click('#btn-reload');
     await expect(controller.locator('#log-list li').first()).toContainText(/指令 reload/, { timeout: 12000 });
     await boardCtx.close();
     await ctrlCtx.close();
@@ -132,7 +123,7 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await controller.bringToFront();
     await board.waitForTimeout(idleMs);
-    await clickControllerDevButton(controller, 'btn-send-numbers');
+    await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length >= 1,
       { timeout: 8000 },
