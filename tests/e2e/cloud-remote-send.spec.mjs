@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
@@ -55,7 +55,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
       },
       { timeout: 20000 },
     );
-    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
+    await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length >= 1,
       { timeout: 8000 },
@@ -67,7 +67,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
   test('remote send shows number on board within 3s', async ({ browser }) => {
     const { boardCtx, ctrlCtx, board, controller } = await openBoardAndController(browser);
     const t0 = Date.now();
-    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
+    await controller.click('[data-testid="btn-send-numbers"]');
     await board.waitForFunction(
       () => document.querySelectorAll('.milksha-ready .milksha-num').length >= 1,
       { timeout: 5000 },
@@ -81,7 +81,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
   test('ten sends produce ten numbers and clear works', async ({ browser }) => {
     const { boardCtx, ctrlCtx, board, controller } = await openBoardAndController(browser);
     for (let i = 0; i < 10; i += 1) {
-      await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
+      await controller.click('[data-testid="btn-send-numbers"]');
       await board.waitForFunction(
         (n) => document.querySelectorAll('.milksha-ready .milksha-num').length === n,
         i + 1,

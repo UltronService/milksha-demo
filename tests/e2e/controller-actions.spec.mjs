@@ -90,6 +90,7 @@ for (const mode of MODES) {
     });
     await clickControllerDevButton(controller, 'btn-send-tammy');
     await expect(receiver.locator('.rcv-ready .rcv-num').first()).toHaveText('1488', { timeout: 15000 });
+    await expandControllerZone(controller, 'sec-pos');
     await clickControllerDevButton(controller, 'btn-gen-normal');
     await expect(receiver.locator('.rcv-prep .rcv-num, .rcv-ready .rcv-num').first()).toBeVisible({
       timeout: 30000,

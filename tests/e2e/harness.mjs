@@ -475,11 +475,24 @@ async function ensureZonesExpandedForElement(page, elementId) {
   }
 }
 
+async function confirmClearBoardModalIfOpen(page) {
+  const modal = page.locator('[data-testid="clear-board-modal"]');
+  if (!(await modal.isVisible())) {
+    return;
+  }
+  const confirm = page.locator('[data-testid="btn-clear-confirm"]');
+  await expect(confirm).toBeVisible();
+  await confirm.click();
+}
+
 export async function clickControllerDevButton(page, elementId) {
   await ensureZonesExpandedForElement(page, elementId);
   const btn = page.locator(`#${elementId}`);
   await expect(btn).toBeVisible();
   await btn.click();
+  if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+    await confirmClearBoardModalIfOpen(page);
+  }
 }
 
 export async function clickControllerDevButtonByTestId(page, testId) {

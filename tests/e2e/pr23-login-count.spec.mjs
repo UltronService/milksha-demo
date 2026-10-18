@@ -21,6 +21,7 @@ test.describe('PR23 login rate', () => {
   });
 
   test.beforeEach(async () => {
+    await restartCloud();
     await resetCloudState({ seedDevice: true });
   });
 

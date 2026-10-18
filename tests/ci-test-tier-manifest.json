@@ -1,5 +1,5 @@
 {
-  "e2eShardCount": 20,
+  "e2eShardCount": 24,
   "supportPaths": [
     "tests/fixtures/",
     "tests/e2e/harness.mjs",
