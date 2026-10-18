@@ -31,6 +31,9 @@
   /** @type {'none'|'realtime'|'rest-wake'} */
   let cloudSyncMode = 'none';
   let cloudRestWakeBound = false;
+  let restWakeCatchUpTimer = null;
+  const REST_WAKE_CATCH_UP_INTERVAL_MS = 2000;
+  const REST_WAKE_CATCH_UP_MAX_MS = 45000;
   let clockTimer = null;
   let commandInFlight = false;
   /** @type {ReturnType<typeof window.QMS.Controller.StoreSimulationHost.createStoreSimulationHost>|null} */
@@ -1326,12 +1329,46 @@
     });
   }
 
+  function stopRestWakeCatchUp() {
+    if (restWakeCatchUpTimer) {
+      clearInterval(restWakeCatchUpTimer);
+      restWakeCatchUpTimer = null;
+    }
+  }
+
+  function startRestWakeCatchUp() {
+    if (cloudSyncMode !== 'rest-wake' || !connected) {
+      return;
+    }
+    stopRestWakeCatchUp();
+    const startedAt = Date.now();
+    restWakeCatchUpTimer = setInterval(function () {
+      if (!connected || cloudSyncMode !== 'rest-wake') {
+        stopRestWakeCatchUp();
+        return;
+      }
+      if (deviceOnline) {
+        stopRestWakeCatchUp();
+        return;
+      }
+      if (Date.now() - startedAt > REST_WAKE_CATCH_UP_MAX_MS) {
+        stopRestWakeCatchUp();
+        return;
+      }
+      pollDevice().catch(function () {});
+      refreshBoardLists().catch(function () {});
+    }, REST_WAKE_CATCH_UP_INTERVAL_MS);
+  }
+
   async function startCloudRestWakeSync() {
     stopCloudRealtimeSync();
     cloudSyncMode = 'rest-wake';
     bindCloudRestWakeHandlers();
     await refreshBoardLists();
     await pollDevice();
+    if (!deviceOnline) {
+      startRestWakeCatchUp();
+    }
   }
 
   async function startCloudSync(mode, config, deviceId) {
@@ -1376,6 +1413,9 @@
       lastHeartbeatAt = formatHeartbeatDisplay(last);
       const age = Date.now() - Date.parse(last);
       deviceOnline = age < heartbeatTimeoutMs();
+      if (deviceOnline && cloudSyncMode === 'rest-wake') {
+        stopRestWakeCatchUp();
+      }
     } else {
       deviceOnline = false;
       if (!last || !isRealBoardBoxDevice(dev && dev.data)) {
@@ -1449,6 +1489,7 @@
   }
 
   function stopCloudRealtimeSync() {
+    stopRestWakeCatchUp();
     if (cloudRealtimeSync) {
       cloudRealtimeSync.stop();
       cloudRealtimeSync = null;

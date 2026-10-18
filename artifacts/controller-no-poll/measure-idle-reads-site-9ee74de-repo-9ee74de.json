@@ -1,0 +1,26 @@
+{
+  "repoGitHead": "9ee74de",
+  "siteGitHead": "9ee74de",
+  "siteRoot": "/workspace",
+  "storeId": "zz-qa-store-a",
+  "deviceId": "stb-01",
+  "idleSec": 60,
+  "elapsedMs": 60001,
+  "measuredWindow": "idle_after_connect",
+  "measurementSource": "fake-cloud /test/controllerDocGetCounts (Firestore REST GET proxy)",
+  "firestoreRestGetCounts": {
+    "board": 0,
+    "device": 0,
+    "combined": 0
+  },
+  "combinedBoardDeviceGets": 0,
+  "extrapolatedReadsPerHour": {
+    "board": 0,
+    "device": 0,
+    "combined": 0
+  },
+  "telemetry": {
+    "realtimeConnected": false,
+    "stats": null
+  }
+}

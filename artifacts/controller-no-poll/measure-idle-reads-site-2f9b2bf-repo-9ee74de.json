@@ -1,0 +1,25 @@
+{
+  "repoGitHead": "9ee74de",
+  "siteGitHead": "2f9b2bf",
+  "siteRoot": "/workspace/artifacts/controller-no-poll/main-worktree",
+  "storeId": "zz-qa-store-a",
+  "deviceId": "stb-01",
+  "idleSec": 60,
+  "elapsedMs": 60001,
+  "measuredWindow": "idle_after_connect",
+  "measurementSource": "fake-cloud /test/controllerDocGetCounts (Firestore REST GET proxy)",
+  "firestoreRestGetCounts": {
+    "board": 15,
+    "device": 15,
+    "combined": 30
+  },
+  "combinedBoardDeviceGets": 30,
+  "extrapolatedReadsPerHour": {
+    "board": 900,
+    "device": 900,
+    "combined": 1800
+  },
+  "telemetry": {
+    "stats": null
+  }
+}
