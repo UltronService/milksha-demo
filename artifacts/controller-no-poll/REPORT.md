@@ -23,10 +23,10 @@
 
 ## CI
 
-- **PR CI run**：（push 後填入 Actions URL）
-- **Head commit**：（push 後填入）
+- **PR CI run**：https://github.com/UltronService/milksha-demo/actions/runs/39127542087
+- **Head commit**：`3f09454`
 - **與 main baseline 38 失敗對照**：`artifacts/ci-nightly/main-baseline-failures-39105020723.txt` — PR 新增失敗須為 **0**（允許與 baseline 重疊的既有失敗）。
 
 ## PR
 
-- **連結**：（建立後填入）
+- **連結**：https://github.com/UltronService/milksha-demo/pull/101
