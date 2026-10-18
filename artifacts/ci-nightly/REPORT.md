@@ -1,7 +1,8 @@
 # PR #98 — CI / QA 紀錄
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head:** `9f63d18`（`cursor/ci-npm-test-playwright-order-ce9c`）
+- **Head:** `309045c`（`cursor/ci-npm-test-playwright-order-ce9c`）
+- **參考 PR CI：** [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) — workflow **failure（紅燈）**；**18** 個唯一 e2e 失敗 ⊆ main 既有 **38** 項；**分支獨有 0**
 - **main 36 項基準：** [39105020723](https://github.com/UltronService/milksha-demo/actions/runs/39105020723)（清單見 `main-baseline-failures-39105020723.txt`，含 addendum +2）
 
 ## 總監 §1 — main 單 spec ×3（同 CI 環境）
@@ -39,13 +40,15 @@ gh workflow run ci-main-spec-triple-probe.yml --ref cursor/ci-npm-test-playwrigh
 
 ## QA 驗收對照（總監 §2）
 
+**說明：** 下表「驗收符合」指 (a)–(e) 條款對照結果；**不等於** GitHub Actions workflow 全綠。證據 run [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) 結論為 **failure（紅燈）**（12 個 failed job），與 main 既有失敗清單對照後 **分支獨有 0**。
+
 | 條目 | 結果 | 證據 |
 |------|------|------|
-| **(a) 總時間 ≤15 分** | **通過** | PR CI [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) workflow **11m 13s**；較早綠牆參考 [39108756283](https://github.com/UltronService/milksha-demo/actions/runs/39108756283) **9m 39s** |
-| **(b) 每測試檔 PR 或 nightly** | **通過** | `node --test tests/ci-test-tier-assignment.test.js` — `every test file is assigned to exactly one of PR or nightly tiers`；`tests/ci-test-tier-manifest.json` → `e2eShardCount: 24` |
-| **(c) PR 不連真雲** | **通過** | `tests/ci-pr-tier-guard.test.js`（`installPrTierNetworkGuard`、`firestore.googleapis.com` shim）；`tests/ci-pr-workflow-guard.test.js`（`ci.yml` 無 `e2e-live-cloud` job） |
-| **(d) 失敗沒比 main 多** | **通過** | 本 run **18** 個唯一失敗測試 ⊆ baseline **38**（36 + addendum 2）；無「僅分支」新增項（見下表） |
-| **(e) 展開後才 toBeVisible** | **通過** | 單元：`tests/controller-zone-expand-harness.test.js`；e2e：`POS add-ticket stays hidden until zones are expanded by user toggle`、`after expandControllerZone clicks, add-ticket is visible to the user`（`tests/e2e/controller-zone-expand-guard.spec.mjs`） |
+| **(a) 總時間 ≤15 分** | **驗收符合** | 同上 run 牆鐘 **11m 13s**（紅燈 run，僅量牆鐘）；同分支較早 run [39108756283](https://github.com/UltronService/milksha-demo/actions/runs/39108756283) 亦 **failure**，牆鐘 **9m 39s** |
+| **(b) 每測試檔 PR 或 nightly** | **驗收符合** | `node --test tests/ci-test-tier-assignment.test.js` — `every test file is assigned to exactly one of PR or nightly tiers`；`tests/ci-test-tier-manifest.json` → `e2eShardCount: 24` |
+| **(c) PR 不連真雲** | **驗收符合** | `tests/ci-pr-tier-guard.test.js`（`installPrTierNetworkGuard`、`firestore.googleapis.com` shim）；`tests/ci-pr-workflow-guard.test.js`（`ci.yml` 無 `e2e-live-cloud` job） |
+| **(d) 失敗沒比 main 多** | **驗收符合** | run 39109845340：**18** 個唯一失敗 ⊆ baseline **38**（36 + addendum 2）；**分支獨有 0**（見下表） |
+| **(e) 展開後才 toBeVisible** | **驗收符合** | 單元：`tests/controller-zone-expand-harness.test.js`；e2e：`POS add-ticket stays hidden until zones are expanded by user toggle`、`after expandControllerZone clicks, add-ticket is visible to the user`（`tests/e2e/controller-zone-expand-guard.spec.mjs`） |
 
 ### (d) 對照 — PR [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) vs main baseline
 
@@ -74,11 +77,12 @@ gh workflow run ci-main-spec-triple-probe.yml --ref cursor/ci-npm-test-playwrigh
 - `home-board-ten-send-clear` — fresh context + 2× localStorage seeded variants
 - `pr23-login-count` — 5 min normal board idle（**獨立 job + main addendum**）
 
-## 最新 PR CI（commit `9f63d18`）
+## 最新 PR CI（證據 run，非全綠）
 
 | 項目 | 值 |
 |------|-----|
 | Run | [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) |
+| Workflow 結論 | **failure（紅燈）** |
 | Workflow 牆鐘 | **11m 13s** |
 | 最慢 e2e shard | **e2e (19)** ≈ **9m 31s**（571s） |
 | 失敗 job 數 | 12（含 `e2e-pr23-login-rate`） |
