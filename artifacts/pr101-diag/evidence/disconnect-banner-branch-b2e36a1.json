@@ -1,0 +1,214 @@
+{
+  "label": "branch-b2e36a1",
+  "siteRoot": "/workspace",
+  "store": "zz-qa-store-a",
+  "passed": false,
+  "offlineSamples": [
+    {
+      "at": "2026-10-18T15:22:53.678Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:22:55.688Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:22:58.697Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:23:02.705Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:23:08.712Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:23:18.721Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:23:36.729Z",
+      "boardOnline": "0",
+      "connected": "1",
+      "transportRoute": "0",
+      "realtimePill": null,
+      "telemetryRealtime": true,
+      "bannerHidden": true,
+      "bannerText": "",
+      "realtimeStats": {
+        "boardListen": true,
+        "deviceListen": true,
+        "readCounts": {
+          "board": 1,
+          "device": 1,
+          "refetch": 0
+        }
+      },
+      "sdkLoaded": true,
+      "authUser": true,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    }
+  ],
+  "consoleLines": [
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:22:51.252Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"0\",\"connected\":\"1\",\"transportRoute\":\"0\",\"realtimePill\":null,\"telemetryRealtime\":true,\"bannerHidden\":true,\"bannerText\":\"\",\"realtimeStats\":{\"boardListen\":true,\"deviceListen\":true,\"readCounts\":{\"board\":1,\"device\":1,\"refetch\":0}},\"sdkLoaded\":true,\"authUser\":true,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "label": "main-2f9b2bf",
+  "siteRoot": "/workspace/artifacts/controller-no-poll/main-worktree",
+  "store": "zz-qa-store-a",
+  "passed": false,
+  "offlineSamples": [
+    {
+      "at": "2026-10-18T15:24:18.909Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:20.914Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:23.923Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "Failed to fetch",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:27.930Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "signal is aborted without reason",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:37.936Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "signal is aborted without reason",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:47.941Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "signal is aborted without reason",
+      "navigatorOnLine": false
+    },
+    {
+      "at": "2026-10-18T15:24:57.945Z",
+      "boardOnline": "1",
+      "connected": "1",
+      "transportRoute": "1",
+      "realtimePill": null,
+      "bannerText": "",
+      "realtimeStats": null,
+      "sdkLoaded": false,
+      "authUser": false,
+      "paths": {
+        "devicePath": "stores/zz-qa-store-a/devices/stb-01",
+        "boardPath": "stores/zz-qa-store-a/board/today_board"
+      },
+      "restDevice": null,
+      "restError": "signal is aborted without reason",
+      "navigatorOnLine": false
+    }
+  ],
+  "consoleLines": [
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":{\"lastSeen\":\"2026-10-18T15:24:18.543Z\",\"online\":true,\"appVersion\":\"receiver-demo-2026-10-08-realtime-board\"},\"restError\":\"\",\"navigatorOnLine\":true}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"Failed to fetch\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"signal is aborted without reason\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"signal is aborted without reason\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"signal is aborted without reason\",\"navigatorOnLine\":false}",
+    "[pr101-dbg] sample {\"boardOnline\":\"1\",\"connected\":\"1\",\"transportRoute\":\"1\",\"realtimePill\":null,\"bannerText\":\"\",\"realtimeStats\":null,\"sdkLoaded\":false,\"authUser\":false,\"paths\":{\"devicePath\":\"stores/zz-qa-store-a/devices/stb-01\",\"boardPath\":\"stores/zz-qa-store-a/board/today_board\"},\"restDevice\":null,\"restError\":\"signal is aborted without reason\",\"navigatorOnLine\":false}"
+  ]
+}
