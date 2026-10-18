@@ -42,6 +42,7 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
     'js/board/board-auto-pair.js',
     'js/board/board-auto-pair-host.js',
     'js/board/chip-overflow-fit.js',
+    'js/board/pos-ticket-display-no.js',
   ];
   const forbidden = [];
   for (let i = 0; i < touched.length; i += 1) {

@@ -24,6 +24,7 @@ function loadPipeline() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'validate-request.js'), 'utf8'), sandbox);
   vm.runInNewContext(
@@ -82,7 +83,7 @@ test('five sequential sends: refresh readback keeps point 092 and uber C7459 (QA
     { no: '2001', sourceType: 'From_Store_OK', key: 'store' },
     { no: '092', sourceType: 'From_milksha_point_OK', key: 'point' },
     { no: 'C7459', sourceType: 'From_UberEat_OK', key: 'uber' },
-    { no: '6406', sourceType: 'From_FoodPanda_OK', key: 'fp' },
+    { no: '#6406', sourceType: 'From_FoodPanda_OK', key: 'fp' },
     { no: '1234', sourceType: 'From_Udd_OK', key: 'udd' },
   ];
   /** @type {Array<{ no: string, status: string, sourceType: string }>} */
@@ -119,6 +120,6 @@ test('fixture cloud delivery sample maps all non-store sources', function () {
   }));
   assert.equal(byNo['578'], 'From_milksha_point_OK');
   assert.equal(byNo['C7458'], 'From_UberEat_OK');
-  assert.equal(byNo['6406'], 'From_FoodPanda_OK');
+  assert.equal(byNo['#6406'], 'From_FoodPanda_OK');
   assert.equal(byNo['7112'], 'From_Store_OK');
 });

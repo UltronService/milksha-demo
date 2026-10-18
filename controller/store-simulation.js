@@ -18,11 +18,7 @@
     udd: 0.075,
   };
 
-  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
-  const BOARD_NUMBER_DIGIT_4_TO_6 = /^\d{4,6}$/;
-  const BOARD_NUMBER_ALNUM_4_TO_6 = /^[A-Za-z0-9]{4,6}$/;
-  const ALNUM_POOL = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const HEX_POOL = '0123456789ABCDEF';
 
   const MODE_TIMING = {
     normal: {
@@ -73,32 +69,9 @@
     if (MB && typeof MB.normalizeBoardDisplayNumber === 'function') {
       return MB.normalizeBoardDisplayNumber(typeof raw === 'string' ? raw : String(raw == null ? '' : raw), sourceKey);
     }
-    if (typeof raw !== 'string') {
-      return null;
-    }
-    const key = sourceKey || 'store';
-    let working = typeof raw === 'string' ? raw : String(raw == null ? '' : raw);
-    if (key === 'fp') {
-      working = working.replace(/#/g, '');
-    }
-    const trimmed = working.trim();
-    if (trimmed.length > 6) {
-      return null;
-    }
-    if (key === 'store') {
-      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'point') {
-      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'fp') {
-      return BOARD_NUMBER_DIGIT_4_TO_6.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'uber' || key === 'udd') {
-      if (!BOARD_NUMBER_ALNUM_4_TO_6.test(trimmed)) {
-        return null;
-      }
-      return trimmed.toUpperCase();
+    const Pos = root.QMS && root.QMS.Board && root.QMS.Board.PosTicketDisplayNo;
+    if (Pos && typeof Pos.normalizeForSourceKey === 'function') {
+      return Pos.normalizeForSourceKey(raw, sourceKey);
     }
     return null;
   }
@@ -138,23 +111,25 @@
    * @returns {string}
    */
   function randomPointNumber(rng) {
-    const len = rng() < 0.5 ? 3 : 4;
-    return randomDigitString(len, rng);
+    return randomDigitString(3, rng);
   }
 
   /**
-   * @param {number} minLen
-   * @param {number} maxLen
    * @param {() => number} rng
    * @returns {string}
    */
-  function randomAlnumNumber(minLen, maxLen, rng) {
-    const lo = Math.max(1, minLen);
-    const hi = Math.max(lo, maxLen);
-    const len = lo + Math.floor(rng() * (hi - lo + 1));
+  function randomFpNumber(rng) {
+    return '#' + randomDigitString(4, rng);
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomUberHexNumber(rng) {
     let s = '';
-    for (let i = 0; i < len; i += 1) {
-      s += ALNUM_POOL.charAt(Math.floor(rng() * ALNUM_POOL.length));
+    for (let i = 0; i < 5; i += 1) {
+      s += HEX_POOL.charAt(Math.floor(rng() * 16));
     }
     return s;
   }
@@ -163,17 +138,8 @@
    * @param {() => number} rng
    * @returns {string}
    */
-  function randomFpNumber(rng) {
-    const len = 4 + Math.floor(rng() * 3);
-    return randomDigitString(len, rng);
-  }
-
-  /**
-   * @param {() => number} rng
-   * @returns {string}
-   */
-  function randomUberHexNumber(rng) {
-    return randomAlnumNumber(4, 6, rng);
+  function randomUddNumber(rng) {
+    return randomDigitString(4, rng);
   }
 
   /**
@@ -277,7 +243,7 @@
       } else if (key === 'uber') {
         raw = randomUberHexNumber(rng);
       } else if (key === 'udd') {
-        raw = randomAlnumNumber(4, 6, rng);
+        raw = randomUddNumber(rng);
       } else {
         raw = allocateNextNumber(state, usedOnBoard, rng);
       }

@@ -63,11 +63,11 @@ export async function gotoLayoutHarness(page, base) {
 /** Four sources, varying number widths (5-char Uber, hash fp, point, store). */
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
   { source_type: 'From_UberEat_Preparing', number: 'A2C9E' },
-  { source_type: 'From_FoodPanda_Preparing', number: '6406' },
+  { source_type: 'From_FoodPanda_Preparing', number: '#6406' },
   { source_type: 'From_milksha_point_Preparing', number: '097' },
   { source_type: 'From_Store_Preparing', number: '2218' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
-  { source_type: 'From_FoodPanda_Preparing', number: '6405' },
+  { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
   { source_type: 'From_milksha_point_Preparing', number: '096' },
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_UberEat_Preparing', number: 'C3D4E' },
@@ -470,11 +470,11 @@ export async function captureFullBoardScreenshot(options) {
 export function buildFullBoardMixedPayload() {
   const prepNos = [
     { sourceKey: 'uber', no: 'A2C9E' },
-    { sourceKey: 'fp', no: '6406' },
+    { sourceKey: 'fp', no: '#6406' },
     { sourceKey: 'point', no: '097' },
     { sourceKey: 'store', no: '2218' },
     { sourceKey: 'uber', no: 'BFBEF' },
-    { sourceKey: 'fp', no: '6405' },
+    { sourceKey: 'fp', no: '#6405' },
     { sourceKey: 'point', no: '096' },
     { sourceKey: 'store', no: '2217' },
     { sourceKey: 'uber', no: 'C3D4E' },

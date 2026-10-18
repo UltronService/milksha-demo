@@ -2,7 +2,7 @@
 
 /**
  * Fake `today_board.tickets[]` (milksha-cloud PR #22, pre-deploy).
- * `no` is cloud-normalized; foodpanda hash is stripped on the board.
+ * `no` is cloud display value (foodpanda includes leading #).
  * Missing `sourceType` → board treats as store.
  */
 const CLOUD_DELIVERY_SAMPLE_TICKETS = [
@@ -19,7 +19,7 @@ const CLOUD_DELIVERY_SAMPLE_TICKETS = [
     updatedAt: '2026-10-12T22:00:01.000Z',
   },
   {
-    no: '6406',
+    no: '#6406',
     status: 'ready',
     sourceType: 'From_FoodPanda_OK',
     updatedAt: '2026-10-12T22:00:02.000Z',

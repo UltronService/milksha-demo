@@ -152,7 +152,7 @@ test.describe(`${LIVE_CLOUD_STORE_ID} controller push_numbers sources (live clou
       { source: 'uber', no: '1234' },
       { source: 'point', no: '091' },
       { source: 'fp', no: '#6406' },
-      { source: 'udd', no: 'ab12' },
+      { source: 'udd', no: '1234' },
     ];
 
     const pushResult = await ctrl.evaluate(async function (rows) {

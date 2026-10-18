@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const STORE_FOUR = '1234';
-/** Widest valid 6-char Uber alnum on Arial tabular (overflows column band at 1080p/4K). */
+/** Six-char generic channel display (cloud fallback 3–6 alnum); still triggers column overflow fit beside store. */
 export const UBER_SIX = 'WWWWWW';
 
 export const OVERFLOW_VIEWPORTS = [
@@ -23,7 +23,7 @@ export function pr95OverflowArtifactsDir() {
 export function buildUberSixCharOverflowPayload() {
   return [
     { source_type: 'From_Store_OK', number: STORE_FOUR },
-    { source_type: 'From_UberEat_OK', number: UBER_SIX },
+    { source_type: 'From_WideBench_OK', number: UBER_SIX },
   ];
 }
 

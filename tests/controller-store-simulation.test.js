@@ -23,6 +23,7 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
@@ -33,6 +34,8 @@ function loadSimulation() {
   const sandbox = { console: console, setTimeout: setTimeout, clearTimeout: clearTimeout };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/milksha-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-simulation-host.js'), 'utf8'), sandbox);
   return {
@@ -46,16 +49,16 @@ function sourceNumberPattern(sourceKey) {
     return /^\d{4}$/;
   }
   if (sourceKey === 'point') {
-    return /^\d{3,4}$/;
+    return /^\d{3}$/;
   }
   if (sourceKey === 'fp') {
-    return /^\d{4,6}$/;
+    return /^#\d{4}$/;
   }
   if (sourceKey === 'uber') {
-    return /^[0-9A-Z]{4,6}$/;
+    return /^[0-9A-F]{5}$/;
   }
   if (sourceKey === 'udd') {
-    return /^[0-9A-Z]{4,6}$/;
+    return /^\d{4}$/;
   }
   return /^.+$/;
 }
@@ -102,7 +105,8 @@ test('regression: too-short udd numbers are rejected before push', function () {
     assert.equal(check.reason, 'invalid-number');
   });
   const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
-  assert.equal(src.includes('randomAlnumNumber'), true);
+  assert.equal(src.includes('normalizeSimNumber'), true);
+  assert.equal(src.includes('allocateNumberForSource'), true);
 });
 
 test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
@@ -139,7 +143,7 @@ test('validateTicketsForBoardPush allows same number on different sources', func
   const { Sim } = loadSimulation();
   const check = Sim.validateTicketsForBoardPush([
     { no: '1234', status: 'preparing', sourceKey: 'store' },
-    { no: '12340', status: 'ready', sourceKey: 'uber' },
+    { no: 'AB12C', status: 'ready', sourceKey: 'uber' },
     { no: 'C7458', status: 'preparing', sourceKey: 'uber' },
     { no: '091', status: 'ready', sourceKey: 'point' },
   ]);

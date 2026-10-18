@@ -19,27 +19,27 @@
   /** @type {Record<string, string>} */
   const DEFAULT_QUICK_SEND_NUMBER = {
     store: '2001',
-    point: '091',
-    uber: 'C7458',
-    fp: '6405',
+    point: '012',
+    uber: 'AB12C',
+    fp: '#6405',
     udd: '1234',
   };
 
   /** @type {Record<string, string>} */
   const RULE_NOTE = {
     store: '4 位數字',
-    point: '3–4 位數字',
-    fp: '4–6 位數字，# 可有可無',
-    uber: '4–6 位英數字',
-    udd: '4–6 位英數字',
+    point: '3 位數字',
+    fp: '# 與 4 位數字（例 #1234）',
+    uber: '5 位十六進位 A–F',
+    udd: '4 位數字',
   };
 
   const VALIDATION_HINT = {
     store: '門市號碼須為 4 位數字',
-    point: '迷點號碼須為 3–4 位數字',
-    fp: 'foodpanda 號碼須為 4–6 位數字',
-    uber: 'Uber Eats 號碼須為 4–6 位英數字',
-    udd: 'Udd 號碼須為 4–6 位英數字',
+    point: '迷點號碼須為 3 位數字',
+    fp: 'foodpanda 須為 # 加 4 位數字（例 #1234）',
+    uber: 'Uber Eats 須為 5 位十六進位（A–F）',
+    udd: 'Udd 須為 4 位數字',
   };
 
   const DUPLICATE_ON_BOARD_MESSAGE = '此號碼已在看板上';
@@ -87,12 +87,6 @@
     const normalized = normalize(raw, key);
     if (!normalized) {
       return { ok: false, message: hint };
-    }
-    if (key === 'fp' && normalized.length < 4) {
-      return { ok: false, message: VALIDATION_HINT.fp };
-    }
-    if ((key === 'uber' || key === 'udd') && normalized.length < 4) {
-      return { ok: false, message: VALIDATION_HINT[key] };
     }
     return { ok: true, normalized: normalized, sourceKey: key };
   }

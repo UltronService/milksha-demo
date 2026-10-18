@@ -153,11 +153,6 @@
     return ib - ia;
   }
 
-  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_DIGIT_3_TO_4 = /^\d{3,4}$/;
-  const BOARD_NUMBER_DIGIT_4_TO_6 = /^\d{4,6}$/;
-  const BOARD_NUMBER_ALNUM_4_TO_6 = /^[A-Za-z0-9]{4,6}$/;
-  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
   /**
@@ -173,44 +168,24 @@
   }
 
   /**
-   * Board display guard — matches cloud normalization:
-   * store 4 digits; point 3–4 digits; fp 4–6 digits (# stripped); uber/udd 4–6 alnum uppercase.
+   * Board display guard — milksha-cloud sanitizePosTicketDisplayNo (via pos-ticket-display-no.js).
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
    */
   function normalizeBoardDisplayNumber(raw, sourceKey) {
-    if (typeof raw !== 'string') {
+    const mod = QMS.Board && QMS.Board.PosTicketDisplayNo;
+    if (!mod || typeof mod.sanitizePosTicketDisplayNo !== 'function') {
       return null;
     }
     const key = sourceKey || 'store';
-    let working = raw;
-    if (key === 'fp') {
-      working = working.replace(/#/g, '');
+    if (typeof key === 'string' && key.indexOf('unk:') === 0) {
+      return mod.sanitizePosTicketDisplayNo(raw, key.slice(4));
     }
-    const trimmed = working.trim();
-    if (trimmed.length > 6) {
-      return null;
+    if (typeof mod.normalizeForSourceKey === 'function') {
+      return mod.normalizeForSourceKey(raw, key);
     }
-    if (key === 'store') {
-      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'point') {
-      return BOARD_NUMBER_DIGIT_3_TO_4.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'fp') {
-      return BOARD_NUMBER_DIGIT_4_TO_6.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'uber' || key === 'udd') {
-      if (!BOARD_NUMBER_ALNUM_4_TO_6.test(trimmed)) {
-        return null;
-      }
-      return trimmed.toUpperCase();
-    }
-    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
-      return null;
-    }
-    return trimmed.toUpperCase();
+    return null;
   }
 
   /** @param {() => void} fn — test hook */

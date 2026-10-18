@@ -16,6 +16,7 @@ const BOARD_DIFF_WHITELIST = [
   'js/board/board-auto-pair.js',
   'js/board/board-auto-pair-host.js',
   'js/board/chip-overflow-fit.js',
+  'js/board/pos-ticket-display-no.js',
 ];
 
 const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';

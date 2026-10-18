@@ -32,11 +32,12 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'source-icons-layout.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/source-icons-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/milksha-board-anim-config.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/milksha-board-anim.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/milksha-board.js'), 'utf8'), sandbox);
   return sandbox.QMS.MilkshaBoard;
 }
 
@@ -45,7 +46,7 @@ function loadTodayBoard() {
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
   vm.runInNewContext(
-    fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'),
+    fs.readFileSync(path.join(ROOT, 'js/board/today-board.js'), 'utf8'),
     sandbox,
   );
   return sandbox.QMS.Board.TodayBoard;
@@ -59,23 +60,22 @@ test('store source accepts only four-digit strings', function () {
   assert.equal(MB.normalizeBoardDisplayNumber('12ab', 'store'), null);
 });
 
-test('milksha point keeps leading zero on short numeric codes', function () {
+test('milksha point: exactly 3 digits', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
-  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), null);
 });
 
-test('foodpanda accepts 4–6 digits with optional hash stripped on display', function () {
+test('foodpanda requires hash and 4 digits on display', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '12345');
-  assert.equal(MB.normalizeBoardDisplayNumber('#1234567', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
 });
 
-test('uber alphanumeric normalizes to uppercase', function () {
+test('uber: 5 hex uppercase', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
 });
@@ -85,17 +85,17 @@ test('same digits on different sources both appear when each is valid for its so
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
     { source_type: 'From_Store_OK', number: '1234' },
-    { source_type: 'From_UberEat_OK', number: '12340' },
+    { source_type: 'From_UberEat_OK', number: '1234A' },
   ]);
   assert.equal(parts.ready.length, 2);
   assert.ok(parts.ready.some((r) => r.sourceKey === 'store' && r.number === '1234'));
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '12340'));
+  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '1234A'));
 });
 
-test('non-store numbers longer than six characters are dropped', function () {
+test('invalid uber hex is dropped', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('1234567', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ABCDEFG', 'uber'), null);
   const parts = MB.partitionNumberContent([
     { source_type: 'From_UberEat_OK', number: 'ABCDEFG' },
   ]);
@@ -125,5 +125,5 @@ test('cloud-shaped delivery sample tickets partition to four ready numbers', fun
   const parts = MB.partitionNumberContent(nc);
   assert.equal(parts.ready.length, 4);
   const nums = parts.ready.map((r) => r.number).sort();
-  assert.equal(nums.join(','), '578,6406,7112,C7458');
+  assert.equal(nums.join(','), '#6406,578,7112,C7458');
 });

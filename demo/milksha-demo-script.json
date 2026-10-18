@@ -150,7 +150,7 @@
   {
     "_note": "1001 取餐完消失（不響）；F37 轉可取餐（要響）",
     "_expectRing": [
-      "fp:5037"
+      "fp:#5037"
     ],
     "request": {
       "isEncrypt": false,
@@ -422,7 +422,7 @@
       "store:1011",
       "store:1012",
       "point:022",
-      "fp:5038",
+      "fp:#5038",
       "uber:5513B"
     ],
     "request": {

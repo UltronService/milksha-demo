@@ -23,6 +23,7 @@ function loadSendNumber() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller', 'controller-send-number.js'), 'utf8'), sandbox);
   return sandbox.QMS.Controller.SendNumber;
@@ -36,7 +37,7 @@ test('switching source replaces pristine default with new source default', funct
     currentValue: '2001',
     pristine: true,
   });
-  assert.equal(first.nextValue, 'C7458');
+  assert.equal(first.nextValue, 'AB12C');
   assert.equal(first.selectAll, true);
   assert.equal(first.pristine, true);
 });
@@ -75,22 +76,23 @@ test('B5: valid number restores normal rule note and enabled send', function () 
     duplicateOnBoard: false,
   });
   assert.equal(ui.valid, true);
-  assert.equal(ui.ruleNoteText, '4–6 位數字，# 可有可無');
+  assert.equal(ui.ruleNoteText, '# 與 4 位數字（例 #1234）');
   assert.equal(ui.errorText, '');
   assert.equal(ui.inputInvalid, false);
   assert.equal(ui.sendDisabled, false);
 });
 
-test('foodpanda normalizes without hash for board display', function () {
+test('foodpanda keeps hash on board display', function () {
   const S = loadSendNumber();
   const ok = S.validateQuickSendNumber('fp', '#6405');
   assert.equal(ok.ok, true);
-  assert.equal(ok.normalized, '6405');
+  assert.equal(ok.normalized, '#6405');
 });
 
-test('point accepts 4 digits with leading zero preserved', function () {
+test('point accepts exactly 3 digits with leading zero preserved', function () {
   const S = loadSendNumber();
-  assert.equal(S.validateQuickSendNumber('point', '0912').normalized, '0912');
+  assert.equal(S.validateQuickSendNumber('point', '012').normalized, '012');
+  assert.equal(S.validateQuickSendNumber('point', '0912').ok, false);
 });
 
 test('duplicate on board surfaces 此號碼已在看板上 in rule-note slot', function () {

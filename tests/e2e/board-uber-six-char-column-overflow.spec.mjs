@@ -108,14 +108,14 @@ test.describe('PR #95: uber 6-char + icon column overflow', () => {
       };
       window.QMS.Board.ChipOverflowFit.resetFailureLog();
     });
-    const payload = [{ source_type: 'From_UberEat_OK', number: UBER_SIX }];
+    const payload = [{ source_type: 'From_UberEat_OK', number: 'AB12C' }];
     await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), payload);
     await page.waitForTimeout(100);
     await page.evaluate((rows) => window.QMS.runtime.applyPayload(rows), payload);
     await page.waitForTimeout(100);
     const logged = await page.evaluate(() => window.QMS.Board.ChipOverflowFit.getFailureLoggedIds());
     expect(logged.length).toBe(1);
-    expect(logged[0]).toMatch(/^uber:/);
+    expect(logged[0]).toMatch(/^uber:AB12C$/);
   });
 
   test('scale fit API: no recompute every idle frame after payload', async ({ page }) => {

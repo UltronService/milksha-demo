@@ -23,9 +23,10 @@ function loadControllerSendNumber() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller', 'controller-send-number.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'transport', 'push-numbers-params.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/milksha-board.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/controller-send-number.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/transport/push-numbers-params.js'), 'utf8'), sandbox);
   return {
     SendNumber: sandbox.QMS.Controller.SendNumber,
     PushNumbersParams: sandbox.QMS.Transport.PushNumbersParams,
@@ -50,33 +51,31 @@ test('store quick send accepts only four digits', function () {
   assert.equal(SendNumber.validateQuickSendNumber('store', '12345').ok, false);
 });
 
-test('point quick send: 3–4 digits preserves leading zero', function () {
+test('point quick send: exactly 3 digits preserves leading zero', function () {
   const { SendNumber } = loadControllerSendNumber();
   const ok = SendNumber.validateQuickSendNumber('point', '091');
   assert.equal(ok.ok, true);
   assert.equal(ok.normalized, '091');
-  assert.equal(SendNumber.validateQuickSendNumber('point', '0912').ok, true);
+  assert.equal(SendNumber.validateQuickSendNumber('point', '0912').ok, false);
   assert.equal(SendNumber.validateQuickSendNumber('point', '12').ok, false);
 });
 
-test('uber and udd: 4–6 alnum uppercase', function () {
+test('uber: 5 hex; udd: 4 digits', function () {
   const { SendNumber } = loadControllerSendNumber();
   const uber = SendNumber.validateQuickSendNumber('uber', 'c7458');
   assert.equal(uber.ok, true);
   assert.equal(uber.normalized, 'C7458');
-  const udd = SendNumber.validateQuickSendNumber('udd', 'ab12');
-  assert.equal(udd.ok, true);
-  assert.equal(udd.normalized, 'AB12');
-  assert.equal(SendNumber.validateQuickSendNumber('udd', 'abc').ok, false);
-  assert.equal(SendNumber.validateQuickSendNumber('uber', 'GGG').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('uber', 'AB12G').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('udd', '1234').ok, true);
+  assert.equal(SendNumber.validateQuickSendNumber('udd', 'ab12').ok, false);
 });
 
-test('foodpanda: 4–6 digits, optional leading #', function () {
+test('foodpanda: # + 4 digits required', function () {
   const { SendNumber } = loadControllerSendNumber();
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '6406');
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, true);
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '#6406');
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, false);
   assert.equal(SendNumber.validateQuickSendNumber('fp', '#123').ok, false);
-  assert.match(SendNumber.RULE_NOTE.fp, /# 可有可無/);
+  assert.match(SendNumber.RULE_NOTE.fp, /#.*4 位數字/);
 });
 
 test('invalid quick send returns message and does not normalize', function () {

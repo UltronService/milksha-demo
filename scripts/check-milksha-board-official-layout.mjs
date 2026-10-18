@@ -16,11 +16,11 @@ const ICON_BOX_FACTOR = 0.8;
 const SAMPLE_PAYLOAD = [
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_milksha_point_Preparing', number: '096' },
-  { source_type: 'From_FoodPanda_Preparing', number: '6405' },
+  { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
   { source_type: 'From_Store_OK', number: '2217' },
   { source_type: 'From_milksha_point_OK', number: '096' },
-  { source_type: 'From_FoodPanda_OK', number: '6405' },
+  { source_type: 'From_FoodPanda_OK', number: '#6405' },
   { source_type: 'From_UberEat_OK', number: 'BFBEF' },
 ];
 
@@ -135,9 +135,9 @@ export async function runOfficialBoardLayoutCheck() {
         failures.push('icon slot overflow hidden');
       }
     });
-    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:6405"] .milksha-num');
-    if (!fp || fp.textContent !== '6405') {
-      failures.push('foodpanda display expected 6405 got ' + (fp ? fp.textContent : 'missing'));
+    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:#6405"] .milksha-num');
+    if (!fp || fp.textContent !== '#6405') {
+      failures.push('foodpanda display expected #6405 got ' + (fp ? fp.textContent : 'missing'));
     }
     return { ok: failures.length === 0, fontPx: expectedFont, failures: failures };
   }, FONT_PX);
