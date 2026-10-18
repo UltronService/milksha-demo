@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, connectController, resetCloudState } from './harness.mjs';
+import {
+  urlsForMode,
+  connectController,
+  resetCloudState,
+  clickControllerDevButton,
+  fillControllerDevField,
+  selectControllerDevField,
+} from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -44,7 +51,7 @@ test.describe('guest board empty hint states', () => {
 
   test('both-empty shows centered hint', async ({ browser }) => {
     const { ctx, receiver, controller } = await openPair(browser);
-    await controller.click('#btn-clear-board');
+    await clickControllerDevButton(controller, 'btn-clear-board');
     const hint = receiver.locator('#rcv-empty-board-hint');
     await expect(hint).toBeVisible({ timeout: 15000 });
     await expect(hint).toHaveText('目前沒有號碼');
@@ -55,10 +62,10 @@ test.describe('guest board empty hint states', () => {
 
   test('one-empty hides hint and leaves other column blank', async ({ browser }) => {
     const { ctx, receiver, controller } = await openPair(browser);
-    await controller.click('#btn-clear-board');
-    await controller.fill('#fld-no', '9201');
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.click('#btn-add-ticket');
+    await clickControllerDevButton(controller, 'btn-clear-board');
+    await fillControllerDevField(controller, 'fld-no', '9201');
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '9201' })).toBeVisible({
       timeout: 15000,
     });
@@ -71,12 +78,12 @@ test.describe('guest board empty hint states', () => {
 
   test('none-empty hides hint immediately', async ({ browser }) => {
     const { ctx, receiver, controller } = await openPair(browser);
-    await controller.fill('#fld-no', '9301');
-    await controller.selectOption('#fld-status', 'ready');
-    await controller.click('#btn-add-ticket');
-    await controller.fill('#fld-no', '9302');
-    await controller.selectOption('#fld-status', 'preparing');
-    await controller.click('#btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '9301');
+    await selectControllerDevField(controller, 'fld-status', 'ready');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
+    await fillControllerDevField(controller, 'fld-no', '9302');
+    await selectControllerDevField(controller, 'fld-status', 'preparing');
+    await clickControllerDevButton(controller, 'btn-add-ticket');
     await expect(receiver.locator('#rcv-empty-board-hint')).toBeHidden();
     await expect(receiver.locator('.rcv-ready .rcv-num', { hasText: '9301' })).toBeVisible({
       timeout: 15000,

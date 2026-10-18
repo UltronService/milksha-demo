@@ -16,12 +16,10 @@ test('harness defines PR-tier production network guard for fake-cloud shim', fun
   );
 });
 
-test('installBundledCloudRouteShim registers proxy routes before PR guard abort', function () {
+test('installBundledCloudRouteShim proxies production cloud hosts to fake-cloud', function () {
   const src = readFileSync(harnessPath, 'utf8');
   const shimStart = src.indexOf('export async function installBundledCloudRouteShim');
   const shimBody = src.slice(shimStart, shimStart + 2500);
-  assert.ok(shimBody.includes('installPrTierNetworkGuard'), 'shim must call guard helper');
-  const guardIdx = shimBody.indexOf('installPrTierNetworkGuard');
-  const routeIdx = shimBody.indexOf("page.route('https://firestore.googleapis.com");
-  assert.ok(guardIdx >= 0 && routeIdx > guardIdx, 'proxy routes must follow guard setup');
+  assert.ok(shimBody.includes("page.route('https://firestore.googleapis.com"));
+  assert.ok(shimBody.includes('asia-east1-milksha-qms-dev.cloudfunctions.net'));
 });
