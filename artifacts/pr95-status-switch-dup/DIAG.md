@@ -1,9 +1,9 @@
-# PR #95 — 準備中 → 請取餐 後「此號碼已在看板上」（`b35c419`）
+# PR #95 — 準備中 → 請取餐 後「此號碼已在看板上」
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/95
-- **HEAD（除錯基線）:** `b35c419`
-- **對照（QA 稱無此現象）:** `f02ddca`（`controller/controller-app.js` 與 `b35c419` **無 diff**）
-- **本輪:** 僅回歸測試 + 假設，**不修程式**
+- **除錯基線:** `5715da7`（回歸測試紅燈）
+- **修正 HEAD:** _(push 後填入)_
+- **根因:** **H1** — `fld-quick-status` 無 `change` 監聽，狀態切換後未重跑 `syncQuickSendFieldUi` / `syncActionButtonStates`
 
 ## 現象（QA）
 
@@ -62,7 +62,7 @@ git checkout f02ddca
 |--|--|
 | **機制** | `buildQuickSendPresentationForField` 每次會用 `readQuickSendStatus()` 重算 `duplicateOnBoard`，但 **DOM 只在 `syncQuickSendFieldUi` 更新**。`syncActionButtonStates` 單獨呼叫時會重算 `isQuickSendSendBlocked()`（按鈕應解鎖），但若未再跑 `syncQuickSendFieldUi`，note 仍顯示「已在看板上」；若也未跑 `syncActionButtonStates`，按鈕保持 `disabled`。 |
 | **證據** | `initQuickSendFieldUi`（`controller-app.js` ~919–940）無 `fld-quick-status` listener；回歸測試在 `selectOption(..., 'ready')` 後 `sendBlocked:false` 但 `noteHasDuplicate:true` 且 `buttonDisabled:true`。 |
-| **驗證** | 在 `fld-quick-status` `change` 加 `[pr95-status-switch-dup]` log + `syncQuickSendFieldUi(); syncActionButtonStates();`（修復候選，本輪不做）；或 Playwright 手動 `evaluate` 呼叫同名 sync 後預期測試轉綠。 |
+| **驗證** | 已實作：`initQuickSendFieldUi` 內 `fld-quick-status` `change` → `hideQuickSendSuccess()`、`syncQuickSendFieldUi()`、`syncActionButtonStates()`。 |
 
 ### H2 — post-send `refreshBoardLists` 固定鎖住「準備中」重複 UI，與後續狀態切換脫鉤
 
@@ -70,7 +70,7 @@ git checkout f02ddca
 |--|--|
 | **機制** | `sendQuickDemoNumber` → `posSend` → `refreshBoardLists`（~1354）→ `syncQuickSendFieldUi`（~1442）；當時 dropdown 仍為 preparing → `duplicateOnBoard:true`。 |
 | **證據** | 回歸測試在第一次送出後可穩定等到 note 含「此號碼已在看板上」。 |
-| **驗證** | `[pr95-status-switch-dup]` 記錄 `refreshBoardLists` 結尾與 `readQuickSendStatus()`；比對時間序與 QA 操作（先改狀態 vs 先 refresh）。 |
+| **驗證** | 修復後 post-send refresh 仍會短暫顯示準備中重複；改選請取餐後 UI 應恢復（回歸 spec 覆蓋）。 |
 
 ### H3 — `4ac628a` normalize 使 `validated.normalized` 與 `tickets[].no` 不一致，導致誤判重複
 
@@ -78,7 +78,7 @@ git checkout f02ddca
 |--|--|
 | **機制** | cloud sanitize 後欄位值與 local `tickets` 字串不同，`quickSendNumberOnBoard` 比對失敗或雙重條目。 |
 | **證據** | `f02ddca..b35c419` 無 `controller-app.js` diff；本測試用門市 4 位純數字，風險較低。 |
-| **驗證** | 失敗時 log `[pr95-status-switch-dup] tickets=` JSON 與 `validated.normalized`；對 fp `#`、uber hex 重跑同一 spec。 |
+| **驗證** | 本回歸用門市純數字；修復後仍通過，未見 normalize 誤判。 |
 
 ### H4 — `duplicateKey`（channel + 號碼）誤用到 controller quick-send
 
@@ -96,11 +96,29 @@ git checkout f02ddca
 | **證據** | 本回歸用 **local** 已重現 stale UI；cloud 為 QA 可能差異路徑。 |
 | **驗證** | 複製同一 spec 改 `mode=cloud&store=zz-qa-ci-store`（僅 zz-qa），比對 `getTickets()` 與 fake-cloud payload。 |
 
-## 建議修復方向（僅記錄，本輪不實作）
+## 修正（H1，負責人 21:55 台北核准）
 
-在 `initQuickSendFieldUi` 為 `fld-quick-status` 訂閱 `change`：`hideQuickSendSuccess()`、`syncQuickSendFieldUi()`、`syncActionButtonStates()`，並以 `[pr95-status-switch-dup]` 打一次 debug log 確認順序。
+`controller/controller-app.js` — `initQuickSendFieldUi` 為 `#fld-quick-status` 訂閱 `change`，與 source／號碼輸入一致刷新 quick-send 呈現與按鈕狀態。
 
-## 變更清單（本輪）
+## 本機驗證（修復後）
 
-- 新增 `tests/e2e/controller-quick-send-status-switch-duplicate.spec.mjs`
-- 本檔 `artifacts/pr95-status-switch-dup/DIAG.md`
+| 項目 | 結果 |
+|------|------|
+| `node scripts/run-unit-tests.mjs` | **361/361** pass |
+| `MILKSHA_CI_TIER=pr npx playwright test tests/e2e/controller-quick-send-status-switch-duplicate.spec.mjs` | **1/1** pass |
+| 資產版本 | `20261018b` |
+
+## CI（push 後更新）
+
+| Run | 連結 | 結論 | 分支獨有失敗 |
+|-----|------|------|----------------|
+| _(待填)_ | | | 目標 **0**（失敗 ⊆ main **38** 項） |
+
+**main 38 項基準：** `artifacts/ci-nightly/main-baseline-failures-39105020723.txt`
+
+## 變更清單
+
+- `controller/controller-app.js`（H1 修復）
+- `config/asset-version.json`、`js/milksha-asset-version.js`、`controller/index.html`、`index.html`、`receiver-demo/index.html` → `20261018b`
+- `tests/e2e/controller-quick-send-status-switch-duplicate.spec.mjs`（回歸，未改斷言）
+- 本檔
