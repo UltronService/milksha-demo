@@ -3,6 +3,7 @@ const e2ePort = process.env.MILKSHA_E2E_PORT || '8877';
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 module.exports = {
   testDir: 'tests/e2e',
+  testIgnore: ['**/*-live-cloud.spec.mjs'],
   timeout: 90000,
   workers: 1,
   fullyParallel: false,
