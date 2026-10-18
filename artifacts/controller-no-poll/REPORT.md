@@ -6,6 +6,7 @@
 - 斷線：顯示 `#realtime-disconnect-banner`（`data-testid="realtime-disconnect-banner"`），指數退避重掛；重連成功後各文件 **一次** `get()`（`forceRefetch`）。
 - **未改** 30 秒 `listStores` 輪詢。
 - Local 模式仍使用 `startLocalPolling()`（4s，本機 POC，非雲端 Firestore 計費路徑）。
+- Fake-cloud／`fake-api-key-for-emulator`：REST **wake**（連線、前景、送號後 refetch），無 4s 週期 poll（Firebase Listen 無法走 fake-cloud shim）。
 
 ## 讀取次數（同一情境：單頁已連線、idle 60 分鐘、無叫號）
 
@@ -20,6 +21,7 @@
 |------|------|
 | `tests/controller-polling.test.js` | 雲端走 `startCloudRealtimeSync`；local 保留 `startLocalPolling` |
 | `tests/controller-realtime-sync.test.js` | board snapshot 更新、`onRealtimeState` 斷線與重連補讀 |
+| `tests/controller-cloud-rest-wake.test.js` | fake API key 走 rest-wake、無 interval |
 
 ## CI
 

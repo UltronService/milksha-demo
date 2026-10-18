@@ -28,6 +28,9 @@
   /** @type {ReturnType<typeof window.QMS.Controller.RealtimeSync.createControllerRealtimeSync>|null} */
   let cloudRealtimeSync = null;
   let cloudRealtimeConnected = false;
+  /** @type {'none'|'realtime'|'rest-wake'} */
+  let cloudSyncMode = 'none';
+  let cloudRestWakeBound = false;
   let clockTimer = null;
   let commandInFlight = false;
   /** @type {ReturnType<typeof window.QMS.Controller.StoreSimulationHost.createStoreSimulationHost>|null} */
@@ -1300,8 +1303,47 @@
     return storeSimulationHost && storeSimulationHost.isRunning && storeSimulationHost.isRunning();
   }
 
-  function isCloudRealtimeMode(mode) {
+  function isCloudTransportMode(mode) {
     return mode === 'cloud' || mode === 'firestore';
+  }
+
+  function cloudSyncUsesRestWakeOnly(config) {
+    const apiKey = String(config && config.apiKey ? config.apiKey : '');
+    return apiKey === 'fake-api-key-for-emulator';
+  }
+
+  function bindCloudRestWakeHandlers() {
+    if (cloudRestWakeBound) {
+      return;
+    }
+    cloudRestWakeBound = true;
+    document.addEventListener('visibilitychange', function () {
+      if (cloudSyncMode !== 'rest-wake' || document.hidden || !connected) {
+        return;
+      }
+      refreshBoardLists().catch(function () {});
+      pollDevice().catch(function () {});
+    });
+  }
+
+  async function startCloudRestWakeSync() {
+    stopCloudRealtimeSync();
+    cloudSyncMode = 'rest-wake';
+    bindCloudRestWakeHandlers();
+    await refreshBoardLists();
+    await pollDevice();
+  }
+
+  async function startCloudSync(mode, config, deviceId) {
+    if (!isCloudTransportMode(mode)) {
+      return;
+    }
+    if (cloudSyncUsesRestWakeOnly(config)) {
+      await startCloudRestWakeSync();
+      return;
+    }
+    cloudSyncMode = 'realtime';
+    await startCloudRealtimeSync(mode, config, deviceId);
   }
 
   function applyBoardDocument(doc) {
@@ -1347,7 +1389,11 @@
   }
 
   async function refreshBoardLists() {
-    if (cloudRealtimeSync && cloudRealtimeSync.isActive()) {
+    if (
+      cloudSyncMode === 'realtime' &&
+      cloudRealtimeSync &&
+      cloudRealtimeSync.isActive()
+    ) {
       await cloudRealtimeSync.forceRefetch();
       return;
     }
@@ -1362,7 +1408,11 @@
     if (!transport || !connected) {
       return;
     }
-    if (cloudRealtimeSync && cloudRealtimeSync.isActive()) {
+    if (
+      cloudSyncMode === 'realtime' &&
+      cloudRealtimeSync &&
+      cloudRealtimeSync.isActive()
+    ) {
       return;
     }
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
@@ -1393,7 +1443,7 @@
     const modeEl = document.getElementById('fld-mode');
     const mode = modeEl ? modeEl.value : 'local';
     const pill = document.getElementById('connection-status-pill');
-    if (pill && isCloudRealtimeMode(mode)) {
+    if (pill && cloudSyncMode === 'realtime') {
       pill.setAttribute('data-realtime-connected', cloudRealtimeConnected ? '1' : '0');
     }
   }
@@ -1403,6 +1453,7 @@
       cloudRealtimeSync.stop();
       cloudRealtimeSync = null;
     }
+    cloudSyncMode = 'none';
     cloudRealtimeConnected = false;
     syncRealtimeDisconnectBanner(false);
     syncRealtimeConnectedAttr();
@@ -1537,8 +1588,8 @@
     });
     try {
       connected = true;
-      if (isCloudRealtimeMode(mode)) {
-        await startCloudRealtimeSync(mode, config, deviceId);
+      if (isCloudTransportMode(mode)) {
+        await startCloudSync(mode, config, deviceId);
       } else {
         await refreshBoardLists();
         await pollDevice();
@@ -1678,8 +1729,8 @@
       connected = true;
       hideStoreNotAllowedBanner();
       await ensureLocalPocDeviceStub();
-      if (isCloudRealtimeMode(mode)) {
-        await startCloudRealtimeSync(mode, config, deviceId);
+      if (isCloudTransportMode(mode)) {
+        await startCloudSync(mode, config, deviceId);
       } else {
         await refreshBoardLists();
         await pollDevice();
@@ -2132,10 +2183,19 @@
     if (document.hidden) {
       return;
     }
-    if (cloudRealtimeSync && cloudRealtimeSync.isActive()) {
+    if (
+      cloudSyncMode === 'realtime' &&
+      cloudRealtimeSync &&
+      cloudRealtimeSync.isActive()
+    ) {
       cloudRealtimeSync.forceRefetch().catch(function () {
         /* ignore */
       });
+      return;
+    }
+    if (cloudSyncMode === 'rest-wake' && connected) {
+      refreshBoardLists().catch(function () {});
+      pollDevice().catch(function () {});
     }
   });
   document.getElementById('fld-pos-sign-key').addEventListener('input', function () {
