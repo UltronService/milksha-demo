@@ -5,9 +5,9 @@
 | 項目 | 值 |
 |------|-----|
 | **PR** | https://github.com/UltronService/milksha-demo/pull/101 |
-| **Head commit** | （見本 push 後 `git rev-parse --short HEAD`；上一版量測/CI 對照為 `9ee74de`） |
-| **CI run（owner 指定）** | https://github.com/UltronService/milksha-demo/actions/runs/39129671976（`9ee74de`，conclusion: failure） |
-| **CI run（rest-wake catch-up 修復後）** | push 後見 PR Checks 最新 run |
+| **Head commit** | `3c82a1e` |
+| **CI run（owner 指定）** | https://github.com/UltronService/milksha-demo/actions/runs/39129671976（`9ee74de`，conclusion: failure；對照表見 §2） |
+| **CI run（catch-up 修復後）** | https://github.com/UltronService/milksha-demo/pull/101 → Checks 最新（`3c82a1e` 起） |
 
 ---
 
