@@ -70,6 +70,7 @@ export async function sampleControllerDbg(ctrl) {
     const Paths = window.QMS && window.QMS.Transport && window.QMS.Transport.Paths;
     const devicePath = Paths ? Paths.deviceDocPath(storeId, deviceId) : '';
     const boardPath = Paths ? Paths.todayBoardPath(storeId) : '';
+    const restData = restDevice && restDevice.data ? restDevice.data : null;
     const snap = {
       boardOnline: document.getElementById('online-state')?.getAttribute('data-board-online'),
       connected: document.getElementById('online-state')?.getAttribute('data-connected'),
@@ -82,15 +83,15 @@ export async function sampleControllerDbg(ctrl) {
       sdkLoaded: Boolean(window.QMS?.Transport?.FirebaseSdkBridge?.isSdkLoaded?.()),
       authUser: Boolean(window.firebase?.auth?.()?.currentUser),
       paths: { devicePath, boardPath },
-      restDevice: restDevice
+      restDeviceShape: restData
         ? {
-            lastSeen: restDevice.data?.lastSeen,
-            online: restDevice.data?.online,
-            appVersion: restDevice.data?.appVersion,
-            controllerDeviceStub: restDevice.data?.controllerDeviceStub,
+            hasLastSeen: Boolean(restData.lastSeen),
+            onlineIsTrue: restData.online === true,
+            hasAppVersion: Boolean(restData.appVersion),
+            controllerDeviceStub: restData.controllerDeviceStub === true,
           }
         : null,
-      restError,
+      restError: restError ? String(restError).slice(0, 120) : '',
       navigatorOnLine: typeof navigator !== 'undefined' ? navigator.onLine : null,
     };
     console.log('[pr101-dbg] sample', JSON.stringify(snap));
