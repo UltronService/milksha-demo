@@ -932,6 +932,14 @@
         applyQuickSendSourceSwitch(readQuickSendSourceKey());
       });
     }
+    const statusSel = document.getElementById('fld-quick-status');
+    if (statusSel) {
+      statusSel.addEventListener('change', function () {
+        hideQuickSendSuccess();
+        syncQuickSendFieldUi();
+        syncActionButtonStates();
+      });
+    }
     quickEl.addEventListener('input', function () {
       quickSendNumberPristine = false;
       hideQuickSendSuccess();
