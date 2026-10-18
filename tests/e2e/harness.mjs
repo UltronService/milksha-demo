@@ -207,7 +207,22 @@ export function urlsForMode(mode) {
   return { recv, ctrl, base };
 }
 
+const PR_TIER_BLOCK_PATTERNS = [
+  'https://firestore.googleapis.com/**',
+  'https://asia-east1-milksha-qms-dev.cloudfunctions.net/**',
+];
+
+export async function installPrTierNetworkGuard(target) {
+  if (process.env.MILKSHA_CI_TIER !== 'pr') {
+    return;
+  }
+  for (const pattern of PR_TIER_BLOCK_PATTERNS) {
+    await target.route(pattern, (route) => route.abort('blockedbyclient'));
+  }
+}
+
 export async function installBundledCloudRouteShim(page) {
+  await installPrTierNetworkGuard(page);
   const base = `http://127.0.0.1:${PORT_CLOUD}`;
   async function proxyToFakeCloud(route, targetUrl) {
     const req = route.request();
@@ -274,6 +289,7 @@ export async function isolatedCloudContext(browser) {
       /* ignore */
     }
   });
+  await installPrTierNetworkGuard(ctx);
   return ctx;
 }
 
@@ -302,6 +318,7 @@ export async function freshContext(browser) {
       /* ignore */
     }
   });
+  await installPrTierNetworkGuard(ctx);
   return ctx;
 }
 

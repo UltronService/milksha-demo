@@ -3,10 +3,11 @@
  * PR #74 column alignment: fixed 1.0F slot + 0.2F gap + number; left edges align per column.
  */
 import { chromium } from 'playwright';
-import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
+import { copySiteForPlaywright } from './lib/copy-site-for-playwright.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TOL_PX = 1;
@@ -74,11 +75,7 @@ export const ALIGNMENT_SAMPLE_PAYLOAD = [
 ];
 
 function prepareSite() {
-  const siteRoot = join('/tmp', 'milksha-column-align-' + process.pid);
-  const dest = join(siteRoot, 'milksha-demo');
-  rmSync(siteRoot, { recursive: true, force: true });
-  mkdirSync(dest, { recursive: true });
-  cpSync(rootDir, dest, { recursive: true, filter: (src) => !src.includes('node_modules') });
+  const { siteRoot } = copySiteForPlaywright(rootDir);
   const port = ephemeralPort();
   return { siteRoot, base: `http://127.0.0.1:${port}/milksha-demo/`, port: port };
 }
