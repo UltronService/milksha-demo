@@ -5,9 +5,9 @@
 | 項目 | 值 |
 |------|-----|
 | **PR** | https://github.com/UltronService/milksha-demo/pull/101 |
-| **Head commit** | `3c82a1e` |
-| **CI run（owner 指定）** | https://github.com/UltronService/milksha-demo/actions/runs/39129671976（`9ee74de`，conclusion: failure；對照表見 §2） |
-| **CI run（catch-up 修復後）** | https://github.com/UltronService/milksha-demo/pull/101 → Checks 最新（`3c82a1e` 起） |
+| **Head commit** | `ab3284c` |
+| **CI run（驗收用）** | https://github.com/UltronService/milksha-demo/actions/runs/39132334019（`ab3284c`，conclusion: failure；§2 對照） |
+| **CI run（前次）** | https://github.com/UltronService/milksha-demo/actions/runs/39129671976（`9ee74de`） |
 
 ---
 
@@ -53,33 +53,48 @@ MILKSHA_SITE_ROOT=$PWD/artifacts/controller-no-poll/main-worktree \
 
 ## 2. CI 失敗對照 main 38 項基準
 
-基準檔：`artifacts/ci-nightly/main-baseline-failures-39105020723.txt`（36 + addendum 2 = **38**）。
+基準檔：`artifacts/ci-nightly/main-baseline-failures-39105020723.txt`（36 + addendum 2 = **38**）。  
+對照方式：以 **spec 檔名 + 測試標題** 匹配（行號可與基準不同）。
 
-### Run 39129671976（`9ee74de`）唯一失敗用例（依 spec 標題去重）
+### Run 39132334019（`ab3284c`）失敗用例
 
-| # | 失敗用例 | 在 38 基準？ |
-|---|----------|-------------|
+| # | 失敗用例（去重） | 在 38 基準？ |
+|---|------------------|-------------|
 | 1 | `pr23-login-count.spec.mjs` › 5 min normal board idle | ✅ addendum |
 | 2 | `cloud-remote-send.spec.mjs` › ten sends produce ten numbers and clear works | ✅ addendum |
-| 3 | `cloud-remote-send.spec.mjs` › controller before board opened shows hint… | ⚠️ **不在基準清單**（本機重跑通過；視為 CI flake，非結構性回歸） |
-| 4 | `board-cell-peak-simulation.spec.mjs` › 3-min peak run… | ✅ |
-| 5 | `cloud-qa-checklist.spec.mjs` › network cable pull… | ✅（行號與 main 基準不同，同場景） |
-| 6 | `controller-post-send-board-read-abort.spec.mjs` › push_numbers HTTP 500… | ✅ |
-| 7 | `controller-source-quick-send.spec.mjs` › local quick send… | ✅ |
-| 8 | `controller-store-picker-evidence.spec.mjs` › 3c two minutes… | ✅ |
-| 9 | `controller-store-picker.spec.mjs` › new store appears within poll window… | ✅ |
-| 10 | `controller-store-picker.spec.mjs` › switching store waits for heartbeat… | ⚠️ **不在基準** → **分支獨有**；已以 rest-wake **catch-up**（上線即停）修復，本機 `spec.mjs:99` 通過 |
-| 11 | `forbidden-store-then-qa-isolation.spec.mjs` › zz-deny-test… | ✅ |
-| 12 | `fresh-browser-pause-heartbeat.spec.mjs` › boxHeartbeat 403… | ✅ |
-| 13 | `home-board-art-alignment.spec.mjs` › landscape art grid… (1920/3840) | ✅ |
-| 14 | `home-board-cloud-recovery.spec.mjs` › B-N07: 60s blocked routes… | ✅ |
-| 15 | `home-board-quick-send-one.spec.mjs` › ten quick sends… | ✅ |
-| 16 | `home-board-stale-storage.spec.mjs` › stale cloud settings… | ✅ |
-| 17 | `home-board-ten-send-clear.spec.mjs` › local-link … 清空看板（3 variants） | ✅ |
+| 3 | `board-cell-peak-simulation.spec.mjs` › 3-min peak run… | ✅ |
+| 4 | `cloud-qa-checklist.spec.mjs` › network cable pull and restore… | ✅ |
+| 5 | `controller-post-send-board-read-abort.spec.mjs` › push_numbers HTTP 500… | ✅ |
+| 6 | `controller-source-quick-send.spec.mjs` › local quick send… | ✅ |
+| 7 | `controller-store-picker-evidence.spec.mjs` › 3c two minutes… | ✅ |
+| 8 | `controller-store-picker.spec.mjs` › new store appears within poll window… | ✅ |
+| 9 | `fresh-browser-pause-heartbeat.spec.mjs` › boxHeartbeat 403… | ✅ |
+| 10 | `home-board-art-alignment.spec.mjs` › landscape art grid… @ 1920 | ✅ |
+| 11 | `home-board-art-alignment.spec.mjs` › landscape art grid… @ 3840 | ✅ |
+| 12 | `home-board-cloud-recovery.spec.mjs` › B-N07: 60s blocked routes… | ✅ |
+| 13 | `home-board-quick-send-one.spec.mjs` › ten quick sends… | ✅ |
+| 14 | `home-board-stale-storage.spec.mjs` › stale cloud settings… | ✅ |
+| 15–17 | `home-board-ten-send-clear.spec.mjs` › local-link … 清空看板（3 variants） | ✅ |
 
-**分支獨有（需修）**：#10 → 已修（`startRestWakeCatchUp`）。**#3** 基準外但本機綠，不屬穩定分支回歸。
+**分支獨有失敗數：0**（上表每一項皆落在 38 項基準內）。
 
-**較 main 基準少失敗的項目**（PR run 未再出現）：例如多數 `board-empty-hint*`、`controller-connect-errors*` 等 — 不計為分支新增失敗。
+本 run **未**失敗、且 **不在 38 項** 的用例（前次 CI 曾出現）：
+
+| 用例 | 處置 |
+|------|------|
+| `cloud-remote-send.spec.mjs` › controller before board opened… | 見下方 triple probe |
+| `controller-store-picker.spec.mjs` › switching store waits for heartbeat… | `ab3284c` CI 未再失敗；catch-up 已合入 |
+
+### Triple probe：`controller before board opened`（不在 38 項）
+
+依 owner 要求：`MILKSHA_CI_TIER=pr` + 同 `playwright.config.js`，main `2f9b2bf` 與分支各 **3 次**：
+
+| Ref | 結果 | 紀錄 |
+|-----|------|------|
+| main @ `2f9b2bf` | **3/3 PASS** | `artifacts/controller-no-poll/triple-cloud-remote-before-board-main.log` |
+| 分支 @ `ab3284c` | **3/3 PASS** | `artifacts/controller-no-poll/triple-cloud-remote-before-board-branch.log` |
+
+說明：`39132334019` failed log **無**此用例；main／分支本機 triple 皆綠 → **非分支獨有回歸**，不列入分支獨有失敗。摘要：`triple-probe-cloud-remote-before-board.md`。
 
 ---
 
