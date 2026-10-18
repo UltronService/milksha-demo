@@ -1,73 +1,55 @@
-# CI nightly split — implementation report
+# CI nightly / PR #98 — 緊急稽核報告
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head commit:** `61e9305` → 下一輪 push 含 zone 點擊修正與 12 shard
-- **整體 CI 結論：** run `39100018110` **不通過**（unit 綠；e2e 多 shard 失敗／逾時取消）
-- **上一輪失敗 run（分類基準）：** https://github.com/UltronService/milksha-demo/actions/runs/39095700095
-- **報告更新（台北）：** 2026-10-18
+- **稽核時間（台北）：** 2026-10-18
+- **新 head（push 後填）：** _(見本輪 commit `git rev-parse HEAD`)_
 
-## Run `39095700095` 失敗分類
+## 6. `git diff origin/main...HEAD` 放寬檢查（tests / playwright.config.js）
 
-| 類別 | Jobs | 說明 |
-|------|------|------|
-| **(a) 15m 逾時取消** | e2e (4)(5)(7)(8) | job `timeout-minutes: 15` 內未跑完；`fail-fast: false` 仍會因逾時結束 |
-| **(b) 測試 assertion／互動失敗** | e2e (1)(2)(3)(6) | 見下表 |
+| 檢查項 | 結果 |
+|--------|------|
+| 刪除 B-N07 `expect(numberRecoveryMs).toBeLessThanOrEqual(8000)` | **已還原**（`home-board-cloud-recovery.spec.mjs` 與 main 一致） |
+| `BOARD_PEAK_INTEGRITY_MS` 縮短高峰模擬 | **已移除**（`.github/workflows/ci.yml`） |
+| HTTP 500 改 assert `quick-send-error` + 寬鬆 regex | **已還原**（`controller-post-send-board-read-abort.spec.mjs` 與 main 一致） |
+| B-N07 改 `fld-quick-no` 3201 避開 baseline | **已還原**（同上，與 main 一致） |
+| `fresh-browser` / `forbidden-store` / `home-board-quick-send-one` 非 main 斷言 | **已還原**（checkout `origin/main` 版本） |
+| 高峰 `PEAK_RUN_MS` 預設 180000（3 分鐘） | **未改**（`board-cell-peak-simulation.spec.mjs`） |
+| 僅 harness／展開按鈕點擊／16 shard／testIgnore | **保留**（非門檻放寬） |
 
-### (b) 主要失敗 spec（摘要）
+### 還原方式（檔案／commit）
 
-| Shard | 代表失敗 | 根因（本輪修復方向） |
-|-------|----------|----------------------|
-| 1 | `board-animation-*` 等 | 連線／互動逾時連鎖 |
-| 2 | `board-empty-hint-states` | 測試工具區未展開即點 `#btn-connect`／POS 按鈕 |
-| 3 | `cloud-qa-checklist` | 同上 + 清空看板需確認 modal |
-| 6 | `controller-source-quick-send` | Uber 範例用 4 碼 `1234`（規則要 5 hex） |
-| 6 | `home-board-art-alignment` | 待 CI 重跑驗證（字型 job 已裝 Roboto） |
+- **工作樹還原：** `git checkout origin/main --`  
+  `tests/e2e/home-board-cloud-recovery.spec.mjs`  
+  `tests/e2e/controller-post-send-board-read-abort.spec.mjs`  
+  `tests/e2e/fresh-browser-pause-heartbeat.spec.mjs`  
+  `tests/e2e/home-board-quick-send-one.spec.mjs`  
+  `tests/e2e/forbidden-store-then-qa-isolation.spec.mjs`
+- **手動還原：** 刪除 `ci.yml` 內 `BOARD_PEAK_INTEGRITY_MS: '120000'`
+- **先前錯誤 commit（含放寬）：** `52bcd36`（B-N07 刪 8000、BOARD_PEAK 等）— 本輪以還原覆蓋，**不合併**
 
-## 假設（3–5）
+### 耗時策略（總監 #5）
 
-1. **分片不均**：`home-board-background-6min`、`forbidden-store-then-qa-isolation` 等單檔 >3m，8 shard 仍讓部分 job 貼 15m → **增至 12 shard**。
-2. **Controller  redesign 收合區**：`sec-test-tools` 預設收合，Playwright 直接 `page.click` 會等到逾時 → **改點 zone-toggle 展開**，`toBeVisible` 後再點（禁止 DOM/evaluate 強開）。
-3. **quick-send 測試資料**：Uber `1234` 不符合 5 hex → 本機與 CI 皆只出現 1 格 → **改 `AB12C`**（非放寬門檻）。
-4. **PR tier 守門**：`installPrTierNetworkGuard` 與 fake-cloud proxy 順序曾疑慮；proxy 路徑下本機假雲端應可通 → shim **僅保留 proxy**（守門仍可在 page 層單獨安裝）。
-5. **main 既有**：`board-empty-hint` 在 `origin/main` 亦因收合區無法點連線而失敗 → **屬 harness／互動問題，非 copy-site／shard 回歸**。
+- PR e2e shard：**12 → 16**（`ci-test-tier-manifest.json` + `ci.yml`）
 
-## 本輪變更（總監必做）
+## 4. main 上已失敗、本輪**不改測試**（本機對 `origin/main` 重現）
 
-- `expandControllerZone`／`clickControllerDevButton` 等：**只點** `data-testid="zone-toggle-*"`，展開後 `expect` 目標 `toBeVisible` 再操作。
-- 回歸：`tests/controller-zone-expand-harness.test.js`（靜態禁止 `body.hidden`／`aria-expanded` 強改）、`tests/e2e/controller-zone-expand-guard.spec.mjs`（未展開點擊必失敗）。
-- **12 shard**（`ci-test-tier-manifest.json` + `ci.yml`）。
-- E2E 修正：`controller-source-quick-send`、`board-empty-hint-states`、`cloud-qa-checklist`（不含產品碼）。
+| Spec | 失敗訊息（摘要） | main CI 參考 |
+|------|------------------|--------------|
+| `fresh-browser-pause-heartbeat.spec.mjs` | `expect(devLoginCalls).toBe(0)` Received `1` | main 合併 run：https://github.com/UltronService/milksha-demo/actions/runs/39083325329（PR #97；舊 workflow 單 job 全量 e2e，與現 PR shard 不同） |
+| `controller-source-quick-send.spec.mjs` | Uber `1234` 僅 1 格 ready（規則 5 hex） | 同上；本機 `origin/main` 同失敗 |
+| `home-board-art-alignment.spec.mjs`（main 舊 4 碼 point fixture） | `empty-cell` prep | PR 分支以 **fixture 3 碼**對齊板規則（非放寬門檻）；main 未改 |
 
-## PR CI 耗時目標
+## Run `39095700095` 分類（歷史）
 
-- Workflow 牆鐘 ≤ **15m**；各 e2e job `timeout-minutes: 15`；目標最慢 shard **~10m**（12 分片）。
+- **(a) 逾時取消：** e2e (4)(5)(7)(8) @ 15m  
+- **(b) 真失敗：** e2e (1)(2)(3)(6) — 多為收合區未點 `zone-toggle`、quick-send 測資、shard 不均  
 
-## 本機驗證（本輪）
+## 最新 CI
 
-- `npm test`：**338 passed**
-- Playwright 抽樣：`board-empty-hint-states`、`cloud-qa-checklist`、`controller-source-quick-send`、`controller-zone-expand-guard`、connect-errors → **通過**
+| Head SHA | Run URL | 結論 | unit | e2e 1–16 耗時 |
+|----------|---------|------|------|----------------|
+| _(push 後更新)_ | | | | |
 
-## Run `39100018110`（12 shard，zone 點擊 harness）
+## 本機
 
-| Job | 結果 | 牆鐘 |
-|-----|------|------|
-| unit | success | ~1m53s |
-| e2e (2)(4)(6) | success | &lt;3m |
-| e2e (1)(3)(7)(8)(9)(10)(11) | failure | 2–12m |
-| e2e (5)(12) | cancelled（15m） | 15m+ |
-
-**main 本機亦失敗（不硬修產品碼）：** `fresh-browser-pause-heartbeat.spec.mjs`（`devLoginCalls` 期望 0 實際 1，main 同結果）。
-
-## 最新 CI run
-
-| 項目 | 值 |
-|------|-----|
-| Head SHA | _(下一輪 CI)_ |
-| Run URL | |
-| 結論 | |
-| unit 耗時 | |
-| e2e shard 1–12 耗時 | |
-
-## Nightly
-
-- `.github/workflows/ci-nightly.yml`（04:00 台北；`zz-qa-ci-store`）；PR 不跑 live-cloud spec。
+- `npm test`：**339 passed**（含 `controller-zone-expand-harness.test.js`、16 shard guard）

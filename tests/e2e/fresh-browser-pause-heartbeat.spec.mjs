@@ -26,18 +26,18 @@ test.describe('fresh browser 連線暫停 with existing session', () => {
     const ctx = await isolatedCloudContext(browser);
     const board = await ctx.newPage();
     await installBundledCloudRouteShim(board);
-    let devLoginCalls = 0;
-    await board.route('**/devLogin', async (route) => {
-      devLoginCalls += 1;
-      await route.continue();
-    });
     await board.goto(`${BASE}/?mode=cloud&store=${STORE}`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await board.waitForFunction(
       () => Object.keys(localStorage).some((k) => k.startsWith('milksha:auth:')),
       { timeout: 30000 },
     );
-    devLoginCalls = 0;
+
+    let devLoginCalls = 0;
+    await board.route('**/devLogin', async (route) => {
+      devLoginCalls += 1;
+      await route.continue();
+    });
     await board.route('**/boxHeartbeat', async (route) => {
       await route.fulfill({
         status: 403,
