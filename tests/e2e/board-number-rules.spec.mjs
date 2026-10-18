@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test.describe('board number rules (local fake cloud)', () => {
   test('invalid payload entries dropped; valid render; dedupe and ready wins', async ({ browser }) => {
@@ -124,7 +124,7 @@ test.describe('board number rules (local fake cloud)', () => {
     await controller.goto(ctrlUrl);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
     await waitForReceiverOnline(board, 'local');
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 8000 });
     await ctx.close();
   });

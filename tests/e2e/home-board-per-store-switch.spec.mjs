@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
@@ -59,7 +52,7 @@ test.describe('per-store switch in one browser', () => {
     await controller.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 45000,
     });
@@ -71,7 +64,7 @@ test.describe('per-store switch in one browser', () => {
 
     await controller.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`);
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 45000 });
 
     await board.goto(`${BASE}/?mode=cloud&store=${STORE_A}`);
@@ -95,7 +88,7 @@ test.describe('per-store switch in one browser', () => {
     await controller.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`);
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await controller.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 45000,
     });

@@ -3,15 +3,62 @@
  * PR #74 column alignment: fixed 1.0F slot + 0.2F gap + number; left edges align per column.
  */
 import { chromium } from 'playwright';
-import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
+import { copySiteForPlaywright } from './lib/copy-site-for-playwright.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TOL_PX = 1;
 const CREAM_BOUNDS_TOL_PX = 1;
 const PR74_BASELINE_TOL_PX = 2;
+
+/** Offline layout probes: demo payload + local transport (never default cloud auto-pair). */
+export const BOARD_LAYOUT_HARNESS_QUERY = 'demo=0&mode=local';
+
+/**
+ * @param {string} base
+ * @returns {string}
+ */
+export function boardLayoutHarnessUrl(base) {
+  return base + '?' + BOARD_LAYOUT_HARNESS_QUERY;
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @returns {Promise<void>}
+ */
+export async function assertLayoutHarnessAvoidsCloudAutoPair(page) {
+  const url = new URL(page.url());
+  if (url.searchParams.get('mode') !== 'local' || url.searchParams.get('demo') !== '0') {
+    throw new Error('layout harness must use demo=0&mode=local, got ' + url.search);
+  }
+  const state = await page.evaluate(() => {
+    const root = document.getElementById('board-root');
+    return {
+      bootError: Boolean(root && root.classList.contains('boot-error-stage')),
+      autoPairStarted: Boolean(window.__milkshaBoardAutoPairController),
+    };
+  });
+  if (state.bootError) {
+    throw new Error('layout harness opened boot-error surface');
+  }
+  if (state.autoPairStarted) {
+    throw new Error('layout harness must not start board auto-pair (cloud boot)');
+  }
+}
+
+/**
+ * @param {import('playwright').Page} page
+ * @param {string} base
+ * @returns {Promise<void>}
+ */
+export async function gotoLayoutHarness(page, base) {
+  await page.goto(boardLayoutHarnessUrl(base), { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await assertLayoutHarnessAvoidsCloudAutoPair(page);
+}
 
 /** Four sources, varying number widths (5-char Uber, hash fp, point, store). */
 export const ALIGNMENT_SAMPLE_PAYLOAD = [
@@ -28,11 +75,7 @@ export const ALIGNMENT_SAMPLE_PAYLOAD = [
 ];
 
 function prepareSite() {
-  const siteRoot = join('/tmp', 'milksha-column-align-' + process.pid);
-  const dest = join(siteRoot, 'milksha-demo');
-  rmSync(siteRoot, { recursive: true, force: true });
-  mkdirSync(dest, { recursive: true });
-  cpSync(rootDir, dest, { recursive: true, filter: (src) => !src.includes('node_modules') });
+  const { siteRoot } = copySiteForPlaywright(rootDir);
   const port = ephemeralPort();
   return { siteRoot, base: `http://127.0.0.1:${port}/milksha-demo/`, port: port };
 }
@@ -61,6 +104,23 @@ function startServer(siteRoot, port) {
   });
 }
 
+async function disposePlaywrightSession(browser, server) {
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (_err) {
+      // ignore close errors after failed launch
+    }
+  }
+  if (server) {
+    await new Promise(function (resolve) {
+      server.close(function () {
+        resolve(undefined);
+      });
+    });
+  }
+}
+
 let portSeq = 0;
 function ephemeralPort() {
   portSeq += 1;
@@ -78,10 +138,11 @@ export async function runCreamColumnBoundsCheck(options) {
   const payload = opts.payload || buildFullBoardMixedPayload();
   const { siteRoot, base, port } = prepareSite();
   const server = await startServer(siteRoot, port);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     if (off) {
@@ -169,12 +230,6 @@ export async function runCreamColumnBoundsCheck(options) {
     return { ok: violations.length === 0, tolPx: tol, violations: violations };
   }, CREAM_BOUNDS_TOL_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   const failures = result.violations.map(function (v) {
     return (
       v.zone +
@@ -195,6 +250,9 @@ export async function runCreamColumnBoundsCheck(options) {
     );
   });
   return { ok: result.ok, tolPx: CREAM_BOUNDS_TOL_PX, violations: result.violations, failures: failures };
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
 
 export async function runColumnAlignmentCheck(options) {
@@ -202,10 +260,11 @@ export async function runColumnAlignmentCheck(options) {
   const payload = opts.payload || ALIGNMENT_SAMPLE_PAYLOAD;
   const { siteRoot, base, port } = prepareSite();
   const server = await startServer(siteRoot, port);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     if (off) {
@@ -309,13 +368,10 @@ export async function runColumnAlignmentCheck(options) {
     return { ok: failures.length === 0, tolPx: tol, zones: { prep: prep, ready: ready }, failures: failures };
   }, TOL_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return result;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
 
 export async function captureFullBoardScreenshot(options) {
@@ -324,10 +380,11 @@ export async function captureFullBoardScreenshot(options) {
   const payload = opts.payload;
   const { siteRoot, base, port } = prepareSite();
   const server = await startServer(siteRoot, port);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     const off = document.getElementById('milksha-cloud-offline');
     const paused = document.getElementById('milksha-cloud-paused');
@@ -403,13 +460,10 @@ export async function captureFullBoardScreenshot(options) {
     }
     return { prep: zoneRows('.milksha-prep'), ready: zoneRows('.milksha-ready'), tolPx: tol };
   }, TOL_PX);
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return { outPath: outPath, alignment: alignment };
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
 
 /** 10 prep + 10 ready, mixed sources, distinct ids per zone. */
@@ -503,10 +557,11 @@ export async function measurePr74BaselineCoords(options) {
   const fontPx = opts.fontPx || 64;
   const { siteRoot, base, port } = prepareSite();
   const server = await startServer(siteRoot, port);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
     window.QMS.runtime.applyPayload(rows, { silent: true });
@@ -553,13 +608,10 @@ export async function measurePr74BaselineCoords(options) {
     return out;
   }, fontPx);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return rows;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
 
 const REF_UI_ICON_TOL_PX = 2;
@@ -569,10 +621,11 @@ export async function measureRefUiIconAnchors(options) {
   const payload = opts.payload || buildFullBoardMixedPayload();
   const { siteRoot, base, port } = prepareSite();
   const server = await startServer(siteRoot, port);
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.QMS && window.QMS.runtime && window.QMS.runtime.applyPayload);
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     document.getElementById('milksha-cloud-offline')?.setAttribute('hidden', 'hidden');
     window.QMS.runtime.applyPayload(rows, { silent: true });
@@ -608,13 +661,10 @@ export async function measureRefUiIconAnchors(options) {
     return { ok: failures.length === 0, failures: failures };
   }, opts.tolPx ?? REF_UI_ICON_TOL_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return result;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }
 
 /** UI compare layout: fp×3+point×2 | uber×3+point×2 per zone (newest-first grid). */
@@ -670,4 +720,26 @@ export async function runPr74BaselineCheck(options) {
     }
   });
   return { ok: failures.length === 0, tolPx: tol, rows: rows, failures: failures };
+}
+
+/**
+ * Smoke: layout harness must not enter cloud auto-pair boot (regression for PR #97).
+ * @returns {Promise<{ ok: true }>}
+ */
+export async function verifyLayoutHarnessBootIsolation() {
+  const { siteRoot, base, port } = prepareSite();
+  const server = await startServer(siteRoot, port);
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+    await gotoLayoutHarness(page, base);
+    return { ok: true };
+  } finally {
+    await browser.close();
+    await new Promise(function (r) {
+      server.close(function () {
+        r(undefined);
+      });
+    });
+  }
 }

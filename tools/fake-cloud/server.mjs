@@ -59,7 +59,12 @@ function registerStore(storeId, opts) {
     return { ok: false, code: 'store_not_allowed', message: 'store denied' };
   }
   if (storeRegistry.has(id)) {
-    return { ok: true, store: storeRegistry.get(id) };
+    const existing = storeRegistry.get(id);
+    if (opts && opts.name && String(opts.name).trim()) {
+      existing.name = String(opts.name).trim();
+      storeRegistry.set(id, existing);
+    }
+    return { ok: true, store: existing };
   }
   if (storeRegistry.size >= STORE_REGISTRY_MAX) {
     return { ok: false, code: 'dev_store_registry_full', message: 'registry full' };
@@ -86,6 +91,19 @@ function isAllowedDevLoginStore(storeId) {
 }
 let devLoginRequestCount = 0;
 let listStoresRequestCount = 0;
+/** @type {Map<string, { storeId: string, firstPairedAtMs: number }>} */
+const boardAutoPairByDevice = new Map();
+let boardAutoPairRequestCount = 0;
+let boardAutoPairInitialCount = 0;
+let boardAutoPairReadCount = 0;
+/** @type {object[]} */
+const boardAutoPairBodiesLog = [];
+const BOARD_AUTO_PAIR_FIRST_WINDOW_MS = 10 * 60 * 1000;
+/** @type {() => number} */
+let boardAutoPairNowMs = () => Date.now();
+/** @type {{ at: number, name: string, detail?: string }[]} */
+const authBootEvents = [];
+let lastBoardAutoPairCustomToken = '';
 
 const PORT = Number(process.env.FAKE_CLOUD_PORT || 8787);
 const PROJECT = 'milksha-qms-dev';
@@ -409,6 +427,14 @@ const server = http.createServer(async (req, res) => {
       pendingCommandClearOnAck = true;
       devLoginRequestCount = 0;
       listStoresRequestCount = 0;
+      boardAutoPairByDevice.clear();
+      boardAutoPairRequestCount = 0;
+      boardAutoPairInitialCount = 0;
+      boardAutoPairReadCount = 0;
+      boardAutoPairBodiesLog.length = 0;
+      boardAutoPairNowMs = () => Date.now();
+      authBootEvents.length = 0;
+      lastBoardAutoPairCustomToken = '';
       storeRegistry.clear();
       seedRegisteredStores();
       if (resetBody.seedDevice !== false) {
@@ -426,6 +452,33 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === '/test/devLoginCount' && req.method === 'GET') {
       return json(res, 200, { count: devLoginRequestCount });
+    }
+    if (url.pathname === '/test/boardAutoPairCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairRequestCount });
+    }
+    if (url.pathname === '/test/boardAutoPairInitialCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairInitialCount });
+    }
+    if (url.pathname === '/test/boardAutoPairReadCount' && req.method === 'GET') {
+      return json(res, 200, { count: boardAutoPairReadCount });
+    }
+    if (url.pathname === '/test/boardAutoPairBodies' && req.method === 'GET') {
+      return json(res, 200, { bodies: boardAutoPairBodiesLog.slice() });
+    }
+    if (url.pathname === '/test/boardAutoPairNow' && req.method === 'POST') {
+      const body = await readBody(req);
+      if (body && Number.isFinite(Number(body.nowMs))) {
+        const fixed = Number(body.nowMs);
+        boardAutoPairNowMs = () => fixed;
+      }
+      return json(res, 200, { ok: true, nowMs: boardAutoPairNowMs() });
+    }
+    if (url.pathname === '/test/authBootOrder' && req.method === 'GET') {
+      return json(res, 200, {
+        events: authBootEvents.slice(),
+        devLoginCount: devLoginRequestCount,
+        lastBoardAutoPairCustomToken: lastBoardAutoPairCustomToken,
+      });
     }
     if (url.pathname === '/test/listStoresCount' && req.method === 'GET') {
       return json(res, 200, { count: listStoresRequestCount });
@@ -487,6 +540,7 @@ const server = http.createServer(async (req, res) => {
     const fnPrefix = `/fn/${PROJECT}/${REGION}/`;
     if (req.method === 'POST' && url.pathname === `${fnPrefix}devLogin`) {
       devLoginRequestCount += 1;
+      authBootEvents.push({ at: Date.now(), name: 'devLogin' });
       const body = await readBody(req);
       const sid = String(body.storeId || '').trim();
       if (!isValidStoreIdFormat(sid)) {
@@ -542,6 +596,14 @@ const server = http.createServer(async (req, res) => {
       }
       const idToken =
         customToken && customToken.startsWith('fake-') ? customToken : 'fake-id-token';
+      authBootEvents.push({
+        at: Date.now(),
+        name: 'signInWithCustomToken',
+        detail:
+          lastBoardAutoPairCustomToken && customToken === lastBoardAutoPairCustomToken
+            ? 'pair_token'
+            : 'other_token',
+      });
       return json(res, 200, {
         idToken,
         refreshToken: 'fake-refresh',
@@ -598,6 +660,145 @@ const server = http.createServer(async (req, res) => {
           information: info,
           seq: seq,
           boxOnline: online,
+        });
+      }
+
+      if (name === 'boardAutoPair' || name === 'boardAutoPair/') {
+        authBootEvents.push({ at: Date.now(), name: 'boardAutoPair' });
+        boardAutoPairRequestCount += 1;
+        boardAutoPairBodiesLog.push({ ...body });
+        const deviceId = String(body.deviceId || body.machineId || '').trim();
+        if (!deviceId) {
+          return json(res, 400, apiError('invalid_body', 'deviceId required'));
+        }
+        if (deviceId.length > 128) {
+          return json(res, 400, apiError('invalid_body', 'deviceId too long'));
+        }
+        if (body.clientIp != null || body.ip != null || body.externalIp != null) {
+          return json(res, 400, apiError('invalid_body', 'ip fields not accepted'));
+        }
+
+        const now = boardAutoPairNowMs();
+        const readStoreId = String(body.storeId || '').trim();
+        const hasReadPath = Boolean(readStoreId) && !body.brand && !body.storeNumber && !body.brandId;
+
+        async function mintPairToken(storeId) {
+          if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+            try {
+              const { mintCustomToken } = await import('../emulator-qa/admin.mjs');
+              return await mintCustomToken({
+                storeId,
+                role: 'device',
+                deviceId,
+              });
+            } catch (e) {
+              return null;
+            }
+          }
+          return `fake-${storeId}-device`;
+        }
+
+        function pairNotFound() {
+          return json(res, 200, { ok: false, information: '找不到目標叫號機' });
+        }
+
+        function resolveStoreIdFromInitial(brand, storeNumber) {
+          const sn = String(storeNumber || '').trim();
+          if (!sn) {
+            return null;
+          }
+          if (
+            isValidStoreIdFormat(sn) &&
+            (STORE_ID_ZZ_QA_RE.test(sn) ||
+              STORE_ID_LETTER_SIX_DIGITS_RE.test(sn) ||
+              KNOWN_LITERAL_STORE_IDS.has(sn))
+          ) {
+            return sn;
+          }
+          const b = String(brand || body.brandId || '').trim();
+          if (b === 'zz-qa') {
+            return 'zz-qa-' + sn.toLowerCase();
+          }
+          if ((b === 'Milksha' || b === 'milksha') && STORE_ID_LETTER_SIX_DIGITS_RE.test(sn)) {
+            return sn;
+          }
+          return null;
+        }
+
+        if (hasReadPath) {
+          boardAutoPairReadCount += 1;
+          if (!isValidStoreIdFormat(readStoreId)) {
+            return pairNotFound();
+          }
+          const entry = boardAutoPairByDevice.get(deviceId);
+          if (!entry || entry.storeId !== readStoreId) {
+            return pairNotFound();
+          }
+          if (!isStoreRegistered(readStoreId)) {
+            return pairNotFound();
+          }
+          const storeEntry = storeRegistry.get(readStoreId);
+          let isFirstBind = false;
+          if (now - entry.firstPairedAtMs < BOARD_AUTO_PAIR_FIRST_WINDOW_MS) {
+            isFirstBind = true;
+          }
+          const customToken = await mintPairToken(readStoreId);
+          if (!customToken) {
+            return json(res, 500, apiError('internal_error', 'token mint failed'));
+          }
+          lastBoardAutoPairCustomToken = customToken;
+          return json(res, 200, {
+            ok: true,
+            storeId: readStoreId,
+            storeName: storeEntry && storeEntry.name ? storeEntry.name : readStoreId,
+            storeNumber: readStoreId,
+            isFirstBind,
+            customToken,
+          });
+        }
+
+        boardAutoPairInitialCount += 1;
+        const brand = String(body.brand || body.brandId || '').trim();
+        const storeNumber = String(body.storeNumber || body.storeId || '').trim();
+        if (!brand || !storeNumber) {
+          return json(res, 400, apiError('invalid_body', 'brand and storeNumber required'));
+        }
+        const resolvedStoreId = resolveStoreIdFromInitial(brand, storeNumber);
+        if (!resolvedStoreId || !isValidStoreIdFormat(resolvedStoreId)) {
+          return pairNotFound();
+        }
+        if (!isStoreRegistered(resolvedStoreId)) {
+          return pairNotFound();
+        }
+        const storeEntry = storeRegistry.get(resolvedStoreId);
+        if (!storeEntry) {
+          return pairNotFound();
+        }
+        let entry = boardAutoPairByDevice.get(deviceId);
+        let isFirstBind = false;
+        if (!entry) {
+          isFirstBind = true;
+          entry = { storeId: resolvedStoreId, firstPairedAtMs: now };
+          boardAutoPairByDevice.set(deviceId, entry);
+        } else if (entry.storeId !== resolvedStoreId) {
+          entry = { storeId: resolvedStoreId, firstPairedAtMs: now };
+          boardAutoPairByDevice.set(deviceId, entry);
+          isFirstBind = true;
+        } else if (now - entry.firstPairedAtMs < BOARD_AUTO_PAIR_FIRST_WINDOW_MS) {
+          isFirstBind = true;
+        }
+        const customToken = await mintPairToken(resolvedStoreId);
+        if (!customToken) {
+          return json(res, 500, apiError('internal_error', 'token mint failed'));
+        }
+        lastBoardAutoPairCustomToken = customToken;
+        return json(res, 200, {
+          ok: true,
+          storeId: resolvedStoreId,
+          storeName: storeEntry && storeEntry.name ? storeEntry.name : resolvedStoreId,
+          storeNumber: resolvedStoreId,
+          isFirstBind,
+          customToken,
         });
       }
 

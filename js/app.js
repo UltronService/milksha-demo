@@ -52,6 +52,7 @@
   }
 
   QMS.boot = boot;
+  QMS.showBootError = showBootError;
 
   if (root.document) {
     if (root.document.readyState === 'loading') {

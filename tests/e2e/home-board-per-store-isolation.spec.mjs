@@ -1,12 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  restartCloud,
-  startSite,
-  resetCloudState,
-  PORT_SITE,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-} from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
@@ -44,13 +37,13 @@ test.describe('per-store home board isolation', () => {
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
-    await ctrlA.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 45000,
     });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 5000 });
 
-    await ctrlB.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
     await expect(boardB.locator('.milksha-ready .milksha-num').first()).toBeVisible({
       timeout: 20000,
     });

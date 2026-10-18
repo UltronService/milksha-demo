@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 async function openLocalPocController(browser) {
   const ctx = await freshContext(browser);
@@ -26,13 +26,12 @@ async function openLocalPocController(browser) {
 test('continuous simulation normal: board sync and stop', async ({ browser }) => {
   test.setTimeout(120000);
   const { ctx, board, controller } = await openLocalPocController(browser);
-  await controller.locator('[data-testid="zone-toggle-pos"]').click();
-  await controller.click('[data-testid="btn-gen-normal"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-gen-normal');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/運行中/, { timeout: 5000 });
   await expect(board.locator('.milksha-prep .milksha-num, .milksha-ready .milksha-num').first()).toBeVisible({
     timeout: 30000,
   });
-  await controller.click('[data-testid="btn-sim-stop"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-sim-stop');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/已停止/);
   const prepCount = await board.locator('.milksha-prep .milksha-num').count();
   await controller.waitForTimeout(3000);
@@ -44,11 +43,10 @@ test('continuous simulation normal: board sync and stop', async ({ browser }) =>
 test('peak simulation can switch from normal without duplicate run', async ({ browser }) => {
   test.setTimeout(120000);
   const { ctx, controller } = await openLocalPocController(browser);
-  await controller.locator('[data-testid="zone-toggle-pos"]').click();
-  await controller.click('[data-testid="btn-gen-normal"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-gen-normal');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/一般/);
-  await controller.click('[data-testid="btn-gen-peak"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-gen-peak');
   await expect(controller.locator('[data-testid="sim-status"]')).toContainText(/尖峰/);
-  await controller.click('[data-testid="btn-sim-stop"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-sim-stop');
   await ctx.close();
 });

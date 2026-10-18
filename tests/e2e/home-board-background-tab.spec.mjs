@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 test('controller stays online while board tab is in background', async ({ browser }) => {
   test.setTimeout(150000);
@@ -22,7 +22,7 @@ test('controller stays online while board tab is in background', async ({ browse
   await board.waitForTimeout(70000);
 
   await expect(controller.locator('#online-state')).toContainText('看板 在線', { timeout: 10000 });
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 10000 });
 
   await ctx.close();

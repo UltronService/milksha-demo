@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 const WRONG_STORE_SEED = () => {
   localStorage.setItem(
@@ -53,7 +53,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   });
   expect(deviceDoc && deviceDoc.online).toBe(true);
 
-  await controller.click('[data-testid="btn-send-numbers"]');
+  await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(1, { timeout: 20000 });
   await ctx.close();
 });

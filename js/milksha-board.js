@@ -566,6 +566,11 @@
       rootEl.style.setProperty('--milksha-num-font', numFont + 'px');
       rootEl.style.setProperty('--milksha-pg-ind-font', PAGE_INDICATOR_FONT_PX + 'px');
       rootEl.style.setProperty('--milksha-pg-ind-inset', PAGE_INDICATOR_INSET_PX + 'px');
+      const hintPx = QMS.Board && QMS.Board.AutoPair && QMS.Board.AutoPair.bindHintFontPx
+        ? QMS.Board.AutoPair.bindHintFontPx(numFont)
+        : Math.max(14, Math.round(numFont / 4));
+      rootEl.style.setProperty('--milksha-bind-hint-font', hintPx + 'px');
+      rootEl.style.setProperty('--milksha-bind-hint-inset', '16px');
     }
 
     /**

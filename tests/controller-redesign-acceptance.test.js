@@ -9,29 +9,46 @@ const vm = require('node:vm');
 const ROOT = path.join(__dirname, '..');
 
 /**
- * PR #95 explicit whitelist (no globs). PR #97 (cursor/board-auto-pair-a19b) may add paths — merge both lists when rebasing.
- * @type {readonly string[]}
+ * 總監核准：自動配對與 PR #95 chip overflow 看板檔可與 main diff；其餘 js/board/* 仍須零 diff。
+ * PR #95 + PR #97 合併時須保留兩邊白名單條目（勿只保留一邊）。
  */
-const BOARD_JS_PATH_WHITELIST = Object.freeze(['js/board/chip-overflow-fit.js']);
+const BOARD_DIFF_WHITELIST = [
+  'js/board/board-auto-pair.js',
+  'js/board/board-auto-pair-host.js',
+  'js/board/chip-overflow-fit.js',
+];
+
+const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
 
 /**
- * @param {string[]} touchedPaths
- * @param {readonly string[]} whitelist
- * @returns {string[]}
+ * @param {string[]} touchedPaths paths changed vs integration base
+ * @param {string[]} boardWhitelist explicit js/board files allowed to differ
+ * @returns {string[]} violating paths
  */
-function forbiddenBoardPathHits(touchedPaths, whitelist) {
-  const forbiddenPrefixes = ['js/board/', 'receiver/'];
-  return touchedPaths.filter(function (p) {
-    if (whitelist.indexOf(p) >= 0) {
-      return false;
+function boardReceiverDiffViolations(touchedPaths, boardWhitelist) {
+  const violations = [];
+  for (let i = 0; i < touchedPaths.length; i += 1) {
+    const p = touchedPaths[i];
+    if (p.indexOf(RECEIVER_DIFF_FORBIDDEN_PREFIX) === 0) {
+      violations.push(p);
+      continue;
     }
-    for (let i = 0; i < forbiddenPrefixes.length; i += 1) {
-      if (p.startsWith(forbiddenPrefixes[i])) {
-        return true;
-      }
+    if (p.indexOf('js/board/') === 0 && boardWhitelist.indexOf(p) < 0) {
+      violations.push(p);
     }
-    return false;
-  });
+  }
+  return violations;
+}
+
+function gitDiffNameOnlyAgainstMain() {
+  const { execSync } = require('node:child_process');
+  const diff = execSync('git diff origin/main --name-only', { cwd: ROOT, encoding: 'utf8' });
+  return diff
+    .split('\n')
+    .map(function (l) {
+      return l.trim();
+    })
+    .filter(Boolean);
 }
 
 function readUtf8(rel) {
@@ -145,25 +162,76 @@ test('acceptance 7: core controller test zones and actions remain in HTML', func
   }
 });
 
-test('acceptance 8 guard: whitelisted chip-overflow-fit only; other js/board paths fail', function () {
-  const hits = forbiddenBoardPathHits(
-    ['js/board/chip-overflow-fit.js', 'js/board/other-module.js', 'receiver/demo.js'],
-    BOARD_JS_PATH_WHITELIST,
+test('acceptance 8 guard: combined whitelist allows overflow-fit and auto-pair only', function () {
+  const sample = [
+    'js/board/board-auto-pair.js',
+    'js/board/board-auto-pair-host.js',
+    'js/board/chip-overflow-fit.js',
+    'js/board/other-module.js',
+    'receiver/cloud-boot.js',
+  ];
+  const hits = boardReceiverDiffViolations(sample, BOARD_DIFF_WHITELIST);
+  assert.deepEqual(hits.sort(), ['js/board/other-module.js', 'receiver/cloud-boot.js'].sort());
+  assert.deepEqual(
+    boardReceiverDiffViolations(
+      ['js/board/board-auto-pair.js', 'js/board/chip-overflow-fit.js'],
+      BOARD_DIFF_WHITELIST,
+    ),
+    [],
   );
-  assert.deepEqual(hits, ['js/board/other-module.js', 'receiver/demo.js']);
-  const allowedOnly = forbiddenBoardPathHits(['js/board/chip-overflow-fit.js'], BOARD_JS_PATH_WHITELIST);
-  assert.deepEqual(allowedOnly, []);
 });
 
-test('acceptance 8: board receiver entry files untouched on this branch', function () {
-  const { execSync } = require('node:child_process');
-  const diff = execSync('git diff origin/main --name-only', { cwd: ROOT, encoding: 'utf8' });
-  const touched = diff
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const hits = forbiddenBoardPathHits(touched, BOARD_JS_PATH_WHITELIST);
-  assert.equal(hits.length, 0, `Board code paths must not change (outside whitelist): ${hits.join(', ')}`);
+test('acceptance 8: only board whitelist may differ under js/board or receiver/', function () {
+  const touched = gitDiffNameOnlyAgainstMain();
+  const hits = boardReceiverDiffViolations(touched, BOARD_DIFF_WHITELIST);
+  assert.equal(
+    hits.length,
+    0,
+    `Board/receiver paths outside whitelist must not change: ${hits.join(', ')}`,
+  );
+});
+
+test('acceptance 8b: whitelist policy flags any non-listed js/board file in a diff', function () {
+  const sample = [
+    'js/board/board-auto-pair.js',
+    'js/board/board-auto-pair-host.js',
+    'js/board/chip-overflow-fit.js',
+    'js/board/today-board.js',
+    'receiver/cloud-boot.js',
+  ];
+  const hits = boardReceiverDiffViolations(sample, BOARD_DIFF_WHITELIST);
+  assert.deepEqual(hits.sort(), ['js/board/today-board.js', 'receiver/cloud-boot.js'].sort());
+  assert.deepEqual(
+    boardReceiverDiffViolations(
+      ['js/board/board-auto-pair.js', 'js/board/board-auto-pair-host.js', 'js/board/chip-overflow-fit.js'],
+      BOARD_DIFF_WHITELIST,
+    ),
+    [],
+  );
+});
+
+test('acceptance 8c: every other js/board file has zero diff vs main on this branch', function () {
+  const touched = new Set(gitDiffNameOnlyAgainstMain());
+  const boardDir = path.join(ROOT, 'js', 'board');
+  const allBoardFiles = fs
+    .readdirSync(boardDir)
+    .filter(function (name) {
+      return name.endsWith('.js');
+    })
+    .map(function (name) {
+      return 'js/board/' + name;
+    });
+  const outsideWhitelist = allBoardFiles.filter(function (rel) {
+    return BOARD_DIFF_WHITELIST.indexOf(rel) < 0;
+  });
+  const unexpected = outsideWhitelist.filter(function (rel) {
+    return touched.has(rel);
+  });
+  assert.equal(
+    unexpected.length,
+    0,
+    `Non-whitelist board files must have zero diff: ${unexpected.join(', ')}`,
+  );
 });
 
 test('acceptance 10: disconnected header pill label is 未連線', function () {

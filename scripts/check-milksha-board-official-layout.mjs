@@ -3,10 +3,12 @@
  * Production board @ 1920×1080: 70px font, 54px icon box, object-fit contain.
  */
 import { chromium } from 'playwright';
-import { cpSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
+import { gotoLayoutHarness } from './check-milksha-board-column-alignment.mjs';
+import { copySiteForPlaywright } from './lib/copy-site-for-playwright.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FONT_PX = 70;
@@ -14,21 +16,17 @@ const ICON_BOX_FACTOR = 0.8;
 const SAMPLE_PAYLOAD = [
   { source_type: 'From_Store_Preparing', number: '2217' },
   { source_type: 'From_milksha_point_Preparing', number: '096' },
-  { source_type: 'From_FoodPanda_Preparing', number: '6405' },
+  { source_type: 'From_FoodPanda_Preparing', number: '#6405' },
   { source_type: 'From_UberEat_Preparing', number: 'BFBEF' },
   { source_type: 'From_Store_OK', number: '2217' },
   { source_type: 'From_milksha_point_OK', number: '096' },
-  { source_type: 'From_FoodPanda_OK', number: '6405' },
+  { source_type: 'From_FoodPanda_OK', number: '#6405' },
   { source_type: 'From_UberEat_OK', number: 'BFBEF' },
 ];
 
 function prepareSite() {
-  const siteRoot = join('/tmp', 'milksha-official-layout-' + process.pid);
-  const dest = join(siteRoot, 'milksha-demo');
-  rmSync(siteRoot, { recursive: true, force: true });
-  mkdirSync(dest, { recursive: true });
-  cpSync(rootDir, dest, { recursive: true, filter: (src) => !src.includes('node_modules') });
-  return { siteRoot };
+  const { siteRoot } = copySiteForPlaywright(rootDir);
+  return { siteRoot, base: `http://127.0.0.1:8772/milksha-demo/` };
 }
 
 function startServer(siteRoot) {
@@ -50,23 +48,38 @@ function startServer(siteRoot) {
         res.end('not found');
       }
     });
-    server.listen(0, '127.0.0.1', () => {
-      const addr = server.address();
-      const port = typeof addr === 'object' && addr ? addr.port : 0;
-      resolve({ server: server, base: `http://127.0.0.1:${port}/milksha-demo/` });
-    });
+    server.listen(8772, '127.0.0.1', () => resolve(server));
   });
+}
+
+async function disposePlaywrightSession(browser, server) {
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (_err) {
+      // ignore close errors after failed launch
+    }
+  }
+  if (server) {
+    await new Promise(function (resolve) {
+      server.close(function () {
+        resolve(undefined);
+      });
+    });
+  }
 }
 
 /**
  * @returns {Promise<{ ok: boolean, fontPx: number, failures: string[] }>}
  */
 export async function runOfficialBoardLayoutCheck() {
-  const { siteRoot } = prepareSite();
-  const { server, base } = await startServer(siteRoot);
-  const browser = await chromium.launch();
+  const { siteRoot, base } = prepareSite();
+  const server = await startServer(siteRoot);
+  let browser;
+  try {
+    browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  await page.goto(base + '?demo=0', { waitUntil: 'networkidle' });
+  await gotoLayoutHarness(page, base);
   await page.evaluate((rows) => {
     window.QMS.runtime.applyPayload(rows, { silent: true });
   }, SAMPLE_PAYLOAD);
@@ -122,18 +135,15 @@ export async function runOfficialBoardLayoutCheck() {
         failures.push('icon slot overflow hidden');
       }
     });
-    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:6405"] .milksha-num');
-    if (!fp || fp.textContent !== '6405') {
-      failures.push('foodpanda display expected 6405 got ' + (fp ? fp.textContent : 'missing'));
+    const fp = document.querySelector('.milksha-board-chip[data-item-id="fp:#6405"] .milksha-num');
+    if (!fp || fp.textContent !== '#6405') {
+      failures.push('foodpanda display expected #6405 got ' + (fp ? fp.textContent : 'missing'));
     }
     return { ok: failures.length === 0, fontPx: expectedFont, failures: failures };
   }, FONT_PX);
 
-  await browser.close();
-  await new Promise(function (r) {
-    server.close(function () {
-      r(undefined);
-    });
-  });
   return result;
+  } finally {
+    await disposePlaywrightSession(browser, server);
+  }
 }

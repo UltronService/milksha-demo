@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { taipeiBusinessDate } from '../../tools/fake-cloud/taipei-business-date.mjs';
-import {
-  resetCloudState,
-  PORT_SITE,
-  PORT_CLOUD,
-  installBundledCloudRouteShim,
-  isolatedCloudContext,
-  waitForReceiverOnline,
-} from './harness.mjs';
+import { PORT_CLOUD, PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, waitForReceiverOnline } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE = 's120030';
@@ -75,7 +68,7 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
       await route.continue();
     });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
     await expect
       .poll(() => releaseHeldBoardGet !== null, { timeout: 15000, intervals: [100, 200, 500] })
       .toBe(true);
@@ -136,7 +129,7 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await waitForReceiverOnline(board, 'cloud');
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
 
     await expect(ctrl.locator('[data-testid="command-error-alert"]')).toBeHidden({ timeout: 12000 });
     await expect(ctrl.locator('[data-testid="user-banner"]')).toBeHidden({ timeout: 8000 });
@@ -191,7 +184,7 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await waitForReceiverOnline(board, 'cloud');
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
-    await ctrl.click('[data-testid="btn-send-numbers"]');
+    await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
     await expect(ctrl.locator('[data-testid="command-error-alert"]')).toBeVisible({ timeout: 12000 });
     await expect(ctrl.locator('[data-testid="command-error-message"]')).toContainText('雲端暫時出錯');
     await expect(ctrl.locator('#list-ready li')).toHaveCount(0, { timeout: 8000 });

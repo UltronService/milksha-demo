@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execPath } from 'node:process';
+import { expect } from '@playwright/test';
 
 const HARNESS_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export function siteRoot() {
@@ -207,6 +208,20 @@ export function urlsForMode(mode) {
   return { recv, ctrl, base };
 }
 
+const PR_TIER_BLOCK_PATTERNS = [
+  'https://firestore.googleapis.com/**',
+  'https://asia-east1-milksha-qms-dev.cloudfunctions.net/**',
+];
+
+export async function installPrTierNetworkGuard(target) {
+  if (process.env.MILKSHA_CI_TIER !== 'pr') {
+    return;
+  }
+  for (const pattern of PR_TIER_BLOCK_PATTERNS) {
+    await target.route(pattern, (route) => route.abort('blockedbyclient'));
+  }
+}
+
 export async function installBundledCloudRouteShim(page) {
   const base = `http://127.0.0.1:${PORT_CLOUD}`;
   async function proxyToFakeCloud(route, targetUrl) {
@@ -398,82 +413,142 @@ export async function waitForReceiverOnline(receiver, mode, storeOverride) {
   throw new Error('firestore receiver device not online on fake-cloud');
 }
 
+const CONTROLLER_ZONE_PARENT = {
+  'sec-connect': 'sec-test-tools',
+  'sec-pos': 'sec-test-tools',
+  'sec-net': 'sec-test-tools',
+  'sec-special': 'sec-test-tools',
+  'sec-log': 'sec-test-tools',
+};
+
+const CONTROLLER_ZONE_TOGGLE_TESTID = {
+  'sec-test-tools': 'zone-toggle-test-tools',
+  'sec-connect': 'zone-toggle-connect',
+  'sec-pos': 'zone-toggle-pos',
+  'sec-net': 'zone-toggle-net',
+  'sec-special': 'zone-toggle-special',
+  'sec-log': 'zone-toggle-log',
+};
+
+function controllerZoneExpandChain(zoneId) {
+  const chain = [zoneId];
+  let parent = CONTROLLER_ZONE_PARENT[zoneId];
+  while (parent) {
+    chain.unshift(parent);
+    parent = CONTROLLER_ZONE_PARENT[parent];
+  }
+  return chain;
+}
+
+async function expandSingleControllerZone(page, zoneId) {
+  const toggleTestId = CONTROLLER_ZONE_TOGGLE_TESTID[zoneId];
+  if (!toggleTestId) {
+    return;
+  }
+  const toggle = page.locator(`[data-testid="${toggleTestId}"]`);
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  }
+}
+
 export async function expandControllerZone(page, zoneId) {
-  await page.evaluate((id) => {
-    const section = document.getElementById(id);
-    if (!section) {
-      return;
+  for (const id of controllerZoneExpandChain(zoneId)) {
+    await expandSingleControllerZone(page, id);
+  }
+}
+
+async function ensureZonesExpandedForElement(page, elementId) {
+  const zoneIds = await page.locator(`#${elementId}`).evaluate((el) => {
+    const ids = [];
+    let node = el instanceof HTMLElement ? el : null;
+    while (node) {
+      if (node.classList.contains('zone') && node.id) {
+        ids.unshift(node.id);
+      }
+      node = node.parentElement;
     }
-    const btn = section.querySelector('.zone-toggle');
-    const body = section.querySelector('.zone-body');
-    if (btn) {
-      btn.setAttribute('aria-expanded', 'true');
-    }
-    if (body) {
-      body.hidden = false;
-    }
-  }, zoneId);
+    return ids;
+  });
+  for (const zid of zoneIds) {
+    await expandSingleControllerZone(page, zid);
+  }
+}
+
+async function confirmClearBoardModalIfOpen(page) {
+  const modal = page.locator('[data-testid="clear-board-modal"]');
+  if (!(await modal.isVisible())) {
+    return;
+  }
+  const confirm = page.locator('[data-testid="btn-clear-confirm"]');
+  await expect(confirm).toBeVisible();
+  await confirm.click();
+}
+
+export async function clickControllerDevButton(page, elementId) {
+  await ensureZonesExpandedForElement(page, elementId);
+  const btn = page.locator(`#${elementId}`);
+  await expect(btn).toBeVisible();
+  await btn.click();
+  if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+    await confirmClearBoardModalIfOpen(page);
+  }
+}
+
+export async function clickControllerDevButtonByTestId(page, testId) {
+  const loc = page.locator(`[data-testid="${testId}"]`);
+  const id = await loc.getAttribute('id');
+  if (!id) {
+    throw new Error(`clickControllerDevButtonByTestId: [data-testid="${testId}"] has no id`);
+  }
+  await clickControllerDevButton(page, id);
+}
+
+export async function fillControllerDevField(page, fieldId, value) {
+  await ensureZonesExpandedForElement(page, fieldId);
+  const field = page.locator(`#${fieldId}`);
+  await expect(field).toBeVisible();
+  await field.fill(value);
+}
+
+export async function selectControllerDevField(page, fieldId, value) {
+  await ensureZonesExpandedForElement(page, fieldId);
+  const field = page.locator(`#${fieldId}`);
+  await expect(field).toBeVisible();
+  await field.selectOption(value);
 }
 
 export async function connectController(page, mode) {
   await expandControllerZone(page, 'sec-connect');
-  await page.evaluate(() => {
-    const adv = document.getElementById('advanced-settings');
-    if (adv) {
-      adv.open = true;
-    }
-  });
+  const advancedSummary = page.locator('#advanced-settings summary');
+  if (!(await page.locator('#advanced-settings[open]').count())) {
+    await advancedSummary.click();
+  }
+  await expect(page.locator('[data-testid="fld-mode"]')).toBeVisible();
   if (mode === 'firestore') {
     await page.selectOption('#fld-mode', 'firestore');
-    // 進階設定 is collapsed by default; set fields via script (URL params also feed buildConfig).
-    await page.evaluate(
-      ({ host, key }) => {
-        const adv = document.getElementById('advanced-settings');
-        if (adv) adv.open = true;
-        const g = document.getElementById('fld-gateway');
-        const k = document.getElementById('fld-cloud-apikey');
-        const p = document.getElementById('fld-cloud-project');
-        const emu = document.getElementById('fld-use-emulator');
-        if (g) g.value = host;
-        if (k) k.value = key;
-        if (p) p.value = 'milksha-qms-dev';
-        if (emu) emu.checked = true;
-        const prefixEl = document.getElementById('fld-emulator-prefix');
-        if (prefixEl) prefixEl.value = '__emulator';
-        if (window.QMS && window.QMS.Transport && window.QMS.Transport.CloudSettings) {
-          window.QMS.Transport.CloudSettings.save({
-            projectId: 'milksha-qms-dev',
-            apiKey: key,
-            gateway: host,
-            useEmulator: true,
-            emulatorPrefix: '__emulator',
-            region: 'asia-east1',
-          });
-        }
-      },
-      {
-        host: `127.0.0.1:${PORT_SITE}`,
-        key: 'fake-api-key-for-emulator',
-      },
-    );
+    await page.locator('[data-testid="fld-gateway"]').fill(`127.0.0.1:${PORT_SITE}`);
+    await page.locator('[data-testid="fld-cloud-apikey"]').fill('fake-api-key-for-emulator');
+    await page.locator('[data-testid="fld-cloud-project"]').fill('milksha-qms-dev');
+    await page.locator('[data-testid="fld-use-emulator"]').check();
+    const prefixEl = page.locator('#fld-emulator-prefix');
+    if (await prefixEl.count()) {
+      await prefixEl.fill('__emulator');
+    }
   } else if (mode === 'cloud') {
     await page.selectOption('#fld-mode', 'cloud');
   } else {
-    await page.evaluate(() => {
-      const sel = document.getElementById('fld-mode');
-      if (sel) {
-        sel.value = 'local';
-      }
-    });
+    await page.selectOption('#fld-mode', 'local');
   }
-  await page.evaluate((posSecret) => {
-    const el = document.getElementById('fld-pos-sign-key');
-    if (el) el.value = posSecret;
-    if (window.QMS?.Transport?.ControllerSecrets) {
-      window.QMS.Transport.ControllerSecrets.savePosSignSecret(posSecret);
-    }
-  }, FAKE_CLOUD_POS_SIGN_SECRET);
-  await page.click('#btn-connect');
+  const posKey = page.locator('[data-testid="fld-pos-sign-key"]');
+  await expect(posKey).toBeVisible();
+  await posKey.fill(FAKE_CLOUD_POS_SIGN_SECRET);
+  const alreadyOnline = await page.locator('#online-state[data-connected="1"]').count();
+  if (alreadyOnline === 0) {
+    const connectBtn = page.locator('[data-testid="btn-connect"]');
+    await expect(connectBtn).toBeVisible();
+    await connectBtn.click();
+  }
   await page.waitForFunction(
     () => {
       const el = document.getElementById('online-state');
@@ -499,8 +574,4 @@ export async function connectController(page, mode) {
   } else {
     await page.waitForTimeout(400);
   }
-  await expandControllerZone(page, 'sec-pos');
-  await expandControllerZone(page, 'sec-net');
-  await expandControllerZone(page, 'sec-special');
-  await expandControllerZone(page, 'sec-log');
 }

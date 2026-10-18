@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { urlsForMode, PORT_SITE, expandControllerZone } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, expandControllerZone, urlsForMode } from './harness.mjs';
 
 const MSG_401 = '登入失敗。請稍後再按連線。';
 const MSG_403 = '這個帳號沒有這間店的權限。請檢查店號。';
@@ -41,7 +41,7 @@ test('controller connect 401 shows access code alert', async ({ browser }) => {
     });
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
-  await controller.click('#btn-connect');
+  await clickControllerDevButton(controller, 'btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401, { timeout: 10000 });
   await expect(controller.locator('.controller-alert-error')).toHaveCSS('color', 'rgb(207, 19, 34)');
   await expect(controller.getByTestId('command-error-message')).toHaveCSS('color', 'rgb(207, 19, 34)');
@@ -64,7 +64,7 @@ test('controller connect 403 invalid_access_code shows forbidden alert', async (
     });
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
-  await controller.click('#btn-connect');
+  await clickControllerDevButton(controller, 'btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
   expect(attempts).toBe(1);
   await ctx.close();
@@ -81,7 +81,7 @@ test('controller connect 403 forbidden shows permission alert', async ({ browser
     });
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
-  await controller.click('#btn-connect');
+  await clickControllerDevButton(controller, 'btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
   await ctx.close();
 });
@@ -99,7 +99,7 @@ test('controller connect 403 forbidden does not retry devLogin', async ({ browse
     });
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
-  await controller.click('#btn-connect');
+  await clickControllerDevButton(controller, 'btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403, { timeout: 10000 });
   await controller.waitForTimeout(1500);
   expect(attempts).toBe(1);
@@ -117,7 +117,7 @@ test('controller connect network error shows cloud retry alert', async ({ browse
     });
   });
   await openFirestoreConnectForm(controller, `127.0.0.1:${PORT_SITE}`);
-  await controller.click('#btn-connect');
+  await clickControllerDevButton(controller, 'btn-connect');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_CLOUD, { timeout: 10000 });
   await ctx.close();
 });

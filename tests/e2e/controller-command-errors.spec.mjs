@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { connectController, urlsForMode } from './harness.mjs';
+import { clickControllerDevButton, connectController, fillControllerDevField, urlsForMode } from './harness.mjs';
 import { e2eArtifactsDir } from './artifact-dir.mjs';
 
 const ART = e2eArtifactsDir();
@@ -49,13 +49,13 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await openNetZone(controller);
 
   await rejectDevCommand(controller, 403, { code: 'forbidden', message: 'no permission for this store' });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_403);
   await controller.screenshot({ path: `${ART}/controller-alert-403.png`, fullPage: false });
   await controller.getByTestId('command-error-close').click();
 
   await rejectDevCommand(controller, 401, { code: 'invalid_token', message: 'login expired, please sign in again' });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   const alert = controller.getByTestId('command-error-alert');
   await expect(alert).toBeVisible();
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_401);
@@ -65,7 +65,7 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await rejectDevCommand(controller, 404, { code: 'device_not_found', message: 'device not found' });
   await controller.getByTestId('command-error-close').click();
   await expect(alert).toBeHidden();
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(alert).toBeVisible();
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_404);
   await controller.screenshot({ path: `${ART}/controller-alert-404.png`, fullPage: false });
@@ -74,8 +74,8 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
     const adv = document.getElementById('advanced-settings');
     if (adv) adv.open = true;
   });
-  await controller.fill('#fld-device', 'bad device');
-  await controller.click('#btn-restore');
+  await fillControllerDevField(controller, 'fld-device', 'bad device');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_DEVICE_ID);
   const detailDevice = await controller.getByTestId('command-error-detail').textContent();
   expect(detailDevice).toMatch(/400/);
@@ -83,9 +83,9 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
   await controller.screenshot({ path: `${ART}/controller-alert-invalid-device-id.png`, fullPage: false });
 
   await controller.getByTestId('command-error-close').click();
-  await controller.fill('#fld-device', 'stb-01');
+  await fillControllerDevField(controller, 'fld-device', 'stb-01');
   await rejectDevCommand(controller, 400, { code: 'invalid_command_params', message: 'bad params' });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_400);
   await expect(controller.getByTestId('command-error-message')).not.toContainText('bad params');
   const detail400 = await controller.getByTestId('command-error-detail').textContent();
@@ -94,11 +94,11 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
 
   await rejectDevCommand(controller, 500, { code: 'internal_error', message: 'An internal error occurred.' });
   await controller.getByTestId('command-error-close').click();
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.getByTestId('command-error-message')).toHaveText(MSG_500);
   await controller.screenshot({ path: `${ART}/controller-alert-500.png`, fullPage: false });
 
-  await controller.fill('#fld-device', 'stb-01');
+  await fillControllerDevField(controller, 'fld-device', 'stb-01');
   await controller.evaluate(() => {
     const ok = window.__controller.setDevCommandHandler(
       () =>
@@ -110,7 +110,7 @@ test('controller | devCommand error alerts and in-flight lock', async ({ browser
       throw new Error('setDevCommandHandler failed');
     }
   });
-  await controller.click('#btn-restore');
+  await clickControllerDevButton(controller, 'btn-restore');
   await expect(controller.locator('#btn-restore')).toBeDisabled();
   expect(await controller.evaluate(() => window.__controllerTelemetry.isCommandInFlight())).toBe(true);
   await controller.evaluate(() => window.__releaseDevCommand());
