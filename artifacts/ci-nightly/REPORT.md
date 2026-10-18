@@ -1,7 +1,7 @@
 # PR #98 — CI / QA 紀錄
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/98
-- **Head:** `309045c`（`cursor/ci-npm-test-playwright-order-ce9c`）
+- **Head:** `63f600c`（`cursor/ci-npm-test-playwright-order-ce9c`）
 - **參考 PR CI：** [39109845340](https://github.com/UltronService/milksha-demo/actions/runs/39109845340) — workflow **failure（紅燈）**；**18** 個唯一 e2e 失敗 ⊆ main 既有 **38** 項；**分支獨有 0**
 - **main 36 項基準：** [39105020723](https://github.com/UltronService/milksha-demo/actions/runs/39105020723)（清單見 `main-baseline-failures-39105020723.txt`，含 addendum +2）
 
