@@ -18,8 +18,7 @@
   const USER_MSG_404 = USER_MSG_DEVICE_NOT_FOUND;
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
   const USER_MSG_CLOUD_COMMAND_REJECTED = '指令內容不符合規定，雲端拒收。';
-  const USER_MSG_PUSH_NUMBERS_TOO_LARGE =
-    '送出內容太大，雲端拒收。請減少號碼或縮短號碼後再送。';
+  const USER_MSG_PUSH_NUMBERS_TOO_LARGE = '送出失敗：號碼太多或太長。請分批送出。';
   const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
   const USER_MSG_INTERNAL_ERROR = '雲端暫時出錯。請稍後再送一次。';
 

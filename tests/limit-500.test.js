@@ -266,6 +266,7 @@ test('limit-500 cloud PR38: push_numbers over 256KB rejected; controller maps me
     assert.equal(json.code, E.CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE);
     const msg = E.devCommandUserMessage({ status: 400, response: json });
     assert.equal(msg, E.USER_MSG_PUSH_NUMBERS_TOO_LARGE);
+    assert.doesNotMatch(msg, /push_numbers_params_too_large/);
   });
 });
 
@@ -278,6 +279,7 @@ test('limit-500 item 11b: after push_numbers too large rejection inputs stay typ
   };
   const quickError = E.devCommandUserMessage(err, {});
   assert.equal(quickError, E.USER_MSG_PUSH_NUMBERS_TOO_LARGE);
+  assert.doesNotMatch(quickError, /push_numbers_params_too_large/);
   assert.equal(dom['fld-quick-no'].value, '2847');
 });
 
