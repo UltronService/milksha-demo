@@ -1,0 +1,222 @@
+
+Running 6 tests using 1 worker
+
+(node:265266) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:265266) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (3.0m)
+(node:265425) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:265425) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (2.0s)
+(node:265569) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:265569) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (3.0m)
+(node:265724) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:265724) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  4 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (3.0m)
+(node:265876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:265876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  5 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (3.0m)
+(node:266028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:266028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  6 forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (3.0m)
+
+
+  1) forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('#btn-send-numbers')[22m
+    [2m    - locator resolved to <button disabled type="button" aria-disabled="true" id="btn-send-numbers" data-requires-connect="1" data-testid="btn-send-numbers" class="primary btn-send-numbers">↵            送出號碼↵          </button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    346 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at harness.mjs:532
+
+      530 |   const btn = page.locator(`#${elementId}`);
+      531 |   await expect(btn).toBeVisible();
+    > 532 |   await btn.click();
+          |             ^
+      533 |   if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+      534 |     await confirmClearBoardModalIfOpen(page);
+      535 |   }
+        at clickControllerDevButton (/workspace/tests/e2e/harness.mjs:532:13)
+        at clickControllerDevButtonByTestId (/workspace/tests/e2e/harness.mjs:544:3)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:58:5
+
+  2) forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('#btn-send-numbers')[22m
+    [2m    - locator resolved to <button disabled type="button" aria-disabled="true" id="btn-send-numbers" data-requires-connect="1" data-testid="btn-send-numbers" class="primary btn-send-numbers">↵            送出號碼↵          </button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    346 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at harness.mjs:532
+
+      530 |   const btn = page.locator(`#${elementId}`);
+      531 |   await expect(btn).toBeVisible();
+    > 532 |   await btn.click();
+          |             ^
+      533 |   if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+      534 |     await confirmClearBoardModalIfOpen(page);
+      535 |   }
+        at clickControllerDevButton (/workspace/tests/e2e/harness.mjs:532:13)
+        at clickControllerDevButtonByTestId (/workspace/tests/e2e/harness.mjs:544:3)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:58:5
+
+  3) forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('#btn-send-numbers')[22m
+    [2m    - locator resolved to <button disabled type="button" aria-disabled="true" id="btn-send-numbers" data-requires-connect="1" data-testid="btn-send-numbers" class="primary btn-send-numbers">↵            送出號碼↵          </button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    346 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at harness.mjs:532
+
+      530 |   const btn = page.locator(`#${elementId}`);
+      531 |   await expect(btn).toBeVisible();
+    > 532 |   await btn.click();
+          |             ^
+      533 |   if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+      534 |     await confirmClearBoardModalIfOpen(page);
+      535 |   }
+        at clickControllerDevButton (/workspace/tests/e2e/harness.mjs:532:13)
+        at clickControllerDevButtonByTestId (/workspace/tests/e2e/harness.mjs:544:3)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:58:5
+
+  4) forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('#btn-send-numbers')[22m
+    [2m    - locator resolved to <button disabled type="button" aria-disabled="true" id="btn-send-numbers" data-requires-connect="1" data-testid="btn-send-numbers" class="primary btn-send-numbers">↵            送出號碼↵          </button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    346 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at harness.mjs:532
+
+      530 |   const btn = page.locator(`#${elementId}`);
+      531 |   await expect(btn).toBeVisible();
+    > 532 |   await btn.click();
+          |             ^
+      533 |   if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+      534 |     await confirmClearBoardModalIfOpen(page);
+      535 |   }
+        at clickControllerDevButton (/workspace/tests/e2e/harness.mjs:532:13)
+        at clickControllerDevButtonByTestId (/workspace/tests/e2e/harness.mjs:544:3)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:58:5
+
+  5) forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('#btn-send-numbers')[22m
+    [2m    - locator resolved to <button disabled type="button" aria-disabled="true" id="btn-send-numbers" data-requires-connect="1" data-testid="btn-send-numbers" class="primary btn-send-numbers">↵            送出號碼↵          </button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not enabled[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    346 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not enabled[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+       at harness.mjs:532
+
+      530 |   const btn = page.locator(`#${elementId}`);
+      531 |   await expect(btn).toBeVisible();
+    > 532 |   await btn.click();
+          |             ^
+      533 |   if (elementId === 'btn-clear-now' || elementId === 'btn-clear-board') {
+      534 |     await confirmClearBoardModalIfOpen(page);
+      535 |   }
+        at clickControllerDevButton (/workspace/tests/e2e/harness.mjs:532:13)
+        at clickControllerDevButtonByTestId (/workspace/tests/e2e/harness.mjs:544:3)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:58:5
+
+  5 failed
+    forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:18:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+  1 passed (15.1m)
