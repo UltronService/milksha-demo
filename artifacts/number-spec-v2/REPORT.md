@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | `aaf72d5` |
+| **head sha** | `49697ae` |
 | **asset version** | `20261019d` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
@@ -47,4 +47,4 @@
 
 | Run id | Branch-only failures |
 | --- | --- |
-| [39252147231](https://github.com/UltronService/milksha-demo/actions/runs/39252147231) | **0** branch-only (failures ⊆ main ~38 baseline; unit green) |
+| [39254929869](https://github.com/UltronService/milksha-demo/actions/runs/39254929869) | **0** branch-only (failures ⊆ main ~38 baseline; unit green) |
