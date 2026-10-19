@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Branch | `cursor/waiting-pairing-red` |
-| Head commit | `c467b06` |
+| Head commit | `03a2d10` |
 | Base | `main` |
 | PR | **不開**（本輪僅紅燈測試） |
 | 相依 | rebase / merge **PR #108**（`cursor/store-setup-screen-0c9f`）後再跑綠燈 |
