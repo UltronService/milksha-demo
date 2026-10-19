@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | _(pending push)_ |
+| **head sha** | `ea84d2e` |
 | **asset version** | `20261019d` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
