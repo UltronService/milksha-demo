@@ -3,12 +3,13 @@
 | Field | Value |
 | --- | --- |
 | PR | https://github.com/UltronService/milksha-demo/pull/108 |
-| Head SHA | _(see latest push on branch)_ |
+| Head SHA | `af28f47` (+ follow-up e2e alignment commits on branch) |
 | Asset version | `20261019a` |
 | Store id validator | `js/store-id.js` — same rules as main `controller/store-list.js` (`KNOWN_LITERAL`, `zz-qa-*`, `zz-deny-*`, `[a-z][0-9]{6}`). PR #105 dedicated module not on main; logic extracted without changing rules. |
 | Unit tests | 351 passed (`npm test`) |
-| CI run | _(filled after CI)_ |
-| Branch-only e2e failures | _(filled after CI)_ |
+| CI run | https://github.com/UltronService/milksha-demo/actions/runs/39266706823 |
+| E2E failed tests (branch) | 23 in fake-cloud shards + 1 `e2e-pr23-login-rate` (see run log); main baseline run `39136354686` ≈ 16 + pr23 |
+| Branch-only e2e failures | ~7 vs main shard totals (alignment/stale-storage harness follow-up in progress) |
 
 ## Item → test mapping
 

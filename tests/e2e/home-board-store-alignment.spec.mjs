@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, homeBoardUrl, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
 
 const WRONG_STORE_SEED = () => {
   localStorage.setItem(
@@ -23,7 +23,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
   });
 
   const board = await ctx.newPage();
-  await board.goto(`${urlsLocalHomePoc().board}&store=s110012&device=stb-01`);
+  await board.goto(homeBoardUrl(urlsLocalHomePoc().base, 'mode=local&store=s110012&device=stb-01'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
 
@@ -32,8 +32,8 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
     () => {
       try {
         const poc = JSON.parse(localStorage.getItem('milksha:local:poc-target') || 'null');
-        const dev = JSON.parse(localStorage.getItem('milksha:local:device:c030020:stb-01') || 'null');
-        return Boolean(poc && poc.storeId === 'c030020' && dev && dev.online);
+        const dev = JSON.parse(localStorage.getItem('milksha:local:device:zz-qa-store-a:stb-01') || 'null');
+        return Boolean(poc && poc.storeId === 'zz-qa-store-a' && dev && dev.online);
       } catch {
         return false;
       }
@@ -46,7 +46,7 @@ test('wrong-store heartbeat: controller shows hint until board realigns', async 
 
   const deviceDoc = await board.evaluate(() => {
     try {
-      return JSON.parse(localStorage.getItem('milksha:local:device:c030020:stb-01') || 'null');
+      return JSON.parse(localStorage.getItem('milksha:local:device:zz-qa-store-a:stb-01') || 'null');
     } catch {
       return null;
     }
@@ -62,7 +62,7 @@ test('board already open on wrong store realigns when controller connects', asyn
   const ctx = await freshContext(browser);
   await ctx.addInitScript(WRONG_STORE_SEED);
   const board = await ctx.newPage();
-  await board.goto(`${urlsLocalHomePoc().board}&store=s110012&device=stb-01`);
+  await board.goto(homeBoardUrl(urlsLocalHomePoc().base, 'mode=local&store=s110012&device=stb-01'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
 
   const controller = await ctx.newPage();
@@ -74,7 +74,7 @@ test('board already open on wrong store realigns when controller connects', asyn
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 15000 });
 
   const hbKey = await board.evaluate(() => {
-    const good = localStorage.getItem('milksha:local:device:c030020:stb-01');
+    const good = localStorage.getItem('milksha:local:device:zz-qa-store-a:stb-01');
     return Boolean(good);
   });
   expect(hbKey).toBe(true);
