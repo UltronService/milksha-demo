@@ -16,6 +16,18 @@ test.describe('controller cloud store picker', () => {
     await resetCloudState({ seedDevice: true });
   });
 
+  test('403: a123 invalid digit length shows 店號格式不對', async ({ browser }) => {
+    const ctx = await isolatedCloudContext(browser);
+    const page = await ctx.newPage();
+    await installBundledCloudRouteShim(page);
+    await page.goto(`${BASE}/controller/?mode=cloud&store=a123`);
+    await expandControllerZone(page, 'sec-connect');
+    const banner = page.locator('[data-testid="store-not-allowed-banner"]');
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText('店號格式不對');
+    await ctx.close();
+  });
+
   test('403: invalid store id format shows 店號格式不對 and blocks send', async ({ browser }) => {
     const ctx = await isolatedCloudContext(browser);
     const page = await ctx.newPage();
@@ -65,6 +77,38 @@ test.describe('controller cloud store picker', () => {
     const banner = page.locator('[data-testid="store-not-allowed-banner"]');
     await expect(banner).toBeVisible({ timeout: 20000 });
     await expect(banner).toContainText('名額已滿');
+    await ctx.close();
+  });
+
+  test('a17 appears in store list after board pairs on fake cloud', async ({ browser }) => {
+    test.setTimeout(120000);
+    await fetch(`http://127.0.0.1:${PORT_CLOUD}/test/registerStore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storeId: 'a17', name: '測試店 a17' }),
+    });
+    const ctx = await isolatedCloudContext(browser);
+    const board = await ctx.newPage();
+    await installBundledCloudRouteShim(board);
+    await board.goto(`${BASE}/?mode=cloud&store=a17`);
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
+    const controller = await ctx.newPage();
+    await installBundledCloudRouteShim(controller);
+    await controller.goto(`${BASE}/controller/?mode=cloud&store=a17&testStoreListPollMs=2000`);
+    await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
+    await expandControllerZone(controller, 'sec-connect');
+    await expect
+      .poll(
+        async () => {
+          await controller.evaluate(() => window.__controller.refreshStoreListFromCloud());
+          const values = await controller.locator('#fld-store option').evaluateAll((opts) =>
+            opts.map((o) => o.value),
+          );
+          return values.includes('a17');
+        },
+        { timeout: 35000 },
+      )
+      .toBeTruthy();
     await ctx.close();
   });
 

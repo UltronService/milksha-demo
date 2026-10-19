@@ -59,6 +59,7 @@ function loadStoreList() {
   const sandbox = { fetch: async function () { throw new Error('fetch not mocked'); } };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(readUtf8('js/shared/store-id.js'), sandbox);
   vm.runInNewContext(readUtf8('controller/store-list.js'), sandbox);
   return sandbox.QMS.Controller.StoreList;
 }

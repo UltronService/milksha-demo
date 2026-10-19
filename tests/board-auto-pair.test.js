@@ -12,6 +12,7 @@ function loadAutoPair() {
   const sandbox = { globalThis: {}, Date: Date, Intl: Intl, crypto: { randomUUID: () => 'test-machine-uuid' } };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'shared', 'store-id.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'board-auto-pair.js'), 'utf8'), sandbox);
   return sandbox.QMS.Board.AutoPair;
@@ -34,6 +35,17 @@ function memoryStorage() {
     },
   };
 }
+
+test('buildAutoPairRequest normalizes storeNumber A17 to a17', function () {
+  const AP = loadAutoPair();
+  const built = AP.buildAutoPairRequest({
+    brand: 'Milksha',
+    storeNumber: 'A17',
+    deviceId: 'stb-01',
+  });
+  assert.equal(built.ok, true);
+  assert.equal(built.body.storeNumber, 'a17');
+});
 
 test('buildAutoPairRequest initial has brand storeNumber deviceId only', function () {
   const AP = loadAutoPair();
@@ -151,6 +163,10 @@ test('msUntilNextTaipeiMinute aligns before minute rollover', function () {
 
 test('home board index wires auto-pair scripts', function () {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.match(html, /board-auto-pair\.js\?v=/);
+  const storeIdIdx = html.indexOf('js/shared/store-id.js?v=');
+  const autoPairIdx = html.indexOf('board-auto-pair.js?v=');
+  assert.ok(storeIdIdx >= 0, 'index.html must load js/shared/store-id.js');
+  assert.ok(autoPairIdx >= 0, 'index.html must load board-auto-pair.js');
+  assert.ok(storeIdIdx < autoPairIdx, 'store-id.js must load before board-auto-pair.js');
   assert.match(html, /board-bind-api\.js\?v=/);
 });

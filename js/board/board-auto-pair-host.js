@@ -126,7 +126,12 @@
     const brandId = String(
       opts.brandId || (brandPack && brandPack.brandId) || '',
     ).trim();
-    const storeNumber = String(opts.storeNumber || opts.storeId || '').trim();
+    const StoreId = QMS.Shared && QMS.Shared.StoreId;
+    const storeNumberRaw = String(opts.storeNumber || opts.storeId || '').trim();
+    const storeNumber =
+      StoreId && StoreId.normalizeStoreId
+        ? StoreId.normalizeStoreId(storeNumberRaw)
+        : storeNumberRaw.toLowerCase();
     const cloudApi = opts.cloudApi;
     const signInWithCustomToken =
       typeof opts.signInWithCustomToken === 'function' ? opts.signInWithCustomToken : null;

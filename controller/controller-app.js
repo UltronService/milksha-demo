@@ -842,10 +842,19 @@
     return Object.assign({}, cfg, { posSignSecret: posSecret });
   }
 
+  function normalizeStoreIdValue(raw) {
+    if (StoreList && StoreList.normalizeStoreId) {
+      return StoreList.normalizeStoreId(raw);
+    }
+    return String(raw || '').trim().toLowerCase();
+  }
+
   function storeId() {
     const fallback =
       (Validate && Validate.DEFAULT_HOME_BOARD_STORE_ID) || 'c030020';
-    return document.getElementById('fld-store').value.trim() || fallback;
+    const el = document.getElementById('fld-store');
+    const raw = el && el.value.trim() ? el.value.trim() : fallback;
+    return normalizeStoreIdValue(raw);
   }
 
   function publishLocalPocTargetFromForm() {
@@ -1733,7 +1742,11 @@
   }
 
   function urlStoreParam() {
-    return new URLSearchParams(window.location.search).get('store') || '';
+    const raw = new URLSearchParams(window.location.search).get('store') || '';
+    if (!raw) {
+      return '';
+    }
+    return normalizeStoreIdValue(raw);
   }
 
   function isCloudPickerMode() {

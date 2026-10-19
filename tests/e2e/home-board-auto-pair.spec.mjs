@@ -193,6 +193,23 @@ test.describe('home board auto-pair', () => {
     await registerStore('zz-qa-store-a', 'QA測試門市A');
     await registerStore('zz-qa-ci-store', 'CI測試門市');
     await registerStore('zz-qa-long-name', LONG_STORE_NAME);
+    await registerStore('a17', '測試店 a17');
+  });
+
+  test('a17 pairs with normalized storeNumber and bind hint shows a17', async ({ browser }) => {
+    const { ctx, page } = await openCloudBoard(browser, 'A17', {
+      clockIso: CLOCK_2026_TAIPEI_1429,
+    });
+    const bindBodies = await boardAutoPairBodiesFromCloud();
+    const initial = bindBodies.find((b) => b.brand && b.storeNumber);
+    expect(initial && initial.storeNumber).toBe('a17');
+    const record = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('milksha:board-bind-record') || 'null'),
+    );
+    expect(record.storeId).toBe('a17');
+    expect(record.storeNumber).toBe('a17');
+    await expect(page.locator('#milksha-board-bind-hint')).toContainText('a17');
+    await ctx.close();
   });
 
   test('boot order: boardAutoPair before signIn; login uses pair customToken not devLogin', async ({

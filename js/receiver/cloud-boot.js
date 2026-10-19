@@ -93,6 +93,12 @@
     if (params.get('device')) {
       root.localStorage.setItem('milksha:deviceId', deviceId);
     }
+    const StoreId = root.QMS && root.QMS.Shared && root.QMS.Shared.StoreId;
+    if (StoreId && StoreId.normalizeStoreId) {
+      storeId = StoreId.normalizeStoreId(storeId);
+    } else {
+      storeId = String(storeId || '').trim().toLowerCase();
+    }
     return { storeId: storeId, deviceId: deviceId };
   }
 

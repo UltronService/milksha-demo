@@ -15,33 +15,10 @@ import {
 } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
+import { isValidStoreIdFormat, normalizeStoreId } from '../../scripts/store-id-lib.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
-const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
-const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
-const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
-const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
 const STORE_REGISTRY_MAX = Number(process.env.FAKE_STORE_REGISTRY_MAX || 200);
-
-function isValidStoreIdFormat(storeId) {
-  const id = String(storeId || '').trim();
-  if (!id) {
-    return false;
-  }
-  if (KNOWN_LITERAL_STORE_IDS.has(id)) {
-    return true;
-  }
-  if (STORE_ID_ZZ_QA_RE.test(id)) {
-    return true;
-  }
-  if (STORE_ID_ZZ_DENY_RE.test(id)) {
-    return true;
-  }
-  if (STORE_ID_LETTER_SIX_DIGITS_RE.test(id)) {
-    return true;
-  }
-  return false;
-}
 
 /** @type {Map<string, { storeId: string, name: string, registeredAt: number|null, test: boolean }>} */
 const storeRegistry = new Map();
@@ -703,24 +680,17 @@ const server = http.createServer(async (req, res) => {
         }
 
         function resolveStoreIdFromInitial(brand, storeNumber) {
-          const sn = String(storeNumber || '').trim();
+          const sn = normalizeStoreId(storeNumber);
           if (!sn) {
             return null;
           }
-          if (
-            isValidStoreIdFormat(sn) &&
-            (STORE_ID_ZZ_QA_RE.test(sn) ||
-              STORE_ID_LETTER_SIX_DIGITS_RE.test(sn) ||
-              KNOWN_LITERAL_STORE_IDS.has(sn))
-          ) {
+          if (isValidStoreIdFormat(sn)) {
             return sn;
           }
           const b = String(brand || body.brandId || '').trim();
           if (b === 'zz-qa') {
-            return 'zz-qa-' + sn.toLowerCase();
-          }
-          if ((b === 'Milksha' || b === 'milksha') && STORE_ID_LETTER_SIX_DIGITS_RE.test(sn)) {
-            return sn;
+            const candidate = normalizeStoreId('zz-qa-' + sn);
+            return isValidStoreIdFormat(candidate) ? candidate : null;
           }
           return null;
         }
