@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| PR | _(filled after push)_ |
-| Head SHA | _(filled after push)_ |
+| PR | https://github.com/UltronService/milksha-demo/pull/108 |
+| Head SHA | `e57f96a` |
 | Asset version | `20261019a` |
 | Store id validator | `js/store-id.js` — same rules as main `controller/store-list.js` (`KNOWN_LITERAL`, `zz-qa-*`, `zz-deny-*`, `[a-z][0-9]{6}`). PR #105 dedicated module not on main; logic extracted without changing rules. |
 | Unit tests | 351 passed (`npm test`) |
