@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | PR | https://github.com/UltronService/milksha-demo/pull/108 |
-| Head SHA | _(latest push on `cursor/store-setup-screen-0c9f`)_ |
+| Head SHA | `d2af9ec` |
 | Asset version | `20261019g` |
 | Unit tests | 354 passed (`npm test`) |
 
@@ -31,14 +31,18 @@
 
 Compare normalized `(spec.mjs :: test title)` from `gh run view --log-failed`:
 
-| Run | Branch | Main |
+| Run | Branch (`d2af9ec`) | Main |
 | --- | --- | --- |
-| Run ID | _(latest after `20261019g` push)_ | `39136354686` |
-| Failed e2e cases (unique) | _(fill after CI)_ | 17 |
-| Branch-only failures | **must be 0** | — |
-| ⊆ main? | _(fill: branch_fail ⊆ main_fail ∪ fixed)_ | — |
+| Run ID | `39278656213` | `39136354686` |
+| Failed e2e cases (unique) | **7** | **10** |
+| Branch-only failures | **0** | — |
+| ⊆ main? | **Yes** — every branch failure title appears in main’s failed set | — |
 
-Previous run `39268857539` (pre-`g` / pre-e2e fixes): branch-only **3** (`cloud-remote-send` controller-before-board, `controller-redesign-acceptance` picker, `forbidden-store-then-qa-isolation`); fixed in follow-up commits.
+Branch failed cases (all present on main): `board-cell-peak-simulation` peak run; `cloud-remote-send` ten sends; `controller-post-send-board-read-abort` HTTP 500 rollback; `controller-store-picker-evidence` 3c; `home-board-cloud-recovery` B-N07; `pr23-login-count` 5 min idle (×2 shard titles).
+
+Main-only failures (pass on branch): `cloud-qa-checklist` cable pull; `controller-store-picker` poll window; `fresh-browser-pause-heartbeat` boxHeartbeat 403.
+
+`forbidden-store-then-qa-isolation` — **pass** on branch run `39278656213` (wait outbound-ready + post–`zz-deny` storage wipe).
 
 ## Item → test mapping (14)
 
