@@ -2,7 +2,7 @@
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/107
 - **分支:** `cursor/limit-500-numbers-7037`
-- **HEAD:** `ef703c0`
+- **HEAD:** `b27124c`
 - **資產版本:** `20261019a`
 - **與 #95 關係:** 可能與 [PR #95](https://github.com/UltronService/milksha-demo/pull/95)（`cursor/controller-default-number-5dd5`）衝突同一批檔案；#95 合併後需 rebase。
 
