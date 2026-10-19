@@ -195,10 +195,6 @@
       }
       out.ready = readyNorm.list;
       out.preparing = prepNorm.list;
-      const paramsJson = JSON.stringify(out);
-      if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-        return invalidCommandParams('指令參數超過 1024 位元組上限');
-      }
       return { ok: true, params: out };
     }
     for (let i = 0; i < allowed.length; i += 1) {
@@ -224,10 +220,6 @@
     }
     if (allowed.length === 0 && Object.keys(raw).length > 0) {
       return invalidCommandParams('此指令不可帶參數');
-    }
-    const paramsJson = JSON.stringify(out);
-    if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-      return invalidCommandParams('指令參數超過 1024 位元組上限');
     }
     return { ok: true, params: out };
   }
@@ -259,10 +251,6 @@
     });
     if (extra.length > 0) {
       return invalidCommandParams('請求含有不允許的欄位');
-    }
-    const json = JSON.stringify(body);
-    if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-      return invalidCommandParams('請求內容過大');
     }
     return { ok: true, body: body };
   }

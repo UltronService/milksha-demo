@@ -135,10 +135,6 @@ function normalizeParams(type, params) {
     if (!prepNorm.ok) return prepNorm;
     out.ready = readyNorm.list;
     out.preparing = prepNorm.list;
-    const paramsJson = JSON.stringify(out);
-    if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-      return invalidCommandParams('params too large');
-    }
     return { ok: true, params: out };
   }
   for (const key of allowed) {
@@ -157,10 +153,6 @@ function normalizeParams(type, params) {
   }
   if (allowed.length === 0 && Object.keys(raw).length > 0) {
     return invalidCommandParams('invalid params');
-  }
-  const paramsJson = JSON.stringify(out);
-  if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-    return invalidCommandParams('params too large');
   }
   return { ok: true, params: out };
 }
@@ -183,10 +175,6 @@ export function buildDevCommandRequest(input) {
   if (!body.storeId) {
     return invalidCommandParams('invalid store');
   }
-  const json = JSON.stringify(body);
-  if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-    return invalidCommandParams('request too large');
-  }
   return { ok: true, body };
 }
 
@@ -204,6 +192,7 @@ export function httpStatusForApiErrorCode(code) {
   if (code === 'device_not_found' || code === 'not_found') return 404;
   if (code === 'internal_error') return 500;
   if (code === 'payload_too_large') return 413;
+  if (code === 'push_numbers_params_too_large') return 400;
   if (code === 'invalid_device_id' || code === 'invalid_command_params' || code === 'invalid_body') {
     return 400;
   }

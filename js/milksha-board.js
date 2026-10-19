@@ -479,7 +479,7 @@
       });
       return boardChimePolicy;
     }
-    const metaById = {};
+    let metaById = {};
     let readyItems = [];
     let prepItems = [];
     let readyPage = 0;
@@ -896,8 +896,8 @@
         }
       }
 
-      lastRenderedPrep = prepItems.slice();
-      lastRenderedReady = readyItems.slice();
+      lastRenderedPrep = prepItems;
+      lastRenderedReady = readyItems;
       lastRenderedPrepPage = prepPage;
       lastRenderedReadyPage = readyPage;
     }
@@ -912,8 +912,8 @@
       const zone = boardEl.querySelector(zoneSel);
       if (!zone) {
         renderBoard();
-        lastRenderedPrep = prepItems.slice();
-        lastRenderedReady = readyItems.slice();
+        lastRenderedPrep = prepItems;
+        lastRenderedReady = readyItems;
         lastRenderedPrepPage = prepPage;
         lastRenderedReadyPage = readyPage;
         return Promise.resolve();
@@ -1237,11 +1237,12 @@
      */
     function applyPayload(numberContent, opts) {
       const now = Date.now();
-      const prevPrepBefore = prepItems.slice();
-      const prevReadyBefore = readyItems.slice();
+      const prevPrepBefore = prepItems;
+      const prevReadyBefore = readyItems;
       const wasBoardEmpty = isBoardFullyEmpty(prevReadyBefore, prevPrepBefore);
       const parts = partitionNumberContent(numberContent);
       const newReadyIds = detectNewlyReady(prevReadyIdSet, parts.ready);
+      const newReadyIdLookup = new Set(newReadyIds);
       const nextReadyIdSet = new Set();
       for (let nr = 0; nr < parts.ready.length; nr += 1) {
         nextReadyIdSet.add(parts.ready[nr].id);
@@ -1269,7 +1270,7 @@
               : 0;
         nextMeta[e.id] = {
           firstSeenAt: prev && prev.firstSeenAt ? prev.firstSeenAt : now,
-          readyAt: newReadyIds.indexOf(e.id) >= 0 ? now : readyAt,
+          readyAt: newReadyIdLookup.has(e.id) ? now : readyAt,
           payloadIndex: payloadIndex,
         };
         nextReady.push({
@@ -1311,14 +1312,7 @@
         return compareNewestFirst(a, b, 'firstSeenAt');
       });
 
-      Object.keys(metaById).forEach(function (k) {
-        if (!nextMeta[k]) {
-          delete metaById[k];
-        }
-      });
-      Object.keys(nextMeta).forEach(function (k) {
-        metaById[k] = nextMeta[k];
-      });
+      metaById = nextMeta;
 
       readyItems = nextReady;
       prepItems = nextPrep;
@@ -1354,8 +1348,8 @@
         boardAnimator.cancelAll(boardEl);
       }
       renderBoard();
-      lastRenderedPrep = prepItems.slice();
-      lastRenderedReady = readyItems.slice();
+      lastRenderedPrep = prepItems;
+      lastRenderedReady = readyItems;
       lastRenderedPrepPage = prepPage;
       lastRenderedReadyPage = readyPage;
     }
@@ -1384,8 +1378,8 @@
 
     applyScale();
     renderBoard();
-    lastRenderedPrep = prepItems.slice();
-    lastRenderedReady = readyItems.slice();
+    lastRenderedPrep = prepItems;
+    lastRenderedReady = readyItems;
     lastRenderedPrepPage = prepPage;
     lastRenderedReadyPage = readyPage;
     scheduleZoneTimers();

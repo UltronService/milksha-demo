@@ -95,6 +95,20 @@ test('devCommand user messages map by response code', function () {
     E.USER_MSG_400_INVALID,
   );
   assert.equal(
+    E.devCommandUserMessage({
+      status: 400,
+      response: { code: E.CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE, message: 'too big' },
+    }),
+    E.USER_MSG_PUSH_NUMBERS_TOO_LARGE,
+  );
+  assert.equal(
+    E.devCommandUserMessage({
+      status: 400,
+      response: { code: 'invalid_command_params', message: 'command exceeds 1024 byte limit' },
+    }),
+    E.USER_MSG_CLOUD_COMMAND_REJECTED,
+  );
+  assert.equal(
     E.devCommandUserMessage({ status: 418, response: { code: 'weird', message: 'nope' } }),
     E.USER_MSG_INTERNAL_ERROR,
   );
