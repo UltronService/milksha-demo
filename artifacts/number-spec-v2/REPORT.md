@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | **head sha** | `5b6a381` |
-| **asset version** | `20261019b` |
+| **asset version** | `20261019c` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
 ## Spec coverage (15 items)
@@ -12,6 +12,7 @@
 | --- | --- | --- | --- |
 | 1 | As-sent display (case, `#`, leading zeros) | `tests/number-spec-v2.test.js` → spec 1 | pass |
 | 2 | Max 6 grapheme/code units | `tests/number-spec-v2.test.js` → spec 2 | pass |
+| 2b | STB: code-point baseline + Segmenter fallback | `tests/number-spec-v2.test.js` → STB baseline / STB fallback | pass |
 | 3 | Trim outer whitespace, keep inner | `tests/number-spec-v2.test.js` → spec 3 | pass |
 | 4 | Empty / whitespace-only → blank cell | `tests/number-spec-v2.test.js` → spec 4 | pass |
 | 5 | Dedupe source + trimmed original | `tests/number-spec-v2.test.js` → spec 5 | pass |
@@ -40,9 +41,15 @@
 - `tests/e2e/board-number-rules.spec.mjs`
 - `tests/e2e/controller-default-number.spec.mjs`
 
+## STB / old WebView truncation (Android)
+
+- **Baseline (required on STB)**: `truncateToDisplayUnitsByCodePoint` — `Array.from(str)` then slice; ES2015 only, no `Intl.Segmenter`, no regex `u`/`v`.
+- **Enhancement (optional)**: `Intl.Segmenter` used only when `canUseIntlSegmenter()` is true; otherwise baseline.
+- **Tests**: emoji `😀`, CJK ext-B `𠮷`, surrogate-pair integrity, fallback with `Intl: { Segmenter: undefined }` in `tests/number-spec-v2.test.js`.
+
 ## Unit tests
 
-- **370** tests, **370** pass, **0** fail (`npm test`)
+- **372** tests, **372** pass (`npm test`, includes STB cases above).
 
 ## E2E (local)
 

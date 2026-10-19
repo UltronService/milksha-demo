@@ -63,6 +63,52 @@
   }
 
   /**
+   * STB / old WebView baseline: Unicode code points via ES2015 string iteration (no surrogate splits).
+   * @param {string} text
+   * @param {number} [maxUnits]
+   * @returns {string}
+   */
+  function truncateToDisplayUnitsByCodePoint(text, maxUnits) {
+    const limit = maxUnits == null ? DISPLAY_UNIT_LIMIT : maxUnits;
+    if (!text) {
+      return '';
+    }
+    const units = Array.from(String(text));
+    return units.slice(0, limit).join('');
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  function canUseIntlSegmenter() {
+    try {
+      return typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function';
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  /**
+   * Optional grapheme-aware path when Intl.Segmenter exists (feature-detected).
+   * @param {string} text
+   * @param {number} limit
+   * @returns {string}
+   */
+  function truncateToDisplayUnitsWithSegmenter(text, limit) {
+    const seg = new Intl.Segmenter('und', { granularity: 'grapheme' });
+    let count = 0;
+    let out = '';
+    for (const part of seg.segment(text)) {
+      if (count >= limit) {
+        break;
+      }
+      out += part.segment;
+      count += 1;
+    }
+    return out;
+  }
+
+  /**
    * @param {string} text
    * @param {number} [maxUnits]
    * @returns {string}
@@ -72,24 +118,10 @@
     if (!text) {
       return '';
     }
-    if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-      const seg = new Intl.Segmenter('und', { granularity: 'grapheme' });
-      let count = 0;
-      let out = '';
-      for (const part of seg.segment(text)) {
-        if (count >= limit) {
-          break;
-        }
-        out += part.segment;
-        count += 1;
-      }
-      return out;
+    if (canUseIntlSegmenter()) {
+      return truncateToDisplayUnitsWithSegmenter(text, limit);
     }
-    const units = [];
-    for (const unit of text) {
-      units.push(unit);
-    }
-    return units.slice(0, limit).join('');
+    return truncateToDisplayUnitsByCodePoint(text, limit);
   }
 
   /**
@@ -191,6 +223,8 @@
     channelFromSourceType: channelFromSourceType,
     trimBoardNumberEdges: trimBoardNumberEdges,
     truncateToDisplayUnits: truncateToDisplayUnits,
+    truncateToDisplayUnitsByCodePoint: truncateToDisplayUnitsByCodePoint,
+    canUseIntlSegmenter: canUseIntlSegmenter,
     escapeHtmlText: escapeHtmlText,
     boardNumberFromPos: boardNumberFromPos,
     sanitizePosTicketDisplayNo: sanitizePosTicketDisplayNo,

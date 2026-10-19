@@ -7,6 +7,25 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
+const POS_TICKET_JS = fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8');
+
+/**
+ * @param {{ Intl?: { Segmenter?: unknown } }} [opts]
+ */
+function loadPosModule(opts) {
+  const sandbox = {
+    console: console,
+    Object: Object,
+    Array: Array,
+    String: String,
+    Error: Error,
+    Intl: opts && opts.Intl ? opts.Intl : Intl,
+  };
+  sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
+  vm.runInNewContext(POS_TICKET_JS, sandbox);
+  return sandbox.QMS.Board.PosTicketDisplayNo;
+}
 
 function loadBoardStack() {
   const sandbox = {
@@ -80,6 +99,34 @@ test('spec 2: display at most 6 grapheme/code units', function () {
   assert.equal(Pos.truncateToDisplayUnits('12345😀'), '12345😀');
   assert.equal(Pos.truncateToDisplayUnits('123456😀'), '123456');
   assert.equal(Pos.truncateToDisplayUnits('𠮷𠮷𠮷𠮷𠮷𠮷𠮷'), '𠮷𠮷𠮷𠮷𠮷𠮷');
+});
+
+test('STB baseline: truncateToDisplayUnitsByCodePoint keeps emoji and 𠮷 whole', function () {
+  const Pos = loadPosModule({ Intl: { Segmenter: undefined } });
+  assert.equal(Pos.truncateToDisplayUnitsByCodePoint('12345😀'), '12345😀');
+  assert.equal(Pos.truncateToDisplayUnitsByCodePoint('123456😀'), '123456');
+  assert.equal(Pos.truncateToDisplayUnitsByCodePoint('😀😀😀😀😀😀😀'), '😀😀😀😀😀😀');
+  assert.equal(Pos.truncateToDisplayUnitsByCodePoint('𠮷𠮷𠮷𠮷𠮷𠮷𠮷'), '𠮷𠮷𠮷𠮷𠮷𠮷');
+  const ki = '\uD842\uDFB7';
+  const mixed = 'a' + ki + 'bcd';
+  const twoUnits = Pos.truncateToDisplayUnitsByCodePoint(mixed, 2);
+  assert.equal(twoUnits, 'a' + ki);
+  assert.equal(Array.from(twoUnits).length, 2);
+  assert.ok(!twoUnits.includes('\uD842') || twoUnits.includes(ki));
+});
+
+test('STB fallback: truncateToDisplayUnits without Intl.Segmenter matches code-point baseline', function () {
+  const Pos = loadPosModule({ Intl: { Segmenter: undefined } });
+  assert.equal(Pos.canUseIntlSegmenter(), false);
+  const samples = ['123456😀', '12345😀', '𠮷𠮷𠮷𠮷𠮷𠮷𠮷', '#130,vke3-2643-dy6y'];
+  for (let i = 0; i < samples.length; i += 1) {
+    const s = samples[i];
+    assert.equal(
+      Pos.truncateToDisplayUnits(s),
+      Pos.truncateToDisplayUnitsByCodePoint(s),
+      'fallback must match baseline for: ' + s,
+    );
+  }
 });
 
 test('spec 3: trim outer whitespace, keep inner spaces', function () {
