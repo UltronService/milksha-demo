@@ -16,23 +16,40 @@ function loadStoreId() {
   return sandbox.QMS.StoreId;
 }
 
-test('store id format validation matches home board rules', function () {
+test('normalizeStoreId lowercases and trims', function () {
   const S = loadStoreId();
-  assert.equal(S.isValidStoreIdFormat('c030020'), true);
-  assert.equal(S.isValidStoreIdFormat('zz-qa-store-a'), true);
-  assert.equal(S.isValidStoreIdFormat('zz-deny-test'), true);
-  assert.equal(S.isValidStoreIdFormat('a123456'), true);
-  assert.equal(S.isValidStoreIdFormat('C030020'), false);
-  assert.equal(S.isValidStoreIdFormat('zz-qa-UPPER'), false);
-  assert.equal(S.isValidStoreIdFormat('abc'), false);
-  assert.equal(S.isValidStoreIdFormat('a1'), false);
-  assert.equal(S.isValidStoreIdFormat('A170000'), false);
-  assert.equal(S.isValidStoreIdFormat('a17x'), false);
+  assert.equal(S.normalizeStoreId('  A17 '), 'a17');
+  assert.equal(S.normalizeStoreId('C030020'), 'c030020');
 });
 
-test('literal test store a17 is valid; short a1 and a18 are not', function () {
+test('accept letter+2 and letter+6 store ids', function () {
   const S = loadStoreId();
   assert.equal(S.isValidStoreIdFormat('a17'), true);
+  assert.equal(S.isValidStoreIdFormat('a00'), true);
+  assert.equal(S.isValidStoreIdFormat('c030020'), true);
+  assert.equal(S.isValidStoreIdFormat('x123456'), true);
+  assert.equal(S.isValidStoreIdFormat('A17'), true);
+});
+
+test('accept zz-qa test store ids', function () {
+  const S = loadStoreId();
+  assert.equal(S.isValidStoreIdFormat('zz-qa-store-a'), true);
+  assert.equal(S.isValidStoreIdFormat('zz-qa-ci-store'), true);
+  assert.equal(S.isValidStoreIdFormat('zz-deny-test'), true);
+});
+
+test('reject wrong digit counts and non-store shapes', function () {
+  const S = loadStoreId();
+  assert.equal(S.isValidStoreIdFormat('abc'), false);
   assert.equal(S.isValidStoreIdFormat('a1'), false);
-  assert.equal(S.isValidStoreIdFormat('a18'), false);
+  assert.equal(S.isValidStoreIdFormat('a17x'), false);
+  assert.equal(S.isValidStoreIdFormat('aa17'), false);
+  assert.equal(S.isValidStoreIdFormat('17'), false);
+});
+
+test('a17 and a000017 are different ids (no padding equivalence)', function () {
+  const S = loadStoreId();
+  assert.equal(S.isValidStoreIdFormat('a17'), true);
+  assert.equal(S.isValidStoreIdFormat('a000017'), true);
+  assert.notEqual(S.normalizeStoreId('a17'), S.normalizeStoreId('a000017'));
 });

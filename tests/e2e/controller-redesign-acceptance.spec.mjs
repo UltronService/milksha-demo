@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, expandControllerZone, homeBoardUrl, HOME_BOARD_QA_STORE } from './harness.mjs';
+import { freshContext, PORT_SITE, expandControllerZone, homeBoardUrl, homeControllerUrl } from './harness.mjs';
 
 const DISCONNECTED_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=cloud&noCloudWarm=1`;
-const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local&store=${HOME_BOARD_QA_STORE}`;
+const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local`;
+const LOCAL_CTRL_SYNC = homeControllerUrl(`http://127.0.0.1:${PORT_SITE}`, 'mode=local');
 
 async function expandTestTools(page) {
   await expandControllerZone(page, 'sec-test-tools');
@@ -27,7 +28,7 @@ test('redesign: store selector above send; disconnected pill and disabled send',
 test('redesign: local store options limited to c030020 and a17', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const page = await ctx.newPage();
-  await page.goto(LOCAL_CTRL);
+  await page.goto(`${LOCAL_CTRL}`);
   await page.waitForSelector('[data-testid="fld-store"]');
   const values = await page.locator('#fld-store option').evaluateAll((opts) =>
     opts.map((o) => o.value).sort(),
@@ -42,7 +43,7 @@ test('redesign: clear modal cancel vs confirm', async ({ browser }) => {
   const page = await ctx.newPage();
   const base = `http://127.0.0.1:${PORT_SITE}`;
   await board.goto(homeBoardUrl(base, 'mode=local'));
-  await page.goto(LOCAL_CTRL);
+  await page.goto(LOCAL_CTRL_SYNC);
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 20000 });
   await page.locator('[data-testid="btn-clear-board-main"]').click();
   await expect(page.locator('[data-testid="clear-board-modal"]')).toBeVisible();
@@ -61,7 +62,7 @@ test('redesign: successful send shows success bar without top error alert', asyn
   const page = await ctx.newPage();
   const base = `http://127.0.0.1:${PORT_SITE}`;
   await board.goto(homeBoardUrl(base, 'mode=local'));
-  await page.goto(LOCAL_CTRL);
+  await page.goto(LOCAL_CTRL_SYNC);
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
   await page.locator('[data-testid="btn-send-numbers"]').click();
   await expect(page.locator('[data-testid="quick-send-success"]')).toBeVisible({ timeout: 10000 });

@@ -22,19 +22,22 @@
     if (raw === null) {
       return { status: 'setup', reason: 'missing' };
     }
-    const trimmed = String(raw).trim();
-    if (!trimmed) {
+    const StoreId = QMS.StoreId;
+    const normalized =
+      StoreId && typeof StoreId.normalizeStoreId === 'function'
+        ? StoreId.normalizeStoreId(raw)
+        : String(raw).trim().toLowerCase();
+    if (!normalized) {
       return { status: 'setup', reason: 'empty' };
     }
-    const StoreId = QMS.StoreId;
     const valid =
       StoreId && typeof StoreId.isValidStoreIdFormat === 'function'
-        ? StoreId.isValidStoreIdFormat(trimmed)
+        ? StoreId.isValidStoreIdFormat(normalized)
         : false;
     if (!valid) {
       return { status: 'setup', reason: 'invalid' };
     }
-    return { status: 'ready', storeId: trimmed };
+    return { status: 'ready', storeId: normalized };
   }
 
   /**

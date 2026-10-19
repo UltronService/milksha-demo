@@ -7,6 +7,7 @@ import {
   installBundledCloudRouteShim,
   isolatedCloudContext,
   expandControllerZone,
+  clickControllerDevButtonByTestId,
   homeBoardUrl,
   homeControllerUrl,
 } from './harness.mjs';
@@ -45,7 +46,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
     const ctrlCtx = await isolatedCloudContext(browser);
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(controller);
-    await controller.goto(`${BASE}/controller/`);
+    await controller.goto(homeControllerUrl(BASE));
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     const sendBtn = controller.getByTestId('btn-send-numbers');
     await expect(sendBtn).toBeDisabled();
@@ -91,12 +92,10 @@ test.describe('cloud remote send (isolated contexts)', () => {
   test('ten sends produce ten numbers and clear works', async ({ browser }) => {
     const { boardCtx, ctrlCtx, board, controller } = await openBoardAndController(browser);
     for (let i = 0; i < 10; i += 1) {
-      await controller.click('[data-testid="btn-send-numbers"]');
-      await board.waitForFunction(
-        (n) => document.querySelectorAll('.milksha-ready .milksha-num').length === n,
-        i + 1,
-        { timeout: 5000 },
-      );
+      await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
+      await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(i + 1, {
+        timeout: 8000,
+      });
     }
     await expandControllerZone(controller, 'sec-special');
     await controller.click('[data-testid="btn-clear-now"]');

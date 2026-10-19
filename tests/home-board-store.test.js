@@ -47,7 +47,7 @@ test('item 3: whitespace-only store= needs setup', function () {
 
 test('item 4: invalid store formats need setup', function () {
   const H = loadHomeBoardStore();
-  for (const q of ['?store=abc', '?store=a1', '?store=A170000', '?store=a17x']) {
+  for (const q of ['?store=abc', '?store=a1', '?store=a123', '?store=a17x']) {
     assert.equal(H.needsStoreSetup(q), true, q);
     assert.equal(H.resolveStoreFromUrlParams(q).reason, 'invalid', q);
   }

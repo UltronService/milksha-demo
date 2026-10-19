@@ -77,15 +77,15 @@ test('store id format validation', function () {
   assert.equal(S.isValidStoreIdFormat('zz-qa-store-a'), true);
   assert.equal(S.isValidStoreIdFormat('zz-deny-test'), true);
   assert.equal(S.isValidStoreIdFormat('a123456'), true);
-  assert.equal(S.isValidStoreIdFormat('C030020'), false);
-  assert.equal(S.isValidStoreIdFormat('zz-qa-UPPER'), false);
+  assert.equal(S.isValidStoreIdFormat('C030020'), true);
+  assert.equal(S.isValidStoreIdFormat('a1'), false);
 });
 
-test('literal test store a17 is valid; short a1 and a18 are not', function () {
+test('letter+2 ids valid; single digit after letter invalid', function () {
   const S = loadStoreList();
   assert.equal(S.isValidStoreIdFormat('a17'), true);
+  assert.equal(S.isValidStoreIdFormat('a18'), true);
   assert.equal(S.isValidStoreIdFormat('a1'), false);
-  assert.equal(S.isValidStoreIdFormat('a18'), false);
 });
 
 test('resolveStoreAccessUserMessage maps 403 codes', function () {
