@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | `1f1020d` |
+| **head sha** | `9cd0de6` |
 | **asset version** | `20261019b` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
