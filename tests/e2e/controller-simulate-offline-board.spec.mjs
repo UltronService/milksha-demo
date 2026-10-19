@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, expandControllerZone, homeBoardUrl, homeControllerUrl, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, restartCloud, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 
@@ -21,8 +21,8 @@ test.describe('controller simulate_offline on guest board', () => {
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(board);
     await installBundledCloudRouteShim(controller);
-    await board.goto(`${BASE}/`);
-    await controller.goto(`${BASE}/controller/`);
+    await board.goto(homeBoardUrl(BASE));
+    await controller.goto(homeControllerUrl(BASE));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');

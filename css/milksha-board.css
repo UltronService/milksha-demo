@@ -494,3 +494,36 @@
   color: #777;
   font-size: 14px;
 }
+
+.board-store-setup {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: #111;
+  color: #fff;
+  text-align: center;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+  font-size: clamp(28px, 4.5vw, 64px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+}
+
+.board-store-setup[hidden] {
+  display: none !important;
+}
+
+.board-store-setup p {
+  max-width: min(92vw, 1200px);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#board-root[hidden] {
+  display: none !important;
+}

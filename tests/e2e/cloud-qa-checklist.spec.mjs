@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, ensureCloudRunning, expandControllerZone, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, startSite } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, ensureCloudRunning, expandControllerZone, homeBoardUrl, homeControllerUrl, installBundledCloudRouteShim, isolatedCloudContext, resetCloudState, startSite } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const FULL_BG = process.env.PR22_FULL_QA === '1';
@@ -30,8 +30,8 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     const ctx = await isolatedCloudContext(browser);
     const board = await ctx.newPage();
     const controller = await ctx.newPage();
-    await board.goto(`${BASE}/?mode=local`);
-    await controller.goto(`${BASE}/controller/?mode=local`);
+    await board.goto(homeBoardUrl(BASE, 'mode=local'));
+    await controller.goto(homeControllerUrl(BASE, 'mode=local'));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 15000 });
     await ctx.close();
@@ -44,8 +44,8 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(board);
     await installBundledCloudRouteShim(controller);
-    await board.goto(`${BASE}/`);
-    await controller.goto(`${BASE}/controller/`);
+    await board.goto(homeBoardUrl(BASE));
+    await controller.goto(homeControllerUrl(BASE));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
@@ -72,8 +72,8 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(board);
     await installBundledCloudRouteShim(controller);
-    await board.goto(`${BASE}/`);
-    await controller.goto(`${BASE}/controller/`);
+    await board.goto(homeBoardUrl(BASE));
+    await controller.goto(homeControllerUrl(BASE));
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await expandControllerZone(controller, 'sec-pos');
     await clickControllerDevButton(controller, 'btn-add-ticket');
@@ -109,8 +109,8 @@ test.describe('PR22 cloud QA checklist (fake-cloud routed as prod)', () => {
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(board);
     await installBundledCloudRouteShim(controller);
-    await board.goto(`${BASE}/`);
-    await controller.goto(`${BASE}/controller/`);
+    await board.goto(homeBoardUrl(BASE));
+    await controller.goto(homeControllerUrl(BASE));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await controller.bringToFront();

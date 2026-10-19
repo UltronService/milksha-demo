@@ -185,12 +185,45 @@ export function stopHarness() {
   stopOwnedCloud();
 }
 
+export const HOME_BOARD_QA_STORE = 'zz-qa-store-a';
+
+/**
+ * @param {string} [query] query string without leading ?
+ */
+export function homeBoardQuery(query = '') {
+  const params = new URLSearchParams(String(query).replace(/^\?/, ''));
+  if (!params.has('store')) {
+    params.set('store', HOME_BOARD_QA_STORE);
+  }
+  return params.toString();
+}
+
+/**
+ * @param {string} base
+ * @param {string} [query]
+ */
+export function homeBoardUrl(base, query = '') {
+  return `${base}/?${homeBoardQuery(query)}`;
+}
+
+/**
+ * @param {string} base
+ * @param {string} [query]
+ */
+export function homeControllerUrl(base, query = '') {
+  const params = new URLSearchParams(String(query).replace(/^\?/, ''));
+  if (!params.has('store')) {
+    params.set('store', HOME_BOARD_QA_STORE);
+  }
+  return `${base}/controller/?${params.toString()}`;
+}
+
 export function urlsLocalHomePoc() {
   const base = `http://127.0.0.1:${PORT_SITE}`;
   return {
     base,
-    board: `${base}/?mode=local`,
-    ctrl: `${base}/controller/?mode=local`,
+    board: homeBoardUrl(base, 'mode=local'),
+    ctrl: `${base}/controller/?mode=local&store=${HOME_BOARD_QA_STORE}`,
   };
 }
 
@@ -366,7 +399,14 @@ async function resolveReceiverStoreId(receiver, storeOverride) {
     if (path.includes('receiver-demo')) {
       return 's120030';
     }
-    return 'c030020';
+    const HomeBoardStore = window.QMS?.Receiver?.HomeBoardStore;
+    if (HomeBoardStore && typeof HomeBoardStore.resolveStoreFromUrlParams === 'function') {
+      const resolved = HomeBoardStore.resolveStoreFromUrlParams(params);
+      if (resolved.status === 'ready') {
+        return resolved.storeId;
+      }
+    }
+    return fromUrl || '';
   });
 }
 

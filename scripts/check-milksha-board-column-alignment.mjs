@@ -15,7 +15,7 @@ const CREAM_BOUNDS_TOL_PX = 1;
 const PR74_BASELINE_TOL_PX = 2;
 
 /** Offline layout probes: demo payload + local transport (never default cloud auto-pair). */
-export const BOARD_LAYOUT_HARNESS_QUERY = 'demo=0&mode=local';
+export const BOARD_LAYOUT_HARNESS_QUERY = 'demo=0&mode=local&store=zz-qa-store-a';
 
 /**
  * @param {string} base
@@ -31,8 +31,12 @@ export function boardLayoutHarnessUrl(base) {
  */
 export async function assertLayoutHarnessAvoidsCloudAutoPair(page) {
   const url = new URL(page.url());
-  if (url.searchParams.get('mode') !== 'local' || url.searchParams.get('demo') !== '0') {
-    throw new Error('layout harness must use demo=0&mode=local, got ' + url.search);
+  if (
+    url.searchParams.get('mode') !== 'local' ||
+    url.searchParams.get('demo') !== '0' ||
+    url.searchParams.get('store') !== 'zz-qa-store-a'
+  ) {
+    throw new Error('layout harness must use demo=0&mode=local&store=zz-qa-store-a, got ' + url.search);
   }
   const state = await page.evaluate(() => {
     const root = document.getElementById('board-root');

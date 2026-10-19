@@ -1,9 +1,47 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, resetCloudState, restartCloud, startSite } from './harness.mjs';
+import {
+  PORT_SITE,
+  clickControllerDevButtonByTestId,
+  installBundledCloudRouteShim,
+  resetCloudState,
+  restartCloud,
+  startSite,
+} from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
 const STORE_B = 'zz-qa-store-b';
+
+function isBoxHeartbeatOk(res) {
+  return res.request().method() === 'POST' && res.url().includes('boxHeartbeat') && res.status() === 200;
+}
+
+/** Wait for a real boxHeartbeat HTTP 200 from this board tab (no extra timeout beyond response wait). */
+async function waitForRealBoardBoxHeartbeat(board) {
+  await board.waitForFunction(
+    () => typeof window.receiverCloud?.sendHeartbeat === 'function',
+    undefined,
+    { timeout: 30000 },
+  );
+  const heartbeatDone = board.waitForResponse(isBoxHeartbeatOk, { timeout: 30000 });
+  await board.evaluate(() => window.receiverCloud.sendHeartbeat());
+  await heartbeatDone;
+}
+
+async function waitBoardCloudReady(board) {
+  await board.waitForFunction(
+    () => typeof window.receiverCloud?.sendHeartbeat === 'function',
+    undefined,
+    { timeout: 30000 },
+  );
+  await expect(board.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
+}
+
+async function waitControllerOutboundReady(ctrl) {
+  await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 60000 });
+  await expect(ctrl.locator('[data-testid="btn-send-numbers-block-reason"]')).toBeHidden({ timeout: 60000 });
+  await expect(ctrl.locator('[data-testid="btn-send-numbers"]')).toBeEnabled({ timeout: 60000 });
+}
 
 test.describe('forbidden store then zz-qa isolation (same browser context)', () => {
   test.beforeAll(async () => {
@@ -36,25 +74,40 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
     await denied.close();
 
+    const wipe = await ctx.newPage();
+    await wipe.goto(`${BASE}/`);
+    await wipe.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await wipe.close();
+
     const boardA = await ctx.newPage();
     const boardB = await ctx.newPage();
-    const ctrlA = await ctx.newPage();
-    const ctrlB = await ctx.newPage();
-    for (const p of [boardA, boardB, ctrlA, ctrlB]) {
-      await installBundledCloudRouteShim(p);
-    }
+    await installBundledCloudRouteShim(boardA);
+    await installBundledCloudRouteShim(boardB);
     await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}`);
     await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}`);
+    await waitBoardCloudReady(boardA);
+    await waitBoardCloudReady(boardB);
+    await waitForRealBoardBoxHeartbeat(boardA);
+    await waitForRealBoardBoxHeartbeat(boardB);
+
+    const ctrlA = await ctx.newPage();
+    await installBundledCloudRouteShim(ctrlA);
     await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`);
-    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`);
-    await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
-    await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
-    await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
-    await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
+    await waitControllerOutboundReady(ctrlA);
+
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
-    await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
+    await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 10000 });
+
+    const ctrlB = await ctx.newPage();
+    await installBundledCloudRouteShim(ctrlB);
+    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`);
+    await waitForRealBoardBoxHeartbeat(boardB);
+    await waitControllerOutboundReady(ctrlB);
+
     await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
     await expect(boardB.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await ctx.close();

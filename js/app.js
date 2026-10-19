@@ -26,7 +26,38 @@
       '</p></div>';
   }
 
+  function showHomeBoardStoreSetup() {
+    const gate = root.document.getElementById('board-store-setup');
+    const rootEl = root.document.getElementById('board-root');
+    const HomeBoardStore = QMS.Receiver && QMS.Receiver.HomeBoardStore;
+    const message =
+      HomeBoardStore && HomeBoardStore.SETUP_MESSAGE
+        ? HomeBoardStore.SETUP_MESSAGE
+        : '請設定店編號';
+    if (gate) {
+      const text = gate.querySelector('p');
+      if (text) {
+        text.textContent = message;
+      }
+      gate.hidden = false;
+    }
+    if (rootEl) {
+      rootEl.hidden = true;
+    }
+  }
+
   function boot() {
+    const rootEl = root.document.getElementById('board-root');
+    if (rootEl) {
+      const HomeBoardStore = QMS.Receiver && QMS.Receiver.HomeBoardStore;
+      if (HomeBoardStore && typeof HomeBoardStore.needsStoreSetup === 'function') {
+        const params = new URLSearchParams(root.location.search);
+        if (HomeBoardStore.needsStoreSetup(params)) {
+          showHomeBoardStoreSetup();
+          return;
+        }
+      }
+    }
     QMS.loadSiteBrand()
       .then(function (brand) {
         if (typeof QMS.bootMilkshaBoard !== 'function') {

@@ -1,5 +1,17 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, waitForReceiverOnline } from './harness.mjs';
+import {
+  PORT_SITE,
+  clickControllerDevButtonByTestId,
+  freshContext,
+  homeBoardUrl,
+  homeControllerUrl,
+  installBundledCloudRouteShim,
+  isolatedCloudContext,
+  resetCloudState,
+  restartCloud,
+  startSite,
+  waitForReceiverOnline,
+} from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STALE_SEED = () => {
@@ -38,10 +50,10 @@ test('stale deviceId: board first then controller shows online and numbers', asy
   await ctx.addInitScript(STALE_SEED);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  await board.goto(`${BASE}/?mode=local`);
+  await board.goto(homeBoardUrl(BASE, 'mode=local&store=c030020'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
-  await controller.goto(`${BASE}/controller/?mode=local`);
+  await controller.goto(homeControllerUrl(BASE, 'mode=local&store=c030020'));
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
@@ -56,12 +68,12 @@ test('stale deviceId: controller first then board shows online and numbers', asy
   await ctx.addInitScript(STALE_SEED);
   const controller = await ctx.newPage();
   const board = await ctx.newPage();
-  await controller.goto(`${BASE}/controller/?mode=local`);
+  await controller.goto(homeControllerUrl(BASE, 'mode=local&store=c030020'));
   await controller.waitForFunction(
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
   );
-  await board.goto(`${BASE}/?mode=local`);
+  await board.goto(homeBoardUrl(BASE, 'mode=local&store=c030020'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
@@ -69,31 +81,43 @@ test('stale deviceId: controller first then board shows online and numbers', asy
   await ctx.close();
 });
 
-test('stale cloud settings on home board migrate to bundled and connect cloud', async ({ browser }) => {
-  const ctx = await freshContext(browser);
-  await ctx.addInitScript(() => {
-    localStorage.setItem(
-      'milksha:cloud-settings',
-      JSON.stringify({
-        projectId: 'bad',
-        apiKey: 'x',
-        accessCode: 'y',
-        region: 'asia-east1',
-      }),
-    );
+test.describe('stale cloud settings', () => {
+  test.beforeAll(async () => {
+    await restartCloud();
+    await startSite();
   });
-  const board = await ctx.newPage();
-  await board.goto(`${BASE}/?mode=cloud&store=c030020`);
-  await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
-  const pinned = await board.evaluate(() => {
-    const settings = localStorage.getItem('milksha:cloud-settings') || '';
-    return {
-      deviceId: localStorage.getItem('milksha:deviceId'),
-      settings,
-      staleKeyGone: settings.indexOf('"apiKey":"x"') < 0,
-    };
+
+  test.beforeEach(async () => {
+    await resetCloudState({ seedDevice: true });
   });
-  expect(pinned.deviceId).toBe('stb-01');
-  expect(pinned.staleKeyGone).toBe(true);
-  await ctx.close();
+
+  test('stale cloud settings on home board migrate to bundled and connect cloud', async ({ browser }) => {
+    const ctx = await isolatedCloudContext(browser);
+    await ctx.addInitScript(() => {
+      localStorage.setItem(
+        'milksha:cloud-settings',
+        JSON.stringify({
+          projectId: 'bad',
+          apiKey: 'x',
+          accessCode: 'y',
+          region: 'asia-east1',
+        }),
+      );
+    });
+    const board = await ctx.newPage();
+    await installBundledCloudRouteShim(board);
+    await board.goto(`${BASE}/?mode=cloud&store=zz-qa-store-a`);
+    await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
+    const pinned = await board.evaluate(() => {
+      const settings = localStorage.getItem('milksha:cloud-settings') || '';
+      return {
+        deviceId: localStorage.getItem('milksha:deviceId'),
+        settings,
+        staleKeyGone: settings.indexOf('"apiKey":"x"') < 0,
+      };
+    });
+    expect(pinned.deviceId).toBe('stb-01');
+    expect(pinned.staleKeyGone).toBe(true);
+    await ctx.close();
+  });
 });

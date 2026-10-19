@@ -17,6 +17,7 @@ test('home board index wires cloud sync scripts', function () {
   assert.match(html, /js\/receiver\/cloud-boot\.js\?v=/);
   assert.match(html, /js\/receiver\/cloud-runtime\.js\?v=/);
   assert.match(html, /js\/transport\/local-cloud-shim\.js\?v=/);
+  assert.match(html, /board-store-setup/);
 });
 
 test('home board pins local POC targets in cloud-boot', function () {

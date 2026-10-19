@@ -1,0 +1,102 @@
+
+Running 6 tests using 1 worker
+
+(node:261954) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:261954) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (560ms)
+(node:262082) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262082) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (608ms)
+(node:262306) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262306) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (517ms)
+(node:262473) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262473) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  4 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (524ms)
+(node:262594) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262594) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  5 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (501ms)
+(node:262725) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:262725) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  6 forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends (527ms)
+
+
+  1) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  2) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  3) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  4) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  5) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  6) forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+
+    Error: page.evaluate: Error: receiverCloud heartbeat API unavailable
+        at eval (eval at evaluate (:234:30), <anonymous>:10:11)
+        at async <anonymous>:260:30
+        at eval (/workspace/eval at evaluate (:234:30), <anonymous>:10:11)
+        at /workspace/async <anonymous>:260:30
+        at waitForRealBoardBoxHeartbeat (/workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:22:15)
+        at /workspace/tests/e2e/forbidden-store-then-qa-isolation.spec.mjs:94:11
+
+  6 failed
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
+    forbidden-store-then-qa-isolation.spec.mjs:57:3 › forbidden store then zz-qa isolation (same browser context) › zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends 
