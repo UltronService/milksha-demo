@@ -1,6 +1,8 @@
 # Store ID rule — implementation report
 
 **Branch:** `cursor/store-id-rule-de1b`  
+**PR:** https://github.com/UltronService/milksha-demo/pull/105  
+**Head commit:** `262295a`  
 **Asset version:** `20261019a`  
 **Date (Taipei):** 2026-10-19
 
