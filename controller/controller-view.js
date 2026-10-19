@@ -54,7 +54,7 @@
 
   /** @returns {string} */
   function quickSendFailureSurface() {
-    return 'quick-send-error';
+    return 'quick-send-rule-note';
   }
 
   QMS.Controller.View = {

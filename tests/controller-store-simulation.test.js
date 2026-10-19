@@ -23,6 +23,7 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
@@ -33,6 +34,8 @@ function loadSimulation() {
   const sandbox = { console: console, setTimeout: setTimeout, clearTimeout: clearTimeout };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/milksha-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-simulation-host.js'), 'utf8'), sandbox);
   return {
@@ -70,7 +73,7 @@ function mulberry32(seed) {
   };
 }
 
-test('allocateNumberForSource: ~1000 draws per non-store source match cloud rules (udd = 4 digits)', function () {
+test('allocateNumberForSource: ~1000 draws per non-store source match cloud rules', function () {
   const { Sim } = loadSimulation();
   const MB = loadMilkshaBoard();
   const rng = mulberry32(20261015);
@@ -91,19 +94,18 @@ test('allocateNumberForSource: ~1000 draws per non-store source match cloud rule
   }
 });
 
-test('regression: legacy Udd alnum simulator numbers are rejected before push', function () {
+test('regression: arbitrary udd strings accepted before push', function () {
   const { Sim } = loadSimulation();
-  const legacySamples = ['U0K18', '29U9KT', 'BFBEF', 'AB12'];
-  legacySamples.forEach(function (badNo) {
+  const legacySamples = ['abc', '12', 'ABCDEFG'];
+  legacySamples.forEach(function (no) {
     const check = Sim.validateTicketsForBoardPush([
-      { no: badNo, status: 'preparing', sourceKey: 'udd' },
+      { no: no, status: 'preparing', sourceKey: 'udd' },
     ]);
-    assert.equal(check.ok, false, 'udd ticket must not use legacy alnum: ' + badNo);
-    assert.equal(check.reason, 'invalid-number');
+    assert.equal(check.ok, true, 'udd ticket accepted: ' + no);
   });
   const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
-  assert.equal(src.includes('randomAlnumNumber'), false);
-  assert.equal(src.includes('randomDigitString(4, rng)'), true);
+  assert.equal(src.includes('normalizeSimNumber'), true);
+  assert.equal(src.includes('allocateNumberForSource'), true);
 });
 
 test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function () {
@@ -112,7 +114,7 @@ test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function (
     Sim.validateTicketsForBoardPush([{ no: '0001', status: 'preparing', sourceKey: 'store' }]).ok,
     true,
   );
-  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready', sourceKey: 'store' }]).ok, false);
+  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready', sourceKey: 'store' }]).ok, true);
   assert.equal(
     Sim.validateTicketsForBoardPush([
       { no: '0001', status: 'preparing', sourceKey: 'store' },
@@ -140,7 +142,7 @@ test('validateTicketsForBoardPush allows same number on different sources', func
   const { Sim } = loadSimulation();
   const check = Sim.validateTicketsForBoardPush([
     { no: '1234', status: 'preparing', sourceKey: 'store' },
-    { no: '12340', status: 'ready', sourceKey: 'uber' },
+    { no: 'AB12C', status: 'ready', sourceKey: 'uber' },
     { no: 'C7458', status: 'preparing', sourceKey: 'uber' },
     { no: '091', status: 'ready', sourceKey: 'point' },
   ]);

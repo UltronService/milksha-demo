@@ -18,11 +18,7 @@
     udd: 0.075,
   };
 
-  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
-  const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
-  const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
-  const UBER_HEX_POOL = '0123456789ABCDEF';
+  const HEX_POOL = '0123456789ABCDEF';
 
   const MODE_TIMING = {
     normal: {
@@ -73,25 +69,9 @@
     if (MB && typeof MB.normalizeBoardDisplayNumber === 'function') {
       return MB.normalizeBoardDisplayNumber(typeof raw === 'string' ? raw : String(raw == null ? '' : raw), sourceKey);
     }
-    if (typeof raw !== 'string') {
-      return null;
-    }
-    const key = sourceKey || 'store';
-    const trimmed = typeof raw === 'string' ? raw.trim() : String(raw == null ? '' : raw).trim();
-    if (key === 'store' || key === 'udd') {
-      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'point') {
-      return BOARD_NUMBER_THREE_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'fp') {
-      return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'uber') {
-      if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
-        return null;
-      }
-      return trimmed.toUpperCase();
+    const Pos = root.QMS && root.QMS.Board && root.QMS.Board.PosTicketDisplayNo;
+    if (Pos && typeof Pos.normalizeForSourceKey === 'function') {
+      return Pos.normalizeForSourceKey(raw, sourceKey);
     }
     return null;
   }
@@ -149,9 +129,17 @@
   function randomUberHexNumber(rng) {
     let s = '';
     for (let i = 0; i < 5; i += 1) {
-      s += UBER_HEX_POOL.charAt(Math.floor(rng() * UBER_HEX_POOL.length));
+      s += HEX_POOL.charAt(Math.floor(rng() * 16));
     }
     return s;
+  }
+
+  /**
+   * @param {() => number} rng
+   * @returns {string}
+   */
+  function randomUddNumber(rng) {
+    return randomDigitString(4, rng);
   }
 
   /**
@@ -255,7 +243,7 @@
       } else if (key === 'uber') {
         raw = randomUberHexNumber(rng);
       } else if (key === 'udd') {
-        raw = randomDigitString(4, rng);
+        raw = randomUddNumber(rng);
       } else {
         raw = allocateNextNumber(state, usedOnBoard, rng);
       }
@@ -609,12 +597,18 @@
     for (let i = 0; i < list.length; i += 1) {
       const row = list[i];
       const sourceKey = String(row && row.sourceKey != null ? row.sourceKey : 'store');
-      const rawNo = String(row && row.no != null ? row.no : '').trim();
+      const rawNo = row && row.no != null ? row.no : '';
+      if (typeof rawNo !== 'string') {
+        return { ok: false, reason: 'invalid-number', no: String(rawNo), sourceKey: sourceKey };
+      }
+      const Pos = root.QMS && root.QMS.Board && root.QMS.Board.PosTicketDisplayNo;
+      const dedupeKey =
+        Pos && Pos.trimBoardNumberEdges ? Pos.trimBoardNumberEdges(rawNo) : rawNo.replace(/^\s+|\s+$/g, '');
       const no = normalizeSimNumber(rawNo, sourceKey);
-      if (!no) {
+      if (no === null) {
         return { ok: false, reason: 'invalid-number', no: rawNo, sourceKey: sourceKey };
       }
-      const id = ticketCompositeKey(sourceKey, no);
+      const id = ticketCompositeKey(sourceKey, dedupeKey);
       const status = String(row.status || '');
       if (status === 'ready') {
         if (ready.has(id)) {

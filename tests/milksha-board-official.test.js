@@ -32,7 +32,8 @@ function loadBoardStack() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/landscape-art-layout.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'source-icons-layout.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
@@ -49,12 +50,12 @@ test('landscape art baseline uses 70px number font for both zones', function () 
   assert.equal(art.NUM_FONT_PX, OFFICIAL_NUM_FONT_PX);
 });
 
-test('foodpanda requires hash + 4 digits on board', function () {
+test('foodpanda: hash preserved on board', function () {
   const { MB } = loadBoardStack();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '#12345');
 });
 
 test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', function () {

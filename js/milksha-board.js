@@ -118,12 +118,7 @@
     if (aliased) {
       return aliased;
     }
-    const unkMatch = sourceType.match(/^(From_.+)_(OK|Preparing)$/);
-    if (!unkMatch) {
-      return null;
-    }
-    const zone = unkMatch[2] === 'OK' ? 'ready' : 'preparing';
-    return { sourceKey: 'unk:' + unkMatch[1], zone: zone };
+    return null;
   }
 
   /**
@@ -153,11 +148,6 @@
     return ib - ia;
   }
 
-  const BOARD_NUMBER_FOUR_DIGIT = /^\d{4}$/;
-  const BOARD_NUMBER_THREE_DIGIT = /^\d{3}$/;
-  const BOARD_NUMBER_UBER_HEX_FIVE = /^[0-9A-Fa-f]{5}$/;
-  const BOARD_NUMBER_FP_HASH_FOUR = /^#\d{4}$/;
-  const BOARD_NUMBER_ALNUM_3_TO_6 = /^[A-Za-z0-9]{3,6}$/;
   const warnedInvalidBoardNumbers = new Set();
 
   /**
@@ -173,40 +163,32 @@
   }
 
   /**
-   * Board display guard (production log rules):
-   * store/udd 4 digits; point 3 digits; fp #+4 digits; uber 5 hex.
+   * Board display guard — milksha-cloud sanitizePosTicketDisplayNo (via pos-ticket-display-no.js).
    * @param {unknown} raw
    * @param {string} [sourceKey] defaults to store (four-digit rule)
    * @returns {string | null}
    */
   function normalizeBoardDisplayNumber(raw, sourceKey) {
-    if (typeof raw !== 'string') {
+    const mod = QMS.Board && QMS.Board.PosTicketDisplayNo;
+    if (!mod || typeof mod.normalizeForSourceKey !== 'function') {
       return null;
     }
     const key = sourceKey || 'store';
-    const trimmed = raw.trim();
-    if (key === 'store' || key === 'udd') {
-      return BOARD_NUMBER_FOUR_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'point') {
-      return BOARD_NUMBER_THREE_DIGIT.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'fp') {
-      return BOARD_NUMBER_FP_HASH_FOUR.test(trimmed) ? trimmed : null;
-    }
-    if (key === 'uber') {
-      if (!BOARD_NUMBER_UBER_HEX_FIVE.test(trimmed)) {
-        return null;
-      }
-      return trimmed.toUpperCase();
-    }
-    if (trimmed.length > 6) {
+    return mod.normalizeForSourceKey(raw, key);
+  }
+
+  /**
+   * @param {unknown} raw
+   * @param {string} [sourceKey]
+   * @returns {{ dedupeKey: string, display: string } | null}
+   */
+  function boardNumberEntryFromPos(raw, sourceKey) {
+    const mod = QMS.Board && QMS.Board.PosTicketDisplayNo;
+    if (!mod || typeof mod.boardNumberFromPos !== 'function') {
       return null;
     }
-    if (!BOARD_NUMBER_ALNUM_3_TO_6.test(trimmed)) {
-      return null;
-    }
-    return trimmed.toUpperCase();
+    const key = sourceKey || 'store';
+    return mod.boardNumberFromPos(raw, key);
   }
 
   /** @param {() => void} fn — test hook */
@@ -236,17 +218,17 @@
       if (!parsed) {
         continue;
       }
-      const normalized = normalizeBoardDisplayNumber(row.number, parsed.sourceKey);
-      if (!normalized) {
-        if (row.number !== undefined) {
+      const parsedNumber = boardNumberEntryFromPos(row.number, parsed.sourceKey);
+      if (!parsedNumber) {
+        if (typeof row.number !== 'string') {
           warnInvalidBoardNumberOnce(row.number);
         }
         continue;
       }
       const entry = {
-        id: makeItemId(parsed.sourceKey, normalized),
+        id: makeItemId(parsed.sourceKey, parsedNumber.dedupeKey),
         sourceKey: parsed.sourceKey,
-        number: normalized,
+        number: parsedNumber.display,
         payloadIndex: i,
       };
       if (parsed.zone === 'ready') {
@@ -382,19 +364,24 @@
    * @returns {string}
    */
   function renderNumberChip(item) {
-    if (!item || !item.number) {
+    if (!item || typeof item.number !== 'string') {
       return '';
     }
     const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
+    const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
     const sourceKey = item.sourceKey || 'store';
     const chipClass =
       icons && icons.sourceKeyShowsIcon(sourceKey)
         ? 'milksha-board-chip milksha-board-chip--with-icon'
         : 'milksha-board-chip milksha-board-chip--with-slot';
+    const escaped =
+      posNo && posNo.escapeHtmlText
+        ? posNo.escapeHtmlText(item.number)
+        : String(item.number);
     const inner =
       icons && icons.renderChipInnerHtml
         ? icons.renderChipInnerHtml(item)
-        : '<span class="milksha-num">' + item.number + '</span>';
+        : '<span class="milksha-num">' + escaped + '</span>';
     return (
       '<div class="' +
       chipClass +
@@ -509,6 +496,13 @@
     function useLandscapeArtGrid() {
       const cfg = layoutConfig();
       return orientation === 'landscape' && cfg.split === 'row' && Boolean(landscapeArtLayout());
+    }
+
+    function applyChipOverflowFitNow() {
+      const fit = QMS.Board && QMS.Board.ChipOverflowFit;
+      if (fit && typeof fit.applyBoardOverflowFit === 'function') {
+        fit.applyBoardOverflowFit(boardEl);
+      }
     }
 
     function logSound(itemId) {
@@ -760,7 +754,13 @@
           if (icons && icons.renderChipInnerHtml) {
             return icons.renderChipInnerHtml(cell);
           }
-          return cell && cell.number ? '<span class="milksha-num">' + cell.number + '</span>' : '';
+          if (!cell || typeof cell.number !== 'string') {
+            return '';
+          }
+          const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
+          const escaped =
+            posNo && posNo.escapeHtmlText ? posNo.escapeHtmlText(cell.number) : String(cell.number);
+          return '<span class="milksha-num">' + escaped + '</span>';
         },
         chipClassForCell: function (cell) {
           const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
@@ -849,20 +849,24 @@
           animator.cancelAll(boardEl);
         }
         renderBoard();
+        applyChipOverflowFitNow();
       } else {
         animator.cancelAll(boardEl);
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          const clearPrep = animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          const clearReady = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
+          });
+          Promise.all([clearPrep, clearReady]).then(function () {
+            applyChipOverflowFitNow();
           });
         } else {
           const prepTurn = prevPrepPage !== prepPage;
@@ -892,6 +896,7 @@
             if (readyTurn) {
               updateZonePageIndicator(readyZone, readyPage, readyPages);
             }
+            applyChipOverflowFitNow();
           });
         }
       }
@@ -912,6 +917,7 @@
       const zone = boardEl.querySelector(zoneSel);
       if (!zone) {
         renderBoard();
+        applyChipOverflowFitNow();
         lastRenderedPrep = prepItems.slice();
         lastRenderedReady = readyItems.slice();
         lastRenderedPrepPage = prepPage;
@@ -924,6 +930,7 @@
         : zone.querySelectorAll('.milksha-num-cell');
       if (cellEls.length !== PAGE_SIZE) {
         renderBoard();
+        applyChipOverflowFitNow();
         if (zoneKey === 'prep') {
           lastRenderedPrepPage = page;
         } else {
@@ -956,6 +963,7 @@
             PAGE_SIZE,
           );
           updateZonePageIndicator(zone, currentPage, pagesNow);
+          applyChipOverflowFitNow();
           return undefined;
         });
       } else {
@@ -963,12 +971,13 @@
         for (let i = 0; i < PAGE_SIZE; i += 1) {
           const cell = cells[i];
           const el = cellEls[i];
-          if (cell && cell.number) {
+          if (cell) {
             el.innerHTML = renderNumberChip(cell);
           } else {
             el.innerHTML = '';
           }
         }
+        applyChipOverflowFitNow();
       }
       updateZonePageIndicator(zone, page, totalPages);
       if (zoneKey === 'prep') {
@@ -1052,7 +1061,7 @@
           'px;top:' +
           pos.top +
           'px">';
-        if (cell && cell.number) {
+        if (cell) {
           z += renderNumberChip(cell);
         }
         z += '</div>';
@@ -1123,7 +1132,7 @@
       z += '<div class="milksha-cream-grid milksha-zone-numbers">';
       for (let i = 0; i < PAGE_SIZE; i += 1) {
         const cell = cells[i];
-        if (cell && cell.number) {
+        if (cell) {
           z += '<div class="milksha-num-cell">' + renderNumberChip(cell) + '</div>';
         } else {
           z += '<div class="milksha-num-cell"></div>';
@@ -1354,6 +1363,7 @@
         boardAnimator.cancelAll(boardEl);
       }
       renderBoard();
+      applyChipOverflowFitNow();
       lastRenderedPrep = prepItems.slice();
       lastRenderedReady = readyItems.slice();
       lastRenderedPrepPage = prepPage;
@@ -1384,6 +1394,7 @@
 
     applyScale();
     renderBoard();
+    applyChipOverflowFitNow();
     lastRenderedPrep = prepItems.slice();
     lastRenderedReady = readyItems.slice();
     lastRenderedPrepPage = prepPage;
@@ -1508,6 +1519,7 @@
   QMS.MilkshaBoard = {
     parseSourceType: parseSourceType,
     normalizeBoardDisplayNumber: normalizeBoardDisplayNumber,
+    boardNumberEntryFromPos: boardNumberEntryFromPos,
     resetInvalidBoardNumberWarningsForTest: resetInvalidBoardNumberWarningsForTest,
     partitionNumberContent: partitionNumberContent,
     detectNewlyReady: detectNewlyReady,

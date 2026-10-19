@@ -43,7 +43,16 @@
       if (!parsed || parsed.zone !== 'ready') {
         continue;
       }
-      const id = makeItemId(parsed.sourceKey, row.number);
+      let dedupeKey = row.number;
+      const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo;
+      if (posNo && typeof posNo.boardNumberFromPos === 'function') {
+        const parsedNo = posNo.boardNumberFromPos(row.number, parsed.sourceKey);
+        if (!parsedNo) {
+          continue;
+        }
+        dedupeKey = parsedNo.dedupeKey;
+      }
+      const id = makeItemId(parsed.sourceKey, dedupeKey);
       if (!readyIds[id]) {
         readyIds[id] = true;
         set.add(id);

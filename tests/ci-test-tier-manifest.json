@@ -11,7 +11,8 @@
     "tests/e2e/live-cloud-teardown.mjs",
     "tests/e2e/board-animation-live-setup.mjs",
     "tests/e2e/realtime-emulator-harness.mjs",
-    "tests/e2e/baseline-6975672.mjs"
+    "tests/e2e/baseline-6975672.mjs",
+    "tests/e2e/board-uber-six-char-column-overflow-helpers.mjs"
   ],
   "pr": {
     "workflowFile": ".github/workflows/ci.yml",

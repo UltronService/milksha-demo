@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>叫號看板 · 控制端</title>
-    <link rel="stylesheet" href="controller.css?v=20261017d" />
-    <script src="../js/board/today-board.js?v=20261017d"></script>
+    <link rel="stylesheet" href="controller.css?v=20261019d" />
+    <script src="../js/board/today-board.js?v=20261019d"></script>
   </head>
   <body>
     <header class="app-header">
@@ -86,9 +86,17 @@
                 <option value="ready" selected>請取餐</option>
               </select>
             </label>
-            <label class="quick-send-label">號碼
-              <input id="fld-quick-no" value="2001" inputmode="text" autocomplete="off" data-testid="fld-quick-no" />
-            </label>
+            <div class="quick-send-number-row" data-testid="quick-send-number-row">
+              <label class="quick-send-label quick-send-number-label">號碼
+                <input id="fld-quick-no" value="2001" inputmode="text" autocomplete="off" data-testid="fld-quick-no" />
+              </label>
+              <p
+                id="quick-send-rule-note"
+                class="quick-send-rule-note"
+                data-testid="quick-send-rule-note"
+                aria-live="polite"
+              ></p>
+            </div>
           </div>
           <p id="quick-send-error" class="quick-send-error" hidden role="alert" data-testid="quick-send-error"></p>
           <div
@@ -345,40 +353,41 @@
         </div>
       </div>
     </div>
-    <script src="../js/milksha-board.js?v=20261017d"></script>
-    <script src="../js/transport/push-numbers-params.js?v=20261017d"></script>
-    <script src="controller-send-number.js?v=20261017d"></script>
-    <script src="controller-cloud-ticket-readback.js?v=20261017d"></script>
-    <script src="../config/firebase.js?v=20261017d"></script>
-    <script src="../js/transport/paths.js?v=20261017d"></script>
-    <script src="../js/transport/firestore-value.js?v=20261017d"></script>
-    <script src="../js/transport/board-seq.js?v=20261017d"></script>
-    <script src="../js/transport/cloud-settings.js?v=20261017d"></script>
-    <script src="../js/transport/controller-secrets.js?v=20261017d"></script>
-    <script src="../js/transport/config-resolve.js?v=20261017d"></script>
-    <script src="../js/vendor/qrcode-generator.js?v=20261017d"></script>
-    <script src="../js/transport/auth-session.js?v=20261017d"></script>
-    <script src="../js/vendor/md5.min.js?v=20261017d"></script>
-    <script src="../js/transport/milksha-md5.js?v=20261017d"></script>
-    <script src="../js/transport/milksha-pos-sign.js?v=20261017d"></script>
-    <script src="../js/transport/milksha-pos-wire.js?v=20261017d"></script>
-    <script src="../js/transport/json-raw.js?v=20261017d"></script>
-    <script src="../js/transport/dev-command-validation.js?v=20261017d"></script>
-    <script src="../js/transport/controller-command-errors.js?v=20261017d"></script>
-    <script src="../js/transport/board-refresh-after-command.js?v=20261017d"></script>
-    <script src="../js/transport/cloud-api.js?v=20261017d"></script>
-    <script src="../js/transport/firestore-rest.js?v=20261017d"></script>
-    <script src="../js/transport/pos-receiver-validate.js?v=20261017d"></script>
-    <script src="../js/transport/local-poc-coord.js?v=20261017d"></script>
-    <script src="../js/transport/local-cloud-shim.js?v=20261017d"></script>
-    <script src="../js/transport/local-transport.js?v=20261017d"></script>
-    <script src="../js/transport/firestore-transport.js?v=20261017d"></script>
-    <script src="../js/transport/create-transport.js?v=20261017d"></script>
-    <script src="../js/receiver/validate-request.js?v=20261017d"></script>
-    <script src="store-list.js?v=20261017d"></script>
-    <script src="store-simulation.js?v=20261017d"></script>
-    <script src="store-simulation-host.js?v=20261017d"></script>
-    <script src="controller-view.js?v=20261017d"></script>
-    <script src="controller-app.js?v=20261017d"></script>
+    <script src="../js/board/pos-ticket-display-no.js?v=20261019d"></script>
+    <script src="../js/milksha-board.js?v=20261019d"></script>
+    <script src="../js/transport/push-numbers-params.js?v=20261019d"></script>
+    <script src="controller-send-number.js?v=20261019d"></script>
+    <script src="controller-cloud-ticket-readback.js?v=20261019d"></script>
+    <script src="../config/firebase.js?v=20261019d"></script>
+    <script src="../js/transport/paths.js?v=20261019d"></script>
+    <script src="../js/transport/firestore-value.js?v=20261019d"></script>
+    <script src="../js/transport/board-seq.js?v=20261019d"></script>
+    <script src="../js/transport/cloud-settings.js?v=20261019d"></script>
+    <script src="../js/transport/controller-secrets.js?v=20261019d"></script>
+    <script src="../js/transport/config-resolve.js?v=20261019d"></script>
+    <script src="../js/vendor/qrcode-generator.js?v=20261019d"></script>
+    <script src="../js/transport/auth-session.js?v=20261019d"></script>
+    <script src="../js/vendor/md5.min.js?v=20261019d"></script>
+    <script src="../js/transport/milksha-md5.js?v=20261019d"></script>
+    <script src="../js/transport/milksha-pos-sign.js?v=20261019d"></script>
+    <script src="../js/transport/milksha-pos-wire.js?v=20261019d"></script>
+    <script src="../js/transport/json-raw.js?v=20261019d"></script>
+    <script src="../js/transport/dev-command-validation.js?v=20261019d"></script>
+    <script src="../js/transport/controller-command-errors.js?v=20261019d"></script>
+    <script src="../js/transport/board-refresh-after-command.js?v=20261019d"></script>
+    <script src="../js/transport/cloud-api.js?v=20261019d"></script>
+    <script src="../js/transport/firestore-rest.js?v=20261019d"></script>
+    <script src="../js/transport/pos-receiver-validate.js?v=20261019d"></script>
+    <script src="../js/transport/local-poc-coord.js?v=20261019d"></script>
+    <script src="../js/transport/local-cloud-shim.js?v=20261019d"></script>
+    <script src="../js/transport/local-transport.js?v=20261019d"></script>
+    <script src="../js/transport/firestore-transport.js?v=20261019d"></script>
+    <script src="../js/transport/create-transport.js?v=20261019d"></script>
+    <script src="../js/receiver/validate-request.js?v=20261019d"></script>
+    <script src="store-list.js?v=20261019d"></script>
+    <script src="store-simulation.js?v=20261019d"></script>
+    <script src="store-simulation-host.js?v=20261019d"></script>
+    <script src="controller-view.js?v=20261019d"></script>
+    <script src="controller-app.js?v=20261019d"></script>
   </body>
 </html>

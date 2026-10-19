@@ -24,6 +24,7 @@ function loadPipeline() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'receiver', 'validate-request.js'), 'utf8'), sandbox);
   vm.runInNewContext(

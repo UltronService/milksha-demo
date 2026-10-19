@@ -26,17 +26,19 @@ function loadMilkshaBoard() {
     Promise: Promise,
     Error: Error,
     Set: Set,
+    Intl: Intl,
     requestAnimationFrame: function (fn) {
       fn();
     },
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'landscape-art-layout.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'source-icons-layout.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8'), sandbox);
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/landscape-art-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/source-icons-layout.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/milksha-board-anim-config.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/milksha-board-anim.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/milksha-board.js'), 'utf8'), sandbox);
   return sandbox.QMS.MilkshaBoard;
 }
 
@@ -45,59 +47,58 @@ function loadTodayBoard() {
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
   vm.runInNewContext(
-    fs.readFileSync(path.join(ROOT, 'js', 'board', 'today-board.js'), 'utf8'),
+    fs.readFileSync(path.join(ROOT, 'js/board/today-board.js'), 'utf8'),
     sandbox,
   );
   return sandbox.QMS.Board.TodayBoard;
 }
 
-test('store source accepts only four-digit strings', function () {
+test('store source accepts arbitrary strings', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('7112', 'store'), '7112');
-  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12345', 'store'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12ab', 'store'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), '123');
+  assert.equal(MB.normalizeBoardDisplayNumber('12ab', 'store'), '12ab');
 });
 
-test('milksha point keeps leading zero on short numeric codes', function () {
+test('milksha point: preserves leading zeros', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
 });
 
-test('foodpanda requires # plus four digits', function () {
+test('foodpanda keeps hash optional', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '#12345');
 });
 
-test('uber alphanumeric normalizes to uppercase', function () {
+test('uber: preserves case', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
+  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'c7458');
 });
 
-test('same digits on different sources both appear when each is valid for its source', function () {
+test('same digits on different sources both appear', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
     { source_type: 'From_Store_OK', number: '1234' },
-    { source_type: 'From_UberEat_OK', number: '12340' },
+    { source_type: 'From_UberEat_OK', number: '1234A' },
   ]);
   assert.equal(parts.ready.length, 2);
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'store' && r.number === '1234'));
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '12340'));
 });
 
-test('non-store numbers longer than six characters are dropped', function () {
+test('long uber string truncates to 6 display units', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('1234567', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ABCDEFG', 'uber'), 'ABCDEF');
   const parts = MB.partitionNumberContent([
     { source_type: 'From_UberEat_OK', number: 'ABCDEFG' },
   ]);
-  assert.equal(parts.ready.length, 0);
+  assert.equal(parts.ready.length, 1);
+  assert.equal(parts.ready[0].number, 'ABCDEF');
 });
 
 test('ticket without sourceType maps to store POS source_type', function () {

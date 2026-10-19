@@ -31,6 +31,7 @@ function loadMilkshaBoard() {
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/board/pos-ticket-display-no.js'), 'utf8'), sandbox);
   const code = fs.readFileSync(path.join(ROOT, 'js', 'milksha-board.js'), 'utf8');
   vm.runInNewContext(code, sandbox, { filename: 'milksha-board.js' });
   return sandbox.QMS.MilkshaBoard;

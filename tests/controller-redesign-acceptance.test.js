@@ -9,13 +9,16 @@ const vm = require('node:vm');
 const ROOT = path.join(__dirname, '..');
 
 /**
- * 總監核准：自動配對相關看板檔可與 main diff；其餘 js/board/* 仍須零 diff。
- * PR #95（controller-default-number）亦放寬同一 acceptance #8，另列 js/board/chip-overflow-fit.js。
- * 兩 PR 皆改此檔時後合併者須合併兩邊白名單條目（勿只保留一邊）。
+ * 總監核准：自動配對與 PR #95 chip overflow 看板檔可與 main diff；其餘 js/board/* 仍須零 diff。
+ * PR #95 + PR #97 合併時須保留兩邊白名單條目（勿只保留一邊）。
  */
-const BOARD_AUTO_PAIR_DIFF_WHITELIST = [
+const BOARD_DIFF_WHITELIST = [
   'js/board/board-auto-pair.js',
   'js/board/board-auto-pair-host.js',
+  'js/board/chip-overflow-fit.js',
+  'js/board/pos-ticket-display-no.js',
+  'js/board/source-icons-layout.js',
+  'js/board/milksha-board-anim.js',
 ];
 
 const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
@@ -162,13 +165,32 @@ test('acceptance 7: core controller test zones and actions remain in HTML', func
   }
 });
 
-test('acceptance 8: only board auto-pair whitelist may differ under js/board or receiver/', function () {
+test('acceptance 8 guard: combined whitelist allows overflow-fit and auto-pair only', function () {
+  const sample = [
+    'js/board/board-auto-pair.js',
+    'js/board/board-auto-pair-host.js',
+    'js/board/chip-overflow-fit.js',
+    'js/board/other-module.js',
+    'receiver/cloud-boot.js',
+  ];
+  const hits = boardReceiverDiffViolations(sample, BOARD_DIFF_WHITELIST);
+  assert.deepEqual(hits.sort(), ['js/board/other-module.js', 'receiver/cloud-boot.js'].sort());
+  assert.deepEqual(
+    boardReceiverDiffViolations(
+      ['js/board/board-auto-pair.js', 'js/board/chip-overflow-fit.js'],
+      BOARD_DIFF_WHITELIST,
+    ),
+    [],
+  );
+});
+
+test('acceptance 8: only board whitelist may differ under js/board or receiver/', function () {
   const touched = gitDiffNameOnlyAgainstMain();
-  const hits = boardReceiverDiffViolations(touched, BOARD_AUTO_PAIR_DIFF_WHITELIST);
+  const hits = boardReceiverDiffViolations(touched, BOARD_DIFF_WHITELIST);
   assert.equal(
     hits.length,
     0,
-    `Board/receiver paths outside auto-pair whitelist must not change: ${hits.join(', ')}`,
+    `Board/receiver paths outside whitelist must not change: ${hits.join(', ')}`,
   );
 });
 
@@ -176,15 +198,16 @@ test('acceptance 8b: whitelist policy flags any non-listed js/board file in a di
   const sample = [
     'js/board/board-auto-pair.js',
     'js/board/board-auto-pair-host.js',
+    'js/board/chip-overflow-fit.js',
     'js/board/today-board.js',
     'receiver/cloud-boot.js',
   ];
-  const hits = boardReceiverDiffViolations(sample, BOARD_AUTO_PAIR_DIFF_WHITELIST);
+  const hits = boardReceiverDiffViolations(sample, BOARD_DIFF_WHITELIST);
   assert.deepEqual(hits.sort(), ['js/board/today-board.js', 'receiver/cloud-boot.js'].sort());
   assert.deepEqual(
     boardReceiverDiffViolations(
-      ['js/board/board-auto-pair.js', 'js/board/board-auto-pair-host.js'],
-      BOARD_AUTO_PAIR_DIFF_WHITELIST,
+      ['js/board/board-auto-pair.js', 'js/board/board-auto-pair-host.js', 'js/board/chip-overflow-fit.js'],
+      BOARD_DIFF_WHITELIST,
     ),
     [],
   );
@@ -202,7 +225,7 @@ test('acceptance 8c: every other js/board file has zero diff vs main on this bra
       return 'js/board/' + name;
     });
   const outsideWhitelist = allBoardFiles.filter(function (rel) {
-    return BOARD_AUTO_PAIR_DIFF_WHITELIST.indexOf(rel) < 0;
+    return BOARD_DIFF_WHITELIST.indexOf(rel) < 0;
   });
   const unexpected = outsideWhitelist.filter(function (rel) {
     return touched.has(rel);
@@ -220,10 +243,10 @@ test('acceptance 10: disconnected header pill label is 未連線', function () {
   assert.match(V.formatConnectionPillLabel({ connected: true, boardOnline: true }), /已連線/);
 });
 
-test('acceptance 11: tap targets at least 48px and send errors use quick-send-error', function () {
+test('acceptance 11: tap targets at least 48px and send errors use quick-send-rule-note', function () {
   const css = readUtf8('controller/controller.css');
   assert.match(css, /--tap-min:\s*48px/);
   assert.match(css, /min-height:\s*var\(--tap-min\)/);
   const V = loadControllerView();
-  assert.equal(V.quickSendFailureSurface(), 'quick-send-error');
+  assert.equal(V.quickSendFailureSurface(), 'quick-send-rule-note');
 });

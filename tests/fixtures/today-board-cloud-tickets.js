@@ -2,7 +2,7 @@
 
 /**
  * Fake `today_board.tickets[]` (milksha-cloud PR #22, pre-deploy).
- * `no` is cloud-normalized; foodpanda includes `#` per log rules.
+ * `no` is cloud display value (foodpanda includes leading #).
  * Missing `sourceType` → board treats as store.
  */
 const CLOUD_DELIVERY_SAMPLE_TICKETS = [
