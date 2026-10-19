@@ -27,6 +27,13 @@ function firstInlineScriptBody(html) {
   return m ? m[1] : '';
 }
 
+const STORE_ID_BOARD_BOOT_DIFF_ALLOW = new Set([
+  'js/shared/store-id.js',
+  'js/board/board-auto-pair.js',
+  'js/board/board-auto-pair-host.js',
+  'js/receiver/cloud-boot.js',
+]);
+
 test('spec 1: pos2756-test page exists and board receiver paths are not changed on branch', function () {
   assert.ok(fs.existsSync(path.join(ROOT, 'pos2756-test', 'index.html')));
   const html = readUtf8('pos2756-test/index.html');
@@ -38,15 +45,34 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
       return l.trim();
     })
     .filter(Boolean);
-  const boardAutoPairWhitelist = new Set([
-    'js/board/board-auto-pair.js',
-    'js/board/board-auto-pair-host.js',
-  ]);
+  const touchedSet = new Set(touched);
+
+  const boardDir = path.join(ROOT, 'js', 'board');
+  const allBoardFiles = fs
+    .readdirSync(boardDir)
+    .filter(function (name) {
+      return name.endsWith('.js');
+    })
+    .map(function (name) {
+      return 'js/board/' + name;
+    });
+  const unexpectedBoard = allBoardFiles.filter(function (rel) {
+    return touchedSet.has(rel) && !STORE_ID_BOARD_BOOT_DIFF_ALLOW.has(rel);
+  });
+  assert.equal(
+    unexpectedBoard.length,
+    0,
+    'Non-allowlisted js/board files must have zero diff: ' + unexpectedBoard.join(', '),
+  );
+
   const forbidden = touched.filter(function (p) {
-    if (boardAutoPairWhitelist.has(p)) {
+    if (STORE_ID_BOARD_BOOT_DIFF_ALLOW.has(p)) {
       return false;
     }
-    return p.startsWith('js/board/') || p.startsWith('receiver/');
+    if (p.startsWith('js/board/')) {
+      return true;
+    }
+    return p.startsWith('receiver/');
   });
   assert.equal(forbidden.length, 0, 'board paths must stay untouched: ' + forbidden.join(', '));
 });

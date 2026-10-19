@@ -163,6 +163,10 @@ test('msUntilNextTaipeiMinute aligns before minute rollover', function () {
 
 test('home board index wires auto-pair scripts', function () {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.match(html, /board-auto-pair\.js\?v=/);
+  const storeIdIdx = html.indexOf('js/shared/store-id.js?v=');
+  const autoPairIdx = html.indexOf('board-auto-pair.js?v=');
+  assert.ok(storeIdIdx >= 0, 'index.html must load js/shared/store-id.js');
+  assert.ok(autoPairIdx >= 0, 'index.html must load board-auto-pair.js');
+  assert.ok(storeIdIdx < autoPairIdx, 'store-id.js must load before board-auto-pair.js');
   assert.match(html, /board-bind-api\.js\?v=/);
 });
