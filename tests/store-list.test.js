@@ -12,6 +12,8 @@ function loadStoreList() {
   const sandbox = { fetch: async function () { throw new Error('fetch not mocked'); } };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  sandbox.QMS = {};
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js', 'store-id.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-list.js'), 'utf8'), sandbox);
   return sandbox.QMS.Controller.StoreList;
 }

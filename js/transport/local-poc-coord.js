@@ -9,7 +9,6 @@
 
   const POC_TARGET_KEY = 'milksha:local:poc-target';
   const POC_CHANNEL_NAME = 'milksha-local-poc';
-  const DEFAULT_STORE_ID = 'c030020';
   const DEFAULT_DEVICE_ID = 'stb-01';
 
   /**
@@ -74,16 +73,25 @@
       return { storeId: poc.storeId, deviceId: poc.deviceId, source: 'poc-target' };
     }
     if (options.homeBoard) {
+      const fromUrl = options.fallbackStoreId ? String(options.fallbackStoreId).trim() : '';
+      if (fromUrl) {
+        return {
+          storeId: fromUrl,
+          deviceId: options.fallbackDeviceId || DEFAULT_DEVICE_ID,
+          source: 'url-store',
+        };
+      }
       return {
-        storeId: DEFAULT_STORE_ID,
-        deviceId: DEFAULT_DEVICE_ID,
-        source: 'home-default',
+        storeId: '',
+        deviceId: options.fallbackDeviceId || DEFAULT_DEVICE_ID,
+        source: 'home-no-store',
       };
     }
+    const fbStore = options.fallbackStoreId ? String(options.fallbackStoreId).trim() : '';
     return {
-      storeId: options.fallbackStoreId || DEFAULT_STORE_ID,
+      storeId: fbStore || 's120030',
       deviceId: options.fallbackDeviceId || DEFAULT_DEVICE_ID,
-      source: 'fallback',
+      source: fbStore ? 'fallback' : 'receiver-demo-default',
     };
   }
 
@@ -176,7 +184,6 @@
   QMS.Transport.LocalPocCoord = {
     POC_TARGET_KEY: POC_TARGET_KEY,
     POC_CHANNEL_NAME: POC_CHANNEL_NAME,
-    DEFAULT_STORE_ID: DEFAULT_STORE_ID,
     DEFAULT_DEVICE_ID: DEFAULT_DEVICE_ID,
     readLocalPocTarget: readLocalPocTarget,
     publishLocalPocTarget: publishLocalPocTarget,

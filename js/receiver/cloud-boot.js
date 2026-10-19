@@ -34,14 +34,6 @@
     return 5 * 60 * 1000;
   }
 
-  function defaultHomeBoardStoreId() {
-    const Validate = root.QMS && root.QMS.Receiver && root.QMS.Receiver.Validate;
-    if (Validate && Validate.DEFAULT_HOME_BOARD_STORE_ID) {
-      return Validate.DEFAULT_HOME_BOARD_STORE_ID;
-    }
-    return 'c030020';
-  }
-
   function clearOtherReceiverCaches(activeStoreId) {
     const keep = String(activeStoreId || '').trim();
     if (!keep) {
@@ -78,8 +70,14 @@
     let storeId = storeParam || 's120030';
     let deviceId = deviceParam || root.localStorage.getItem('milksha:deviceId') || 'stb-01';
     if (home) {
-      if (!storeParam) {
-        storeId = defaultHomeBoardStoreId();
+      const HomeBoardStore = root.QMS && root.QMS.Receiver && root.QMS.Receiver.HomeBoardStore;
+      if (HomeBoardStore && typeof HomeBoardStore.resolveStoreFromUrlParams === 'function') {
+        const resolved = HomeBoardStore.resolveStoreFromUrlParams(params);
+        storeId = resolved.status === 'ready' ? resolved.storeId : '';
+      } else if (storeParam) {
+        storeId = String(storeParam).trim();
+      } else {
+        storeId = '';
       }
       if (!deviceParam) {
         deviceId = 'stb-01';
@@ -104,6 +102,17 @@
     }
     if (stage) {
       stage.hidden = show;
+    }
+  }
+
+  function showHomeBoardStoreSetup(show) {
+    const gate = root.document.getElementById('board-store-setup');
+    const boardRoot = root.document.getElementById('board-root');
+    if (gate) {
+      gate.hidden = !show;
+    }
+    if (boardRoot) {
+      boardRoot.hidden = show;
     }
   }
 
@@ -284,6 +293,14 @@
 
     const params = new URLSearchParams(root.location.search);
     const homeBoard = isHomeBoardPage();
+    if (homeBoard) {
+      const HomeBoardStore = root.QMS && root.QMS.Receiver && root.QMS.Receiver.HomeBoardStore;
+      if (HomeBoardStore && HomeBoardStore.needsStoreSetup(params)) {
+        showHomeBoardStoreSetup(true);
+        return;
+      }
+      showHomeBoardStoreSetup(false);
+    }
     let mode = (params.get('mode') || '').toLowerCase();
     if (!mode && homeBoard) {
       const preferCloud =

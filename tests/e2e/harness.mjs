@@ -366,7 +366,14 @@ async function resolveReceiverStoreId(receiver, storeOverride) {
     if (path.includes('receiver-demo')) {
       return 's120030';
     }
-    return 'c030020';
+    const HomeBoardStore = window.QMS?.Receiver?.HomeBoardStore;
+    if (HomeBoardStore && typeof HomeBoardStore.resolveStoreFromUrlParams === 'function') {
+      const resolved = HomeBoardStore.resolveStoreFromUrlParams(params);
+      if (resolved.status === 'ready') {
+        return resolved.storeId;
+      }
+    }
+    return fromUrl || '';
   });
 }
 

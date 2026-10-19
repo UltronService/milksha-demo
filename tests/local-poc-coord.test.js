@@ -52,3 +52,10 @@ test('resolveLocalDeviceContext prefers poc target on home board', () => {
   const ctx = Coord.resolveLocalDeviceContext(localStorage, { homeBoard: true, fallbackStoreId: 's110012' });
   assert.equal(ctx.storeId, 's120030');
 });
+
+test('home board without poc or url store does not default to c030020', () => {
+  const { Coord, localStorage } = loadCoord();
+  const ctx = Coord.resolveLocalDeviceContext(localStorage, { homeBoard: true });
+  assert.equal(ctx.storeId, '');
+  assert.equal(ctx.source, 'home-no-store');
+});

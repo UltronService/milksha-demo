@@ -16,7 +16,7 @@ test('BOARD_LAYOUT_HARNESS_QUERY uses local mode without cloud auto-pair default
   const { BOARD_LAYOUT_HARNESS_QUERY, boardLayoutHarnessUrl } = await import(
     '../scripts/check-milksha-board-column-alignment.mjs'
   );
-  assert.equal(BOARD_LAYOUT_HARNESS_QUERY, 'demo=0&mode=local');
+  assert.equal(BOARD_LAYOUT_HARNESS_QUERY, 'demo=0&mode=local&store=zz-qa-store-a');
   const url = boardLayoutHarnessUrl('http://127.0.0.1:8800/milksha-demo/');
   assert.match(url, /demo=0/);
   assert.match(url, /mode=local/);
