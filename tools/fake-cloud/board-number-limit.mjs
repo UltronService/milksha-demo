@@ -4,9 +4,9 @@
 export const MAX_BOARD_PUSH_NUMBERS = 500;
 
 /**
- * After push_numbers is applied, the cloud keeps at most `max` tickets by dropping the oldest.
- * Fake-cloud models oldest as earliest rows in push order (ready[] then preparing[]).
- * TODO-align-with-backend: confirm eviction order against milksha-cloud when readable.
+ * milksha-cloud PR #38: never reject >500; keep the newest numbers in send order.
+ * Combined list order is ready[] then preparing[] as built from push_numbers params.
+ * A single push with >500 entries keeps the last `max` rows (drops earliest-entered).
  *
  * @param {unknown[]} tickets
  * @param {number} [max]

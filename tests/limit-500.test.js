@@ -227,6 +227,76 @@ test('limit-500 item 11: after other cloud rejection quick-send inputs keep type
   assert.equal(dom['fld-no'].value, '2847');
 });
 
+test('limit-500 item 9b: trim keeps last 500 in send order across ready and preparing', async function () {
+  const { trimTicketsToBoardCap } = await import('../tools/fake-cloud/board-number-limit.mjs');
+  const rows = [];
+  for (let i = 0; i < 400; i += 1) {
+    rows.push({ no: 'R' + i, status: 'ready' });
+  }
+  for (let j = 0; j < 120; j += 1) {
+    rows.push({ no: 'P' + j, status: 'preparing' });
+  }
+  assert.equal(rows.length, 520);
+  const trimmed = trimTicketsToBoardCap(rows);
+  assert.equal(trimmed.length, 500);
+  assert.equal(trimmed[0].no, 'R20');
+  assert.equal(trimmed[499].no, 'P119');
+});
+
+test('limit-500 cloud PR38: push_numbers over 256KB rejected; controller maps message', async function () {
+  const E = loadCmdErrors();
+  const Dev = loadBrowserDevCmd();
+  const pad = 'W'.repeat(32);
+  const ready = [];
+  for (let i = 0; i < 9000; i += 1) {
+    ready.push({ no: pad, sourceType: 'From_Store_OK' });
+  }
+  const built = Dev.buildDevCommandRequest({
+    storeId: STORE_ID,
+    deviceId: 'stb-01',
+    type: 'push_numbers',
+    params: { ready, preparing: [] },
+  });
+  assert.equal(built.ok, true);
+
+  await withFakeCloud(async function () {
+    const res = await postDevCommand(built.body);
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.code, E.CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE);
+    const msg = E.devCommandUserMessage({ status: 400, response: json });
+    assert.equal(msg, E.USER_MSG_PUSH_NUMBERS_TOO_LARGE);
+  });
+});
+
+test('limit-500 item 11b: after push_numbers too large rejection inputs stay typed', function () {
+  const E = loadCmdErrors();
+  const dom = { 'fld-quick-no': { value: '2847' }, 'fld-no': { value: '2847' } };
+  const err = {
+    status: 400,
+    response: { code: E.CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE, message: 'too big' },
+  };
+  const quickError = E.devCommandUserMessage(err, {});
+  assert.equal(quickError, E.USER_MSG_PUSH_NUMBERS_TOO_LARGE);
+  assert.equal(dom['fld-quick-no'].value, '2847');
+});
+
+test('limit-500 cloud PR38: non-push devCommand over 1024 bytes rejected', async function () {
+  const { cloudDevCommandSizeCheck } = await import('../tools/fake-cloud/cloud-dev-command-size.mjs');
+  const E = loadCmdErrors();
+  const hugeBody = {
+    storeId: STORE_ID,
+    deviceId: 'stb-01',
+    type: 'slow',
+    params: { delayMs: 1, padding: 'x'.repeat(1200) },
+  };
+  const check = cloudDevCommandSizeCheck(hugeBody);
+  assert.equal(check.ok, false);
+  assert.equal(check.code, 'invalid_command_params');
+  const msg = E.devCommandUserMessage({ status: 400, response: { code: check.code, message: check.message } });
+  assert.equal(msg, E.USER_MSG_CLOUD_COMMAND_REJECTED);
+});
+
 test('limit-500 item 12: fake-cloud accepts 500 push_numbers', async function () {
   await withFakeCloud(async function () {
     const built = buildPushNumbersRequest(500);

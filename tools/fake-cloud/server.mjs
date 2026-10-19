@@ -16,6 +16,7 @@ import {
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 import { trimTicketsToBoardCap } from './board-number-limit.mjs';
+import { cloudDevCommandSizeCheck } from './cloud-dev-command-size.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
@@ -911,6 +912,14 @@ const server = http.createServer(async (req, res) => {
           return json(res, httpStatusForApiErrorCode(cv.code), apiError(cv.code, cv.message));
         }
         const cmdBody = cv.body;
+        const sizeCheck = cloudDevCommandSizeCheck(cmdBody);
+        if (!sizeCheck.ok) {
+          return json(
+            res,
+            httpStatusForApiErrorCode(sizeCheck.code),
+            apiError(sizeCheck.code, sizeCheck.message),
+          );
+        }
         const bearer = (req.headers.authorization || '').startsWith('Bearer ')
           ? (req.headers.authorization || '').slice(7).trim()
           : '';

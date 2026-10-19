@@ -192,6 +192,7 @@ export function httpStatusForApiErrorCode(code) {
   if (code === 'device_not_found' || code === 'not_found') return 404;
   if (code === 'internal_error') return 500;
   if (code === 'payload_too_large') return 413;
+  if (code === 'push_numbers_params_too_large') return 400;
   if (code === 'invalid_device_id' || code === 'invalid_command_params' || code === 'invalid_body') {
     return 400;
   }

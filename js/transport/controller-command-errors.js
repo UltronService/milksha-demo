@@ -17,8 +17,14 @@
   const USER_MSG_DEVICE_NOT_FOUND = '請先打開看板';
   const USER_MSG_404 = USER_MSG_DEVICE_NOT_FOUND;
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
+  const USER_MSG_CLOUD_COMMAND_REJECTED = '指令內容不符合規定，雲端拒收。';
+  const USER_MSG_PUSH_NUMBERS_TOO_LARGE =
+    '送出內容太大，雲端拒收。請減少號碼或縮短號碼後再送。';
   const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
   const USER_MSG_INTERNAL_ERROR = '雲端暫時出錯。請稍後再送一次。';
+
+  const CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE = 'push_numbers_params_too_large';
+  const CLOUD_SIZE_HINT_RE = /1024|byte limit|exceed|too large/i;
 
   const SENSITIVE_KEY_RE =
     /(token|authorization|password|secret|apikey|api_key|signkey|sign_key|poskey|pos_key|signature|refreshtoken|idtoken|accesscode|access_code)/i;
@@ -105,7 +111,17 @@
     if (code === 'invalid_device_id') {
       return USER_MSG_INVALID_DEVICE_ID;
     }
-    if (code === 'invalid_command_params' || code === 'invalid_body' || code === 'payload_too_large') {
+    if (code === CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE) {
+      return USER_MSG_PUSH_NUMBERS_TOO_LARGE;
+    }
+    if (code === 'invalid_command_params') {
+      const cloudMsg = response && response.message ? String(response.message) : '';
+      if (CLOUD_SIZE_HINT_RE.test(cloudMsg)) {
+        return USER_MSG_CLOUD_COMMAND_REJECTED;
+      }
+      return USER_MSG_400_INVALID;
+    }
+    if (code === 'invalid_body' || code === 'payload_too_large') {
       return USER_MSG_400_INVALID;
     }
     if (code === 'internal_error' || status === 500) {
@@ -177,6 +193,9 @@
     USER_MSG_403: USER_MSG_403,
     USER_MSG_404: USER_MSG_404,
     USER_MSG_400_INVALID: USER_MSG_400_INVALID,
+    USER_MSG_CLOUD_COMMAND_REJECTED: USER_MSG_CLOUD_COMMAND_REJECTED,
+    USER_MSG_PUSH_NUMBERS_TOO_LARGE: USER_MSG_PUSH_NUMBERS_TOO_LARGE,
+    CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE: CLOUD_ERROR_PUSH_NUMBERS_PARAMS_TOO_LARGE,
     USER_MSG_INVALID_DEVICE_ID: USER_MSG_INVALID_DEVICE_ID,
     USER_MSG_INTERNAL_ERROR: USER_MSG_INTERNAL_ERROR,
     USER_MSG_CONNECT_ACCESS: USER_MSG_CONNECT_ACCESS,
