@@ -14,7 +14,7 @@
 | E2E still expects format red-text (source-quick-send ~:35) | `controller-source-quick-send.spec.mjs` → `abc` sends + board cell | E2E pass |
 | Cancel/removal id must use trimmed original | `board-seq.js` + pickup scan `boardDedupeKeyFromRaw` | `board-seq-number-v2.test.js`, `number-spec-v2` wiring |
 | Cloud 64-char cap vs board 6-char display | `boardNumberFromPos` clamps dedupe to 64 code points | `number-spec-v2.test.js` cloud alignment |
-| Empty cell same size as normal | `.milksha-num { min-height: 1em }` | `board-number-rules.spec.mjs` bounding box |
+| Empty cell same size as normal | `.milksha-num { min-height: 1em }` | `board-number-rules.spec.mjs` grid cell W/H ±2px + slot-1 position vs `1002`+`1001` ref |
 
 ## Spec coverage (15 items)
 

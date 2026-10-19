@@ -58,7 +58,9 @@ test.describe('board number rules (local fake cloud)', () => {
     await ctx.close();
   });
 
-  test('empty ready number cell matches normal cell bounding box height', async ({ browser }) => {
+  test('empty ready number cell matches normal grid cell size and keeps next slot position', async ({
+    browser,
+  }) => {
     const ctx = await freshContext(browser);
     const board = await ctx.newPage();
     const { board: boardUrl } = urlsLocalHomePoc();
@@ -67,6 +69,40 @@ test.describe('board number rules (local fake cloud)', () => {
       () => Boolean(window.QMS?.runtime?.applyPayload),
       { timeout: 25000 },
     );
+
+    const readyGridCells = () =>
+      board.evaluate(() => {
+        const zone = document.querySelector('.milksha-ready');
+        if (!zone) {
+          return null;
+        }
+        const grid =
+          zone.querySelector('.milksha-cream-grid.milksha-zone-numbers') ||
+          zone.querySelector('.milksha-art-numbers.milksha-zone-numbers');
+        if (!grid) {
+          return null;
+        }
+        return [...grid.querySelectorAll(':scope > .milksha-num-cell')].map((el) => {
+          const r = el.getBoundingClientRect();
+          return { left: r.left, top: r.top, width: r.width, height: r.height };
+        });
+      });
+
+    await board.evaluate(() => {
+      window.QMS.runtime.applyPayload(
+        [
+          { source_type: 'From_Store_OK', number: '1002' },
+          { source_type: 'From_Store_OK', number: '1001' },
+        ],
+        { silent: true },
+      );
+    });
+    await board.locator('.milksha-ready .milksha-num', { hasText: '1001' }).waitFor({ timeout: 15000 });
+    const refCells = await readyGridCells();
+    expect(refCells).not.toBeNull();
+    expect(refCells.length).toBeGreaterThanOrEqual(2);
+    const refSecondSlot = refCells[1];
+
     await board.evaluate(() => {
       window.QMS.runtime.applyPayload(
         [
@@ -76,15 +112,37 @@ test.describe('board number rules (local fake cloud)', () => {
         { silent: true },
       );
     });
-    await board.waitForSelector('.milksha-ready .milksha-board-chip');
-    const heights = await board.evaluate(() => {
-      const cells = [...document.querySelectorAll('.milksha-ready .milksha-num-cell')].filter((el) =>
-        el.querySelector('.milksha-board-chip'),
-      );
-      return cells.map((el) => el.getBoundingClientRect().height);
+    await board.locator('.milksha-ready .milksha-num', { hasText: '1001' }).waitFor({ timeout: 15000 });
+    const blankPair = await board.evaluate(() => {
+      const zone = document.querySelector('.milksha-ready');
+      const grid =
+        zone.querySelector('.milksha-cream-grid.milksha-zone-numbers') ||
+        zone.querySelector('.milksha-art-numbers.milksha-zone-numbers');
+      const cells = [...grid.querySelectorAll(':scope > .milksha-num-cell')];
+      const slot0 = cells[0];
+      const slot1 = cells[1];
+      const blankNum = slot0.querySelector('.milksha-num');
+      const filledNum = slot1.querySelector('.milksha-num');
+      const r0 = slot0.getBoundingClientRect();
+      const r1 = slot1.getBoundingClientRect();
+      return {
+        slot0: { width: r0.width, height: r0.height, left: r0.left, top: r0.top },
+        slot1: { width: r1.width, height: r1.height, left: r1.left, top: r1.top },
+        blankText: blankNum ? blankNum.textContent : null,
+        filledText: filledNum ? filledNum.textContent : null,
+        slot0HasChip: Boolean(slot0.querySelector('.milksha-board-chip')),
+      };
     });
-    expect(heights.length).toBeGreaterThanOrEqual(2);
-    expect(Math.abs(heights[0] - heights[1])).toBeLessThan(2);
+
+    expect(blankPair.slot0HasChip).toBe(true);
+    expect(blankPair.blankText).toBe('');
+    expect(blankPair.filledText).toBe('1001');
+    expect(Math.abs(blankPair.slot0.width - blankPair.slot1.width)).toBeLessThan(2);
+    expect(Math.abs(blankPair.slot0.height - blankPair.slot1.height)).toBeLessThan(2);
+    expect(Math.abs(blankPair.slot1.left - refSecondSlot.left)).toBeLessThan(2);
+    expect(Math.abs(blankPair.slot1.top - refSecondSlot.top)).toBeLessThan(2);
+    expect(Math.abs(blankPair.slot0.left - refCells[0].left)).toBeLessThan(2);
+    expect(Math.abs(blankPair.slot0.top - refCells[0].top)).toBeLessThan(2);
     await ctx.close();
   });
 
