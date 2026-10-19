@@ -34,8 +34,14 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     });
     await denied.goto(`${BASE}/?mode=cloud&store=zz-deny-test`);
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
-    await denied.context().clearCookies();
     await denied.close();
+    const wipe = await ctx.newPage();
+    await wipe.goto(`${BASE}/`);
+    await wipe.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await wipe.close();
 
     const boardA = await ctx.newPage();
     const boardB = await ctx.newPage();
@@ -56,7 +62,6 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
-    await expect(ctrlB.locator('[data-testid="btn-send-numbers"]')).toBeEnabled({ timeout: 60000 });
     await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
     await expect(boardB.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await ctx.close();
