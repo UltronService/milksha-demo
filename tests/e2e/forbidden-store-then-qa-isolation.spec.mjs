@@ -5,6 +5,11 @@ const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
 const STORE_B = 'zz-qa-store-b';
 
+async function waitControllerOutboundReady(page) {
+  await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 60000 });
+  await expect(page.locator('[data-testid="btn-send-numbers"]')).toBeEnabled({ timeout: 60000 });
+}
+
 test.describe('forbidden store then zz-qa isolation (same browser context)', () => {
   test.beforeAll(async () => {
     await restartCloud();
@@ -57,8 +62,9 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
-    await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
+    await expect(boardB.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
+    await waitControllerOutboundReady(ctrlA);
+    await waitControllerOutboundReady(ctrlB);
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
