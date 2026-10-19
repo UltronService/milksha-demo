@@ -50,12 +50,12 @@ test('landscape art baseline uses 70px number font for both zones', function () 
   assert.equal(art.NUM_FONT_PX, OFFICIAL_NUM_FONT_PX);
 });
 
-test('foodpanda: # + 4 digits on board', function () {
+test('foodpanda: hash preserved on board', function () {
   const { MB } = loadBoardStack();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '#12345');
 });
 
 test('renderNumberChip: delivery icons and empty store slot per PR #74 layout', function () {

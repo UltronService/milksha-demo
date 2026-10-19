@@ -1,5 +1,5 @@
 /**
- * Quick-send source selection, defaults, rule notes, and number validation.
+ * Quick-send source selection, defaults, rule notes, and number preparation (v2: as-typed).
  */
 (function (root) {
   'use strict';
@@ -20,26 +20,18 @@
   const DEFAULT_QUICK_SEND_NUMBER = {
     store: '2001',
     point: '012',
-    uber: 'AB12C',
-    fp: '#6405',
-    udd: '1234',
+    uber: 'c7458',
+    fp: '#130',
+    udd: '0012',
   };
 
   /** @type {Record<string, string>} */
   const RULE_NOTE = {
-    store: '4 位數字',
-    point: '3 位數字',
-    fp: '# 與 4 位數字（例 #1234）',
-    uber: '5 位十六進位 A–F',
-    udd: '4 位數字',
-  };
-
-  const VALIDATION_HINT = {
-    store: '門市號碼須為 4 位數字',
-    point: '迷點號碼須為 3 位數字',
-    fp: 'foodpanda 須為 # 加 4 位數字（例 #1234）',
-    uber: 'Uber Eats 須為 5 位十六進位（A–F）',
-    udd: 'Udd 須為 4 位數字',
+    store: '原樣送出；看板最多顯示 6 字',
+    point: '原樣送出；看板最多顯示 6 字',
+    fp: '原樣送出；看板最多顯示 6 字',
+    uber: '原樣送出；看板最多顯示 6 字',
+    udd: '原樣送出；看板最多顯示 6 字',
   };
 
   const DUPLICATE_ON_BOARD_MESSAGE = '此號碼已在看板上';
@@ -63,9 +55,22 @@
     return RULE_NOTE[key] || RULE_NOTE.store;
   }
 
-  function normalizeFn() {
-    const MB = QMS.MilkshaBoard;
-    return MB && MB.normalizeBoardDisplayNumber ? MB.normalizeBoardDisplayNumber.bind(MB) : null;
+  function posTicketModule() {
+    return QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
+  }
+
+  /**
+   * Board dedupe key for duplicate-on-board checks (trim edges only).
+   * @param {unknown} rawInput
+   * @returns {string}
+   */
+  function boardDedupeKeyFromRaw(rawInput) {
+    const mod = posTicketModule();
+    const raw = rawInput == null ? '' : String(rawInput);
+    if (mod && mod.trimBoardNumberEdges) {
+      return mod.trimBoardNumberEdges(raw);
+    }
+    return raw.replace(/^\s+|\s+$/g, '');
   }
 
   /**
@@ -75,19 +80,11 @@
    */
   function validateQuickSendNumber(sourceKey, rawInput) {
     const key = sourceKey || DEFAULT_SOURCE_KEY;
-    const hint = VALIDATION_HINT[key] || VALIDATION_HINT.store;
-    const raw = rawInput == null ? '' : String(rawInput);
-    if (!raw.trim()) {
-      return { ok: false, message: '請輸入號碼' };
+    const mod = posTicketModule();
+    if (!mod || !mod.isKnownSourceKey || !mod.isKnownSourceKey(key)) {
+      return { ok: false, message: '未知來源' };
     }
-    const normalize = normalizeFn();
-    if (!normalize) {
-      return { ok: false, message: '號碼驗證模組未載入' };
-    }
-    const normalized = normalize(raw, key);
-    if (!normalized) {
-      return { ok: false, message: hint };
-    }
+    const normalized = rawInput == null ? '' : String(rawInput);
     return { ok: true, normalized: normalized, sourceKey: key };
   }
 
@@ -129,21 +126,21 @@
       };
     }
     const validated = validateQuickSendNumber(sourceKey, input.rawValue);
-    if (validated.ok) {
+    if (!validated.ok) {
       return {
-        valid: true,
-        ruleNoteText: normalNote,
-        errorText: '',
-        inputInvalid: false,
-        sendDisabled: false,
+        valid: false,
+        ruleNoteText: '',
+        errorText: validated.message,
+        inputInvalid: true,
+        sendDisabled: true,
       };
     }
     return {
-      valid: false,
-      ruleNoteText: '',
-      errorText: validated.message,
-      inputInvalid: true,
-      sendDisabled: true,
+      valid: true,
+      ruleNoteText: normalNote,
+      errorText: '',
+      inputInvalid: false,
+      sendDisabled: false,
     };
   }
 
@@ -154,11 +151,11 @@
     DEFAULT_SOURCE_KEY: DEFAULT_SOURCE_KEY,
     DEFAULT_QUICK_SEND_NUMBER: DEFAULT_QUICK_SEND_NUMBER,
     RULE_NOTE: RULE_NOTE,
-    VALIDATION_HINT: VALIDATION_HINT,
     DUPLICATE_ON_BOARD_MESSAGE: DUPLICATE_ON_BOARD_MESSAGE,
     sourceOptionForKey: sourceOptionForKey,
     defaultQuickSendNumber: defaultQuickSendNumber,
     ruleNoteForSource: ruleNoteForSource,
+    boardDedupeKeyFromRaw: boardDedupeKeyFromRaw,
     validateQuickSendNumber: validateQuickSendNumber,
     resolveQuickSendValueOnSourceChange: resolveQuickSendValueOnSourceChange,
     buildQuickSendFieldPresentation: buildQuickSendFieldPresentation,

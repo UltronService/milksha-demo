@@ -20,6 +20,7 @@ function loadSendNumber() {
     String: String,
     Error: Error,
     Set: Set,
+    Intl: Intl,
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
@@ -37,7 +38,7 @@ test('switching source replaces pristine default with new source default', funct
     currentValue: '2001',
     pristine: true,
   });
-  assert.equal(first.nextValue, 'AB12C');
+  assert.equal(first.nextValue, 'c7458');
   assert.equal(first.selectAll, true);
   assert.equal(first.pristine, true);
 });
@@ -54,21 +55,21 @@ test('switching source keeps hand-edited number when not pristine', function () 
   assert.equal(kept.selectAll, false);
 });
 
-test('B5: invalid number shows error in rule-note slot and disables send', function () {
+test('B5: short number shows rule note and enabled send (no format error)', function () {
   const S = loadSendNumber();
   const ui = S.buildQuickSendFieldPresentation({
     sourceKey: 'store',
     rawValue: '12',
     duplicateOnBoard: false,
   });
-  assert.equal(ui.valid, false);
-  assert.equal(ui.ruleNoteText, '');
-  assert.match(ui.errorText, /4 位數字/);
-  assert.equal(ui.inputInvalid, true);
-  assert.equal(ui.sendDisabled, true);
+  assert.equal(ui.valid, true);
+  assert.match(ui.ruleNoteText, /原樣送出/);
+  assert.equal(ui.errorText, '');
+  assert.equal(ui.inputInvalid, false);
+  assert.equal(ui.sendDisabled, false);
 });
 
-test('B5: valid number restores normal rule note and enabled send', function () {
+test('B5: any value keeps rule note and enabled send', function () {
   const S = loadSendNumber();
   const ui = S.buildQuickSendFieldPresentation({
     sourceKey: 'fp',
@@ -76,23 +77,23 @@ test('B5: valid number restores normal rule note and enabled send', function () 
     duplicateOnBoard: false,
   });
   assert.equal(ui.valid, true);
-  assert.equal(ui.ruleNoteText, '# 與 4 位數字（例 #1234）');
+  assert.match(ui.ruleNoteText, /原樣送出/);
   assert.equal(ui.errorText, '');
   assert.equal(ui.inputInvalid, false);
   assert.equal(ui.sendDisabled, false);
 });
 
-test('foodpanda keeps hash on board display', function () {
+test('foodpanda sends hash as typed', function () {
   const S = loadSendNumber();
   const ok = S.validateQuickSendNumber('fp', '#6405');
   assert.equal(ok.ok, true);
   assert.equal(ok.normalized, '#6405');
 });
 
-test('point accepts exactly 3 digits with leading zero preserved', function () {
+test('point accepts any string as typed', function () {
   const S = loadSendNumber();
   assert.equal(S.validateQuickSendNumber('point', '012').normalized, '012');
-  assert.equal(S.validateQuickSendNumber('point', '0912').ok, false);
+  assert.equal(S.validateQuickSendNumber('point', '0912').ok, true);
 });
 
 test('duplicate on board surfaces 此號碼已在看板上 in rule-note slot', function () {

@@ -1,5 +1,5 @@
 /**
- * Aligns with milksha-cloud functions/src/lib/pos-ticket-channel.ts sanitizePosTicketDisplayNo.
+ * POS ticket number → board display (v2: as-sent, trim edges, max 6 display units).
  */
 (function (root) {
   'use strict';
@@ -15,6 +15,18 @@
     fp: 'From_FoodPanda',
     udd: 'From_Udd',
   });
+
+  const KNOWN_SOURCE_KEYS = Object.freeze(Object.keys(SOURCE_KEY_TO_CHANNEL));
+
+  const DISPLAY_UNIT_LIMIT = 6;
+
+  /**
+   * @param {string} sourceKey
+   * @returns {boolean}
+   */
+  function isKnownSourceKey(sourceKey) {
+    return typeof sourceKey === 'string' && SOURCE_KEY_TO_CHANNEL[sourceKey] != null;
+  }
 
   /**
    * @param {string} sourceType
@@ -43,44 +55,108 @@
   }
 
   /**
-   * @param {unknown} raw
-   * @param {string} channelOrSourceKey source key (store, point, …) or From_* channel
-   * @returns {string | null} display value for board / push
+   * @param {string} raw
+   * @returns {string}
    */
-  function sanitizePosTicketDisplayNo(raw, channelOrSourceKey) {
-    if (typeof raw !== 'string') {
+  function trimBoardNumberEdges(raw) {
+    return String(raw).replace(/^\s+|\s+$/g, '');
+  }
+
+  /**
+   * @param {string} text
+   * @param {number} [maxUnits]
+   * @returns {string}
+   */
+  function truncateToDisplayUnits(text, maxUnits) {
+    const limit = maxUnits == null ? DISPLAY_UNIT_LIMIT : maxUnits;
+    if (!text) {
+      return '';
+    }
+    if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+      const seg = new Intl.Segmenter('und', { granularity: 'grapheme' });
+      let count = 0;
+      let out = '';
+      for (const part of seg.segment(text)) {
+        if (count >= limit) {
+          break;
+        }
+        out += part.segment;
+        count += 1;
+      }
+      return out;
+    }
+    const units = [];
+    for (const unit of text) {
+      units.push(unit);
+    }
+    return units.slice(0, limit).join('');
+  }
+
+  /**
+   * @param {string} text
+   * @returns {string}
+   */
+  function escapeHtmlText(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /**
+   * @param {string} channelOrSourceKey
+   * @returns {string | null}
+   */
+  function sourceKeyFromChannelOrKey(channelOrSourceKey) {
+    if (typeof channelOrSourceKey !== 'string' || !channelOrSourceKey) {
       return null;
     }
-    const channel = resolveChannel(channelOrSourceKey);
+    if (SOURCE_KEY_TO_CHANNEL[channelOrSourceKey]) {
+      return channelOrSourceKey;
+    }
+    const channel = channelOrSourceKey.indexOf('From_') === 0 ? channelOrSourceKey : null;
     if (!channel) {
       return null;
     }
-    if (channel === 'From_Store') {
-      return /^[0-9]{4}$/.test(raw) ? raw : null;
+    for (let i = 0; i < KNOWN_SOURCE_KEYS.length; i += 1) {
+      const key = KNOWN_SOURCE_KEYS[i];
+      if (SOURCE_KEY_TO_CHANNEL[key] === channel) {
+        return key;
+      }
     }
-    if (channel === 'From_milksha_point') {
-      return /^[0-9]{3}$/.test(raw) ? raw : null;
-    }
-    if (channel === 'From_Udd') {
-      return /^[0-9]{4}$/.test(raw) ? raw : null;
-    }
-    if (channel === 'From_UberEat') {
-      const upper = raw.trim().toUpperCase();
-      return /^[0-9A-F]{5}$/.test(upper) ? upper : null;
-    }
-    if (channel === 'From_FoodPanda') {
-      const trimmed = raw.trim();
-      return /^#[0-9]{4}$/.test(trimmed) ? trimmed : null;
-    }
-    let working = raw;
-    if (working.charAt(0) === '#') {
-      working = working.slice(1);
-    }
-    const upper = working.trim().toUpperCase();
-    if (!/^[0-9A-Z]{3,6}$/.test(upper)) {
+    return null;
+  }
+
+  /**
+   * @param {unknown} raw
+   * @param {string} channelOrSourceKey source key (store, point, …) or From_* channel
+   * @returns {{ dedupeKey: string, display: string } | null}
+   */
+  function boardNumberFromPos(raw, channelOrSourceKey) {
+    if (typeof raw !== 'string') {
       return null;
     }
-    return upper;
+    const sourceKey = sourceKeyFromChannelOrKey(channelOrSourceKey);
+    if (!sourceKey) {
+      return null;
+    }
+    const dedupeKey = trimBoardNumberEdges(raw);
+    const display = truncateToDisplayUnits(dedupeKey, DISPLAY_UNIT_LIMIT);
+    return { dedupeKey: dedupeKey, display: display };
+  }
+
+  /**
+   * @param {unknown} raw
+   * @param {string} channelOrSourceKey
+   * @returns {string | null} display slice for board
+   */
+  function sanitizePosTicketDisplayNo(raw, channelOrSourceKey) {
+    const parsed = boardNumberFromPos(raw, channelOrSourceKey);
+    if (!parsed) {
+      return null;
+    }
+    return parsed.display;
   }
 
   /**
@@ -90,27 +166,33 @@
    */
   function normalizeForSourceKey(raw, sourceKey) {
     const key = sourceKey || 'store';
-    const channel = SOURCE_KEY_TO_CHANNEL[key];
-    if (!channel) {
-      return sanitizePosTicketDisplayNo(raw, key);
+    if (typeof key === 'string' && key.indexOf('unk:') === 0) {
+      return null;
     }
-    return sanitizePosTicketDisplayNo(raw, channel);
+    return sanitizePosTicketDisplayNo(raw, key);
   }
 
   /**
-   * Duplicate ticket key on board (cloud: channel + display number).
+   * Duplicate ticket key on board (source channel + trimmed original number).
    * @param {string} channelOrSourceKey
-   * @param {string} displayNo
+   * @param {string} dedupeKey trimmed original number
    * @returns {string}
    */
-  function duplicateKey(channelOrSourceKey, displayNo) {
+  function duplicateKey(channelOrSourceKey, dedupeKey) {
     const channel = resolveChannel(channelOrSourceKey) || String(channelOrSourceKey);
-    return channel + String(displayNo);
+    return channel + String(dedupeKey);
   }
 
   QMS.Board.PosTicketDisplayNo = {
     SOURCE_KEY_TO_CHANNEL: SOURCE_KEY_TO_CHANNEL,
+    KNOWN_SOURCE_KEYS: KNOWN_SOURCE_KEYS,
+    DISPLAY_UNIT_LIMIT: DISPLAY_UNIT_LIMIT,
+    isKnownSourceKey: isKnownSourceKey,
     channelFromSourceType: channelFromSourceType,
+    trimBoardNumberEdges: trimBoardNumberEdges,
+    truncateToDisplayUnits: truncateToDisplayUnits,
+    escapeHtmlText: escapeHtmlText,
+    boardNumberFromPos: boardNumberFromPos,
     sanitizePosTicketDisplayNo: sanitizePosTicketDisplayNo,
     normalizeForSourceKey: normalizeForSourceKey,
     duplicateKey: duplicateKey,

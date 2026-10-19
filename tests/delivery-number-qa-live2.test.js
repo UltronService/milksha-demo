@@ -60,14 +60,13 @@ const QA_LIVE2_TICKETS = [
   },
 ];
 
-test('QA live2: unrecognized sourceType shows 3–6 alnum code A1B', function () {
+test('QA live2: unrecognized sourceType is not shown on board', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
     { source_type: 'From_CustomPartner_OK', number: 'A1B' },
   ]);
-  assert.equal(parts.ready.length, 1);
-  assert.equal(parts.ready[0].number, 'A1B');
+  assert.equal(parts.ready.length, 0);
 });
 
 test('QA live2: store 1234 without sourceType and UberEats 12340 both on board', function () {

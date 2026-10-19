@@ -651,10 +651,19 @@
       if (deps.renderChipInnerHtml) {
         return deps.renderChipInnerHtml(cell);
       }
-      if (!cell || !cell.number) {
+      if (!cell || typeof cell.number !== 'string') {
         return '';
       }
-      return '<span class="milksha-num">' + cell.number + '</span>';
+      const posNo =
+        typeof globalThis !== 'undefined' &&
+        globalThis.QMS &&
+        globalThis.QMS.Board &&
+        globalThis.QMS.Board.PosTicketDisplayNo
+          ? globalThis.QMS.Board.PosTicketDisplayNo
+          : null;
+      const escaped =
+        posNo && posNo.escapeHtmlText ? posNo.escapeHtmlText(cell.number) : String(cell.number);
+      return '<span class="milksha-num">' + escaped + '</span>';
     }
 
     /**
@@ -827,7 +836,7 @@
         const slot = slotEls[i];
         slot.innerHTML = '';
         const cell = cells[i];
-        if (!cell || !cell.number) {
+        if (!cell || typeof cell.number !== 'string') {
           continue;
         }
         const id = cell.id || '';
@@ -1090,7 +1099,7 @@
               const slot = slotEls[i];
               slot.innerHTML = '';
               const cell = cells[i];
-              if (cell && cell.number) {
+              if (cell && typeof cell.number === 'string') {
                 const chip = deps.document.createElement('div');
                 fillChipElement(chip, cell);
                 chip.setAttribute('data-item-id', cell.id || '');
@@ -1141,7 +1150,7 @@
       for (let i = 0; i < deps.pageSize; i += 1) {
         const cell = cells[i];
         const slot = slotEls[i];
-        if (!cell || !cell.number) {
+        if (!cell || typeof cell.number !== 'string') {
           continue;
         }
         const id = cell.id;

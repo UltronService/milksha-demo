@@ -75,17 +75,13 @@
    * @returns {string}
    */
   function renderChipInnerHtml(item) {
-    if (!item || !item.number) {
+    if (!item || typeof item.number !== 'string') {
       return '';
     }
-    const sourceKey = item.sourceKey || 'store';
-    const withIcon = sourceKeyShowsIcon(sourceKey);
-    return (
-      renderIconSlotHtml(item) +
-      '<span class="milksha-num">' +
-      item.number +
-      '</span>'
-    );
+    const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
+    const escaped =
+      posNo && posNo.escapeHtmlText ? posNo.escapeHtmlText(item.number) : String(item.number);
+    return renderIconSlotHtml(item) + '<span class="milksha-num">' + escaped + '</span>';
   }
 
   QMS.Board = QMS.Board || {};

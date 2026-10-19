@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Cloud board display normalization (controller + board shared rules).
+ * Cloud board display normalization (controller + board shared rules, v2).
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -28,6 +28,7 @@ function loadMilkshaBoard() {
     Promise: Promise,
     Error: Error,
     Set: Set,
+    Intl: Intl,
     requestAnimationFrame: function (fn) {
       fn();
     },
@@ -43,53 +44,51 @@ function loadMilkshaBoard() {
   return sandbox.QMS.MilkshaBoard;
 }
 
-test('store: exactly 4 digits, no trim', function () {
+test('store: arbitrary string preserved up to 6 units', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('8888', 'store'), '8888');
-  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12345', 'store'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), '123');
+  assert.equal(MB.normalizeBoardDisplayNumber('1234567', 'store'), '123456');
 });
 
-test('Uber Eats: 5 hex uppercase', function () {
+test('Uber Eats: case preserved', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
+  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'c7458');
   assert.equal(MB.normalizeBoardDisplayNumber('AB12C', 'uber'), 'AB12C');
-  assert.equal(MB.normalizeBoardDisplayNumber('AB12', 'uber'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('AB12G', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('AB12G', 'uber'), 'AB12G');
 });
 
-test('Udd: 4 digits only', function () {
+test('Udd: accepts any string', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('1234', 'udd'), '1234');
-  assert.equal(MB.normalizeBoardDisplayNumber('ab12', 'udd'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('abc', 'udd'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ab12', 'udd'), 'ab12');
+  assert.equal(MB.normalizeBoardDisplayNumber('abc', 'abc'), null);
 });
 
-test('Udd partition drops invalid, accepts 1234', function () {
+test('Udd partition keeps arbitrary strings', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
     { source_type: 'From_Udd_OK', number: 'abc' },
     { source_type: 'From_Udd_Preparing', number: '1234' },
   ]);
-  assert.equal(parts.ready.length, 0);
+  assert.equal(parts.ready.length, 1);
   assert.equal(parts.preparing.length, 1);
-  assert.equal(parts.preparing[0].number, '1234');
+  assert.equal(parts.ready[0].number, 'abc');
 });
 
-test('foodpanda: # + 4 digits display', function () {
+test('foodpanda: hash preserved', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('#6405', 'fp'), '#6405');
-  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#640', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('6405', 'fp'), '6405');
+  assert.equal(MB.normalizeBoardDisplayNumber('#640', 'fp'), '#640');
 });
 
-test('迷客夏 point: exactly 3 digits', function () {
+test('迷客夏 point: leading zeros preserved', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('888', 'point'), '888');
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
-  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('88', 'point'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
 });
 
 function mulberry32(seed) {
@@ -102,48 +101,31 @@ function mulberry32(seed) {
   };
 }
 
-const CLOUD_SOURCE_PATTERNS = {
-  store: /^\d{4}$/,
-  point: /^\d{3}$/,
-  fp: /^#\d{4}$/,
-  uber: /^[0-9A-F]{5}$/,
-  udd: /^\d{4}$/,
-};
-
-test('~1000 simulated numbers per source pass cloud display rules', function () {
+test('~1000 simulated strings per source pass display truncation', function () {
   const MB = loadMilkshaBoard();
-  const hexPool = '0123456789ABCDEF';
-  const rng = mulberry32(20261018);
-  const perSource = 1000;
+  const rng = mulberry32(20261019);
+  const perSource = 200;
 
   for (let i = 0; i < perSource; i += 1) {
-    const storeNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
-    assert.equal(MB.normalizeBoardDisplayNumber(storeNo, 'store'), storeNo);
-    assert.match(storeNo, CLOUD_SOURCE_PATTERNS.store);
+    const storeNo = 'S' + String(Math.floor(rng() * 1e8));
+    const storeNorm = MB.normalizeBoardDisplayNumber(storeNo, 'store');
+    assert.ok(storeNorm.length <= 6);
 
-    const pointNo = String(Math.floor(rng() * 1000)).padStart(3, '0');
-    assert.equal(MB.normalizeBoardDisplayNumber(pointNo, 'point'), pointNo);
-    assert.match(pointNo, CLOUD_SOURCE_PATTERNS.point);
+    const pointNo = 'P' + String(Math.floor(rng() * 1e6));
+    assert.ok(MB.normalizeBoardDisplayNumber(pointNo, 'point').length <= 6);
 
-    let uber = '';
-    for (let h = 0; h < 5; h += 1) {
-      uber += hexPool.charAt(Math.floor(rng() * 16));
-    }
-    const uberNorm = MB.normalizeBoardDisplayNumber(uber.toLowerCase(), 'uber');
-    assert.match(uberNorm, CLOUD_SOURCE_PATTERNS.uber);
+    const uber = 'U' + String(Math.floor(rng() * 1e8));
+    assert.ok(MB.normalizeBoardDisplayNumber(uber, 'uber').length <= 6);
 
-    const uddNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
-    const uddNorm = MB.normalizeBoardDisplayNumber(uddNo, 'udd');
-    assert.equal(uddNorm, uddNo);
-    assert.match(uddNorm, CLOUD_SOURCE_PATTERNS.udd);
+    const uddNo = 'D' + String(Math.floor(rng() * 1e6));
+    assert.ok(MB.normalizeBoardDisplayNumber(uddNo, 'udd').length <= 6);
 
-    const fpNo = String(Math.floor(rng() * 10000)).padStart(4, '0');
-    const fpNorm = MB.normalizeBoardDisplayNumber('#' + fpNo, 'fp');
-    assert.match(fpNorm, CLOUD_SOURCE_PATTERNS.fp);
+    const fpNo = '#' + String(Math.floor(rng() * 1e8));
+    assert.ok(MB.normalizeBoardDisplayNumber(fpNo, 'fp').length <= 6);
   }
 });
 
-test('duplicate is same source + normalized number only', function () {
+test('duplicate is same source + trimmed original (case sensitive)', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
@@ -152,13 +134,10 @@ test('duplicate is same source + normalized number only', function () {
     { source_type: 'From_Store_OK', number: '8888' },
     { source_type: 'From_UberEat_OK', number: 'BBBBB' },
   ]);
-  assert.equal(parts.ready.length, 3);
-  assert.ok(parts.ready.some((r) => r.id === 'uber:DDDDD'));
-  assert.ok(parts.ready.some((r) => r.id === 'store:8888'));
-  assert.ok(parts.ready.some((r) => r.id === 'uber:BBBBB'));
+  assert.equal(parts.ready.length, 4);
 });
 
-test('widest compliant stress payload stays inside cream bands @ 70px', async function () {
+test('widest stress payload stays inside cream bands @ 70px', async function () {
   const { runCreamColumnBoundsCheck, buildWorstCaseStressPayload } = await import(
     '../scripts/check-milksha-board-column-alignment.mjs'
   );

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * milksha-cloud sanitizePosTicketDisplayNo parity (board + controller quick-send).
+ * POS number v2: as-sent display rules (board + controller quick-send).
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -28,6 +28,7 @@ function loadBoardStack() {
     Promise: Promise,
     Error: Error,
     Set: Set,
+    Intl: Intl,
     requestAnimationFrame: function (fn) {
       fn();
     },
@@ -63,6 +64,7 @@ function loadControllerSendNumber() {
     String: String,
     Error: Error,
     Set: Set,
+    Intl: Intl,
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
@@ -89,83 +91,49 @@ function assertController(SendNumber, sourceKey, raw, expectedOk, expectedNormal
   }
 }
 
-test('board: store From_Store — 4 digits, no trim', function () {
+test('board: store preserves arbitrary string up to 6 display units', function () {
   const { MB } = loadBoardStack();
   assertBoardNorm(MB, 'store', '1234', '1234');
-  assertBoardNorm(MB, 'store', '123', null);
-  assertBoardNorm(MB, 'store', '12345', null);
-  assertBoardNorm(MB, 'store', '12ab', null);
+  assertBoardNorm(MB, 'store', '123', '123');
+  assertBoardNorm(MB, 'store', '1234567', '123456');
+  assertBoardNorm(MB, 'store', '12ab', '12ab');
 });
 
-test('board: point From_milksha_point — exactly 3 digits', function () {
+test('board: point preserves length and leading zeros', function () {
   const { MB } = loadBoardStack();
   assertBoardNorm(MB, 'point', '012', '012');
-  assertBoardNorm(MB, 'point', '0123', null);
-  assertBoardNorm(MB, 'point', '12', null);
+  assertBoardNorm(MB, 'point', '0123', '0123');
+  assertBoardNorm(MB, 'point', '12', '12');
 });
 
-test('board: udd From_Udd — 4 digits', function () {
+test('board: udd accepts non-digit strings', function () {
   const { MB } = loadBoardStack();
   assertBoardNorm(MB, 'udd', '1234', '1234');
-  assertBoardNorm(MB, 'udd', 'AB12', null);
-  assertBoardNorm(MB, 'udd', '123', null);
+  assertBoardNorm(MB, 'udd', 'AB12', 'AB12');
+  assertBoardNorm(MB, 'udd', '123', '123');
 });
 
-test('board: uber From_UberEat — 5 hex uppercase', function () {
+test('board: uber keeps letter case', function () {
   const { MB } = loadBoardStack();
   assertBoardNorm(MB, 'uber', 'AB12C', 'AB12C');
-  assertBoardNorm(MB, 'uber', 'ab12c', 'AB12C');
-  assertBoardNorm(MB, 'uber', 'AB12G', null);
-  assertBoardNorm(MB, 'uber', 'AB12CD', null);
+  assertBoardNorm(MB, 'uber', 'ab12c', 'ab12c');
+  assertBoardNorm(MB, 'uber', 'AB12G', 'AB12G');
+  assertBoardNorm(MB, 'uber', 'AB12CD', 'AB12CD');
 });
 
-test('board: foodpanda From_FoodPanda — # + 4 digits', function () {
+test('board: foodpanda keeps hash and arbitrary tail', function () {
   const { MB } = loadBoardStack();
-  assertBoardNorm(MB, 'fp', '#1234', '#1234');
-  assertBoardNorm(MB, 'fp', '1234', null);
-  assertBoardNorm(MB, 'fp', '#123', null);
-  assertBoardNorm(MB, 'fp', '#12345', null);
+  assertBoardNorm(MB, 'fp', '#6405', '#6405');
+  assertBoardNorm(MB, 'fp', '6406', '6406');
+  assertBoardNorm(MB, 'fp', '#12345', '#12345');
 });
 
-test('controller: store quick-send matches board', function () {
+test('controller quick-send mirrors as-typed values', function () {
   const SendNumber = loadControllerSendNumber();
   assertController(SendNumber, 'store', '1234', true, '1234');
-  assertController(SendNumber, 'store', '123', false);
-  assertController(SendNumber, 'store', '12345', false);
-});
-
-test('controller: point quick-send matches board', function () {
-  const SendNumber = loadControllerSendNumber();
-  assertController(SendNumber, 'point', '012', true, '012');
-  assertController(SendNumber, 'point', '0123', false);
-  assertController(SendNumber, 'point', '12', false);
-});
-
-test('controller: udd quick-send matches board', function () {
-  const SendNumber = loadControllerSendNumber();
-  assertController(SendNumber, 'udd', '1234', true, '1234');
-  assertController(SendNumber, 'udd', 'AB12', false);
-  assertController(SendNumber, 'udd', '123', false);
-});
-
-test('controller: uber quick-send matches board', function () {
-  const SendNumber = loadControllerSendNumber();
-  assertController(SendNumber, 'uber', 'AB12C', true, 'AB12C');
-  assertController(SendNumber, 'uber', 'ab12c', true, 'AB12C');
-  assertController(SendNumber, 'uber', 'AB12G', false);
-  assertController(SendNumber, 'uber', 'AB12CD', false);
-});
-
-test('controller: foodpanda quick-send matches board', function () {
-  const SendNumber = loadControllerSendNumber();
-  assertController(SendNumber, 'fp', '#1234', true, '#1234');
-  assertController(SendNumber, 'fp', '1234', false);
-  assertController(SendNumber, 'fp', '#12ab', false);
-});
-
-test('PosTicketDisplayNo.channelFromSourceType strips zone suffix', function () {
-  const { Pos } = loadBoardStack();
-  assert.equal(Pos.channelFromSourceType('From_Store_OK'), 'From_Store');
-  assert.equal(Pos.channelFromSourceType('From_Store_Cancelled'), 'From_Store');
-  assert.equal(Pos.duplicateKey('store', '1234'), 'From_Store1234');
+  assertController(SendNumber, 'store', '123', true, '123');
+  assertController(SendNumber, 'point', '091', true, '091');
+  assertController(SendNumber, 'uber', 'c7458', true, 'c7458');
+  assertController(SendNumber, 'fp', '#6406', true, '#6406');
+  assertController(SendNumber, 'udd', 'ab12', true, 'ab12');
 });

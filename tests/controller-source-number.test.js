@@ -20,6 +20,7 @@ function loadControllerSendNumber() {
     String: String,
     Error: Error,
     Set: Set,
+    Intl: Intl,
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
@@ -43,46 +44,44 @@ test('quick send source menu: 門市、迷點、Uber Eats、foodpanda、Udd; def
   assert.equal(SendNumber.sourceOptionForKey('store').label, '門市');
 });
 
-test('store quick send accepts only four digits', function () {
+test('store quick send accepts any string as typed', function () {
   const { SendNumber } = loadControllerSendNumber();
   assert.equal(SendNumber.validateQuickSendNumber('store', '1234').ok, true);
   assert.equal(SendNumber.validateQuickSendNumber('store', '1234').normalized, '1234');
-  assert.equal(SendNumber.validateQuickSendNumber('store', '123').ok, false);
-  assert.equal(SendNumber.validateQuickSendNumber('store', '12345').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('store', '123').ok, true);
+  assert.equal(SendNumber.validateQuickSendNumber('store', '12345').ok, true);
 });
 
-test('point quick send: exactly 3 digits preserves leading zero', function () {
+test('point quick send preserves leading zero', function () {
   const { SendNumber } = loadControllerSendNumber();
   const ok = SendNumber.validateQuickSendNumber('point', '091');
   assert.equal(ok.ok, true);
   assert.equal(ok.normalized, '091');
-  assert.equal(SendNumber.validateQuickSendNumber('point', '0912').ok, false);
-  assert.equal(SendNumber.validateQuickSendNumber('point', '12').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('point', '0912').ok, true);
 });
 
-test('uber: 5 hex; udd: 4 digits', function () {
+test('uber and udd: no format gate', function () {
   const { SendNumber } = loadControllerSendNumber();
   const uber = SendNumber.validateQuickSendNumber('uber', 'c7458');
   assert.equal(uber.ok, true);
-  assert.equal(uber.normalized, 'C7458');
-  assert.equal(SendNumber.validateQuickSendNumber('uber', 'AB12G').ok, false);
+  assert.equal(uber.normalized, 'c7458');
+  assert.equal(SendNumber.validateQuickSendNumber('uber', 'AB12G').ok, true);
   assert.equal(SendNumber.validateQuickSendNumber('udd', '1234').ok, true);
-  assert.equal(SendNumber.validateQuickSendNumber('udd', 'ab12').ok, false);
+  assert.equal(SendNumber.validateQuickSendNumber('udd', 'ab12').ok, true);
 });
 
-test('foodpanda: # + 4 digits required', function () {
+test('foodpanda: hash optional on send', function () {
   const { SendNumber } = loadControllerSendNumber();
   assert.equal(SendNumber.validateQuickSendNumber('fp', '#6406').normalized, '#6406');
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, false);
-  assert.equal(SendNumber.validateQuickSendNumber('fp', '#123').ok, false);
-  assert.match(SendNumber.RULE_NOTE.fp, /#.*4 位數字/);
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '6406').ok, true);
+  assert.equal(SendNumber.validateQuickSendNumber('fp', '#123').ok, true);
+  assert.match(SendNumber.RULE_NOTE.fp, /原樣送出/);
 });
 
-test('invalid quick send returns message and does not normalize', function () {
+test('invalid quick send only for unknown source', function () {
   const { SendNumber } = loadControllerSendNumber();
-  const bad = SendNumber.validateQuickSendNumber('store', 'abcd');
+  const bad = SendNumber.validateQuickSendNumber('unknown', 'abcd');
   assert.equal(bad.ok, false);
-  assert.match(bad.message, /4 位數字/);
 });
 
 test('cloud push_numbers params use no + sourceType cloud strings', function () {
@@ -91,7 +90,7 @@ test('cloud push_numbers params use no + sourceType cloud strings', function () 
   const params = PushNumbersParams.ticketsToPushNumbersParams(
     [
       { no: '1234', status: 'ready', sourceKey: 'store' },
-      { no: 'C7458', status: 'ready', sourceKey: 'uber' },
+      { no: 'c7458', status: 'ready', sourceKey: 'uber' },
       { no: '091', status: 'preparing', sourceKey: 'point' },
     ],
     function (key) {
@@ -100,7 +99,7 @@ test('cloud push_numbers params use no + sourceType cloud strings', function () 
   );
   assert.equal(JSON.stringify(params.ready), JSON.stringify([
     { no: '1234', sourceType: 'From_Store_OK' },
-    { no: 'C7458', sourceType: 'From_UberEat_OK' },
+    { no: 'c7458', sourceType: 'From_UberEat_OK' },
   ]));
   assert.equal(JSON.stringify(params.preparing), JSON.stringify([{ no: '091', sourceType: 'From_milksha_point_Preparing' }]));
   const nc = PushNumbersParams.pushNumbersParamsToNumberContent(params);
@@ -123,7 +122,7 @@ test('store-only ticket list still emits { no, sourceType } for push_numbers', f
 test('push_numbers object entry accepts source_type alias', function () {
   const { PushNumbersParams } = loadControllerSendNumber();
   const nc = PushNumbersParams.pushNumbersParamsToNumberContent({
-    ready: [{ no: 'C7458', source_type: 'From_UberEat_OK' }],
+    ready: [{ no: 'c7458', source_type: 'From_UberEat_OK' }],
     preparing: [],
   });
   assert.equal(nc.length, 1);

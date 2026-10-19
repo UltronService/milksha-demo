@@ -836,10 +836,17 @@
   function quickSendNumberOnBoard(sourceKey, normalizedNo, targetStatus) {
     const key = sourceKey || 'store';
     const status = targetStatus || readQuickSendStatus();
-    const no = String(normalizedNo || '');
+    const dedupeKey =
+      SendNumberModule && SendNumberModule.boardDedupeKeyFromRaw
+        ? SendNumberModule.boardDedupeKeyFromRaw(normalizedNo)
+        : String(normalizedNo || '').replace(/^\s+|\s+$/g, '');
     for (let i = 0; i < tickets.length; i += 1) {
       const row = tickets[i];
-      if ((row.sourceKey || 'store') === key && String(row.no) === no && row.status === status) {
+      const rowKey =
+        SendNumberModule && SendNumberModule.boardDedupeKeyFromRaw
+          ? SendNumberModule.boardDedupeKeyFromRaw(row.no)
+          : String(row.no || '').replace(/^\s+|\s+$/g, '');
+      if ((row.sourceKey || 'store') === key && rowKey === dedupeKey && row.status === status) {
         return true;
       }
     }
@@ -2279,7 +2286,7 @@
     const rawNo = readQuickSendRawNumber();
     let no = rawNo;
     if (SendNumberModule && SendNumberModule.validateQuickSendNumber) {
-      const validated = SendNumberModule.validateQuickSendNumber(sourceKey, rawNo || allocateOrderNumber());
+      const validated = SendNumberModule.validateQuickSendNumber(sourceKey, rawNo);
       if (!validated.ok) {
         syncQuickSendFieldUi();
         syncActionButtonStates();
@@ -2291,10 +2298,6 @@
         return;
       }
       no = validated.normalized;
-      const quickEl = document.getElementById('fld-quick-no');
-      if (quickEl) {
-        quickEl.value = no;
-      }
       document.getElementById('fld-no').value = no;
     } else {
       no = no || allocateOrderNumber();

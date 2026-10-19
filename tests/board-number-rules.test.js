@@ -25,6 +25,7 @@ function loadMilkshaBoard() {
     Promise: Promise,
     Error: Error,
     Set: Set,
+    Intl: Intl,
     requestAnimationFrame: function (fn) {
       fn();
     },
@@ -38,24 +39,20 @@ function loadMilkshaBoard() {
   return sandbox.QMS.MilkshaBoard;
 }
 
-test('normalizeBoardDisplayNumber accepts only four-digit display strings', function () {
+test('normalizeBoardDisplayNumber accepts string POS values as-sent (trim edges only)', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('0001'), '0001');
-  assert.equal(MB.normalizeBoardDisplayNumber('9999'), '9999');
-  assert.equal(MB.normalizeBoardDisplayNumber('1001'), '1001');
-  assert.equal(MB.normalizeBoardDisplayNumber('123'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12345'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12ab'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber(''), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('  12 34  '), '12 34');
+  assert.equal(MB.normalizeBoardDisplayNumber('123456789'), '123456');
+  assert.equal(MB.normalizeBoardDisplayNumber('12ab'), '12ab');
+  assert.equal(MB.normalizeBoardDisplayNumber(''), '');
   assert.equal(MB.normalizeBoardDisplayNumber(null), null);
 });
 
-test('normalizeBoardDisplayNumber rejects JSON number type (backend PR #19 alignment)', function () {
+test('normalizeBoardDisplayNumber rejects JSON number type', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber(1001), null);
   assert.equal(MB.normalizeBoardDisplayNumber(1234), null);
-  assert.equal(MB.normalizeBoardDisplayNumber(123), null);
-  assert.equal(MB.normalizeBoardDisplayNumber(12345), null);
 });
 
 test('partitionNumberContent drops JSON number 1001 but keeps string siblings', function () {
@@ -70,7 +67,7 @@ test('partitionNumberContent drops JSON number 1001 but keeps string siblings', 
   assert.equal(JSON.stringify(parts.preparing.map((r) => r.number)), '["2003"]');
 });
 
-test('partitionNumberContent drops invalid entries and warns once per bad value', function () {
+test('partitionNumberContent warns once for non-string numbers only', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const warnings = [];
@@ -82,16 +79,13 @@ test('partitionNumberContent drops invalid entries and warns once per bad value'
     const parts = MB.partitionNumberContent([
       { source_type: 'From_Store_OK', number: '1001' },
       { source_type: 'From_Store_OK', number: '123' },
-      { source_type: 'From_Store_OK', number: '123' },
       { source_type: 'From_Store_Preparing', number: 'abcd' },
       { source_type: 'From_Store_Preparing', number: null },
       { source_type: 'From_Store_Preparing', number: 5678 },
     ]);
-    assert.equal(JSON.stringify(parts.ready.map((r) => r.number)), '["1001"]');
-    assert.equal(JSON.stringify(parts.preparing.map((r) => r.number)), '[]');
-    const bad123 = warnings.filter((w) => w.includes('123'));
-    assert.equal(bad123.length, 1);
-    assert.equal(warnings.filter((w) => w.includes('abcd')).length, 1);
+    assert.equal(JSON.stringify(parts.ready.map((r) => r.number)), '["1001","123"]');
+    assert.equal(JSON.stringify(parts.preparing.map((r) => r.number)), '["abcd"]');
+    assert.equal(warnings.filter((w) => w.includes('5678')).length, 1);
   } finally {
     console.warn = orig;
   }

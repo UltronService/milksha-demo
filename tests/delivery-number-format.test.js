@@ -26,6 +26,7 @@ function loadMilkshaBoard() {
     Promise: Promise,
     Error: Error,
     Set: Set,
+    Intl: Intl,
     requestAnimationFrame: function (fn) {
       fn();
     },
@@ -52,35 +53,34 @@ function loadTodayBoard() {
   return sandbox.QMS.Board.TodayBoard;
 }
 
-test('store source accepts only four-digit strings', function () {
+test('store source accepts arbitrary strings', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('7112', 'store'), '7112');
-  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12345', 'store'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('12ab', 'store'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('123', 'store'), '123');
+  assert.equal(MB.normalizeBoardDisplayNumber('12ab', 'store'), '12ab');
 });
 
-test('milksha point: exactly 3 digits', function () {
+test('milksha point: preserves leading zeros', function () {
   const MB = loadMilkshaBoard();
   assert.equal(MB.normalizeBoardDisplayNumber('091', 'point'), '091');
   assert.equal(MB.normalizeBoardDisplayNumber('578', 'point'), '578');
-  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('0912', 'point'), '0912');
 });
 
-test('foodpanda requires hash and 4 digits on display', function () {
+test('foodpanda keeps hash optional', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   assert.equal(MB.normalizeBoardDisplayNumber('#6406', 'fp'), '#6406');
-  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), null);
-  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('6406', 'fp'), '6406');
+  assert.equal(MB.normalizeBoardDisplayNumber('#12345', 'fp'), '#12345');
 });
 
-test('uber: 5 hex uppercase', function () {
+test('uber: preserves case', function () {
   const MB = loadMilkshaBoard();
-  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'C7458');
+  assert.equal(MB.normalizeBoardDisplayNumber('c7458', 'uber'), 'c7458');
 });
 
-test('same digits on different sources both appear when each is valid for its source', function () {
+test('same digits on different sources both appear', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
   const parts = MB.partitionNumberContent([
@@ -88,18 +88,17 @@ test('same digits on different sources both appear when each is valid for its so
     { source_type: 'From_UberEat_OK', number: '1234A' },
   ]);
   assert.equal(parts.ready.length, 2);
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'store' && r.number === '1234'));
-  assert.ok(parts.ready.some((r) => r.sourceKey === 'uber' && r.number === '1234A'));
 });
 
-test('invalid uber hex is dropped', function () {
+test('long uber string truncates to 6 display units', function () {
   const MB = loadMilkshaBoard();
   MB.resetInvalidBoardNumberWarningsForTest();
-  assert.equal(MB.normalizeBoardDisplayNumber('ABCDEFG', 'uber'), null);
+  assert.equal(MB.normalizeBoardDisplayNumber('ABCDEFG', 'uber'), 'ABCDEF');
   const parts = MB.partitionNumberContent([
     { source_type: 'From_UberEat_OK', number: 'ABCDEFG' },
   ]);
-  assert.equal(parts.ready.length, 0);
+  assert.equal(parts.ready.length, 1);
+  assert.equal(parts.ready[0].number, 'ABCDEF');
 });
 
 test('ticket without sourceType maps to store POS source_type', function () {

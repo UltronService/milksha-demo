@@ -118,12 +118,7 @@
     if (aliased) {
       return aliased;
     }
-    const unkMatch = sourceType.match(/^(From_.+)_(OK|Preparing)$/);
-    if (!unkMatch) {
-      return null;
-    }
-    const zone = unkMatch[2] === 'OK' ? 'ready' : 'preparing';
-    return { sourceKey: 'unk:' + unkMatch[1], zone: zone };
+    return null;
   }
 
   /**
@@ -175,17 +170,25 @@
    */
   function normalizeBoardDisplayNumber(raw, sourceKey) {
     const mod = QMS.Board && QMS.Board.PosTicketDisplayNo;
-    if (!mod || typeof mod.sanitizePosTicketDisplayNo !== 'function') {
+    if (!mod || typeof mod.normalizeForSourceKey !== 'function') {
       return null;
     }
     const key = sourceKey || 'store';
-    if (typeof key === 'string' && key.indexOf('unk:') === 0) {
-      return mod.sanitizePosTicketDisplayNo(raw, key.slice(4));
+    return mod.normalizeForSourceKey(raw, key);
+  }
+
+  /**
+   * @param {unknown} raw
+   * @param {string} [sourceKey]
+   * @returns {{ dedupeKey: string, display: string } | null}
+   */
+  function boardNumberEntryFromPos(raw, sourceKey) {
+    const mod = QMS.Board && QMS.Board.PosTicketDisplayNo;
+    if (!mod || typeof mod.boardNumberFromPos !== 'function') {
+      return null;
     }
-    if (typeof mod.normalizeForSourceKey === 'function') {
-      return mod.normalizeForSourceKey(raw, key);
-    }
-    return null;
+    const key = sourceKey || 'store';
+    return mod.boardNumberFromPos(raw, key);
   }
 
   /** @param {() => void} fn — test hook */
@@ -215,17 +218,17 @@
       if (!parsed) {
         continue;
       }
-      const normalized = normalizeBoardDisplayNumber(row.number, parsed.sourceKey);
-      if (!normalized) {
-        if (row.number !== undefined) {
+      const parsedNumber = boardNumberEntryFromPos(row.number, parsed.sourceKey);
+      if (!parsedNumber) {
+        if (typeof row.number !== 'string') {
           warnInvalidBoardNumberOnce(row.number);
         }
         continue;
       }
       const entry = {
-        id: makeItemId(parsed.sourceKey, normalized),
+        id: makeItemId(parsed.sourceKey, parsedNumber.dedupeKey),
         sourceKey: parsed.sourceKey,
-        number: normalized,
+        number: parsedNumber.display,
         payloadIndex: i,
       };
       if (parsed.zone === 'ready') {
@@ -361,19 +364,24 @@
    * @returns {string}
    */
   function renderNumberChip(item) {
-    if (!item || !item.number) {
+    if (!item || typeof item.number !== 'string') {
       return '';
     }
     const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
+    const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
     const sourceKey = item.sourceKey || 'store';
     const chipClass =
       icons && icons.sourceKeyShowsIcon(sourceKey)
         ? 'milksha-board-chip milksha-board-chip--with-icon'
         : 'milksha-board-chip milksha-board-chip--with-slot';
+    const escaped =
+      posNo && posNo.escapeHtmlText
+        ? posNo.escapeHtmlText(item.number)
+        : String(item.number);
     const inner =
       icons && icons.renderChipInnerHtml
         ? icons.renderChipInnerHtml(item)
-        : '<span class="milksha-num">' + item.number + '</span>';
+        : '<span class="milksha-num">' + escaped + '</span>';
     return (
       '<div class="' +
       chipClass +
@@ -746,7 +754,13 @@
           if (icons && icons.renderChipInnerHtml) {
             return icons.renderChipInnerHtml(cell);
           }
-          return cell && cell.number ? '<span class="milksha-num">' + cell.number + '</span>' : '';
+          if (!cell || typeof cell.number !== 'string') {
+            return '';
+          }
+          const posNo = QMS.Board && QMS.Board.PosTicketDisplayNo ? QMS.Board.PosTicketDisplayNo : null;
+          const escaped =
+            posNo && posNo.escapeHtmlText ? posNo.escapeHtmlText(cell.number) : String(cell.number);
+          return '<span class="milksha-num">' + escaped + '</span>';
         },
         chipClassForCell: function (cell) {
           const icons = QMS.Board && QMS.Board.SourceIconsLayout ? QMS.Board.SourceIconsLayout : null;
@@ -957,7 +971,7 @@
         for (let i = 0; i < PAGE_SIZE; i += 1) {
           const cell = cells[i];
           const el = cellEls[i];
-          if (cell && cell.number) {
+          if (cell) {
             el.innerHTML = renderNumberChip(cell);
           } else {
             el.innerHTML = '';
@@ -1047,7 +1061,7 @@
           'px;top:' +
           pos.top +
           'px">';
-        if (cell && cell.number) {
+        if (cell) {
           z += renderNumberChip(cell);
         }
         z += '</div>';
@@ -1118,7 +1132,7 @@
       z += '<div class="milksha-cream-grid milksha-zone-numbers">';
       for (let i = 0; i < PAGE_SIZE; i += 1) {
         const cell = cells[i];
-        if (cell && cell.number) {
+        if (cell) {
           z += '<div class="milksha-num-cell">' + renderNumberChip(cell) + '</div>';
         } else {
           z += '<div class="milksha-num-cell"></div>';
@@ -1505,6 +1519,7 @@
   QMS.MilkshaBoard = {
     parseSourceType: parseSourceType,
     normalizeBoardDisplayNumber: normalizeBoardDisplayNumber,
+    boardNumberEntryFromPos: boardNumberEntryFromPos,
     resetInvalidBoardNumberWarningsForTest: resetInvalidBoardNumberWarningsForTest,
     partitionNumberContent: partitionNumberContent,
     detectNewlyReady: detectNewlyReady,

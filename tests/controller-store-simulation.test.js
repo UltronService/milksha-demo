@@ -94,15 +94,14 @@ test('allocateNumberForSource: ~1000 draws per non-store source match cloud rule
   }
 });
 
-test('regression: too-short udd numbers are rejected before push', function () {
+test('regression: arbitrary udd strings accepted before push', function () {
   const { Sim } = loadSimulation();
   const legacySamples = ['abc', '12', 'ABCDEFG'];
-  legacySamples.forEach(function (badNo) {
+  legacySamples.forEach(function (no) {
     const check = Sim.validateTicketsForBoardPush([
-      { no: badNo, status: 'preparing', sourceKey: 'udd' },
+      { no: no, status: 'preparing', sourceKey: 'udd' },
     ]);
-    assert.equal(check.ok, false, 'udd ticket must not use invalid length: ' + badNo);
-    assert.equal(check.reason, 'invalid-number');
+    assert.equal(check.ok, true, 'udd ticket accepted: ' + no);
   });
   const src = fs.readFileSync(path.join(ROOT, 'controller/store-simulation.js'), 'utf8');
   assert.equal(src.includes('normalizeSimNumber'), true);
@@ -115,7 +114,7 @@ test('validateTicketsForBoardPush rejects bad simulator-shaped rows', function (
     Sim.validateTicketsForBoardPush([{ no: '0001', status: 'preparing', sourceKey: 'store' }]).ok,
     true,
   );
-  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready', sourceKey: 'store' }]).ok, false);
+  assert.equal(Sim.validateTicketsForBoardPush([{ no: '123', status: 'ready', sourceKey: 'store' }]).ok, true);
   assert.equal(
     Sim.validateTicketsForBoardPush([
       { no: '0001', status: 'preparing', sourceKey: 'store' },

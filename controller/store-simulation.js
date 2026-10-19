@@ -597,12 +597,18 @@
     for (let i = 0; i < list.length; i += 1) {
       const row = list[i];
       const sourceKey = String(row && row.sourceKey != null ? row.sourceKey : 'store');
-      const rawNo = String(row && row.no != null ? row.no : '').trim();
+      const rawNo = row && row.no != null ? row.no : '';
+      if (typeof rawNo !== 'string') {
+        return { ok: false, reason: 'invalid-number', no: String(rawNo), sourceKey: sourceKey };
+      }
+      const Pos = root.QMS && root.QMS.Board && root.QMS.Board.PosTicketDisplayNo;
+      const dedupeKey =
+        Pos && Pos.trimBoardNumberEdges ? Pos.trimBoardNumberEdges(rawNo) : rawNo.replace(/^\s+|\s+$/g, '');
       const no = normalizeSimNumber(rawNo, sourceKey);
-      if (!no) {
+      if (no === null) {
         return { ok: false, reason: 'invalid-number', no: rawNo, sourceKey: sourceKey };
       }
-      const id = ticketCompositeKey(sourceKey, no);
+      const id = ticketCompositeKey(sourceKey, dedupeKey);
       const status = String(row.status || '');
       if (status === 'ready') {
         if (ready.has(id)) {

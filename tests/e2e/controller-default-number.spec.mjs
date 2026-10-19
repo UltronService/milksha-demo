@@ -10,7 +10,7 @@ test('switching source fills default and selects all', async ({ browser }) => {
   await page.waitForSelector('[data-testid="fld-quick-source"]');
   await page.selectOption('[data-testid="fld-quick-source"]', 'uber');
   const input = page.locator('[data-testid="fld-quick-no"]');
-  await expect(input).toHaveValue('AB12C');
+  await expect(input).toHaveValue('c7458');
   const selected = await input.evaluate((el) => {
     return {
       start: el.selectionStart,
@@ -23,7 +23,7 @@ test('switching source fills default and selects all', async ({ browser }) => {
   await ctx.close();
 });
 
-test('B5: invalid after switch shows error in rule note, red border, disabled send', async ({ browser }) => {
+test('B5: short value after switch shows rule note, no format error', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
   await page.goto(LOCAL_CTRL);
@@ -32,22 +32,21 @@ test('B5: invalid after switch shows error in rule note, red border, disabled se
   await page.selectOption('[data-testid="fld-quick-source"]', 'uber');
   await expect(page.locator('[data-testid="fld-quick-no"]')).toHaveValue('12');
   const note = page.locator('[data-testid="quick-send-rule-note"]');
-  await expect(note).toHaveClass(/is-error/);
-  await expect(note).toContainText(/5 位十六進位/);
-  await expect(page.locator('[data-testid="fld-quick-no"]')).toHaveClass(/is-invalid/);
+  await expect(note).not.toHaveClass(/is-error/);
+  await expect(note).toContainText(/原樣送出/);
+  await expect(page.locator('[data-testid="fld-quick-no"]')).not.toHaveClass(/is-invalid/);
   const sendBtn = page.locator('[data-testid="btn-send-numbers"]');
-  await expect(sendBtn).toBeDisabled();
-  await expect(sendBtn).not.toHaveAttribute('title', /.+/);
+  await expect(sendBtn).toBeEnabled();
   await ctx.close();
 });
 
-test('foodpanda default shows rule note to the right on wide viewport', async ({ browser }) => {
+test('foodpanda default shows v2 rule note on wide viewport', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   const page = await ctx.newPage();
   await page.goto(LOCAL_CTRL);
   await page.selectOption('[data-testid="fld-quick-source"]', 'fp');
   const note = page.locator('[data-testid="quick-send-rule-note"]');
-  await expect(note).toContainText('# 與 4 位數字');
+  await expect(note).toContainText('原樣送出');
   const layout = await page.locator('[data-testid="quick-send-number-row"]').evaluate((row) => {
     const input = row.querySelector('#fld-quick-no');
     const noteEl = row.querySelector('#quick-send-rule-note');
