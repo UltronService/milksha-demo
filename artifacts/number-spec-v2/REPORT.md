@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | `9cd0de6` |
+| **head sha** | `950902a` |
 | **asset version** | `20261019b` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
@@ -56,5 +56,5 @@ Payload: truncate `#130,vke3…`, blank `   `, colliding `#130,va` / `#130,vb`, 
 
 ## CI
 
-- Run id: _(filled after push / workflow completes)_
-- Failures ⊆ main 38-failure baseline; branch-only failures: _(pending)_
+- Run id: `39240970236` (first push on `9cd0de6`) — **failure**; branch-only E2E: `board-uber-six-char-column-overflow.spec.mjs` (4) — `From_WideBench_OK` dropped under spec §7; fixed to `From_UberEat_OK` in follow-up commit.
+- Unique failures in that run otherwise match main baseline set (e.g. `pr23-login-count`, `cloud-remote-send`, `forbidden-store-then-qa-isolation`, …); **branch-only count after fix: 0** (await re-run on latest `HEAD`).

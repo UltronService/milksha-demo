@@ -23,7 +23,7 @@ export function pr95OverflowArtifactsDir() {
 export function buildUberSixCharOverflowPayload() {
   return [
     { source_type: 'From_Store_OK', number: STORE_FOUR },
-    { source_type: 'From_WideBench_OK', number: UBER_SIX },
+    { source_type: 'From_UberEat_OK', number: UBER_SIX },
   ];
 }
 
