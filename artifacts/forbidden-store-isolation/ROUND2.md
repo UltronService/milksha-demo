@@ -3,7 +3,7 @@
 **Branch:** `cursor/store-setup-screen-0c9f` (PR #108)  
 **Director gate:** Pass only if **all four** QA criteria below are met. **No merge / no deploy.**  
 **Report (Taipei):** 2026-10-20 07:47 CST (before 08:20 deadline)  
-**Pushed spec baseline:** commit after this doc (ROUND2 stabilization + artifacts); prior remote spec for this file: `d2af9ec` @ `a0209b4`.
+**Pushed spec baseline:** `8a9eae3`; prior remote spec for this file: `d2af9ec` @ `a0209b4`.
 
 ---
 
