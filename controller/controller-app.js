@@ -2220,8 +2220,16 @@
       showUserBanner('請輸入或掃描取餐號碼');
       return;
     }
+    const dedupeScan =
+      SendNumberModule && SendNumberModule.boardDedupeKeyFromRaw
+        ? SendNumberModule.boardDedupeKeyFromRaw(scan)
+        : scan.replace(/^\s+|\s+$/g, '');
     tickets = tickets.filter(function (t) {
-      return !(t.status === 'ready' && t.no === scan);
+      const rowKey =
+        SendNumberModule && SendNumberModule.boardDedupeKeyFromRaw
+          ? SendNumberModule.boardDedupeKeyFromRaw(t.no)
+          : String(t.no || '').replace(/^\s+|\s+$/g, '');
+      return !(t.status === 'ready' && rowKey === dedupeScan);
     });
     document.getElementById('fld-pickup-scan').value = '';
     posSend(ticketsToNc(), false).catch(function (e) {

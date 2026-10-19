@@ -230,3 +230,19 @@ test('spec 15: empty quick send allowed', function () {
   assert.equal(v.ok, true);
   assert.equal(v.normalized, '   ');
 });
+
+test('pickup removal uses trimmed dedupe key (controller wiring)', function () {
+  const src = fs.readFileSync(path.join(ROOT, 'controller/controller-app.js'), 'utf8');
+  assert.match(src, /boardDedupeKeyFromRaw\(scan\)/);
+  assert.match(src, /boardDedupeKeyFromRaw\(t\.no\)/);
+});
+
+test('cloud alignment: dedupe keeps first 64 code points; board display first 6', function () {
+  const Pos = loadPosModule();
+  const long = 'x'.repeat(80);
+  const parsed = Pos.boardNumberFromPos(long, 'store');
+  assert.ok(parsed);
+  assert.equal(Array.from(parsed.dedupeKey).length, 64);
+  assert.equal(parsed.display, 'xxxxxx');
+  assert.equal(parsed.display.length, 6);
+});

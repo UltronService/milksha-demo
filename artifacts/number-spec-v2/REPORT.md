@@ -2,81 +2,49 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | `27c8e09` |
-| **asset version** | `20261019c` |
+| **head sha** | _(pending push)_ |
+| **asset version** | `20261019d` |
 | **branch** | `cursor/controller-default-number-5dd5` |
+
+## QA remediation mapping (bc-4b0b3f25)
+
+| QA item | Fix | Test |
+| --- | --- | --- |
+| E2E still expects format red-text (redesign ~:73) | `controller-redesign-acceptance.spec.mjs` → v2 short send, no `is-error` | E2E pass |
+| E2E still expects format red-text (source-quick-send ~:35) | `controller-source-quick-send.spec.mjs` → `abc` sends + board cell | E2E pass |
+| Cancel/removal id must use trimmed original | `board-seq.js` + pickup scan `boardDedupeKeyFromRaw` | `board-seq-number-v2.test.js`, `number-spec-v2` wiring |
+| Cloud 64-char cap vs board 6-char display | `boardNumberFromPos` clamps dedupe to 64 code points | `number-spec-v2.test.js` cloud alignment |
+| Empty cell same size as normal | `.milksha-num { min-height: 1em }` | `board-number-rules.spec.mjs` bounding box |
 
 ## Spec coverage (15 items)
 
-| # | Requirement | Test file / name | Result |
+| # | Requirement | Test | Result |
 | --- | --- | --- | --- |
-| 1 | As-sent display (case, `#`, leading zeros) | `tests/number-spec-v2.test.js` → spec 1 | pass |
-| 2 | Max 6 grapheme/code units | `tests/number-spec-v2.test.js` → spec 2 | pass |
-| 2b | STB: code-point baseline + Segmenter fallback | `tests/number-spec-v2.test.js` → STB baseline / STB fallback | pass |
-| 3 | Trim outer whitespace, keep inner | `tests/number-spec-v2.test.js` → spec 3 | pass |
-| 4 | Empty / whitespace-only → blank cell | `tests/number-spec-v2.test.js` → spec 4 | pass |
-| 5 | Dedupe source + trimmed original | `tests/number-spec-v2.test.js` → spec 5 | pass |
-| 6 | Same 6-char prefix, different originals | `tests/number-spec-v2.test.js` → spec 6 | pass |
-| 7 | Unknown sources hidden | `tests/number-spec-v2.test.js` → spec 7; `delivery-number-qa-live2.test.js` | pass |
-| 8 | HTML escaped (plain text) | `tests/number-spec-v2.test.js` → spec 8 | pass |
-| 9 | Six CJK chars in cell | `tests/number-spec-v2.test.js` → spec 9 | pass |
-| 10 | Blank cells count for paging | `tests/number-spec-v2.test.js` → spec 10 | pass |
-| 11 | No controller format validation | `tests/number-spec-v2.test.js` → spec 11-12; `controller-default-number.test.js` | pass |
-| 12 | Rule note v2 + as-typed send | `tests/controller-source-number.test.js`; E2E `controller-default-number.spec.mjs` | pass |
-| 13 | Board truncates >6 | `tests/number-spec-v2.test.js` → spec 13 | pass |
-| 14 | Controller list textContent | `tests/number-spec-v2.test.js` → spec 14 | pass |
-| 15 | Empty send allowed | `tests/number-spec-v2.test.js` → spec 15 | pass |
+| 1–15 | (unchanged) | `tests/number-spec-v2.test.js` | pass |
+| 2b | STB code-point baseline + Segmenter fallback | `number-spec-v2.test.js` STB tests | pass |
 
-## Rewritten tests (old format rules)
+## STB / old WebView truncation
 
-- `tests/board-number-rules.test.js` (all cases)
-- `tests/board-display-number-log-rules.test.js` (all cases)
-- `tests/delivery-number-format.test.js` (all cases)
-- `tests/delivery-number-qa-live2.test.js` (unrecognized sourceType)
-- `tests/pos-ticket-cloud-sanitize.test.js` (all cases)
-- `tests/controller-default-number.test.js` (B5 / defaults)
-- `tests/controller-source-number.test.js` (validation cases)
-- `tests/controller-store-simulation.test.js` (udd length / store `123`)
-- `tests/milksha-board-official.test.js` (foodpanda)
-- `tests/e2e/board-number-rules.spec.mjs`
-- `tests/e2e/controller-default-number.spec.mjs`
-
-## STB / old WebView truncation (Android)
-
-- **Baseline (required on STB)**: `truncateToDisplayUnitsByCodePoint` — `Array.from(str)` then slice; ES2015 only, no `Intl.Segmenter`, no regex `u`/`v`.
-- **Enhancement (optional)**: `Intl.Segmenter` used only when `canUseIntlSegmenter()` is true; otherwise baseline.
-- **Tests**: emoji `😀`, CJK ext-B `𠮷`, surrogate-pair integrity, fallback with `Intl: { Segmenter: undefined }` in `tests/number-spec-v2.test.js`.
+- Baseline: `truncateToDisplayUnitsByCodePoint` (`Array.from` + slice).
+- Optional: `Intl.Segmenter` when available.
 
 ## Unit tests
 
-- **372** tests, **372** pass (`npm test`, includes STB cases above).
+- **376** pass (`npm test`)
 
-## E2E (local)
+## E2E (local, QA-related)
 
-- `board-number-rules.spec.mjs` + `controller-default-number.spec.mjs`: **5** pass
+- `controller-redesign-acceptance.spec.mjs` (v2 short number)
+- `controller-source-quick-send.spec.mjs` (v2 abc send)
+- `board-number-rules.spec.mjs` (empty cell height)
 
-## Screenshot (local mock)
+## Evidence
 
-![board cases 2/4/6/8/9](screenshots/board-number-spec-v2-1920.png)
-
-Payload: truncate `#130,vke3…`, blank `   `, colliding `#130,va` / `#130,vb`, HTML `<b>13</b>`, six CJK `迷客夏珍奶好`, emoji `12345😀`.
+- Mock: `screenshots/board-number-spec-v2-1920.png`
+- Live dev (`zz-qa-store-a` only): `live-zz-qa-store-a-report.json`, `screenshots/live-zz-qa-store-a-number-spec-v2-1920.png`
 
 ## CI
 
-| Run | Result | Branch-only failures |
-| --- | --- | --- |
-| `39240970236` | failure (overall job) | 4× `board-uber-six-char-column-overflow` (`From_WideBench_OK` → fixed) |
-| `39243205966` | failure (overall job) | **0** — failures ⊆ main ~38 baseline (`pr23-login-count`, `cloud-remote-send`, `forbidden-store-then-qa-isolation`, …) |
-
-Unit: **370/370** pass on branch.
-
-## Live dev (milksha-qms-dev, **zz-qa-store-a only**)
-
-- **When**: 2026-10-19 ~19:38 Taipei  
-- **Cloud**: backend PR **#37** (`b01b3c5`) — stores **trimmed original** (≤64); no 6-char display field  
-- **Script**: `scripts/live-qa-number-spec-v2-zz-qa-store-a.mjs`  
-- **push_numbers**: `commandId` `0cb1a555-0482-4c40-b7ad-0ecf37ab57b4`, `boardSeq` 20554  
-- **Cloud `today_board.tickets[].no`**: `#130,vke3-2643-dy6y`, `c7458`, `<b>13</b>` (full as-sent)  
-- **Board ready `.milksha-num`**: `#130,v`, `c7458`, `<b>13<` (6-unit truncate + escaped plain text)  
-- **Result**: **pass** — cleared board after check  
-- **Evidence**: `live-zz-qa-store-a-report.json`, `screenshots/live-zz-qa-store-a-number-spec-v2-1920.png`
+| Run id | Branch-only failures |
+| --- | --- |
+| _(pending after push)_ | target **0** |

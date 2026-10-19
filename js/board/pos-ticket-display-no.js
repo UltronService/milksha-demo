@@ -19,6 +19,7 @@
   const KNOWN_SOURCE_KEYS = Object.freeze(Object.keys(SOURCE_KEY_TO_CHANNEL));
 
   const DISPLAY_UNIT_LIMIT = 6;
+  const CLOUD_ORIGINAL_MAX_CODE_POINTS = 64;
 
   /**
    * @param {string} sourceKey
@@ -173,7 +174,10 @@
     if (!sourceKey) {
       return null;
     }
-    const dedupeKey = trimBoardNumberEdges(raw);
+    const dedupeKey = truncateToDisplayUnitsByCodePoint(
+      trimBoardNumberEdges(raw),
+      CLOUD_ORIGINAL_MAX_CODE_POINTS,
+    );
     const display = truncateToDisplayUnits(dedupeKey, DISPLAY_UNIT_LIMIT);
     return { dedupeKey: dedupeKey, display: display };
   }
@@ -219,6 +223,7 @@
     SOURCE_KEY_TO_CHANNEL: SOURCE_KEY_TO_CHANNEL,
     KNOWN_SOURCE_KEYS: KNOWN_SOURCE_KEYS,
     DISPLAY_UNIT_LIMIT: DISPLAY_UNIT_LIMIT,
+    CLOUD_ORIGINAL_MAX_CODE_POINTS: CLOUD_ORIGINAL_MAX_CODE_POINTS,
     isKnownSourceKey: isKnownSourceKey,
     channelFromSourceType: channelFromSourceType,
     trimBoardNumberEdges: trimBoardNumberEdges,

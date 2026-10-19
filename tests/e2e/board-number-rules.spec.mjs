@@ -58,6 +58,36 @@ test.describe('board number rules (local fake cloud)', () => {
     await ctx.close();
   });
 
+  test('empty ready number cell matches normal cell bounding box height', async ({ browser }) => {
+    const ctx = await freshContext(browser);
+    const board = await ctx.newPage();
+    const { board: boardUrl } = urlsLocalHomePoc();
+    await board.goto(boardUrl);
+    await board.waitForFunction(
+      () => Boolean(window.QMS?.runtime?.applyPayload),
+      { timeout: 25000 },
+    );
+    await board.evaluate(() => {
+      window.QMS.runtime.applyPayload(
+        [
+          { source_type: 'From_Store_OK', number: '   ' },
+          { source_type: 'From_Store_OK', number: '1001' },
+        ],
+        { silent: true },
+      );
+    });
+    await board.waitForSelector('.milksha-ready .milksha-board-chip');
+    const heights = await board.evaluate(() => {
+      const cells = [...document.querySelectorAll('.milksha-ready .milksha-num-cell')].filter((el) =>
+        el.querySelector('.milksha-board-chip'),
+      );
+      return cells.map((el) => el.getBoundingClientRect().height);
+    });
+    expect(heights.length).toBeGreaterThanOrEqual(2);
+    expect(Math.abs(heights[0] - heights[1])).toBeLessThan(2);
+    await ctx.close();
+  });
+
   test('JSON number 1001 is not displayed; string ticket still renders', async ({ browser }) => {
     const ctx = await freshContext(browser);
     const board = await ctx.newPage();

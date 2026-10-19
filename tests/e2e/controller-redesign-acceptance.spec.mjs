@@ -70,18 +70,21 @@ test('redesign: successful send shows success bar without top error alert', asyn
   await ctx.close();
 });
 
-test('redesign: failed send shows error in send area only', async ({ browser }) => {
+test('redesign: v2 short number sends without format red error', async ({ browser }) => {
   const ctx = await freshContext(browser);
   const page = await ctx.newPage();
   await page.goto(LOCAL_CTRL);
-  await page.waitForSelector('[data-testid="btn-send-numbers"]');
+  await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
   await page.selectOption('[data-testid="fld-quick-source"]', 'store');
-  await page.fill('[data-testid="fld-quick-no"]', '12');
-  await expect(page.locator('[data-testid="btn-send-numbers"]')).toBeDisabled();
+  await page.fill('[data-testid="fld-quick-no"]', 'v2qa12');
   const ruleNote = page.locator('[data-testid="quick-send-rule-note"]');
   await expect(ruleNote).toBeVisible({ timeout: 5000 });
-  await expect(ruleNote).toHaveClass(/is-error/);
-  await expect(page.locator('[data-testid="quick-send-success"]')).toBeHidden();
+  await expect(ruleNote).not.toHaveClass(/is-error/);
+  await expect(ruleNote).toContainText(/原樣送出/);
+  await expect(page.locator('[data-testid="fld-quick-no"]')).not.toHaveClass(/is-invalid/);
+  await expect(page.locator('[data-testid="btn-send-numbers"]')).toBeEnabled();
+  await expect(ruleNote).not.toContainText(/4 位數字/);
+  await expect(ruleNote).not.toContainText(/十六進位/);
   await ctx.close();
 });
 

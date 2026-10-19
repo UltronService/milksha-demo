@@ -321,6 +321,9 @@
   letter-spacing: 0.02em;
   color: var(--milksha-num-color);
   white-space: nowrap;
+  display: inline-block;
+  min-height: 1em;
+  min-width: 0;
 }
 
 .milksha-board-chip {
