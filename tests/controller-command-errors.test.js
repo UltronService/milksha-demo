@@ -95,6 +95,13 @@ test('devCommand user messages map by response code', function () {
     E.USER_MSG_400_INVALID,
   );
   assert.equal(
+    E.devCommandUserMessage({
+      status: 400,
+      response: { code: E.CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS, message: 'too many' },
+    }),
+    E.USER_MSG_TOO_MANY_BOARD_NUMBERS,
+  );
+  assert.equal(
     E.devCommandUserMessage({ status: 418, response: { code: 'weird', message: 'nope' } }),
     E.USER_MSG_INTERNAL_ERROR,
   );

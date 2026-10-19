@@ -19,6 +19,9 @@
   const USER_MSG_400_INVALID = '指令內容不正確。請檢查欄位，再送出。';
   const USER_MSG_INVALID_DEVICE_ID = '裝置編號格式不對。請檢查後再送出。';
   const USER_MSG_INTERNAL_ERROR = '雲端暫時出錯。請稍後再送一次。';
+  /** TODO-align-with-backend: must match milksha-cloud devCommand rejection code when PR lands */
+  const CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS = 'too_many_board_numbers';
+  const USER_MSG_TOO_MANY_BOARD_NUMBERS = '號碼太多（上限 500 個），雲端拒收';
 
   const SENSITIVE_KEY_RE =
     /(token|authorization|password|secret|apikey|api_key|signkey|sign_key|poskey|pos_key|signature|refreshtoken|idtoken|accesscode|access_code)/i;
@@ -105,6 +108,9 @@
     if (code === 'invalid_device_id') {
       return USER_MSG_INVALID_DEVICE_ID;
     }
+    if (code === CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS) {
+      return USER_MSG_TOO_MANY_BOARD_NUMBERS;
+    }
     if (code === 'invalid_command_params' || code === 'invalid_body' || code === 'payload_too_large') {
       return USER_MSG_400_INVALID;
     }
@@ -179,6 +185,8 @@
     USER_MSG_400_INVALID: USER_MSG_400_INVALID,
     USER_MSG_INVALID_DEVICE_ID: USER_MSG_INVALID_DEVICE_ID,
     USER_MSG_INTERNAL_ERROR: USER_MSG_INTERNAL_ERROR,
+    CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS: CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS,
+    USER_MSG_TOO_MANY_BOARD_NUMBERS: USER_MSG_TOO_MANY_BOARD_NUMBERS,
     USER_MSG_CONNECT_ACCESS: USER_MSG_CONNECT_ACCESS,
     USER_MSG_CONNECT_FORBIDDEN: USER_MSG_CONNECT_FORBIDDEN,
     USER_MSG_CONNECT_CLOUD: USER_MSG_CONNECT_CLOUD,

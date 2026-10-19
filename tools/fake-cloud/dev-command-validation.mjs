@@ -135,10 +135,6 @@ function normalizeParams(type, params) {
     if (!prepNorm.ok) return prepNorm;
     out.ready = readyNorm.list;
     out.preparing = prepNorm.list;
-    const paramsJson = JSON.stringify(out);
-    if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-      return invalidCommandParams('params too large');
-    }
     return { ok: true, params: out };
   }
   for (const key of allowed) {
@@ -157,10 +153,6 @@ function normalizeParams(type, params) {
   }
   if (allowed.length === 0 && Object.keys(raw).length > 0) {
     return invalidCommandParams('invalid params');
-  }
-  const paramsJson = JSON.stringify(out);
-  if (utf8ByteLength(paramsJson) > MAX_PARAMS_BYTES) {
-    return invalidCommandParams('params too large');
   }
   return { ok: true, params: out };
 }
@@ -182,10 +174,6 @@ export function buildDevCommandRequest(input) {
   };
   if (!body.storeId) {
     return invalidCommandParams('invalid store');
-  }
-  const json = JSON.stringify(body);
-  if (utf8ByteLength(json) > MAX_JSON_BYTES) {
-    return invalidCommandParams('request too large');
   }
   return { ok: true, body };
 }
