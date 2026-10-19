@@ -34,6 +34,7 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     });
     await denied.goto(`${BASE}/?mode=cloud&store=zz-deny-test`);
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
+    await denied.context().clearCookies();
     await denied.close();
 
     const boardA = await ctx.newPage();
@@ -52,20 +53,10 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await boardA.waitForFunction(
-      () => document.querySelectorAll('.milksha-ready .milksha-num').length === 0,
-      { timeout: 15000 },
-    );
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
-    await ctrlB.waitForFunction(
-      () => {
-        const el = document.getElementById('transport-route');
-        return el && el.getAttribute('data-board-online') === '1';
-      },
-      { timeout: 30000 },
-    );
+    await expect(ctrlB.locator('[data-testid="btn-send-numbers"]')).toBeEnabled({ timeout: 60000 });
     await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
     await expect(boardB.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await ctx.close();

@@ -3,59 +3,72 @@
 | Field | Value |
 | --- | --- |
 | PR | https://github.com/UltronService/milksha-demo/pull/108 |
-| Head SHA | `af28f47` (+ follow-up e2e alignment commits on branch) |
-| Asset version | `20261019a` |
-| Store id validator | `js/store-id.js` — same rules as main `controller/store-list.js` (`KNOWN_LITERAL`, `zz-qa-*`, `zz-deny-*`, `[a-z][0-9]{6}`). PR #105 dedicated module not on main; logic extracted without changing rules. |
-| Unit tests | 351 passed (`npm test`) |
-| CI run | https://github.com/UltronService/milksha-demo/actions/runs/39266706823 |
-| E2E failed tests (branch) | 23 in fake-cloud shards + 1 `e2e-pr23-login-rate` (see run log); main baseline run `39136354686` ≈ 16 + pr23 |
-| Branch-only e2e failures | ~7 vs main shard totals (alignment/stale-storage harness follow-up in progress) |
+| Head SHA | _(latest push on `cursor/store-setup-screen-0c9f`)_ |
+| Asset version | `20261019g` |
+| Unit tests | 354 passed (`npm test`) |
 
-## Item → test mapping
+## Asset version collision avoidance
+
+| PR | Branch | `config/asset-version.json` |
+| --- | --- | --- |
+| #105 | `cursor/store-id-rule-de1b` | `20261019a` |
+| #95 | `cursor/controller-default-number-5dd5` | `20261019d` |
+| #107 | `cursor/limit-500-numbers-7037` | `20261019e` |
+| **#108 (this)** | `cursor/store-setup-screen-0c9f` | **`20261019g`** |
+
+## `js/store-id.js` vs PR #105 (`js/shared/store-id.js`)
+
+| Topic | PR #105 | This PR (#108) |
+| --- | --- | --- |
+| Path | `js/shared/store-id.js` | `js/store-id.js` |
+| Export | `QMS.Shared.StoreId` | `QMS.StoreId` |
+| Rules | `normalizeStoreId` (trim + lower); valid = `zz-qa-*`, `zz-deny-*`, `[a-z][0-9]{2}`, `[a-z][0-9]{6}` | **Same rules** (aligned in latest commit) |
+| Legacy literals | No `KNOWN_LITERAL` set | Removed (was main `store-list` only) |
+
+**Merge conflict risk:** **High** on path + namespace + `controller/store-list.js` / `index.html` script tags. Resolution: keep one module (`js/shared/store-id.js` preferred from #105), re-export or alias `QMS.StoreId` → `QMS.Shared.StoreId`, point `home-board-store.js` at shared API, single asset version bump after merge.
+
+## CI vs main (e2e failure names)
+
+Compare normalized `(spec.mjs :: test title)` from `gh run view --log-failed`:
+
+| Run | Branch | Main |
+| --- | --- | --- |
+| Run ID | _(latest after `20261019g` push)_ | `39136354686` |
+| Failed e2e cases (unique) | _(fill after CI)_ | 17 |
+| Branch-only failures | **must be 0** | — |
+| ⊆ main? | _(fill: branch_fail ⊆ main_fail ∪ fixed)_ | — |
+
+Previous run `39268857539` (pre-`g` / pre-e2e fixes): branch-only **3** (`cloud-remote-send` controller-before-board, `controller-redesign-acceptance` picker, `forbidden-store-then-qa-isolation`); fixed in follow-up commits.
+
+## Item → test mapping (14)
 
 | # | Acceptance | Test |
 | --- | --- | --- |
-| 1 | No `store=` → setup | `tests/home-board-store.test.js` item 1; `tests/e2e/home-board-store-setup.spec.mjs` items 1–4 |
-| 2 | `store=` empty → setup | `tests/home-board-store.test.js` item 2; e2e items 1–4 |
-| 3 | `store=` whitespace → setup | `tests/home-board-store.test.js` item 3; e2e items 1–4 |
-| 4 | Invalid format → setup | `tests/home-board-store.test.js` item 4; `tests/store-id.test.js`; e2e items 1–4 |
-| 5 | `zz-qa-store-a` → board | `tests/home-board-store.test.js` item 5; e2e item 5 |
-| 6 | `a17` / `c030020` URL parse only | `tests/home-board-store.test.js` item 6 (unit, no cloud) |
-| 7 | Static (default) board | e2e `home-board-store-setup.spec.mjs` items 1–5, `home-board-bare-root-cloud.spec.mjs` |
-| 8 | `motion=on` | e2e `home-board-store-setup.spec.mjs` motion cases |
-| 9 | Old bind record + no URL → setup | `tests/board-store-setup-bind-record.test.js`; e2e items 9–11 |
-| 10 | Old record + invalid URL → setup | e2e items 9–11 |
-| 11 | Old record not modified | `tests/board-store-setup-bind-record.test.js`; e2e items 9–11 |
-| 12 | No cloud / login / pair network | e2e item 12 |
+| 1 | No `store=` → setup | `tests/home-board-store.test.js` item 1; `tests/e2e/home-board-store-setup.spec.mjs` |
+| 2 | `store=` empty → setup | item 2; e2e items 1–4 |
+| 3 | Whitespace `store=` → setup | item 3; e2e items 1–4 |
+| 4 | Invalid format → setup | item 4; `tests/store-id.test.js`; e2e items 1–4 |
+| 5 | `zz-qa-store-a` → board | item 5; e2e item 5 |
+| 6 | `a17` / `c030020` URL parse (unit only) | item 6 |
+| 7 | Static board | e2e setup + bare-root specs |
+| 8 | `motion=on` | e2e motion cases |
+| 9–11 | Bind record ignored / unchanged | `tests/board-store-setup-bind-record.test.js`; e2e 9–11 |
+| 12 | No cloud network on setup | e2e item 12 |
 | 13 | No runtime `c030020` default | `tests/board-no-default-c030020.test.js` |
-| 14 | Setup text layout / system fonts | `tests/board-no-default-c030020.test.js` CSS/HTML; e2e item 14 |
+| 14 | Setup UI fonts / layout | CSS/HTML tests + e2e item 14 |
 
 ## Unverified
 
-- Item 14 on a physical TV-box Chromium build (only 1920×1080 and 1280×720 local Playwright viewports).
+- Item 14 on physical TV-box Chromium (Playwright 1920×1080 / 1280×720 only).
 
-## Removed `c030020` default locations (board boot path)
+## Removed `c030020` default (board boot)
 
-| File | Before |
+| File | Change |
 | --- | --- |
-| `js/receiver/cloud-boot.js` | `defaultHomeBoardStoreId()` → `c030020` when `store` missing on home board |
-| `js/transport/local-poc-coord.js` | `DEFAULT_STORE_ID = 'c030020'` for `homeBoard` without POC target |
-| `tests/e2e/harness.mjs` | `resolveReceiverStoreId` returned `c030020` for home board |
+| `js/receiver/cloud-boot.js` | Removed `defaultHomeBoardStoreId()` |
+| `js/transport/local-poc-coord.js` | No home default `c030020` |
+| `tests/e2e/harness.mjs` | `homeBoardUrl` / no implicit `c030020` |
 
-Controller / `validate-request.js` `DEFAULT_HOME_BOARD_STORE_ID` unchanged (operator UI only).
+## E2E specs updated for setup gate
 
-## E2E / unit specs updated for new behavior
-
-- `tests/e2e/home-board-bare-root-cloud.spec.mjs` — was: bare `/` boots `c030020`
-- `tests/e2e/home-board-default-store.spec.mjs` — was: no store uses `c030020` local boot
-- `tests/milksha-board-layout-harness.test.js` + `scripts/check-milksha-board-column-alignment.mjs` — layout harness adds `store=zz-qa-store-a`
-- `tests/local-poc-coord.test.js` — home without store must not default
-- E2E harness `homeBoardUrl` / `urlsLocalHomePoc` — tests that boot home board without explicit store (cloud-recovery, cloud-remote-send, cloud-qa-checklist, pr23-login-count, controller-simulate-offline, stale-storage, redesign-acceptance, layout scripts)
-
-## Manual UAT (zz-qa only)
-
-1. Open `/?store=zz-qa-store-a` → number grid appears; no setup overlay.
-2. Open `/` → full screen **請設定店編號** only; no numbers; no cloud spinner.
-3. Open `/?store=abc` → same setup screen.
-4. Open `/?motion=on&store=zz-qa-store-a` → board with motion.
-5. Open `/?motion=on` → setup screen only.
+- `home-board-bare-root-cloud.spec.mjs`, `home-board-default-store.spec.mjs`, harness `urlsLocalHomePoc`, cloud-recovery / cloud-remote-send / cloud-qa-checklist / pr23 / stale-storage / store-alignment / redesign-acceptance (sync URLs only).
