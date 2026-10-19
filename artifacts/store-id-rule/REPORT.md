@@ -39,7 +39,7 @@ Known failing tests on main (unchanged on branch): layout harness / PR#74 visual
 
 ## CI
 
-- Link: _(filled after push — see PR checks)_
+- Link: https://github.com/UltronService/milksha-demo/actions/runs/39190895616 (PR #105, pending at report time)
 - E2E baseline comparison: expect **38** known failures on `main`; branch-only delta should be **0** (same policy as unit).
 
 ## Files touched (summary)

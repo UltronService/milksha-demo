@@ -1,0 +1,27 @@
+{
+  "capturedAtUtc": "2026-10-19T02:46:00Z",
+  "capturedAtTaipei": "2026-10-19 10:46",
+  "backend": "milksha-qms-dev",
+  "deviceId": "stb-a17-live-1792377969769",
+  "boardAutoPairApiProbe": {
+    "ok": true,
+    "storeId": "a17",
+    "storeName": "測試門市 A17",
+    "storeNumber": "a17"
+  },
+  "livePlaywright": {
+    "pairOk": true,
+    "hintSnippet": "已綁定：\n測試門市 A17\na17 2026-10-19 10:46",
+    "bindRecord": {
+      "storeId": "a17",
+      "storeNumber": "a17",
+      "storeName": "測試門市 A17"
+    },
+    "controllerListHasA17": true,
+    "storeOptions": [
+      { "value": "a17", "text": "測試門市 A17 (a17) · online" },
+      { "value": "c030020", "text": "c030020 (c030020) · offline" }
+    ],
+    "notes": "Pairing + list only; no push_numbers or clear_now to a17"
+  }
+}
