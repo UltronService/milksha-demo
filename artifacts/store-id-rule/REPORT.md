@@ -2,7 +2,7 @@
 
 **Branch:** `cursor/store-id-rule-de1b`  
 **PR:** https://github.com/UltronService/milksha-demo/pull/105  
-**Head commit:** `9c8ba5f`  
+**Head commit:** `d791d9a`  
 **Asset version:** `20261019a`  
 **Date (Taipei):** 2026-10-19
 
