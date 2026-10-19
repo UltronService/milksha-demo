@@ -7,6 +7,8 @@ import {
   installBundledCloudRouteShim,
   isolatedCloudContext,
   expandControllerZone,
+  homeBoardUrl,
+  homeControllerUrl,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -28,8 +30,8 @@ test.describe('cloud remote send (isolated contexts)', () => {
     const controller = await ctrlCtx.newPage();
     await installBundledCloudRouteShim(board);
     await installBundledCloudRouteShim(controller);
-    await board.goto(`${BASE}/`);
-    await controller.goto(`${BASE}/controller/`);
+    await board.goto(homeBoardUrl(BASE));
+    await controller.goto(homeControllerUrl(BASE));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
     await controller.waitForSelector('[data-testid="transport-route"][data-route="cloud"]', {
@@ -54,7 +56,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
     const boardCtx = await isolatedCloudContext(browser);
     const board = await boardCtx.newPage();
     await installBundledCloudRouteShim(board);
-    await board.goto(`${BASE}/`);
+    await board.goto(homeBoardUrl(BASE));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await controller.waitForFunction(
       () => {
@@ -132,7 +134,7 @@ test.describe('cloud remote send (isolated contexts)', () => {
       );
     });
     await installBundledCloudRouteShim(board);
-    await board.goto(`${BASE}/?mode=cloud`);
+    await board.goto(homeBoardUrl(BASE, 'mode=cloud'));
     await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     await boardCtx.close();
   });

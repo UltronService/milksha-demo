@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | PR | https://github.com/UltronService/milksha-demo/pull/108 |
-| Head SHA | `e57f96a` |
+| Head SHA | _(see latest push on branch)_ |
 | Asset version | `20261019a` |
 | Store id validator | `js/store-id.js` — same rules as main `controller/store-list.js` (`KNOWN_LITERAL`, `zz-qa-*`, `zz-deny-*`, `[a-z][0-9]{6}`). PR #105 dedicated module not on main; logic extracted without changing rules. |
 | Unit tests | 351 passed (`npm test`) |
@@ -49,6 +49,7 @@ Controller / `validate-request.js` `DEFAULT_HOME_BOARD_STORE_ID` unchanged (oper
 - `tests/e2e/home-board-default-store.spec.mjs` — was: no store uses `c030020` local boot
 - `tests/milksha-board-layout-harness.test.js` + `scripts/check-milksha-board-column-alignment.mjs` — layout harness adds `store=zz-qa-store-a`
 - `tests/local-poc-coord.test.js` — home without store must not default
+- E2E harness `homeBoardUrl` / `urlsLocalHomePoc` — tests that boot home board without explicit store (cloud-recovery, cloud-remote-send, cloud-qa-checklist, pr23-login-count, controller-simulate-offline, stale-storage, redesign-acceptance, layout scripts)
 
 ## Manual UAT (zz-qa only)
 

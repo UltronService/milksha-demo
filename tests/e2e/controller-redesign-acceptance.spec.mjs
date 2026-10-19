@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { freshContext, PORT_SITE, expandControllerZone } from './harness.mjs';
+import { freshContext, PORT_SITE, expandControllerZone, homeBoardUrl, HOME_BOARD_QA_STORE } from './harness.mjs';
 
 const DISCONNECTED_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=cloud&noCloudWarm=1`;
-const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local`;
+const LOCAL_CTRL = `http://127.0.0.1:${PORT_SITE}/controller/?mode=local&store=${HOME_BOARD_QA_STORE}`;
 
 async function expandTestTools(page) {
   await expandControllerZone(page, 'sec-test-tools');
@@ -41,7 +41,7 @@ test('redesign: clear modal cancel vs confirm', async ({ browser }) => {
   const board = await ctx.newPage();
   const page = await ctx.newPage();
   const base = `http://127.0.0.1:${PORT_SITE}`;
-  await board.goto(`${base}/?mode=local`);
+  await board.goto(homeBoardUrl(base, 'mode=local'));
   await page.goto(LOCAL_CTRL);
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 20000 });
   await page.locator('[data-testid="btn-clear-board-main"]').click();
@@ -60,7 +60,7 @@ test('redesign: successful send shows success bar without top error alert', asyn
   const board = await ctx.newPage();
   const page = await ctx.newPage();
   const base = `http://127.0.0.1:${PORT_SITE}`;
-  await board.goto(`${base}/?mode=local`);
+  await board.goto(homeBoardUrl(base, 'mode=local'));
   await page.goto(LOCAL_CTRL);
   await page.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
   await page.locator('[data-testid="btn-send-numbers"]').click();

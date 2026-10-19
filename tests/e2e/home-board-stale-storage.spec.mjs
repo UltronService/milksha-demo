@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, waitForReceiverOnline } from './harness.mjs';
+import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, homeBoardUrl, waitForReceiverOnline } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STALE_SEED = () => {
@@ -38,7 +38,7 @@ test('stale deviceId: board first then controller shows online and numbers', asy
   await ctx.addInitScript(STALE_SEED);
   const board = await ctx.newPage();
   const controller = await ctx.newPage();
-  await board.goto(`${BASE}/?mode=local`);
+  await board.goto(homeBoardUrl(BASE, 'mode=local'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
   await controller.goto(`${BASE}/controller/?mode=local`);
@@ -61,7 +61,7 @@ test('stale deviceId: controller first then board shows online and numbers', asy
     () => document.getElementById('online-state')?.getAttribute('data-connected') === '1',
     { timeout: 15000 },
   );
-  await board.goto(`${BASE}/?mode=local`);
+  await board.goto(homeBoardUrl(BASE, 'mode=local'));
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   await waitForReceiverOnline(board, 'local');
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: 5000 });
@@ -83,7 +83,7 @@ test('stale cloud settings on home board migrate to bundled and connect cloud', 
     );
   });
   const board = await ctx.newPage();
-  await board.goto(`${BASE}/?mode=cloud&store=c030020`);
+  await board.goto(`${BASE}/?mode=cloud&store=zz-qa-store-a`);
   await board.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 25000 });
   const pinned = await board.evaluate(() => {
     const settings = localStorage.getItem('milksha:cloud-settings') || '';

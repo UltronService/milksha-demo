@@ -7,6 +7,7 @@ import {
   PORT_CLOUD,
   installBundledCloudRouteShim,
   isolatedCloudContext,
+  homeBoardUrl,
 } from './harness.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
@@ -58,7 +59,7 @@ test.describe('PR23 login rate', () => {
     const page = await ctx.newPage();
     await installBundledCloudRouteShim(page);
     const devLoginBootBefore = await readFakeCloudDevLoginCount();
-    await page.goto(`${BASE}/?testAuthRecheckMs=600000`);
+    await page.goto(homeBoardUrl(BASE, 'testAuthRecheckMs=600000'));
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     const devLoginBootAfter = await readFakeCloudDevLoginCount();
     const counts = await countAuthCalls(page, 300, false);
@@ -74,7 +75,7 @@ test.describe('PR23 login rate', () => {
     const ctx = await isolatedCloudContext(browser);
     const page = await ctx.newPage();
     await installBundledCloudRouteShim(page);
-    await page.goto(`${BASE}/?testAuthRecheckMs=600000`);
+    await page.goto(homeBoardUrl(BASE, 'testAuthRecheckMs=600000'));
     await page.waitForFunction(() => Boolean(window.receiverCloud), { timeout: 30000 });
     const counts = await countAuthCalls(page, 120, true);
     writeFileSync(`${ART}/login-count-outage-2m.json`, JSON.stringify(counts, null, 2));
