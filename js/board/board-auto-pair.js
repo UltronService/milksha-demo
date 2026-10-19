@@ -131,15 +131,24 @@
     if (deviceId.length > MAX_DEVICE_ID_LEN) {
       return { ok: false, message: 'deviceId too long' };
     }
+    const StoreId = QMS.Shared && QMS.Shared.StoreId;
+    const normalizeId =
+      StoreId && StoreId.normalizeStoreId
+        ? function (id) {
+            return StoreId.normalizeStoreId(id);
+          }
+        : function (id) {
+            return String(id || '').trim().toLowerCase();
+          };
     if (src.mode === 'read' || src.storeId) {
-      const storeId = String(src.storeId || '').trim();
+      const storeId = normalizeId(src.storeId);
       if (!storeId) {
         return { ok: false, message: 'storeId required for read' };
       }
       return { ok: true, mode: 'read', body: { storeId: storeId, deviceId: deviceId } };
     }
     const brand = String(src.brand || '').trim();
-    const storeNumber = String(src.storeNumber || '').trim();
+    const storeNumber = normalizeId(src.storeNumber);
     if (!brand) {
       return { ok: false, message: 'brand required' };
     }

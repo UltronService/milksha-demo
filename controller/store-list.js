@@ -15,31 +15,43 @@
     '這家店還沒有看板連線過，請先打開看板';
   const MSG_REGISTRY_FULL = '測試店登記名額已滿，請聯絡後端';
 
-  const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
   const OPERATOR_PICKER_STORE_IDS = new Set(['c030020', 'a17']);
-  const STORE_ID_ZZ_QA_RE = /^zz-qa-[a-z0-9-]+$/;
-  const STORE_ID_ZZ_DENY_RE = /^zz-deny-[a-z0-9-]+$/;
-  const STORE_ID_LETTER_SIX_DIGITS_RE = /^[a-z][0-9]{6}$/;
+
+  const StoreId = QMS.Shared && QMS.Shared.StoreId;
+
+  /**
+   * @param {string} storeId
+   * @returns {string}
+   */
+  function normalizeStoreId(storeId) {
+    if (StoreId && StoreId.normalizeStoreId) {
+      return StoreId.normalizeStoreId(storeId);
+    }
+    return String(storeId || '').trim().toLowerCase();
+  }
 
   /**
    * @param {string} storeId
    * @returns {boolean}
    */
   function isValidStoreIdFormat(storeId) {
-    const id = String(storeId || '').trim();
+    if (StoreId && StoreId.isValidStoreIdFormat) {
+      return StoreId.isValidStoreIdFormat(storeId);
+    }
+    const id = normalizeStoreId(storeId);
     if (!id) {
       return false;
     }
-    if (KNOWN_LITERAL_STORE_IDS.has(id)) {
+    if (/^zz-qa-[a-z0-9-]+$/.test(id)) {
       return true;
     }
-    if (STORE_ID_ZZ_QA_RE.test(id)) {
+    if (/^zz-deny-[a-z0-9-]+$/.test(id)) {
       return true;
     }
-    if (STORE_ID_ZZ_DENY_RE.test(id)) {
+    if (/^[a-z][0-9]{2}$/.test(id)) {
       return true;
     }
-    if (STORE_ID_LETTER_SIX_DIGITS_RE.test(id)) {
+    if (/^[a-z][0-9]{6}$/.test(id)) {
       return true;
     }
     return false;
@@ -253,6 +265,7 @@
     MSG_STORE_ID_INVALID: MSG_STORE_ID_INVALID,
     MSG_STORE_NOT_REGISTERED: MSG_STORE_NOT_REGISTERED,
     MSG_REGISTRY_FULL: MSG_REGISTRY_FULL,
+    normalizeStoreId: normalizeStoreId,
     isValidStoreIdFormat: isValidStoreIdFormat,
     resolveErrorCodeFromErr: resolveErrorCodeFromErr,
     resolveStoreAccessUserMessage: resolveStoreAccessUserMessage,

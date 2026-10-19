@@ -12,6 +12,7 @@ function loadStoreList() {
   const sandbox = { fetch: async function () { throw new Error('fetch not mocked'); } };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/shared/store-id.js'), 'utf8'), sandbox);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'controller/store-list.js'), 'utf8'), sandbox);
   return sandbox.QMS.Controller.StoreList;
 }
@@ -69,21 +70,38 @@ test('formatStoreOptionMeta includes online/offline words', function () {
   assert.equal(off.onlineClass, 'store-offline');
 });
 
-test('store id format validation', function () {
+test('store id format validation accepts approved forms', function () {
   const S = loadStoreList();
   assert.equal(S.isValidStoreIdFormat('c030020'), true);
+  assert.equal(S.isValidStoreIdFormat('x123456'), true);
   assert.equal(S.isValidStoreIdFormat('zz-qa-store-a'), true);
+  assert.equal(S.isValidStoreIdFormat('zz-qa-ci-store'), true);
   assert.equal(S.isValidStoreIdFormat('zz-deny-test'), true);
-  assert.equal(S.isValidStoreIdFormat('a123456'), true);
-  assert.equal(S.isValidStoreIdFormat('C030020'), false);
-  assert.equal(S.isValidStoreIdFormat('zz-qa-UPPER'), false);
+  assert.equal(S.isValidStoreIdFormat('a17'), true);
+  assert.equal(S.isValidStoreIdFormat('a00'), true);
+  assert.equal(S.isValidStoreIdFormat('a07'), true);
+  assert.equal(S.isValidStoreIdFormat('A17'), true);
+  assert.equal(S.normalizeStoreId('A17'), 'a17');
+  assert.equal(S.isValidStoreIdFormat('C030020'), true);
 });
 
-test('literal test store a17 is valid; short a1 and a18 are not', function () {
+test('store id format validation rejects invalid digit lengths and shapes', function () {
   const S = loadStoreList();
-  assert.equal(S.isValidStoreIdFormat('a17'), true);
   assert.equal(S.isValidStoreIdFormat('a1'), false);
-  assert.equal(S.isValidStoreIdFormat('a18'), false);
+  assert.equal(S.isValidStoreIdFormat('a123'), false);
+  assert.equal(S.isValidStoreIdFormat('a1234'), false);
+  assert.equal(S.isValidStoreIdFormat('a12345'), false);
+  assert.equal(S.isValidStoreIdFormat('a1234567'), false);
+  assert.equal(S.isValidStoreIdFormat('17'), false);
+  assert.equal(S.isValidStoreIdFormat('aa17'), false);
+  assert.equal(S.isValidStoreIdFormat('017'), false);
+  assert.equal(S.isValidStoreIdFormat('030020'), false);
+});
+
+test('all letter+two-digit ids valid without a17 whitelist', function () {
+  const S = loadStoreList();
+  assert.equal(S.isValidStoreIdFormat('a18'), true);
+  assert.equal(S.isValidStoreIdFormat('z00'), true);
 });
 
 test('resolveStoreAccessUserMessage maps 403 codes', function () {

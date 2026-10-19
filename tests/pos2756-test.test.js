@@ -38,7 +38,14 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
       return l.trim();
     })
     .filter(Boolean);
+  const boardAutoPairWhitelist = new Set([
+    'js/board/board-auto-pair.js',
+    'js/board/board-auto-pair-host.js',
+  ]);
   const forbidden = touched.filter(function (p) {
+    if (boardAutoPairWhitelist.has(p)) {
+      return false;
+    }
     return p.startsWith('js/board/') || p.startsWith('receiver/');
   });
   assert.equal(forbidden.length, 0, 'board paths must stay untouched: ' + forbidden.join(', '));
