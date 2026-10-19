@@ -14,7 +14,7 @@
 ---
 
 - **PR:** https://github.com/UltronService/milksha-demo/pull/107
-- **資產版本:** `20261019d`
+- **資產版本:** `20261019e`
 - **Backend:** milksha-cloud PR #38（mock）
 
 ## 雲端行為（fake-cloud）
@@ -28,7 +28,7 @@
 
 ## Controller UI（`push_numbers_params_too_large`）
 
-- 文案：**「送出失敗：號碼太多或太長。請分批送出。」**（`#quick-send-error` 紅字，無 error code）
+- 文案：**「送出失敗：號碼太多或太長。請刪掉部分號碼，或縮短號碼後再送。」**（`#quick-send-error` 紅字，無 error code）
 - 輸入框內容保留（item 11b）
 
 ## 其他雲端 oversized（非 push_numbers）
@@ -46,5 +46,5 @@
 ## 手動 UAT
 
 1. 501 筆 → 成功 + trim。  
-2. 超大 push →「送出失敗：號碼太多或太長。請分批送出。」，欄位保留。  
+2. 超大 push →「送出失敗：號碼太多或太長。請刪掉部分號碼，或縮短號碼後再送。」，欄位保留。  
 3. 500 筆看板僅當頁 10 格可見（開發者工具 Elements）。
