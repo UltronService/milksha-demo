@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | PR | https://github.com/UltronService/milksha-demo/pull/108 |
-| Head SHA | `d2af9ec` |
+| Head SHA | `ff74d27` (e2e CI on `d2af9ec` run `39278656213`) |
 | Asset version | `20261019g` |
 | Unit tests | 354 passed (`npm test`) |
 
