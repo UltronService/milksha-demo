@@ -3,8 +3,22 @@
  */
 export const MAX_BOARD_PUSH_NUMBERS = 500;
 
-/** TODO-align-with-backend: must match milksha-cloud devCommand rejection code when PR lands */
-export const API_ERROR_TOO_MANY_BOARD_NUMBERS = 'too_many_board_numbers';
+/**
+ * After push_numbers is applied, the cloud keeps at most `max` tickets by dropping the oldest.
+ * Fake-cloud models oldest as earliest rows in push order (ready[] then preparing[]).
+ * TODO-align-with-backend: confirm eviction order against milksha-cloud when readable.
+ *
+ * @param {unknown[]} tickets
+ * @param {number} [max]
+ * @returns {unknown[]}
+ */
+export function trimTicketsToBoardCap(tickets, max = MAX_BOARD_PUSH_NUMBERS) {
+  if (!Array.isArray(tickets) || tickets.length <= max) {
+    return tickets;
+  }
+  const drop = tickets.length - max;
+  return tickets.slice(drop);
+}
 
 export function countPushNumbers(params) {
   if (!params || typeof params !== 'object') {

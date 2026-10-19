@@ -96,6 +96,21 @@ async function postDevCommand(body) {
   });
 }
 
+async function readBoardTicketNos() {
+  const res = await fetch(
+    `http://127.0.0.1:${FAKE_CLOUD_PORT}/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/${STORE_ID}/board/today_board`,
+    { headers: { Authorization: 'Bearer fake-id-token' } },
+  );
+  assert.equal(res.status, 200);
+  const doc = await res.json();
+  const values = doc.fields && doc.fields.tickets && doc.fields.tickets.arrayValue
+    ? doc.fields.tickets.arrayValue.values
+    : [];
+  return values.map(function (v) {
+    return v.mapValue.fields.no.stringValue;
+  });
+}
+
 // --- Controller: devCommand build (items 1–5) ---
 
 test('limit-500 item 1: 18 push_numbers are not blocked by client validation', function () {
@@ -184,17 +199,6 @@ test('limit-500 item 8: boxHeartbeat 1024-byte limit still applies', function ()
   assert.match(hb.message, /請求內容過大/);
 });
 
-test('limit-500 item 9: cloud 501st number maps to plain Chinese cap message', function () {
-  const E = loadCmdErrors();
-  const msg = E.devCommandUserMessage({
-    status: 400,
-    response: { code: E.CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS, message: 'too many' },
-  });
-  assert.equal(msg, E.USER_MSG_TOO_MANY_BOARD_NUMBERS);
-  assert.match(msg, /號碼太多（上限 500 個），雲端拒收/);
-  assert.doesNotMatch(msg, /too many/);
-});
-
 test('limit-500 item 10: other cloud errors stay plain Chinese without raw codes', function () {
   const E = loadCmdErrors();
   const msg = E.devCommandUserMessage({
@@ -206,19 +210,19 @@ test('limit-500 item 10: other cloud errors stay plain Chinese without raw codes
   assert.doesNotMatch(msg, /invalid_command_params/);
 });
 
-test('limit-500 item 11: after cloud rejection quick-send inputs keep typed values', async function () {
+test('limit-500 item 11: after other cloud rejection quick-send inputs keep typed values', function () {
   const E = loadCmdErrors();
   const dom = {
     'fld-quick-no': { value: '2847' },
     'fld-no': { value: '2847' },
   };
-  let quickError = '';
   const err = {
-    status: 400,
-    response: { code: E.CLOUD_ERROR_TOO_MANY_BOARD_NUMBERS, message: 'rejected' },
+    status: 500,
+    response: { code: 'internal_error', message: 'An internal error occurred.' },
   };
-  quickError = E.devCommandUserMessage(err, {});
-  assert.equal(quickError, E.USER_MSG_TOO_MANY_BOARD_NUMBERS);
+  const quickError = E.devCommandUserMessage(err, {});
+  assert.equal(quickError, E.USER_MSG_INTERNAL_ERROR);
+  assert.doesNotMatch(quickError, /internal_error/);
   assert.equal(dom['fld-quick-no'].value, '2847');
   assert.equal(dom['fld-no'].value, '2847');
 });
@@ -232,18 +236,6 @@ test('limit-500 item 12: fake-cloud accepts 500 push_numbers', async function ()
     const json = await res.json();
     assert.equal(json.ok, true);
     assert.ok(json.commandId);
-  });
-});
-
-test('limit-500 item 9b: fake-cloud rejects 501 combined numbers', async function () {
-  const limit = await import('../tools/fake-cloud/board-number-limit.mjs');
-  await withFakeCloud(async function () {
-    const built = buildPushNumbersRequest(501);
-    assert.equal(built.ok, true);
-    const res = await postDevCommand(built.body);
-    assert.equal(res.status, 400);
-    const json = await res.json();
-    assert.equal(json.code, limit.API_ERROR_TOO_MANY_BOARD_NUMBERS);
   });
 });
 
@@ -409,6 +401,44 @@ function sequentialReady(base, count) {
   }
   return nums;
 }
+
+test('limit-500 item 9: 501st push succeeds, cloud drops oldest, board shows new number', async function () {
+  const errSrc = fs.readFileSync(path.join(ROOT, 'js/transport/controller-command-errors.js'), 'utf8');
+  assert.doesNotMatch(errSrc, /號碼太多（上限 500 個），雲端拒收/);
+  assert.doesNotMatch(errSrc, /too_many_board_numbers/);
+
+  await withFakeCloud(async function () {
+    const full = buildPushNumbersRequest(501);
+    assert.equal(full.ok, true);
+    const res = await postDevCommand(full.body);
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.ok, true);
+
+    const nos = await readBoardTicketNos();
+    assert.equal(nos.length, 500);
+    assert.ok(nos.includes('2500'));
+    assert.equal(nos.includes('2000'), false);
+  });
+
+  const harness = bootBoardHarness();
+  const runtime = harness.sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
+    document: harness.sandbox.document,
+    window: harness.sandbox,
+  });
+  const cloudShaped = sequentialReady(2000, 501).slice(1);
+  runtime.applyPayload(readyPayload(cloudShaped), { silent: true });
+  const snap = runtime.getSnapshot();
+  assert.equal(snap.ready.length, 500);
+  assert.equal(snap.ready[0].number, '2500');
+  assert.equal(
+    snap.ready.some(function (r) {
+      return r.number === '2000';
+    }),
+    false,
+  );
+  runtime.destroy();
+});
 
 test('limit-500 item 13: 60 ready numbers paginate 6 pages of 10 in order', async function () {
   const harness = bootBoardHarness();

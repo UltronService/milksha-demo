@@ -68,8 +68,9 @@
 
 | 欄位 | 值 |
 |------|-----|
-| Run ID | push 後更新 |
-| 分支獨有 E2E 失敗數 | push 後更新（目標 **0**，失敗 ⊆ main ~38） |
+| Run ID | [39257558724](https://github.com/UltronService/milksha-demo/actions/runs/39257558724) |
+| unit | **pass**（355 tests，含 limit-500 ×18） |
+| 分支獨有 E2E 失敗數 | **0**（日誌無 `limit-500` 失敗；其餘失敗為 main 基準同類 flaky，見 `artifacts/ci-nightly/main-baseline-failures-39105020723.txt`） |
 
 ## 手動 UAT（非工程）
 

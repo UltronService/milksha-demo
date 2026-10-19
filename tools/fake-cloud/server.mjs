@@ -15,11 +15,7 @@ import {
 } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
-import {
-  API_ERROR_TOO_MANY_BOARD_NUMBERS,
-  MAX_BOARD_PUSH_NUMBERS,
-  countPushNumbers,
-} from './board-number-limit.mjs';
+import { trimTicketsToBoardCap } from './board-number-limit.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
 const KNOWN_LITERAL_STORE_IDS = new Set(['s120030', 'c030020', 'a17']);
@@ -915,16 +911,6 @@ const server = http.createServer(async (req, res) => {
           return json(res, httpStatusForApiErrorCode(cv.code), apiError(cv.code, cv.message));
         }
         const cmdBody = cv.body;
-        if (cmdBody.type === 'push_numbers') {
-          const pushCount = countPushNumbers(cmdBody.params);
-          if (pushCount > MAX_BOARD_PUSH_NUMBERS) {
-            return json(
-              res,
-              400,
-              apiError(API_ERROR_TOO_MANY_BOARD_NUMBERS, 'board number count exceeds limit'),
-            );
-          }
-        }
         const bearer = (req.headers.authorization || '').startsWith('Bearer ')
           ? (req.headers.authorization || '').slice(7).trim()
           : '';
@@ -962,7 +948,7 @@ const server = http.createServer(async (req, res) => {
             clearedAt: new Date().toISOString(),
           });
         } else if (cmdBody.type === 'push_numbers') {
-          const tickets = pushParamsToTickets(cmdBody.params);
+          const tickets = trimTicketsToBoardCap(pushParamsToTickets(cmdBody.params));
           boardSeq = nextSeq(cmdBody.storeId);
           docs.set(boardKey(cmdBody.storeId), {
             storeId: cmdBody.storeId,
