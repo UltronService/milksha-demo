@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| **head sha** | `cc76ce9` |
+| **head sha** | `e65c525` |
 | **asset version** | `20261019b` |
 | **branch** | `cursor/controller-default-number-5dd5` |
 
@@ -56,5 +56,20 @@ Payload: truncate `#130,vke3…`, blank `   `, colliding `#130,va` / `#130,vb`, 
 
 ## CI
 
-- Run id: `39240970236` (first push on `9cd0de6`) — **failure**; branch-only E2E: `board-uber-six-char-column-overflow.spec.mjs` (4) — `From_WideBench_OK` dropped under spec §7; fixed to `From_UberEat_OK` in follow-up commit.
-- Unique failures in that run otherwise match main baseline set (e.g. `pr23-login-count`, `cloud-remote-send`, `forbidden-store-then-qa-isolation`, …); **branch-only count after fix: 0** (await re-run on latest `HEAD`).
+| Run | Result | Branch-only failures |
+| --- | --- | --- |
+| `39240970236` | failure (overall job) | 4× `board-uber-six-char-column-overflow` (`From_WideBench_OK` → fixed) |
+| `39243205966` | failure (overall job) | **0** — failures ⊆ main ~38 baseline (`pr23-login-count`, `cloud-remote-send`, `forbidden-store-then-qa-isolation`, …) |
+
+Unit: **370/370** pass on branch.
+
+## Live dev (milksha-qms-dev, **zz-qa-store-a only**)
+
+- **When**: 2026-10-19 ~19:38 Taipei  
+- **Cloud**: backend PR **#37** (`b01b3c5`) — stores **trimmed original** (≤64); no 6-char display field  
+- **Script**: `scripts/live-qa-number-spec-v2-zz-qa-store-a.mjs`  
+- **push_numbers**: `commandId` `0cb1a555-0482-4c40-b7ad-0ecf37ab57b4`, `boardSeq` 20554  
+- **Cloud `today_board.tickets[].no`**: `#130,vke3-2643-dy6y`, `c7458`, `<b>13</b>` (full as-sent)  
+- **Board ready `.milksha-num`**: `#130,v`, `c7458`, `<b>13<` (6-unit truncate + escaped plain text)  
+- **Result**: **pass** — cleared board after check  
+- **Evidence**: `live-zz-qa-store-a-report.json`, `screenshots/live-zz-qa-store-a-number-spec-v2-1920.png`

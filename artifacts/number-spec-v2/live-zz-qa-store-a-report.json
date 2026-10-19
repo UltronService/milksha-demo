@@ -1,0 +1,58 @@
+{
+  "store": "zz-qa-store-a",
+  "project": "milksha-qms-dev",
+  "cloudBackendNote": "PR #37 b01b3c5 — trimmed original up to 64 chars; board truncates display to 6",
+  "at": "2026-10-19T11:38:32.025Z",
+  "sent": [
+    {
+      "no": "#130,vke3-2643-dy6y",
+      "status": "ready",
+      "sourceKey": "fp"
+    },
+    {
+      "no": "c7458",
+      "status": "ready",
+      "sourceKey": "uber"
+    },
+    {
+      "no": "<b>13</b>",
+      "status": "ready",
+      "sourceKey": "store"
+    }
+  ],
+  "push": {
+    "ok": true,
+    "res": {
+      "commandId": "d1714b25-89a3-4f04-887a-04d043968562",
+      "boardSeq": 20557
+    }
+  },
+  "cloudTickets": {
+    "ok": true,
+    "tickets": [
+      {
+        "no": "#130,vke3-2643-dy6y",
+        "sourceType": "From_FoodPanda_OK"
+      },
+      {
+        "no": "c7458",
+        "sourceType": "From_UberEat_OK"
+      },
+      {
+        "no": "<b>13</b>",
+        "sourceType": "From_Store_OK"
+      }
+    ]
+  },
+  "boardReadyText": [
+    "<b>13<",
+    "c7458",
+    "#130,v"
+  ],
+  "expectedDisplay": [
+    "#130,v",
+    "c7458",
+    "<b>13<"
+  ],
+  "pass": true
+}
