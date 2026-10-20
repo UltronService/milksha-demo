@@ -203,10 +203,10 @@
         return {
           ticketNo: it.ticketNo,
           intakeLogId: it.intakeLogId,
-          firstDataLocalMs: it.firstDataAtLocalMs,
-          firstPaintLocalMs: it.firstPaintAtLocalMs,
-          firstDataCorrectedMs: clockState.clockSynced ? correctedData : null,
-          firstPaintCorrectedMs: clockState.clockSynced ? correctedPaint : null,
+          firstDataAtLocalMs: it.firstDataAtLocalMs,
+          firstPaintAtLocalMs: it.firstPaintAtLocalMs,
+          firstDataAtCorrectedMs: clockState.clockSynced ? correctedData : null,
+          firstPaintAtCorrectedMs: clockState.clockSynced ? correctedPaint : null,
         };
       });
       return {

@@ -1,20 +1,28 @@
-# Box seen report — green (QA #112 follow-up)
+# Box seen report — green
 
-## Commits
+## QA correction (item 1 cancelled)
 
-| Milestone | SHA |
-|-----------|-----|
-| Backend payload field names (red) | `8fa1596` |
-| Backend payload + resilience (green) | see `git log -1` on branch |
+Payload item time fields stay **with `At`** (milksha-cloud PR #45):
 
-## Backend item time fields (exact)
-
-1. `firstDataLocalMs`
-2. `firstPaintLocalMs`
-3. `firstDataCorrectedMs`
-4. `firstPaintCorrectedMs`
+1. `firstDataAtLocalMs`
+2. `firstPaintAtLocalMs`
+3. `firstDataAtCorrectedMs`
+4. `firstPaintAtCorrectedMs`
 
 Contract: `js/board/box-seen-payload-contract.js`
+
+## Commits (At revert)
+
+| | SHA |
+|---|-----|
+| Red (At names in tests) | see `git log` |
+| Green (revert payload keys) | see `git log` |
+
+## Kept from QA
+
+- `tests/pos-receive-log-status.test.js` — items 23/24, no `—`
+- `tests/box-seen-report-localstorage-resilience.test.js`
+- PR title: full IP (no 遮罩)
 
 ## Unit suite (3× vs `main`)
 
@@ -24,10 +32,4 @@ Contract: `js/board/box-seen-payload-contract.js`
 | 2 | 374 | 10 | 384 |
 | 3 | 374 | 10 | 384 |
 
-`main`: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures only (+32 new tests on branch).
-
-## New QA tests
-
-- `tests/box-seen-report-payload-contract.test.js`
-- `tests/pos-receive-log-status.test.js` (items 23/24: 未回報 / 未校正, no `—`)
-- `tests/box-seen-report-localstorage-resilience.test.js`
+Same 10 layout-harness failures as `main`.
