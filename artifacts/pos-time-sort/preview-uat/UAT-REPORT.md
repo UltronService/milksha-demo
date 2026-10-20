@@ -53,3 +53,7 @@ Controller boot (`controller-app.js` ~2383–2464) reads `mode` / `gateway` from
 - **Cause:** `js/board/board-auto-pair-host.js` `renderBindHint` (~88–99): `storeName` in `.milksha-board-bind-hint__name`, then `storeNumber` at start of `.milksha-board-bind-hint__suffix` with **no separator** between spans; when both equal `zz-qa-store-a` it reads as one glued string. Same pattern in `js/board/board-auto-pair.js` `formatBindHintText` (~291): `storeName + storeNumber`.
 - **Sort test (#111):** Cosmetic only; does **not** affect `board-item-sort` or POS ms ordering.
 - **main / Pages:** Same code on `main` (`board-auto-pair-host.js` identical); **same bug** wherever auto-pair hint shows name + number.
+
+## clear_now proof (director 22:40)
+
+See **`CLEAR-PROOF.md`**. Summary: UI clear uses `#fld-device` (default **stb-01**); URL `?device=qa-pc-01` is **not** applied. With default form, **清空看板** stays **disabled** until `#fld-device` = **qa-pc-01**. Aborted network capture confirms safe body only after that fix. **No new clear** after director warning.
