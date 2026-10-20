@@ -192,6 +192,18 @@
         });
         writeJson(storage, deviceKey(sid, devId), merged);
         channel({ type: 'device', storeId: sid, deviceId: devId });
+        return { ok: true, serverNowMs: Date.now() };
+      },
+      boxSeenReport: async function (body) {
+        const sid = activeStoreId();
+        const logs = readJson(storage, receiveLogsKey(sid)) || [];
+        logs.push({
+          at: new Date().toISOString(),
+          kind: 'boxSeenReport',
+          payload: body,
+          serverReceivedAtMs: Date.now(),
+        });
+        writeJson(storage, receiveLogsKey(sid), logs);
         return { ok: true };
       },
       devCommand: async function (body) {

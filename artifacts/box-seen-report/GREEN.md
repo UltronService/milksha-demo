@@ -1,27 +1,40 @@
-# Box seen report — log page format (green)
+# Box seen report — green
 
-## Unit tests (3× vs main baseline)
+## Commits
 
-| Run | pass | fail |
-|-----|------|------|
-| 1 | 349 | 10 |
-| 2 | 349 | 10 |
-| 3 | 349 | 10 |
+- Log format: `c094f00`
+- Full reporter: `095dd06`
 
-Main baseline: **342 pass / 10 fail** (352 tests). This branch adds **7** tests → **349 pass / 10 fail** (359 tests). Failures are the same layout-harness set as `main` (not introduced here).
+## Unit suite (3× vs `main`)
+
+| Run | pass | fail | tests |
+|-----|------|------|-------|
+| 1 | 365 | 10 | 375 |
+| 2 | 365 | 10 | 375 |
+| 3 | 365 | 10 | 375 |
+
+`main` baseline: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures; +23 new tests all pass.
 
 ## New tests
 
 ```bash
-node --test tests/pos-receive-log-format.test.js tests/pos-receive-log-page.test.js
+node --test tests/box-seen-report*.test.js tests/pos-receive-log*.test.js
 ```
 
-All 7 pass.
+## Mutation checks
 
-## Manual UAT
+- `tests/box-seen-report-mutation.test.js` — `firstIntakeLogId` skip guard present in source
+- `tests/box-seen-report-cloud-api.test.js` — `boxSeenReport` does not call `markUploadHaltedFrom403`
 
-1. Open `tools/pos-receive-log/index.html` (via static server or GitHub Pages path).
-2. Expand the sample「收件 demo-intake」row.
-3. Confirm table header includes **比收件晚（秒）**.
-4. Row 1: IP shows `203.69.*.*`, delay **1.500**.
-5. Row 2: IP `10.1.*.*`, delay **-0.120 兩邊時鐘不同**, 狀態 **未回報**, 時鐘 **未校正**.
+## IP display (director)
+
+- `formatIpForDisplay` in `js/tools/pos-receive-log-format.js` returns full trimmed IP; one-line change later for mask.
+
+## Manual UAT (zz-qa-* / fake-cloud)
+
+1. Open home board `?mode=local&store=zz-qa-store-a` with fake-cloud.
+2. Confirm `localStorage.milksha:boxId` set; `?boxId=` overrides when valid 8–64 chars.
+3. Push ticket with `firstIntakeLogId` via fake-cloud board update; number paints → one `boxSeenReport` POST (batched).
+4. Reload board: same ticket not reported again.
+5. Break `boxSeenReport` (500): board/paging still works; no 連線暫停.
+6. `tools/pos-receive-log/index.html`: delay column **比收件晚（秒）**, 未回報 / 未校正 text.

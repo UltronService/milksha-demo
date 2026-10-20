@@ -3,7 +3,7 @@
 | Milestone | Commit | New failing tests |
 |-----------|--------|-------------------|
 | Log page format slice | `4230cd3` | 7 |
-| Full board reporter slice | `pending` (see git log after red commit) | 16 |
+| Full board reporter slice | `ea33f32` | 16 |
 
 ## Full reporter red scope (added tests)
 

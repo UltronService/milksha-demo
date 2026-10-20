@@ -13,7 +13,7 @@
    */
   function mapBoxReportRow(row) {
     const boxId = row && row.boxId ? String(row.boxId) : '';
-    const ipMasked = Format ? Format.maskIpv4ForDisplay(row && row.ip ? String(row.ip) : '') : '';
+    const ipMasked = Format ? Format.formatIpForDisplay(row && row.ip ? String(row.ip) : '') : '';
     const delayText = Format ? Format.formatReceiveDelayCell(row ? row.delayMs : null) : '';
     let statusText = '未回報';
     if (row && row.status === 'reported') {

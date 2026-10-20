@@ -15,6 +15,7 @@
     const boxHeartbeatName = config.boxHeartbeatFunctionName || 'boxHeartbeat';
     const posReceiverName = config.posReceiverFunctionName || 'posReceiver';
     const boxUploadName = config.boxUploadFunctionName || 'boxUpload';
+    const boxSeenReportName = config.boxSeenReportFunctionName || 'boxSeenReport';
     const boardAutoPairName = config.boardAutoPairFunctionName || 'boardAutoPair';
 
     function fnUrl(name) {
@@ -22,7 +23,8 @@
       return base.replace(/\/?$/, '/') + name;
     }
 
-    async function postJson(name, body, withAuth, rawBody, authRetried) {
+    async function postJson(name, body, withAuth, rawBody, authRetried, haltUploadOn403) {
+      const haltOn403 = haltUploadOn403 !== false;
       const headers = { 'Content-Type': 'application/json' };
       if (withAuth) {
         Object.assign(headers, await session.authHeaders());
@@ -45,7 +47,7 @@
         return json || { isSuccess: false, information: '空回應' };
       }
       if (!res.ok) {
-        if (withAuth && res.status === 403 && session.markUploadHaltedFrom403) {
+        if (withAuth && haltOn403 && res.status === 403 && session.markUploadHaltedFrom403) {
           const err403 = new Error((name || 'fn') + ' failed ' + res.status);
           err403.status = 403;
           err403.response = json;
@@ -116,6 +118,9 @@
       },
       boxUpload: function (body) {
         return postJson(boxUploadName, body, true);
+      },
+      boxSeenReport: function (body) {
+        return postJson(boxSeenReportName, body, true, undefined, false, false);
       },
       boardAutoPair: function (body) {
         return postJson(boardAutoPairName, body, false);

@@ -8,29 +8,19 @@
   QMS.Tools = QMS.Tools || {};
 
   /**
+   * Log page IP display (director: full IP for now; swap return line to mask later).
    * @param {string} ip
    * @returns {string}
    */
-  function maskIpv4ForDisplay(ip) {
+  function formatIpForDisplay(ip) {
     if (!ip || typeof ip !== 'string') {
       return '';
     }
     const trimmed = ip.trim();
-    const parts = trimmed.split('.');
-    if (parts.length !== 4) {
+    if (!trimmed) {
       return '';
     }
-    for (let i = 0; i < 4; i += 1) {
-      const p = parts[i];
-      if (!/^\d{1,3}$/.test(p)) {
-        return '';
-      }
-      const n = Number(p);
-      if (n < 0 || n > 255) {
-        return '';
-      }
-    }
-    return parts[0] + '.' + parts[1] + '.*.*';
+    return trimmed;
   }
 
   /**
@@ -65,7 +55,7 @@
   }
 
   QMS.Tools.PosReceiveLogFormat = {
-    maskIpv4ForDisplay: maskIpv4ForDisplay,
+    formatIpForDisplay: formatIpForDisplay,
     formatReceiveDelaySecondsFromMs: formatReceiveDelaySecondsFromMs,
     formatReceiveDelayCell: formatReceiveDelayCell,
   };

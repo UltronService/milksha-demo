@@ -900,6 +900,23 @@
       lastRenderedReady = readyItems.slice();
       lastRenderedPrepPage = prepPage;
       lastRenderedReadyPage = readyPage;
+
+      if (QMS.Board && typeof QMS.Board._boxSeenPaintCallback === 'function') {
+        const paintedIds = [];
+        const prepSlice = prepItems.slice(prepPage * PAGE_SIZE, prepPage * PAGE_SIZE + PAGE_SIZE);
+        const readySlice = readyItems.slice(readyPage * PAGE_SIZE, readyPage * PAGE_SIZE + PAGE_SIZE);
+        for (let pi = 0; pi < prepSlice.length; pi += 1) {
+          paintedIds.push(prepSlice[pi].id);
+        }
+        for (let ri = 0; ri < readySlice.length; ri += 1) {
+          paintedIds.push(readySlice[ri].id);
+        }
+        try {
+          QMS.Board._boxSeenPaintCallback(paintedIds);
+        } catch (e) {
+          /* must not affect display */
+        }
+      }
     }
 
     /**

@@ -19,18 +19,10 @@ function loadPosReceiveLogFormat() {
   return sandbox.QMS.Tools.PosReceiveLogFormat;
 }
 
-test('maskIpv4ForDisplay keeps first two octets only', function () {
+test('formatIpForDisplay returns trimmed full IP', function () {
   const F = loadPosReceiveLogFormat();
-  assert.equal(F.maskIpv4ForDisplay('203.69.12.34'), '203.69.*.*');
-  assert.equal(F.maskIpv4ForDisplay('10.0.0.1'), '10.0.*.*');
-});
-
-test('maskIpv4ForDisplay rejects non-ipv4', function () {
-  const F = loadPosReceiveLogFormat();
-  assert.equal(F.maskIpv4ForDisplay(''), '');
-  assert.equal(F.maskIpv4ForDisplay('203.69'), '');
-  assert.equal(F.maskIpv4ForDisplay('not-an-ip'), '');
-  assert.equal(F.maskIpv4ForDisplay('203.69.1.2.3'), '');
+  assert.equal(F.formatIpForDisplay('  203.69.12.34  '), '203.69.12.34');
+  assert.equal(F.formatIpForDisplay(''), '');
 });
 
 test('formatReceiveDelaySecondsFromMs converts ms to seconds with 3 decimals', function () {

@@ -550,10 +550,61 @@
           );
         };
       }
+      let boxSeenBundle = null;
+      if (
+        homeBoard &&
+        milkshaRuntime &&
+        QMS.Board &&
+        QMS.Board.attachBoxSeenToBoard &&
+        transport.cloudApi
+      ) {
+        const pageVersion = String(root.MILKSHA_ASSET_VERSION || '');
+        boxSeenBundle = QMS.Board.attachBoxSeenToBoard({
+          storeId: creds.storeId,
+          transport: 'poll',
+          pageVersion: pageVersion,
+          cloudApi: transport.cloudApi,
+          getTransport: function () {
+            const live = root.receiverCloud;
+            if (!live || !live.getRealtimeStats) {
+              return 'poll';
+            }
+            const stats = live.getRealtimeStats();
+            if (stats.realtimeDisabled) {
+              return 'poll';
+            }
+            if (stats.boardListen) {
+              return 'realtime';
+            }
+            return 'poll';
+          },
+          isOffline: function () {
+            const live = root.receiverCloud;
+            if (live && live.isSimulatedOffline && live.isSimulatedOffline()) {
+              return true;
+            }
+            if (live && live.isCloudOfflineUiVisible && live.isCloudOfflineUiVisible()) {
+              return true;
+            }
+            if (root.navigator && root.navigator.onLine === false) {
+              return true;
+            }
+            return false;
+          },
+        });
+        QMS.Board._boxSeenPaintCallback = function (ids) {
+          try {
+            boxSeenBundle.reporter.notePaintedItemIds(ids);
+          } catch (e) {
+            /* ignore */
+          }
+        };
+      }
       const cloud = QMS.Receiver.bootReceiverCloud({
         storeId: creds.storeId,
         deviceId: creds.deviceId,
         transport: transport,
+        boxSeen: boxSeenBundle,
         firebaseConfig: modeResolved.config,
         receiverDemo: milkshaRuntime ? null : root.receiverDemo,
         milkshaRuntime: milkshaRuntime || null,
