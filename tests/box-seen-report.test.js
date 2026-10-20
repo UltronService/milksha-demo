@@ -31,6 +31,7 @@ function loadBoxSeenStack(sandbox) {
   sandbox.QMS = sandbox.QMS || {};
   const files = [
     'js/board/box-id.js',
+    'js/board/box-seen-reported-store.js',
     'js/board/box-seen-clock.js',
     'js/board/box-seen-report.js',
   ];

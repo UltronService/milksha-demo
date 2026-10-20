@@ -3,17 +3,29 @@
 ## Commits
 
 - Log format: `c094f00`
-- Full reporter: `095dd06`
+- Full reporter: `38481a4`
+- STB reload / capped reported store: see latest green on branch
+
+## Android STB schedule switch (follow-up)
+
+| Item | Before | After |
+|------|--------|-------|
+| `boxId` after page reopen | **Met** (`milksha:boxId` in localStorage) | Test `box-seen-report-reload.test.js` |
+| No re-report same `storeId+ticketNo+intakeLogId` | **Met** (localStorage dedupe) but unbounded `v1` per `storeId:boxId` | **Fixed**: `v2` per `storeId`, max **500** entries, drop oldest |
+| 1h memory | Risk unbounded reported object | Bounded store (~few KB per store) |
+
+- Red: `ba293e4` (3 failing)
+- Green: (see `git log -1` on branch after push)
 
 ## Unit suite (3× vs `main`)
 
 | Run | pass | fail | tests |
 |-----|------|------|-------|
-| 1 | 365 | 10 | 375 |
-| 2 | 365 | 10 | 375 |
-| 3 | 365 | 10 | 375 |
+| 1 | 368 | 10 | 378 |
+| 2 | 368 | 10 | 378 |
+| 3 | 368 | 10 | 378 |
 
-`main` baseline: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures; +23 new tests all pass.
+`main` baseline: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures only.
 
 ## New tests
 
@@ -28,13 +40,12 @@ node --test tests/box-seen-report*.test.js tests/pos-receive-log*.test.js
 
 ## IP display (director)
 
-- `formatIpForDisplay` in `js/tools/pos-receive-log-format.js` returns full trimmed IP; one-line change later for mask.
+- `formatIpForDisplay` returns full trimmed IP (one-line mask switch later).
 
 ## Manual UAT (zz-qa-* / fake-cloud)
 
 1. Open home board `?mode=local&store=zz-qa-store-a` with fake-cloud.
-2. Confirm `localStorage.milksha:boxId` set; `?boxId=` overrides when valid 8–64 chars.
-3. Push ticket with `firstIntakeLogId` via fake-cloud board update; number paints → one `boxSeenReport` POST (batched).
-4. Reload board: same ticket not reported again.
-5. Break `boxSeenReport` (500): board/paging still works; no 連線暫停.
-6. `tools/pos-receive-log/index.html`: delay column **比收件晚（秒）**, 未回報 / 未校正 text.
+2. Confirm `localStorage.milksha:boxId` set; reload page → same `boxId`.
+3. Push ticket with `firstIntakeLogId`; paint → one `boxSeenReport`.
+4. Close/reopen board (localStorage kept): same ticket **no** second report.
+5. `tools/pos-receive-log/index.html`: delay / 未回報 / 未校正.

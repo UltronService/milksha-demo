@@ -26,5 +26,6 @@ test('index.html loads box seen modules before cloud-runtime', function () {
   const boxId = html.indexOf('js/board/box-id.js');
   const runtime = html.indexOf('js/receiver/cloud-runtime.js');
   assert.ok(boxId > 0 && runtime > boxId);
+  assert.match(html, /box-seen-reported-store\.js/);
   assert.match(html, /box-seen-report\.js/);
 });

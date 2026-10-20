@@ -42,6 +42,7 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
     'js/board/box-id.js',
     'js/board/box-seen-clock.js',
     'js/board/box-seen-report.js',
+    'js/board/box-seen-reported-store.js',
   ]);
   const forbidden = touched.filter(function (p) {
     if (p.startsWith('js/board/') && boardAllow.has(p)) {

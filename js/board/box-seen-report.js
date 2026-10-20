@@ -10,8 +10,6 @@
   const DEFAULT_MIN_SEND_GAP_MS = 2000;
   const DEFAULT_MAX_QUEUE = 200;
   const DEFAULT_MAX_RETRIES = 3;
-  const REPORTED_KEY_PREFIX = 'milksha:box-seen-reported:v1:';
-
   function parseSourceType(st) {
     const Validate = QMS.Receiver && QMS.Receiver.Validate;
     if (Validate && Validate.parseSourceType) {
@@ -35,45 +33,6 @@
       return Validate.itemId(sourceKey, number);
     }
     return sourceKey + ':' + String(number);
-  }
-
-  function reportedStorageKey(storeId, boxId) {
-    return REPORTED_KEY_PREFIX + String(storeId) + ':' + String(boxId);
-  }
-
-  function loadReportedSet(storage, storeId, boxId) {
-    const out = {};
-    if (!storage) {
-      return out;
-    }
-    try {
-      const raw = storage.getItem(reportedStorageKey(storeId, boxId));
-      if (!raw) {
-        return out;
-      }
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        return parsed;
-      }
-    } catch (e) {
-      /* ignore */
-    }
-    return out;
-  }
-
-  function saveReportedSet(storage, storeId, boxId, setObj) {
-    if (!storage) {
-      return;
-    }
-    try {
-      storage.setItem(reportedStorageKey(storeId, boxId), JSON.stringify(setObj));
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
-  function reportDedupeKey(ticketNo, intakeLogId) {
-    return String(intakeLogId) + '|' + String(ticketNo);
   }
 
   /**
@@ -110,26 +69,37 @@
         ? Number(opts.maxRetries)
         : DEFAULT_MAX_RETRIES;
     const storage = root.localStorage || null;
+    const reportedTicketStore =
+      QMS.Board.createReportedTicketStore &&
+      QMS.Board.createReportedTicketStore({
+        storage: storage,
+        storeId: storeId,
+        maxEntries: 500,
+      });
 
     /** @type {Record<string, { ticketNo: string, intakeLogId: string, firstDataAtLocalMs: number, firstPaintAtLocalMs: number | null }>} */
     const tracking = {};
     /** @type {Array<{ ticketNo: string, intakeLogId: string, firstDataAtLocalMs: number, firstPaintAtLocalMs: number }>} */
     const sendQueue = [];
-    let reportedSet = loadReportedSet(storage, storeId, boxId);
     let lastSendAtMs = null;
     let sendInFlight = null;
     let pendingFlush = null;
 
     function isReported(ticketNo, intakeLogId) {
-      return Boolean(reportedSet[reportDedupeKey(ticketNo, intakeLogId)]);
+      if (!reportedTicketStore) {
+        return false;
+      }
+      return reportedTicketStore.hasReported(ticketNo, intakeLogId);
     }
 
     function markReported(items) {
+      if (!reportedTicketStore) {
+        return;
+      }
       for (let i = 0; i < items.length; i += 1) {
         const it = items[i];
-        reportedSet[reportDedupeKey(it.ticketNo, it.intakeLogId)] = true;
+        reportedTicketStore.markReported(it.ticketNo, it.intakeLogId);
       }
-      saveReportedSet(storage, storeId, boxId, reportedSet);
     }
 
     function trimQueue() {
