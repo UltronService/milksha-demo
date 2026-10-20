@@ -69,6 +69,7 @@
       posReceiverFunctionName: b.posReceiverFunctionName || 'posReceiver',
       boxHeartbeatFunctionName: b.boxHeartbeatFunctionName || 'boxHeartbeat',
       boxUploadFunctionName: b.boxUploadFunctionName || 'boxUpload',
+      boxSeenReportFunctionName: b.boxSeenReportFunctionName || 'boxSeenReport',
       receiveLogsPathTemplate: b.receiveLogsPathTemplate || 'stores/{storeId}/receive_logs',
       commandsPathTemplate: b.commandsPathTemplate || 'stores/{storeId}/commands',
       ingestEventsPathTemplate: b.ingestEventsPathTemplate || 'stores/{storeId}/ingest_events',

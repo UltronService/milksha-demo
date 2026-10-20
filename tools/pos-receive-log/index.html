@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>POS 收件紀錄 — 看板回報</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 1rem;
+        line-height: 1.4;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 960px;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.35rem 0.5rem;
+        text-align: left;
+      }
+      th {
+        background: #f4f4f4;
+      }
+      .intake-detail {
+        margin: 0.5rem 0 1rem 1rem;
+      }
+      details {
+        margin-bottom: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>POS 收件紀錄</h1>
+    <p>展開單筆收件可查看各看板 boxId、IP、比收件晚（秒）。</p>
+    <div id="log-root"></div>
+    <script src="../../js/tools/pos-receive-log-format.js?v=20261020a"></script>
+    <script src="pos-receive-log-app.js?v=20261020a"></script>
+    <script>
+      (function () {
+        var root = document.getElementById('log-root');
+        var sample = {
+          intakeLogId: 'demo-intake',
+          boxReports: [
+            { boxId: 'box-qa-1', ip: '203.69.10.20', status: 'reported', clockSynced: true, delayMs: 1500 },
+            { boxId: 'box-qa-2', ip: '10.1.2.3', status: 'not_reported', clockSynced: false, delayMs: -120 },
+          ],
+        };
+        var details = document.createElement('details');
+        var summary = document.createElement('summary');
+        summary.textContent = '收件 ' + sample.intakeLogId;
+        details.appendChild(summary);
+        var panel = document.createElement('div');
+        panel.className = 'intake-detail';
+        details.appendChild(panel);
+        root.appendChild(details);
+        if (window.QMS && QMS.Tools && QMS.Tools.PosReceiveLogApp) {
+          QMS.Tools.PosReceiveLogApp.renderBoxReportsTable(panel, sample.boxReports);
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -893,6 +893,25 @@ const server = http.createServer(async (req, res) => {
           lastAckCommandId: hb.ackCommandId || prev.lastAckCommandId || '',
           pendingCommand: nextPending,
         });
+        return json(res, 200, { ok: true, serverNowMs: Date.now() });
+      }
+
+      if (name === 'boxSeenReport' || name === 'boxSeenReport/') {
+        const sid = String(body.storeId || '').trim();
+        const reg = registerStore(sid);
+        if (!reg.ok) {
+          return json(res, 403, apiError(reg.code, reg.message));
+        }
+        if (!body.boxId || !Array.isArray(body.items)) {
+          return json(res, 400, apiError('invalid_body', 'boxSeenReport payload invalid'));
+        }
+        const key = receiveLogKey(sid, `seen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+        docs.set(key, {
+          at: new Date().toISOString(),
+          kind: 'boxSeenReport',
+          payload: body,
+          serverReceivedAtMs: Date.now(),
+        });
         return json(res, 200, { ok: true });
       }
 

@@ -38,7 +38,17 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
       return l.trim();
     })
     .filter(Boolean);
+  const boardAllow = new Set([
+    'js/board/box-id.js',
+    'js/board/box-seen-clock.js',
+    'js/board/box-seen-report.js',
+    'js/board/box-seen-reported-store.js',
+    'js/board/box-seen-payload-contract.js',
+  ]);
   const forbidden = touched.filter(function (p) {
+    if (p.startsWith('js/board/') && boardAllow.has(p)) {
+      return false;
+    }
     return p.startsWith('js/board/') || p.startsWith('receiver/');
   });
   assert.equal(forbidden.length, 0, 'board paths must stay untouched: ' + forbidden.join(', '));

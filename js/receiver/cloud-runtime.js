@@ -82,6 +82,7 @@
     const enableTestReloadSpy = Boolean(options.enableTestReloadSpy);
     const pauseAutoDevicePoll = Boolean(options.enableTestPollHook);
     const skipInitialCloudKick = options.skipInitialCloudKick === true;
+    const boxSeenBundle = options.boxSeen || null;
 
     let localSeq = 0;
     let lastBoardUpdateTime = '';
@@ -565,6 +566,13 @@
           Validate.itemId,
         );
         return { ignored: true, reason: Validate.MSG.offline };
+      }
+      if (boxSeenBundle && boxSeenBundle.reporter && board.tickets) {
+        try {
+          boxSeenBundle.reporter.ingestTickets(board.tickets);
+        } catch (e) {
+          /* box-seen must never affect board */
+        }
       }
       const numberContent = TodayBoard.ticketsToNumberContent(board.tickets);
       noteSeqForensics('tryApplyTodayBoard', {
@@ -1421,7 +1429,7 @@
       try {
         const ack = pendingAckCommandId || lastAckCommandId || undefined;
         pushBootTimeline('heartbeat_send', { ackCommandId: ack ? String(ack) : '' });
-        await cloudApi.boxHeartbeat({
+        const hbJson = await cloudApi.boxHeartbeat({
           storeId: storeId,
           deviceId: deviceId,
           appVersion: VERSION,
@@ -1430,6 +1438,16 @@
           simulatedOffline: simulateOffline || cloudOfflineUiVisible,
           ackCommandId: ack,
         });
+        if (boxSeenBundle && boxSeenBundle.clock && hbJson) {
+          try {
+            boxSeenBundle.clock.noteHeartbeat(hbJson);
+            if (boxSeenBundle.reporter && boxSeenBundle.reporter.scheduleSend) {
+              boxSeenBundle.reporter.scheduleSend();
+            }
+          } catch (e) {
+            /* ignore */
+          }
+        }
         if (pendingAckCommandId) {
           lastAckCommandId = pendingAckCommandId;
           pendingAckCommandId = '';
