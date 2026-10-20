@@ -170,7 +170,7 @@ export function ReceiveLogPage({
         ),
       },
       {
-        title: '作業時間',
+        title: '作業時間（秒）',
         key: 'processingDuration',
         render: (_, row) => {
           const duration = formatProcessingDuration(row.receivedAtMs, row.posSentAtMs);
