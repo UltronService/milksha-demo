@@ -1,51 +1,33 @@
-# Box seen report — green
+# Box seen report — green (QA #112 follow-up)
 
 ## Commits
 
-- Log format: `c094f00`
-- Full reporter: `38481a4`
-- STB reload / capped reported store: see latest green on branch
+| Milestone | SHA |
+|-----------|-----|
+| Backend payload field names (red) | `8fa1596` |
+| Backend payload + resilience (green) | see `git log -1` on branch |
 
-## Android STB schedule switch (follow-up)
+## Backend item time fields (exact)
 
-| Item | Before | After |
-|------|--------|-------|
-| `boxId` after page reopen | **Met** (`milksha:boxId` in localStorage) | Test `box-seen-report-reload.test.js` |
-| No re-report same `storeId+ticketNo+intakeLogId` | **Met** (localStorage dedupe) but unbounded `v1` per `storeId:boxId` | **Fixed**: `v2` per `storeId`, max **500** entries, drop oldest |
-| 1h memory | Risk unbounded reported object | Bounded store (~few KB per store) |
+1. `firstDataLocalMs`
+2. `firstPaintLocalMs`
+3. `firstDataCorrectedMs`
+4. `firstPaintCorrectedMs`
 
-- Red: `ba293e4` (3 failing)
-- Green: `62d5200`
+Contract: `js/board/box-seen-payload-contract.js`
 
 ## Unit suite (3× vs `main`)
 
 | Run | pass | fail | tests |
 |-----|------|------|-------|
-| 1 | 368 | 10 | 378 |
-| 2 | 368 | 10 | 378 |
-| 3 | 368 | 10 | 378 |
+| 1 | 374 | 10 | 384 |
+| 2 | 374 | 10 | 384 |
+| 3 | 374 | 10 | 384 |
 
-`main` baseline: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures only.
+`main`: 342 pass / 10 fail (352 tests). Same 10 layout-harness failures only (+32 new tests on branch).
 
-## New tests
+## New QA tests
 
-```bash
-node --test tests/box-seen-report*.test.js tests/pos-receive-log*.test.js
-```
-
-## Mutation checks
-
-- `tests/box-seen-report-mutation.test.js` — `firstIntakeLogId` skip guard present in source
-- `tests/box-seen-report-cloud-api.test.js` — `boxSeenReport` does not call `markUploadHaltedFrom403`
-
-## IP display (director)
-
-- `formatIpForDisplay` returns full trimmed IP (one-line mask switch later).
-
-## Manual UAT (zz-qa-* / fake-cloud)
-
-1. Open home board `?mode=local&store=zz-qa-store-a` with fake-cloud.
-2. Confirm `localStorage.milksha:boxId` set; reload page → same `boxId`.
-3. Push ticket with `firstIntakeLogId`; paint → one `boxSeenReport`.
-4. Close/reopen board (localStorage kept): same ticket **no** second report.
-5. `tools/pos-receive-log/index.html`: delay / 未回報 / 未校正.
+- `tests/box-seen-report-payload-contract.test.js`
+- `tests/pos-receive-log-status.test.js` (items 23/24: 未回報 / 未校正, no `—`)
+- `tests/box-seen-report-localstorage-resilience.test.js`
