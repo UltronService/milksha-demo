@@ -102,7 +102,7 @@ describe('POS timing columns (11–18)', () => {
     const expectedHeaders = [
       '收件時間（Taipei）',
       '送件時間',
-      '作業時間',
+      '作業時間（秒）',
       '門市',
       '入口',
       '來源 IP',
