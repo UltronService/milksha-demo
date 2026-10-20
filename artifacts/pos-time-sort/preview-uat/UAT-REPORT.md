@@ -38,3 +38,18 @@
 | `artifacts/pos-time-sort/preview-uat/03-board-numbers-2001-2003.png` | Preparing 2001–2003 visible |
 
 Commit: `74ec7ddd15a6704f4c029276cee0d89c39873770` (PR #111 head at deploy time).
+
+## Redo (director, 2026-10-20 ~21:55 Taipei)
+
+- **04-controller-online.png**: Both tabs reloaded; controller pill **「已連線 · 看板在線」** (no「看板離線」/「等待看板連線」). Requires `#fld-device` = `qa-pc-01` (URL `device=` is **not** applied to the form — see footer section).
+- **05-board-cleared.png**: `btn-clear-board-main` → modal **確認清空** → banner「看板已清空」; board empty after reload.
+
+###「看板離線」root cause (when URL has `device=qa-pc-01`)
+
+Controller boot (`controller-app.js` ~2383–2464) reads `mode` / `gateway` from query but **never** sets `#fld-device` from `?device=`. Field stays default **`stb-01`** (`controller/index.html` + `pinCloudDeviceDefaults`). `pollDevice()` heartbeats **`fld-device`**, while the board uses URL **`qa-pc-01`** → controller thinks board offline until the form is set to `qa-pc-01`.
+
+### Footer `zz-qa-store-azz-qa-store-a`
+
+- **Cause:** `js/board/board-auto-pair-host.js` `renderBindHint` (~88–99): `storeName` in `.milksha-board-bind-hint__name`, then `storeNumber` at start of `.milksha-board-bind-hint__suffix` with **no separator** between spans; when both equal `zz-qa-store-a` it reads as one glued string. Same pattern in `js/board/board-auto-pair.js` `formatBindHintText` (~291): `storeName + storeNumber`.
+- **Sort test (#111):** Cosmetic only; does **not** affect `board-item-sort` or POS ms ordering.
+- **main / Pages:** Same code on `main` (`board-auto-pair-host.js` identical); **same bug** wherever auto-pair hint shows name + number.
