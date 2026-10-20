@@ -28,6 +28,8 @@ export interface RejectedSend {
 export interface ReceiveLogRecord {
   id: string;
   receivedAtMs: number;
+  posTimeStmpRaw: string | null;
+  posSentAtMs: number | null;
   storeNumber: string;
   entry: EntryType;
   sourceIp: string;

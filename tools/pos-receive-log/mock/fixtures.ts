@@ -11,6 +11,8 @@ export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): Re
   return {
     id,
     receivedAtMs: overrides.receivedAtMs ?? SAMPLE_MS_A,
+    posTimeStmpRaw: overrides.posTimeStmpRaw ?? null,
+    posSentAtMs: overrides.posSentAtMs ?? null,
     storeNumber: overrides.storeNumber ?? 'zz-qa-store-a',
     entry: overrides.entry ?? 'POS',
     sourceIp: overrides.sourceIp ?? '203.0.113.10',

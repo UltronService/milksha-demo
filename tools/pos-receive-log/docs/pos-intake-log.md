@@ -24,6 +24,8 @@
 | `bodyByteSize` | 請求 body 大小 |
 | `requestSignature` | 簽章（展示一律 `<REDACTED>`） |
 | `receivedAtMs` | 收件時間（epoch ms） |
+| `posSentAtMs` | POS 送件時間（ms，可 null） |
+| `posTimeStmpRaw` | POS 原始 timeStmp 字串（≤64，可 null） |
 
 ## QA 頁面對照
 
@@ -37,5 +39,9 @@
 | `disposition` | 結果 Tag |
 | `rejectReason` | 拒絕原因 |
 | `bodyByteSize` + redacted signature | raw 區塊 |
+| `receivedAtMs` | 收件時間（台北） |
+| `posSentAtMs` | 送件時間（台北含 ms） |
+| `(receivedAtMs - posSentAtMs) / 1000` | 作業時間（秒，三位小數） |
+| `posTimeStmpRaw`（`posSentAtMs` 缺） | 表格「格式錯誤」；展開列顯示 raw 文字 |
 
-空值顯示 `—`；數值 `0` 顯示 `0`。
+空值顯示 `—`；數值 `0` 顯示 `0`；作業時間 `0` 顯示 `0.000`。

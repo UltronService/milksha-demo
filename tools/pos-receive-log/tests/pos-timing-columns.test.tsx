@@ -87,6 +87,15 @@ describe('POS timing columns (11–18)', () => {
     expect(screen.getByTestId('processing-duration-cell').textContent).toBe('—');
   });
 
+  it('18. zero processing duration shows 0.000 in table', async () => {
+    await renderTimingRecord({
+      receivedAtMs: SAMPLE_MS_A,
+      posSentAtMs: SAMPLE_MS_A,
+      posTimeStmpRaw: null,
+    });
+    expect(screen.getByTestId('processing-duration-cell').textContent).toBe('0.000');
+  });
+
   it('17. original seven columns and two expanded zones remain', async () => {
     const user = userEvent.setup();
     await renderTimingRecord({ posSentAtMs: SAMPLE_MS_A, posTimeStmpRaw: null });

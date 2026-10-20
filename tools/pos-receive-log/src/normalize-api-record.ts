@@ -125,9 +125,25 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
   const r = raw as Record<string, unknown>;
   const legacyResult = r.result as ReceiveResult | undefined;
   const result = legacyResult ?? mapDisposition(r.disposition);
+  const posSentAtMsRaw = r.posSentAtMs;
+  const posSentAtMs =
+    posSentAtMsRaw !== null &&
+    posSentAtMsRaw !== undefined &&
+    typeof posSentAtMsRaw === 'number' &&
+    Number.isFinite(posSentAtMsRaw)
+      ? posSentAtMsRaw
+      : null;
+  const posTimeStmpRawRaw = r.posTimeStmpRaw;
+  const posTimeStmpRaw =
+    posTimeStmpRawRaw === null || posTimeStmpRawRaw === undefined
+      ? null
+      : String(posTimeStmpRawRaw).slice(0, 64);
+
   return {
     id: String(r.id ?? ''),
     receivedAtMs: parseReceivedAtMs(r),
+    posTimeStmpRaw,
+    posSentAtMs,
     storeNumber: String(r.storeNumber ?? r.storeId ?? ''),
     entry: (r.entry as EntryType | undefined) ?? mapSourceToEntry(r.source),
     sourceIp: String(r.sourceIp ?? r.clientIp ?? ''),

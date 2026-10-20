@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { displayCount, displayText } from './display-value';
 import { fetchReceiveLogs, FetchReceiveLogsError } from './fetch-receive-logs';
 import { formatTaipeiWithMs } from './format-taipei-time';
+import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-display';
 import { sourceTypeLabel } from './source-type-label';
 import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
 
@@ -68,6 +69,12 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
           </ul>
         </div>
       )}
+      {record.posTimeStmpRaw ? (
+        <div style={{ marginBottom: 12 }}>
+          <Typography.Text strong>POS timeStmp（raw）</Typography.Text>
+          <div data-testid="pos-time-stmp-raw">{record.posTimeStmpRaw}</div>
+        </div>
+      ) : null}
       <div data-testid="raw-payload">
         <Typography.Text strong>raw payload</Typography.Text>
         <pre>{record.rawPayload || '—'}</pre>
@@ -152,6 +159,30 @@ export function ReceiveLogPage({
         render: (ms: number) => (
           <span data-testid="received-at-cell">{formatTaipeiWithMs(ms)} Taipei</span>
         ),
+      },
+      {
+        title: '送件時間',
+        key: 'sentAt',
+        render: (_, row) => (
+          <span data-testid="sent-at-cell">
+            {formatSentTimeCell(row.posSentAtMs, row.posTimeStmpRaw)}
+          </span>
+        ),
+      },
+      {
+        title: '作業時間',
+        key: 'processingDuration',
+        render: (_, row) => {
+          const duration = formatProcessingDuration(row.receivedAtMs, row.posSentAtMs);
+          return (
+            <span data-testid="processing-duration-cell">
+              {duration.text}
+              {duration.clockSkew ? (
+                <span data-testid="clock-skew-note"> 兩邊時鐘不同</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         title: '門市',
