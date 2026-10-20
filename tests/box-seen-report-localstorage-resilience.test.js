@@ -27,7 +27,7 @@ function loadReporterStack(sandbox) {
 test('corrupt reported-store JSON does not crash reporter; can still send', async function () {
   const sends = [];
   const storage = {
-    _m: new Map([['milksha:box-seen-reported:v2:zz-qa-store-a', '{not-json']],
+    _m: new Map([['milksha:box-seen-reported:v2:zz-qa-store-a', '{not-json}']]),
     getItem(k) {
       return this._m.has(k) ? this._m.get(k) : null;
     },

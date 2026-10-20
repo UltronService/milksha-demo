@@ -30,6 +30,7 @@ function loadBoxSeenStack(sandbox) {
   sandbox.URLSearchParams = URLSearchParams;
   sandbox.QMS = sandbox.QMS || {};
   const files = [
+    'js/board/box-seen-payload-contract.js',
     'js/board/box-id.js',
     'js/board/box-seen-reported-store.js',
     'js/board/box-seen-clock.js',

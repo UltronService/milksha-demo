@@ -103,14 +103,7 @@
     if (!storage) {
       return;
     }
-    try {
-      storage.setItem(
-        storageKey(storeId),
-        JSON.stringify({ order: state.order, set: state.set }),
-      );
-    } catch (e) {
-      /* ignore */
-    }
+    storage.setItem(storageKey(storeId), JSON.stringify({ order: state.order, set: state.set }));
   }
 
   /**
@@ -146,7 +139,11 @@
       state.set[key] = true;
       state.order.push(key);
       trim();
-      saveState(storage, storeId, state);
+      try {
+        saveState(storage, storeId, state);
+      } catch (e) {
+        /* quota or storage errors must not break board */
+      }
     }
 
     function count() {

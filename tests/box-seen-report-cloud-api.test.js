@@ -23,7 +23,9 @@ test('fake-cloud boxHeartbeat returns serverNowMs', async function () {
 
 test('index.html loads box seen modules before cloud-runtime', function () {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const contract = html.indexOf('js/board/box-seen-payload-contract.js');
   const boxId = html.indexOf('js/board/box-id.js');
+  assert.ok(contract > 0 && boxId > contract);
   const runtime = html.indexOf('js/receiver/cloud-runtime.js');
   assert.ok(boxId > 0 && runtime > boxId);
   assert.match(html, /box-seen-reported-store\.js/);

@@ -57,7 +57,10 @@ test('contract module lists backend item time field names (no At)', function () 
     fs.readFileSync(path.join(ROOT, 'js', 'board', 'box-seen-payload-contract.js'), 'utf8'),
     sandbox,
   );
-  assert.deepEqual(sandbox.QMS.Board.BOX_SEEN_ITEM_TIME_FIELD_NAMES, BACKEND_ITEM_TIME_KEYS);
+  assert.deepEqual(
+    Array.from(sandbox.QMS.Board.BOX_SEEN_ITEM_TIME_FIELD_NAMES),
+    BACKEND_ITEM_TIME_KEYS,
+  );
 });
 
 test('boxSeenReport sent item keys use backend time field names exactly', async function () {
