@@ -2,10 +2,11 @@ import { Alert, DatePicker, Empty, Input, Space, Spin, Switch, Table, Tag, Typog
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { displayCount, displayText } from './display-value';
 import { fetchReceiveLogs, FetchReceiveLogsError } from './fetch-receive-logs';
 import { formatTaipeiWithMs } from './format-taipei-time';
 import { sourceTypeLabel } from './source-type-label';
-import type { ReceiveLogRecord, ReceiveResult } from './types';
+import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
 
 const TaipeiRangePicker = DatePicker.RangePicker;
 
@@ -30,12 +31,16 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
     <div style={{ marginBottom: 12 }}>
       <Typography.Text strong>{title}</Typography.Text>
       <ul data-testid={`zone-numbers-${title}`}>
-        {zone.numbers.map((item) => (
-          <li key={`${item.number}-${item.sourceType}`}>
-            {item.number}{' '}
-            <Tag data-testid="source-type-tag">{sourceTypeLabel(item.sourceType)}</Tag>
-          </li>
-        ))}
+        {zone.numbers.length === 0 ? (
+          <li>—</li>
+        ) : (
+          zone.numbers.map((item) => (
+            <li key={`${item.number}-${item.sourceType ?? 'na'}`}>
+              {item.number}{' '}
+              <Tag data-testid="source-type-tag">{sourceTypeLabel(item.sourceType)}</Tag>
+            </li>
+          ))
+        )}
       </ul>
       {zone.notShown.length > 0 && (
         <div data-testid="not-shown-reasons">
@@ -65,7 +70,7 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
       )}
       <div data-testid="raw-payload">
         <Typography.Text strong>raw payload</Typography.Text>
-        <pre>{record.rawPayload}</pre>
+        <pre>{record.rawPayload || '—'}</pre>
         {record.rawPayloadTruncated ? <Typography.Text type="secondary">（已截斷）</Typography.Text> : null}
       </div>
     </div>
@@ -152,26 +157,29 @@ export function ReceiveLogPage({
         title: '門市',
         dataIndex: 'storeNumber',
         key: 'storeNumber',
+        render: (value: string) => displayText(value),
       },
       {
         title: '入口',
         dataIndex: 'entry',
         key: 'entry',
+        render: (value: EntryType) => displayText(value),
       },
       {
         title: '來源 IP',
         dataIndex: 'sourceIp',
         key: 'sourceIp',
+        render: (value: string) => displayText(value),
       },
       {
         title: '請取餐',
         key: 'readyCount',
-        render: (_, row) => row.zones.ready.count,
+        render: (_, row) => displayCount(row.zones.ready.count),
       },
       {
         title: '準備中',
         key: 'prepCount',
-        render: (_, row) => row.zones.preparing.count,
+        render: (_, row) => displayCount(row.zones.preparing.count),
       },
       {
         title: '結果',
@@ -191,7 +199,7 @@ export function ReceiveLogPage({
       <Space wrap style={{ marginBottom: 16 }} data-testid="filter-bar">
         <Input
           aria-label="門市編號"
-          placeholder="門市編號"
+          placeholder="空白＝全部門市"
           value={storeNumber}
           onChange={(e) => setStoreNumber(e.target.value)}
           style={{ width: 200 }}

@@ -6,7 +6,7 @@ export type ReceiveResult = 'success' | 'failed' | 'skipped';
 
 export interface ZoneNumberItem {
   number: string;
-  sourceType: SourceType;
+  sourceType?: SourceType;
 }
 
 export interface NotShownItem {

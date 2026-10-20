@@ -7,6 +7,9 @@ const LABELS: Record<SourceType, string> = {
   milksha_points: '迷點',
 };
 
-export function sourceTypeLabel(sourceType: SourceType): string {
+export function sourceTypeLabel(sourceType: SourceType | undefined): string {
+  if (!sourceType) {
+    return '—';
+  }
   return LABELS[sourceType];
 }

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReceiveLogPage } from '../src/receive-log-page';
 import { buildManyRecords, buildSampleRecord, SAMPLE_MS_A } from '../mock/fixtures';
 import { mockApiBase, mockControl } from './setup';
+import realFeedRecord from './fixtures/pos-intake-log-feed-record.json';
 
 async function readLastFeedRequest(): Promise<{
   hasStoreId: boolean;
@@ -159,6 +160,22 @@ describe('POS receive log page', () => {
     });
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(8000);
+  });
+
+  it('15. maps live feed fields: counts, numbers, raw payload in expand', async () => {
+    await mockControl({ reset: true, record: realFeedRecord });
+    const user = userEvent.setup();
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="s030570" />);
+    await waitFor(() => {
+      expect(screen.getByText('s030570')).toBeInTheDocument();
+    });
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('20')).toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: /expand/i })[0]);
+    const expanded = screen.getByTestId('expanded-row');
+    expect(within(expanded).getByText('#7805')).toBeInTheDocument();
+    expect(within(expanded).getByTestId('raw-payload').textContent).toContain('1794');
+    expect(within(expanded).getByTestId('raw-payload').textContent).toContain('<REDACTED>');
   });
 
   it('14. optional store: empty omits storeId and shows all stores; filled sends storeId', async () => {
