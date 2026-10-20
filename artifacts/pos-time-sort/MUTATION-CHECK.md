@@ -26,6 +26,30 @@ Payload at `T2` is `[8102, 8101]` so index tie-break alone puts `8101` first.
 
 ---
 
+## §12 — mixed POS / updatedAt / local receive sort order
+
+**Test asserts exact order:** `['8202', '8203', '8201']` (local receive ms → `updatedAt` → `firstSeenPosAtMs`).
+
+**Mutate:** Reverse primary time comparator in `js/board/board-item-sort.js` (`tb - ta` → `ta - tb`).
+
+```bash
+node -e "
+const fs=require('fs');
+let s=fs.readFileSync('js/board/board-item-sort.js','utf8');
+s=s.replace('return tb - ta;','return ta - tb;');
+fs.writeFileSync('js/board/board-item-sort.js',s);
+"
+node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern '12 mixed with'
+git checkout js/board/board-item-sort.js
+```
+
+| State | Test 12 |
+|-------|---------|
+| Mutated | **FAIL** — order becomes `['8201','8203','8202']` (oldest-first) |
+| Restored | **PASS** — `['8202','8203','8201']` |
+
+---
+
 ## §20a — `motion=on` must use animator (required)
 
 **Mutate:** Force `isBoardMotionOn()` to return `false` in `js/milksha-board.js` (ignore `?motion=on`).
