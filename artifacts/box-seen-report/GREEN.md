@@ -15,8 +15,8 @@ Contract: `js/board/box-seen-payload-contract.js`
 
 | | SHA |
 |---|-----|
-| Red (At names in tests) | see `git log` |
-| Green (revert payload keys) | see `git log` |
+| Red (At names in tests) | `7317f9e` |
+| Green (revert payload keys) | `604c7a4` |
 
 ## Kept from QA
 
