@@ -15,7 +15,7 @@
 | 1h memory | Risk unbounded reported object | Bounded store (~few KB per store) |
 
 - Red: `ba293e4` (3 failing)
-- Green: (see `git log -1` on branch after push)
+- Green: `62d5200`
 
 ## Unit suite (3× vs `main`)
 
