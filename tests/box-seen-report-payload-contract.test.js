@@ -9,10 +9,10 @@ const vm = require('node:vm');
 const ROOT = path.join(__dirname, '..');
 
 const BACKEND_ITEM_TIME_KEYS = [
-  'firstDataLocalMs',
-  'firstPaintLocalMs',
-  'firstDataCorrectedMs',
-  'firstPaintCorrectedMs',
+  'firstDataAtLocalMs',
+  'firstPaintAtLocalMs',
+  'firstDataAtCorrectedMs',
+  'firstPaintAtCorrectedMs',
 ];
 
 function makeStorage() {
@@ -49,7 +49,7 @@ function loadReporterStack(sandbox) {
   return sandbox.QMS.Board;
 }
 
-test('contract module lists backend item time field names (no At)', function () {
+test('contract module lists backend #45 item time field names (with At)', function () {
   const sandbox = { globalThis: {}, Date: Date };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
@@ -108,9 +108,11 @@ test('boxSeenReport sent item keys use backend time field names exactly', async 
   for (const key of BACKEND_ITEM_TIME_KEYS) {
     assert.ok(Object.prototype.hasOwnProperty.call(item, key), 'missing ' + key);
   }
-  assert.equal(Object.keys(item).filter((k) => k.includes('AtLocal') || k.includes('AtCorrected')).length, 0);
-  assert.equal(item.firstDataLocalMs, 20000);
-  assert.equal(item.firstPaintLocalMs, 20000);
-  assert.equal(item.firstDataCorrectedMs, 19000);
-  assert.equal(item.firstPaintCorrectedMs, 19000);
+  for (const bad of ['firstDataLocalMs', 'firstPaintLocalMs', 'firstDataCorrectedMs', 'firstPaintCorrectedMs']) {
+    assert.equal(Object.prototype.hasOwnProperty.call(item, bad), false, 'must not use renamed ' + bad);
+  }
+  assert.equal(item.firstDataAtLocalMs, 20000);
+  assert.equal(item.firstPaintAtLocalMs, 20000);
+  assert.equal(item.firstDataAtCorrectedMs, 19000);
+  assert.equal(item.firstPaintAtCorrectedMs, 19000);
 });

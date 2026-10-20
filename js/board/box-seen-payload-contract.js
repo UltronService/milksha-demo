@@ -1,5 +1,5 @@
 /**
- * boxSeenReport item time fields — must match milksha-cloud (PR #43/#44); no "At" in names.
+ * boxSeenReport item time fields — milksha-cloud PR #45 (names include "At").
  */
 (function (root) {
   'use strict';
@@ -9,10 +9,10 @@
 
   /** @type {readonly string[]} */
   const BOX_SEEN_ITEM_TIME_FIELD_NAMES = [
-    'firstDataLocalMs',
-    'firstPaintLocalMs',
-    'firstDataCorrectedMs',
-    'firstPaintCorrectedMs',
+    'firstDataAtLocalMs',
+    'firstPaintAtLocalMs',
+    'firstDataAtCorrectedMs',
+    'firstPaintAtCorrectedMs',
   ];
 
   QMS.Board.BOX_SEEN_ITEM_TIME_FIELD_NAMES = BOX_SEEN_ITEM_TIME_FIELD_NAMES;

@@ -184,10 +184,10 @@ test('box seen report payload uses fixed field names', async function () {
   assert.equal(p.items.length, 1);
   assert.equal(p.items[0].ticketNo, '1001');
   assert.equal(p.items[0].intakeLogId, 'in-1');
-  assert.equal(p.items[0].firstDataLocalMs, 20000);
-  assert.equal(p.items[0].firstPaintLocalMs, 20000);
-  assert.equal(p.items[0].firstDataCorrectedMs, 19000);
-  assert.equal(p.items[0].firstPaintCorrectedMs, 19000);
+  assert.equal(p.items[0].firstDataAtLocalMs, 20000);
+  assert.equal(p.items[0].firstPaintAtLocalMs, 20000);
+  assert.equal(p.items[0].firstDataAtCorrectedMs, 19000);
+  assert.equal(p.items[0].firstPaintAtCorrectedMs, 19000);
 });
 
 test('reports each ticket once per board (persists in localStorage)', async function () {
