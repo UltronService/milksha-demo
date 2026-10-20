@@ -1,6 +1,6 @@
 /**
- * In-memory chime dedupe: each ready item id rings at most once per business day.
- * Cleared on business-date roll (03:00 Taipei). First apply after load never rings.
+ * In-memory chime policy: ring only when an id newly enters the ready set.
+ * First apply after load never rings. Ready occupancy tracked for memory bounds.
  */
 (function (root) {
   'use strict';
@@ -14,79 +14,56 @@
   function createBoardChimePolicy(options) {
     const getBusinessDate = options.getBusinessDate;
     const newlyReadyIds = options.newlyReadyIds;
-    let chimedIds = new Set();
-    let trackedBusinessDate = getBusinessDate();
+    let readyOccupancy = new Set();
     let isFirstBatch = true;
 
-    function clearChimedForNewBusinessDay() {
-      chimedIds = new Set();
-      trackedBusinessDate = getBusinessDate();
-    }
-
-    function syncBusinessDate() {
-      const bd = getBusinessDate();
-      if (!bd) {
-        return;
-      }
-      if (trackedBusinessDate !== bd) {
-        clearChimedForNewBusinessDay();
-      }
+    function syncReadyOccupancy(nextReady) {
+      readyOccupancy = new Set(nextReady);
     }
 
     function onBusinessDateRoll() {
-      clearChimedForNewBusinessDay();
+      /* chime no longer keyed by business date */
+    }
+
+    function onBoardCleared() {
+      isFirstBatch = false;
+      readyOccupancy = new Set();
+    }
+
+    function getReadyOccupancyCount() {
+      return readyOccupancy.size;
     }
 
     /**
      * @param {Set<string>} prevReady
      * @param {Set<string>} nextReady
-     * @param {{ silent?: boolean, suppressRing?: boolean }} [opts]
+     * @param {{ silent?: boolean, suppressRing?: boolean, preserveFirstBatchFlag?: boolean }} [opts]
      * @returns {string[]}
      */
-    function numberFromItemId(id) {
-      const parts = String(id).split(':');
-      return parts.length > 1 ? parts[parts.length - 1] : parts[0];
-    }
-
-    function chimeDedupeKey(id) {
-      const bd = getBusinessDate();
-      return bd + '#' + numberFromItemId(id);
-    }
-
     function pickRingIds(prevReady, nextReady, opts) {
       if (!getBusinessDate()) {
         return [];
       }
-      syncBusinessDate();
       if (isFirstBatch) {
         if (!(opts && opts.preserveFirstBatchFlag)) {
           isFirstBatch = false;
         }
-        nextReady.forEach(function (id) {
-          chimedIds.add(chimeDedupeKey(id));
-        });
+        syncReadyOccupancy(nextReady);
         return [];
       }
+      syncReadyOccupancy(nextReady);
       if (opts && (opts.silent || opts.suppressRing)) {
         return [];
       }
-      const newly = newlyReadyIds(prevReady, nextReady);
-      const ringIds = [];
-      for (let i = 0; i < newly.length; i += 1) {
-        const id = newly[i];
-        const key = chimeDedupeKey(id);
-        if (!chimedIds.has(key)) {
-          ringIds.push(id);
-          chimedIds.add(key);
-        }
-      }
-      return ringIds;
+      return newlyReadyIds(prevReady, nextReady);
     }
 
     return {
       pickRingIds: pickRingIds,
       onBusinessDateRoll: onBusinessDateRoll,
-      syncBusinessDate: syncBusinessDate,
+      onBoardCleared: onBoardCleared,
+      getReadyOccupancyCount: getReadyOccupancyCount,
+      syncBusinessDate: function () {},
     };
   }
 

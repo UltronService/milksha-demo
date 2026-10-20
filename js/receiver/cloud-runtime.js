@@ -451,6 +451,9 @@
 
     function clearGuestBoard(opts) {
       const o = opts || {};
+      if (chimePolicy && typeof chimePolicy.onBoardCleared === 'function') {
+        chimePolicy.onBoardCleared();
+      }
       applyNumberContent([], localSeq, {
         silent: o.silent !== false,
         preserveFirstBatchFlag: true,

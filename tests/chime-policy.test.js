@@ -50,7 +50,7 @@ test('first batch after load is silent', function () {
   assertRingEqual(policy.pickRingIds(prev, next), ['store:1002']);
 });
 
-test('ready preparing ready again does not re-chime same business day', function () {
+test('ready leave and re-enter ready rechimes same business day', function () {
   const create = loadChimePolicy();
   const policy = create({
     getBusinessDate: function () {
@@ -69,7 +69,7 @@ test('ready preparing ready again does not re-chime same business day', function
   assertRingEqual(policy.pickRingIds(prev, next), []);
   prev = next;
   next = new Set(['store:55', 'store:56']);
-  assertRingEqual(policy.pickRingIds(prev, next), []);
+  assertRingEqual(policy.pickRingIds(prev, next), ['store:56']);
 });
 
 test('silent and suppressRing skip chime', function () {
@@ -104,7 +104,7 @@ test('stale cache clear preserves first-batch silent flag', function () {
   );
 });
 
-test('same number different source rings once per business day', function () {
+test('same number different source each chimes on newly ready', function () {
   const create = loadChimePolicy();
   const policy = create({
     getBusinessDate: function () {
@@ -115,10 +115,10 @@ test('same number different source rings once per business day', function () {
   policy.pickRingIds(new Set(), new Set(['store:77']));
   let prev = new Set(['store:77']);
   let next = new Set(['store:77', 'point:77']);
-  assertRingEqual(policy.pickRingIds(prev, next), []);
+  assertRingEqual(policy.pickRingIds(prev, next), ['point:77']);
 });
 
-test('after 03:00 business-day roll chimed set clears and ready can chime again', function () {
+test('business-day roll does not rechime steady ready; re-enter still chimes', function () {
   const create = loadChimePolicy();
   let bd = '2026-10-02';
   const policy = create({
@@ -131,7 +131,8 @@ test('after 03:00 business-day roll chimed set clears and ready can chime again'
   policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10']));
   policy.pickRingIds(new Set(['store:9', 'store:10']), new Set(['store:9']));
   policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10']));
+  assertRingEqual(policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10'])), ['store:10']);
   bd = '2026-10-03';
   policy.onBusinessDateRoll();
-  assertRingEqual(policy.pickRingIds(new Set(['store:9']), new Set(['store:9', 'store:10'])), ['store:10']);
+  assertRingEqual(policy.pickRingIds(new Set(['store:9', 'store:10']), new Set(['store:9', 'store:10'])), []);
 });
