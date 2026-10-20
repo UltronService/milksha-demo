@@ -14,7 +14,7 @@ test('pos-receive-log page delay column header is 比收件晚（秒）', functi
   assert.match(html, /比收件晚（秒）/);
 });
 
-test('pos-receive-log app wires format helpers for IP mask and delay seconds', function () {
+test('pos-receive-log app wires format helpers for 完整 IP and delay seconds', function () {
   const appSrc = fs.readFileSync(APP, 'utf8');
   const html = fs.readFileSync(PAGE, 'utf8');
   assert.match(appSrc, /formatIpForDisplay/);
