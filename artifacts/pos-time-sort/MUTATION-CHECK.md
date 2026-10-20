@@ -2,7 +2,9 @@
 
 Run from repo root; always `git checkout` affected files after each mutation.
 
-## §11 — local `firstSeenAt` sort fallback
+## §11 — local receive time (`item.firstSeenAt` / `item.readyAt`)
+
+**Product “local received time”** is not a separate sort API argument. `applyPayload` stamps `firstSeenAt` / `readyAt` from `Date.now()` on each row; `resolvePreparingSortMs` / `resolveReadySortMs` read those fields after POS ms and `updatedAt`. A former `localReceiveMs` function parameter was always passed `0` from `compareBoardZoneItems` and was removed as unreachable dead code (2026-10-20).
 
 **Mutate:** Remove `resolvePreparingSortMs` use of `item.firstSeenAt` in `js/board/board-item-sort.js`.
 

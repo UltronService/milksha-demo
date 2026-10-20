@@ -403,7 +403,7 @@ test('10 missing POS times fall back to cloud updatedAt on row', function () {
   runtime.destroy();
 });
 
-test('11 missing POS and updatedAt uses local receive time', function () {
+test('11 missing POS and updatedAt uses local receive time (firstSeenAt from applyPayload)', function () {
   const h = bootMilkshaHarness('', { startMs: FX.T0 });
   h.runtime.applyPayload([prepRow('8101')], { silent: true });
   h.sandbox.__setNowMs(FX.T2);

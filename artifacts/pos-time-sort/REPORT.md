@@ -33,13 +33,29 @@
 
 **Before implementation:** New tests 1–10, 13, 15–17, 22 failed because sorting used local `Date.now()` and tickets did not carry POS ms. Tests 11–12, 14, 18–21 already matched main behavior or constants.
 
-## Unit tests (full `npm test`)
-| Branch | tests | pass | fail |
-|--------|------:|-----:|-----:|
-| `main` | 352 | 342 | 10 |
-| PR head | 375 | 365 | 10 |
+## Local receive time (QA Medium 2)
 
-PR adds 22 tests (all pass); fail count matches `main` (layout/cream-band harness flakes on CI VM).
+“Local received time” sorting is **`firstSeenAt` / `readyAt` on board rows** (stamped in `applyPayload`), read in `resolvePreparingSortMs` / `resolveReadySortMs` after POS ms and `updatedAt`. Test **#11** + **MUTATION-CHECK §11** cover this.
+
+A unused `localReceiveMs` argument to those resolvers was **always `0`** from `compareBoardZoneItems` and never observable; it was **removed** (not a second fallback layer).
+
+## Unit tests (full `npm test`)
+
+Cloud VM snapshot (2026-10-20); layout/cream-band checks need a live board harness and often fail here while `main` may show 0–1 failures in QA’s environment.
+
+| `main` run | tests | pass | fail |
+|------------|------:|-----:|-----:|
+| 1 | 352 | 342 | 10 |
+| 2 | _(see §3× stability below)_ | | |
+| 3 | | | |
+
+| PR head run | tests | pass | fail |
+|-------------|------:|-----:|-----:|
+| 1 | _(see §3× stability below)_ | | |
+| 2 | | | |
+| 3 | | | |
+
+PR adds 23 focused tests in `milksha-board-pos-time-sort.test.js` (all pass when run alone).
 
 ## Unit tests (focused)
 - `node --test tests/milksha-board-pos-time-sort.test.js`: 23/23 pass

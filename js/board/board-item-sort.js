@@ -30,11 +30,11 @@
   }
 
   /**
+   * Local receive time is `item.firstSeenAt` (preparing) / `item.readyAt` (ready), set in applyPayload.
    * @param {object} item
-   * @param {number} localReceiveMs
    * @returns {number}
    */
-  function resolvePreparingSortMs(item, localReceiveMs) {
+  function resolvePreparingSortMs(item) {
     const fromPos = parseMs(item && item[F.firstSeenPosAtMs]);
     if (fromPos != null) {
       return fromPos;
@@ -47,15 +47,14 @@
     if (local != null) {
       return local;
     }
-    return Number.isFinite(localReceiveMs) ? localReceiveMs : 0;
+    return 0;
   }
 
   /**
    * @param {object} item
-   * @param {number} localReceiveMs
    * @returns {number}
    */
-  function resolveReadySortMs(item, localReceiveMs) {
+  function resolveReadySortMs(item) {
     const fromPos = parseMs(item && item[F.readyPosAtMs]);
     if (fromPos != null) {
       return fromPos;
@@ -68,7 +67,7 @@
     if (local != null) {
       return local;
     }
-    return Number.isFinite(localReceiveMs) ? localReceiveMs : 0;
+    return 0;
   }
 
   /**
@@ -94,10 +93,8 @@
    * @returns {number}
    */
   function compareBoardZoneItems(a, b, zone) {
-    const ta =
-      zone === 'ready' ? resolveReadySortMs(a, 0) : resolvePreparingSortMs(a, 0);
-    const tb =
-      zone === 'ready' ? resolveReadySortMs(b, 0) : resolvePreparingSortMs(b, 0);
+    const ta = zone === 'ready' ? resolveReadySortMs(a) : resolvePreparingSortMs(a);
+    const tb = zone === 'ready' ? resolveReadySortMs(b) : resolvePreparingSortMs(b);
     if (ta !== tb) {
       return tb - ta;
     }
