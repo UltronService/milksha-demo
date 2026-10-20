@@ -16,6 +16,9 @@ const ROOT = path.join(__dirname, '..');
 const BOARD_AUTO_PAIR_DIFF_WHITELIST = [
   'js/board/board-auto-pair.js',
   'js/board/board-auto-pair-host.js',
+  'js/board/box-id.js',
+  'js/board/box-seen-clock.js',
+  'js/board/box-seen-report.js',
 ];
 
 const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
