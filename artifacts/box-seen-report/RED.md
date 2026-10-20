@@ -1,7 +1,7 @@
 # Box seen report — red milestone
 
 - **Branch:** `cursor/box-seen-report`
-- **Commit:** (see git log after red commit)
+- **Commit:** `4230cd3` (red — 7 failing new tests)
 - **New failing tests:** 7
 
 ## Scope (this slice)
