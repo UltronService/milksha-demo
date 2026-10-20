@@ -316,28 +316,61 @@ test('v2-12 across midnight still-present ready does not chime; leave and re-ent
   );
 });
 
-test('v2-14 transport mode switch keeps ready baseline without rechime', function () {
-  const { policy } = makePolicy('2026-10-02');
-  bootSilent(policy, ['store:1', 'store:2']);
-  const baseline = new Set(['store:1', 'store:2']);
-  assert.deepEqual(policy.pickRingIds(baseline, baseline), []);
-  assert.deepEqual(policy.pickRingIds(baseline, new Set(['store:1', 'store:2', 'store:3'])), ['store:3']);
-});
-
-test('v2-15 ready occupancy memory pruned when numbers leave ready', function () {
+test('v2-14 realtime then polling and back: full list resend does not rechime ready', function () {
   const { policy } = makePolicy('2026-10-02');
   bootSilent(policy, []);
   let prev = new Set();
-  for (let i = 0; i < 1000; i += 1) {
-    const id = 'store:' + String(i).padStart(4, '0');
-    const next = new Set([id]);
-    policy.pickRingIds(prev, next);
-    prev = next;
+  const ready = new Set(['store:1001', 'store:1002']);
+  assert.deepEqual(policy.pickRingIds(prev, ready), ['store:1001', 'store:1002']);
+  prev = new Set(ready);
+  assert.deepEqual(policy.pickRingIds(prev, ready), []);
+  assert.deepEqual(policy.pickRingIds(prev, ready), []);
+  assert.deepEqual(policy.pickRingIds(prev, ready), []);
+  const withNew = new Set(['store:1001', 'store:1002', 'store:1003']);
+  assert.deepEqual(policy.pickRingIds(prev, withNew), ['store:1003']);
+});
+
+test('v2-15 simulated 24h and 1000 numbers: occupancy record stays bounded', function () {
+  const { policy, setBusinessDate } = makePolicy('2026-10-02');
+  bootSilent(policy, []);
+  const startCount = policy.getReadyOccupancyCount();
+  const batchCount = 24;
+  const totalNumbers = 1000;
+  const maxReadyWindow = 8;
+  let prev = new Set();
+  let currentReady = new Set();
+  let maxOccupancy = startCount;
+  let numbersTouched = 0;
+  const baseEventsPerBatch = Math.floor(totalNumbers / batchCount);
+  const remainderEvents = totalNumbers % batchCount;
+  for (let batch = 0; batch < batchCount; batch += 1) {
+    const hour = batch % 24;
+    setBusinessDate('2026-10-02');
+    if (hour === 0 && batch > 0) {
+      setBusinessDate('2026-10-03');
+    }
+    assert.equal(policy.pickRingIds(prev, currentReady).length, 0);
+    prev = new Set(currentReady);
+    const eventsThisBatch = baseEventsPerBatch + (batch < remainderEvents ? 1 : 0);
+    for (let e = 0; e < eventsThisBatch; e += 1) {
+      const id = 'store:' + String(numbersTouched % totalNumbers).padStart(4, '0');
+      numbersTouched += 1;
+      currentReady.add(id);
+      while (currentReady.size > maxReadyWindow) {
+        const oldest = currentReady.values().next().value;
+        currentReady.delete(oldest);
+      }
+      policy.pickRingIds(prev, currentReady);
+      prev = new Set(currentReady);
+      maxOccupancy = Math.max(maxOccupancy, policy.getReadyOccupancyCount());
+    }
   }
-  const current = new Set(['store:0999']);
-  assert.equal(policy.getReadyOccupancyCount(), 1);
-  policy.pickRingIds(current, new Set());
-  assert.equal(policy.getReadyOccupancyCount(), 0);
+  const endCount = policy.getReadyOccupancyCount();
+  assert.equal(startCount, 0);
+  assert.equal(numbersTouched, totalNumbers);
+  assert.equal(endCount, currentReady.size);
+  assert.ok(endCount <= maxReadyWindow);
+  assert.ok(maxOccupancy <= maxReadyWindow);
 });
 
 test('v2-16 after board clear full list resend chimes as new entries', function () {

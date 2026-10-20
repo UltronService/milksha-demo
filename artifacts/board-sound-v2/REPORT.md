@@ -27,8 +27,8 @@ Command: `node --test tests/board-sound-v2-acceptance.test.js` with `main` chime
 | 11 | no date dependency | FAIL (dedupe key used business date) |
 | 12 | midnight steady / re-enter | FAIL |
 | 13 | all existing unit tests | see green below |
-| 14 | mode switch baseline | FAIL (false negative on harness) |
-| 15 | occupancy prune | FAIL (no API) |
+| 14 | realtime ↔ polling resend | FAIL (same-day dedupe; weak harness) |
+| 15 | 24h / 1000 occupancy | FAIL (no `getReadyOccupancyCount`) |
 | 16 | clear then full list | FAIL (no `onBoardCleared`) |
 
 **Why only 7–10 passed:** first-batch silence, 3-cap, mute, and FIFO queue live outside same-day dedupe; the rest required removing per-day number dedupe and clear-board baseline reset.
@@ -48,6 +48,28 @@ npx playwright test tests/e2e/main-5501-local-baseline.spec.mjs → 1/1
 - `js/receiver/chime-policy.js` — ring only on newly entering ready set; prune occupancy; `onBoardCleared()`.
 - `js/receiver/cloud-runtime.js` — call `onBoardCleared()` on guest clear.
 - Asset bump `20261019a` (`config/asset-version.json` + HTML `?v=`).
+
+## Acceptance detail: #14 (transport mode switch)
+
+**Result: PASS** (`v2-14` in `tests/board-sound-v2-acceptance.test.js`)
+
+**What the test does:** After boot-silent baseline, models **realtime** establishing `store:1001` + `store:1002` on 請取餐 (two chimes). `prevReady` is then fixed to that set. Three consecutive **full-list resends** of the same two ids model **2s polling**, then **back to realtime**—each resend calls `pickRingIds(prev, ready)` with `prev === ready`. **Expectation:** zero ring ids every time. Only when `store:1003` is added does one chime fire.
+
+## Acceptance detail: #15 (memory prune / long run)
+
+**Result: PASS** (`v2-15` in `tests/board-sound-v2-acceptance.test.js`)
+
+**What the test does:** Simulates **24 batches** (24h-style ticks; business date rolls at batch 24→`2026-10-03`). Each batch starts with a **full ready-list resend** (no chime), then processes enter/leave events. **1,000** distinct ids used in order `store:0000` … `store:0999` (cycled by touch index). Ready window capped at **8** concurrent numbers (leave oldest when exceeded).
+
+| Metric | Value |
+|--------|-------|
+| `getReadyOccupancyCount()` at start | **0** |
+| After 24 batches + 1,000 number touches | **≤ 8** (equals current ready set size) |
+| Max occupancy during run | **≤ 8** (bounded) |
+| Batch count | **24** |
+| Numbers touched | **1,000** (`store:0000`–`store:0999` cycle) |
+
+Record holds only ids still in the current 請取餐 set at end; no unbounded growth across the simulated day.
 
 ## Manual UAT (zz-qa-* only)
 
