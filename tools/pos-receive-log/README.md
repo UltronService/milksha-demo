@@ -19,6 +19,20 @@ API（完整 URL）：`GET posIntakeLogFeed?storeId=&limit=`（`limit` 預設 20
 
 預設 `config.default.json` 指向 test cloud `posIntakeLogFeed`；可用 query `?apiBase=` 覆寫。
 
+## 表格欄位（與 UI 標題一致）
+
+1. 收件時間（Taipei）
+2. 送件時間
+3. 作業時間（秒）
+4. 門市
+5. 入口
+6. 來源 IP
+7. 請取餐
+8. 準備中
+9. 結果
+
+展開列另含：請取餐／準備中號碼清單、拒絕送出（若有）、POS timeStmp（raw）、raw payload。詳見 `docs/pos-intake-log.md`。
+
 ## Firebase Hosting（僅 milksha-qms-dev）
 
 ```bash

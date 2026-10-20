@@ -27,21 +27,36 @@
 | `posSentAtMs` | POS 送件時間（ms，可 null） |
 | `posTimeStmpRaw` | POS 原始 timeStmp 字串（≤64，可 null） |
 
-## QA 頁面對照
+## QA 頁面表格欄位（UI 標題）
 
-| API | UI |
-|-----|-----|
+| 順序 | UI 欄位名稱 |
+|------|-------------|
+| 1 | 收件時間（Taipei） |
+| 2 | 送件時間 |
+| 3 | 作業時間（秒） |
+| 4 | 門市 |
+| 5 | 入口 |
+| 6 | 來源 IP |
+| 7 | 請取餐 |
+| 8 | 準備中 |
+| 9 | 結果 |
+
+## API → UI 對照
+
+| API | UI 欄位名稱 |
+|-----|-------------|
+| `receivedAtMs` | 收件時間（Taipei） |
+| `posSentAtMs` | 送件時間 |
+| `(receivedAtMs - posSentAtMs) / 1000` | 作業時間（秒） |
 | `storeId` | 門市 |
 | `source` | 入口 |
 | `clientIp` | 來源 IP |
-| `readyCount` / `preparingCount` | 請取餐 / 準備中 |
-| `readyNumbers` / `preparingNumbers` | 展開列號碼 |
-| `disposition` | 結果 Tag |
-| `rejectReason` | 拒絕原因 |
-| `bodyByteSize` + redacted signature | raw 區塊 |
-| `receivedAtMs` | 收件時間（台北） |
-| `posSentAtMs` | 送件時間（台北含 ms） |
-| `(receivedAtMs - posSentAtMs) / 1000` | 作業時間（秒，三位小數） |
-| `posTimeStmpRaw`（`posSentAtMs` 缺） | 表格「格式錯誤」；展開列顯示 raw 文字 |
+| `readyCount` | 請取餐 |
+| `preparingCount` | 準備中 |
+| `disposition` | 結果 |
+| `readyNumbers` / `preparingNumbers` | 展開列（請取餐／準備中區塊內號碼） |
+| `rejectReason` | 展開列「拒絕送出」 |
+| `bodyByteSize` + redacted signature | 展開列 raw payload |
+| `posTimeStmpRaw`（`posSentAtMs` 缺） | 送件時間欄「格式錯誤」；展開列 POS timeStmp（raw） |
 
-空值顯示 `—`；數值 `0` 顯示 `0`；作業時間 `0` 顯示 `0.000`。
+空值顯示 `—`；計數欄位數值 `0` 顯示 `0`；作業時間（秒）真實 `0` 顯示 `0.000`。
