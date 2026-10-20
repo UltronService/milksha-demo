@@ -272,22 +272,40 @@
       if (!t || typeof t.no !== 'string') {
         continue;
       }
+      const PosFields = QMS.Board && QMS.Board.PosTimeFields;
+      const attachPos = PosFields && PosFields.copyPosTimeFields;
       if (typeof t.sourceType === 'string' && t.sourceType) {
-        out.push({ source_type: t.sourceType, number: t.no });
+        const row = { source_type: t.sourceType, number: t.no };
+        if (attachPos) {
+          attachPos(t, row);
+        }
+        out.push(row);
         continue;
       }
       if (typeof t.source_type === 'string' && t.source_type) {
-        out.push({ source_type: t.source_type, number: t.no });
+        const row = { source_type: t.source_type, number: t.no };
+        if (attachPos) {
+          attachPos(t, row);
+        }
+        out.push(row);
         continue;
       }
       if (t.status === 'ready') {
         const st =
           (opts && opts.readyByKey && t.sourceKey && opts.readyByKey[t.sourceKey]) || readyType;
-        out.push({ source_type: st, number: t.no });
+        const row = { source_type: st, number: t.no };
+        if (attachPos) {
+          attachPos(t, row);
+        }
+        out.push(row);
       } else if (t.status === 'preparing') {
         const st =
           (opts && opts.prepByKey && t.sourceKey && opts.prepByKey[t.sourceKey]) || preparingType;
-        out.push({ source_type: st, number: t.no });
+        const row = { source_type: st, number: t.no };
+        if (attachPos) {
+          attachPos(t, row);
+        }
+        out.push(row);
       }
     }
     return out;
