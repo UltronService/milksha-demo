@@ -407,15 +407,27 @@ test('11 missing POS and updatedAt uses local receive time', function () {
   const h = bootMilkshaHarness('', { startMs: FX.T0 });
   h.runtime.applyPayload([prepRow('8101')], { silent: true });
   h.sandbox.__setNowMs(FX.T2);
-  h.runtime.applyPayload([prepRow('8101'), prepRow('8102')], { silent: true });
+  // Payload order puts 8102 before 8101; only local firstSeenAt makes 8102 sort first.
+  h.runtime.applyPayload([prepRow('8102'), prepRow('8101')], { silent: true });
+  const snap = h.runtime.getSnapshot();
   assertOrder(function () {
-    return prepNums(h.runtime.getSnapshot());
+    return prepNums(snap);
   }, ['8102', '8101']);
+  const prep8101 = snap.preparing.find(function (p) {
+    return String(p.number) === '8101';
+  });
+  const prep8102 = snap.preparing.find(function (p) {
+    return String(p.number) === '8102';
+  });
+  assert.ok(prep8101 && prep8102, 'both numbers on board');
+  assert.equal(prep8101.firstSeenAt, FX.T0);
+  assert.equal(prep8102.firstSeenAt, FX.T2);
+  assert.ok(prep8102.firstSeenAt > prep8101.firstSeenAt, 'local receive times must drive sort');
   h.runtime.destroy();
 });
 
-test('12 mixed with and without POS fields does not crash', function () {
-  const { runtime } = bootMilkshaHarness();
+test('12 mixed with and without POS fields sorts POS, updatedAt, then local receive', function () {
+  const { runtime } = bootMilkshaHarness('', { startMs: 1_900_000_000_000 });
   runtime.applyPayload(
     [
       prepRow('8201', { firstSeenPosAtMs: FX.T2, seqInBatch: 0 }),
@@ -424,8 +436,9 @@ test('12 mixed with and without POS fields does not crash', function () {
     ],
     { silent: true },
   );
-  const nums = prepNums(runtime.getSnapshot());
-  assert.equal(nums.length, 3);
+  assertOrder(function () {
+    return prepNums(runtime.getSnapshot());
+  }, ['8202', '8203', '8201']);
   runtime.destroy();
 });
 
@@ -613,18 +626,70 @@ test('19 static: preparing zone does not jump when number moves to ready (#60)',
   harness.runtime.destroy();
 });
 
-test('20 motion=on: snapshot render has no static motion violations', function () {
+function staticMotionViolations(html) {
+  const bad = [];
+  if (/milksha-board-chip--layer-float/.test(html)) {
+    bad.push('float-layer');
+  }
+  if (/data-page-turn-anim=/.test(html) || /data-column-move-anim=/.test(html)) {
+    bad.push('anim-flag-on-layer');
+  }
+  if (/style="[^"]*opacity:\s*0/.test(html)) {
+    bad.push('inline-opacity-zero');
+  }
+  if (/style="[^"]*transform:\s*scale\(/.test(html)) {
+    bad.push('inline-scale');
+  }
+  return bad;
+}
+
+test('20 motion=on: animate path and no static motion violations', function () {
   const harness = bootMilkshaHarness('?motion=on');
   harness.runtime.applyPayload([], { silent: true });
   harness.runtime.applyPayload([], { silent: true });
   const payload = ticketsToContent(FX.READY_POS_SORT_TICKETS).concat(
     ticketsToContent(FX.PREPARING_POS_SORT_TICKETS),
   );
-  harness.runtime.applyPayload(payload, { silent: true });
+  harness.runtime.applyPayload(payload);
+  assert.equal(
+    harness.runtime.getAnimSkipReason(),
+    'animate',
+    'motion=on must use animator (not static snapshot path)',
+  );
   const html = harness.getBoardHtml();
-  assert.equal(/milksha-board-chip--layer-float/.test(html), false);
-  assert.equal(/style="[^"]*opacity:\s*0/.test(html), false);
+  assert.deepEqual(staticMotionViolations(html), []);
   harness.runtime.destroy();
+});
+
+test('23 posTimeSource round-trips on tickets and number_content', function () {
+  const tickets = [
+    FX.ticket('8401', 'preparing', {
+      firstSeenPosAtMs: FX.T1,
+      seqInBatch: 0,
+      posTimeSource: 'server',
+    }),
+    FX.ticket('8402', 'ready', {
+      firstSeenPosAtMs: FX.T0,
+      readyPosAtMs: FX.T2,
+      readySeqInBatch: 1,
+      posTimeSource: 'pos',
+    }),
+  ];
+  const nc = ticketsToContent(tickets);
+  assert.equal(nc[0].posTimeSource, 'server');
+  assert.equal(nc[1].posTimeSource, 'pos');
+  const { runtime } = bootMilkshaHarness();
+  runtime.applyPayload(nc, { silent: true });
+  const snap = runtime.getSnapshot();
+  const prep = snap.preparing.find(function (p) {
+    return String(p.number) === '8401';
+  });
+  const ready = snap.ready.find(function (r) {
+    return String(r.number) === '8402';
+  });
+  assert.equal(prep && prep.posTimeSource, 'server');
+  assert.equal(ready && ready.posTimeSource, 'pos');
+  runtime.destroy();
 });
 
 test('21 PAGE_SIZE 10 and 6s page interval unchanged', function () {
