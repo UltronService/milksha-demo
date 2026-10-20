@@ -5,6 +5,14 @@ import { ReceiveLogPage } from '../src/receive-log-page';
 import { buildManyRecords, buildSampleRecord, SAMPLE_MS_A } from '../mock/fixtures';
 import { mockApiBase, mockControl } from './setup';
 
+async function readLastFeedRequest(): Promise<{
+  hasStoreId: boolean;
+  storeId: string | null;
+}> {
+  const res = await fetch(`${mockApiBase}/__mock/last-request`);
+  return (await res.json()) as { hasStoreId: boolean; storeId: string | null };
+}
+
 async function renderPage(overrides: Partial<{ refreshIntervalMs: number }> = {}) {
   const user = userEvent.setup();
   render(
@@ -151,6 +159,37 @@ describe('POS receive log page', () => {
     });
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(8000);
+  });
+
+  it('14. optional store: empty omits storeId and shows all stores; filled sends storeId', async () => {
+    await mockControl({
+      record: buildSampleRecord({
+        id: 'rec-store-b',
+        storeNumber: 'zz-qa-store-b',
+        sourceIp: '203.0.113.55',
+        entry: 'POS',
+        rejectedSends: [],
+      }),
+    });
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} />);
+    await waitFor(() => {
+      expect(screen.getByText('zz-qa-store-b')).toBeInTheDocument();
+      expect(screen.getAllByText('zz-qa-store-a').length).toBeGreaterThan(0);
+    });
+    const withoutStore = await readLastFeedRequest();
+    expect(withoutStore.hasStoreId).toBe(false);
+    expect(withoutStore.storeId).toBeNull();
+
+    const user = userEvent.setup();
+    const input = screen.getByRole('textbox', { name: '門市編號' });
+    await user.type(input, 'zz-qa-store-a');
+    await waitFor(() => {
+      expect(screen.queryByText('zz-qa-store-b')).toBeNull();
+      expect(screen.getAllByText('zz-qa-store-a').length).toBeGreaterThan(0);
+    });
+    const withStore = await readLastFeedRequest();
+    expect(withStore.hasStoreId).toBe(true);
+    expect(withStore.storeId).toBe('zz-qa-store-a');
   });
 
   it('13. disabled status shows 已停用 and no records', async () => {

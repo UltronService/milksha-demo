@@ -74,7 +74,7 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
 
 export function ReceiveLogPage({
   apiBaseUrl,
-  initialStoreNumber = 'zz-qa-store-a',
+  initialStoreNumber = '',
   refreshIntervalMs = 2000,
 }: ReceiveLogPageProps): JSX.Element {
   const [storeNumber, setStoreNumber] = useState(initialStoreNumber);
@@ -98,9 +98,6 @@ export function ReceiveLogPage({
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
   const load = useCallback(async () => {
-    if (!storeNumber.trim()) {
-      return;
-    }
     setLoading(true);
     try {
       const body = await fetchReceiveLogs(

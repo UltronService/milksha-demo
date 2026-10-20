@@ -7,6 +7,7 @@ let mode = 'ok';
 let extraRecords = [];
 let failNext = false;
 let forceFail = false;
+let lastFeedRequest = { search: '', hasStoreId: false, storeId: null };
 
 export function setMockMode(next) {
   mode = next;
@@ -83,7 +84,16 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { ok: true });
   }
 
+  if (req.method === 'GET' && url.pathname === '/__mock/last-request') {
+    return json(res, 200, lastFeedRequest);
+  }
+
   if (req.method === 'GET' && url.pathname === '/') {
+    lastFeedRequest = {
+      search: url.search,
+      hasStoreId: url.searchParams.has('storeId'),
+      storeId: url.searchParams.get('storeId'),
+    };
     if (forceFail || failNext) {
       failNext = false;
       return json(res, 500, { error: 'mock failure' });
