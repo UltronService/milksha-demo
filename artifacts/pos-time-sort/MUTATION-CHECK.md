@@ -1,16 +1,82 @@
-# Test 11 mutation check (local `firstSeenAt` sort fallback)
+# POS time sort — mutation checks (required)
 
-**Procedure:** Remove `resolvePreparingSortMs` use of `item.firstSeenAt` in `js/board/board-item-sort.js` (lines that return `parseMs(item.firstSeenAt)`).
+Run from repo root; always `git checkout` affected files after each mutation.
 
-**Command:**
+## §11 — local `firstSeenAt` sort fallback
+
+**Mutate:** Remove `resolvePreparingSortMs` use of `item.firstSeenAt` in `js/board/board-item-sort.js`.
+
 ```bash
-# patch out firstSeenAt branch, then:
-node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern '^11 '
+node -e "
+const fs=require('fs');
+let s=fs.readFileSync('js/board/board-item-sort.js','utf8');
+s=s.replace(/    const local = parseMs\\(item && item\\.firstSeenAt\\);\\n    if \\(local != null\\) \\{\\n      return local;\\n    \\}\\n/,'');
+fs.writeFileSync('js/board/board-item-sort.js',s);
+"
+node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern '11 missing POS'
 git checkout js/board/board-item-sort.js
 ```
 
-**Result (2026-10-20):**
-- Mutated: `not ok 11 - 11 missing POS and updatedAt uses local receive time` (order becomes `8101` before `8102` when payload lists 8102 first).
-- Restored: `ok 11`.
+| State | Test 11 |
+|-------|---------|
+| Mutated | **FAIL** — order `['8101','8102']` (payload index only) |
+| Restored | **PASS** — order `['8102','8101']` |
 
-Test 11 now uses payload order `[8102, 8101]` at `T2` so payload-index tie-break alone would sort `8101` first; only local receive times force `8102` first.
+Payload at `T2` is `[8102, 8101]` so index tie-break alone puts `8101` first.
+
+---
+
+## §20a — `motion=on` must use animator (required)
+
+**Mutate:** Force `isBoardMotionOn()` to return `false` in `js/milksha-board.js` (ignore `?motion=on`).
+
+```bash
+sed -i "s/return new URLSearchParams(win.location.search).get('motion') === 'on';/return false;/" js/milksha-board.js
+node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern '20 motion=on'
+git checkout js/milksha-board.js
+```
+
+| State | Test 20 (first assertion) |
+|-------|---------------------------|
+| Mutated | **FAIL** — `getAnimSkipReason()` is `motion-off`, expected `animate` |
+| Restored | **PASS** |
+
+---
+
+## §20b — no static motion HTML defects (required)
+
+**Mutate:** Inject float-layer class on chips (simulates broken static/motion DOM).
+
+```bash
+sed -i 's/milksha-board-chip--with-slot/milksha-board-chip--layer-float milksha-board-chip--with-slot/' js/milksha-board.js
+node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern '20 motion=on'
+git checkout js/milksha-board.js
+```
+
+| State | Test 20 (violations assertion) |
+|-------|--------------------------------|
+| Mutated | **FAIL** — `staticMotionViolations` includes `float-layer` |
+| Restored | **PASS** |
+
+---
+
+## §23 — `posTimeSource` round-trip (required)
+
+**Mutate:** Remove `posTimeSource` from `BOARD_POS_TIME_FIELD` in `js/board/board-pos-time-fields.js`.
+
+```bash
+node -e "
+const fs=require('fs');
+const p='js/board/board-pos-time-fields.js';
+let s=fs.readFileSync(p,'utf8');
+s=s.replace(\"    posTimeSource: 'posTimeSource',\\n\",'');
+fs.writeFileSync(p,s);
+"
+node --test tests/milksha-board-pos-time-sort.test.js --test-name-pattern 'posTimeSource round-trips'
+git checkout js/board/board-pos-time-fields.js
+```
+
+| State | Test 23 |
+|-------|---------|
+| Mutated | **FAIL** — `nc[0].posTimeSource` / snapshot fields `undefined` |
+| Restored | **PASS** — `server` / `pos` on prep and ready |

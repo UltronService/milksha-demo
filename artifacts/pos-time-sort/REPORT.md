@@ -42,8 +42,8 @@
 PR adds 22 tests (all pass); fail count matches `main` (layout/cream-band harness flakes on CI VM).
 
 ## Unit tests (focused)
-- `node --test tests/milksha-board-pos-time-sort.test.js`: 23/23 pass (incl. strengthened #11/#12, #20 animate path, #23 `posTimeSource`)
-- Mutation evidence: `artifacts/pos-time-sort/MUTATION-CHECK.md`
+- `node --test tests/milksha-board-pos-time-sort.test.js`: 23/23 pass
+- **Required** with mutation proof: #11 (local receive), #20 (animate + HTML violations), #23 (`posTimeSource`) — see `artifacts/pos-time-sort/MUTATION-CHECK.md` §11 / §20a–b / §23
 
 ## Backend field names (align with cloud)
 - `firstSeenPosAtMs`, `readyPosAtMs`, `posTimeSource`, `seqInBatch`, `readySeqInBatch` — mapped in `js/board/board-pos-time-fields.js` (`BOARD_POS_TIME_FIELD`).

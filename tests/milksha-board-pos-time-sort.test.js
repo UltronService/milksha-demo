@@ -643,7 +643,7 @@ function staticMotionViolations(html) {
   return bad;
 }
 
-test('20 motion=on: animate path and no static motion violations', function () {
+test('20 motion=on: animate path and no static motion violations (required)', function () {
   const harness = bootMilkshaHarness('?motion=on');
   harness.runtime.applyPayload([], { silent: true });
   harness.runtime.applyPayload([], { silent: true });
@@ -654,14 +654,18 @@ test('20 motion=on: animate path and no static motion violations', function () {
   assert.equal(
     harness.runtime.getAnimSkipReason(),
     'animate',
-    'motion=on must use animator (not static snapshot path)',
+    'motion=on must use animator (not static snapshot path); see artifacts/pos-time-sort/MUTATION-CHECK.md §20',
   );
   const html = harness.getBoardHtml();
-  assert.deepEqual(staticMotionViolations(html), []);
+  assert.deepEqual(
+    staticMotionViolations(html),
+    [],
+    'animated board HTML must not show static motion defects; see MUTATION-CHECK.md §20b',
+  );
   harness.runtime.destroy();
 });
 
-test('23 posTimeSource round-trips on tickets and number_content', function () {
+test('23 posTimeSource round-trips on tickets and number_content (required)', function () {
   const tickets = [
     FX.ticket('8401', 'preparing', {
       firstSeenPosAtMs: FX.T1,
@@ -689,6 +693,7 @@ test('23 posTimeSource round-trips on tickets and number_content', function () {
   });
   assert.equal(prep && prep.posTimeSource, 'server');
   assert.equal(ready && ready.posTimeSource, 'pos');
+  assert.notEqual(prep.posTimeSource, ready.posTimeSource);
   runtime.destroy();
 });
 
