@@ -13,11 +13,11 @@ npm test
 npm run build
 ```
 
-API：`GET {apiBase}/pos-receive-logs?storeNumber=&fromMs=&toMs=`
+API（完整 URL）：`GET posIntakeLogFeed?storeId=&limit=`（`limit` 預設 200、上限 1000；時間篩選在前端）。
 
-回應：`{ "status": "ok", "records": [...] }` 或 `{ "status": "disabled" }`。
+回應：`{ "status": "ok", "records": [...] }` 或 `{ "status": "已停用" }`。
 
-預設 `config.default.json` 的 `apiBaseUrl` 為空；可用 query `?apiBase=` 覆寫。
+預設 `config.default.json` 指向 test cloud `posIntakeLogFeed`；可用 query `?apiBase=` 覆寫。
 
 ## Firebase Hosting（僅 milksha-qms-dev）
 

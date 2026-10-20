@@ -38,6 +38,14 @@ import { defaultRecords } from './seed-data.mjs';
 
 const baseRecords = defaultRecords();
 
+function parseLimit(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) {
+    return 200;
+  }
+  return Math.min(n, 1000);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://127.0.0.1:${PORT}`);
   if (req.method === 'POST' && url.pathname === '/__mock/control') {
@@ -75,27 +83,25 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { ok: true });
   }
 
-  if (req.method === 'GET' && url.pathname === '/pos-receive-logs') {
+  if (req.method === 'GET' && url.pathname === '/') {
     if (forceFail || failNext) {
       failNext = false;
       return json(res, 500, { error: 'mock failure' });
     }
-    if (mode === 'disabled') {
-      return json(res, 200, { status: 'disabled' });
+    if (mode === 'disabled' || mode === '已停用') {
+      return json(res, 200, { status: '已停用' });
     }
-    const storeNumber = url.searchParams.get('storeNumber') || '';
-    const fromMs = Number(url.searchParams.get('fromMs') || 0);
-    const toMs = Number(url.searchParams.get('toMs') || Number.MAX_SAFE_INTEGER);
+    const storeId = url.searchParams.get('storeId') || '';
+    const limit = parseLimit(url.searchParams.get('limit'));
     const all = [...baseRecords, ...extraRecords].filter((r) => {
-      if (storeNumber && r.storeNumber !== storeNumber) {
-        return false;
-      }
-      if (r.receivedAtMs < fromMs || r.receivedAtMs > toMs) {
+      const id = r.storeNumber || r.storeId || '';
+      if (storeId && id !== storeId) {
         return false;
       }
       return true;
     });
-    return json(res, 200, { status: 'ok', records: all });
+    all.sort((a, b) => b.receivedAtMs - a.receivedAtMs);
+    return json(res, 200, { status: 'ok', records: all.slice(0, limit) });
   }
 
   json(res, 404, { error: 'not found' });

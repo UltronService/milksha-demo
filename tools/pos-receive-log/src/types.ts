@@ -43,10 +43,12 @@ export interface ReceiveLogRecord {
 
 export type ReceiveLogsApiResponse =
   | { status: 'ok'; records: ReceiveLogRecord[] }
-  | { status: 'disabled' };
+  | { status: '已停用' };
 
 export interface FetchReceiveLogsParams {
-  storeNumber: string;
-  fromMs: number;
-  toMs: number;
+  storeId: string;
+  limit?: number;
 }
+
+export const DEFAULT_FETCH_LIMIT = 200;
+export const MAX_FETCH_LIMIT = 1000;

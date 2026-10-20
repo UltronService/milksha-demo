@@ -84,6 +84,14 @@ export function ReceiveLogPage({
   ]);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [records, setRecords] = useState<ReceiveLogRecord[]>([]);
+  const filteredRecords = useMemo(
+    () =>
+      records.filter(
+        (r) =>
+          r.receivedAtMs >= range[0].valueOf() && r.receivedAtMs <= range[1].valueOf(),
+      ),
+    [records, range],
+  );
   const [disabled, setDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,21 +105,19 @@ export function ReceiveLogPage({
     try {
       const body = await fetchReceiveLogs(
         {
-          storeNumber: storeNumber.trim(),
-          fromMs: range[0].valueOf(),
-          toMs: range[1].valueOf(),
+          storeId: storeNumber.trim(),
+          limit: 1000,
         },
         apiBaseUrl,
       );
-      if (body.status === 'disabled') {
+      if (body.status === '已停用') {
         setDisabled(true);
         setRecords([]);
         setError(null);
         return;
       }
       setDisabled(false);
-      const sorted = [...body.records].sort((a, b) => b.receivedAtMs - a.receivedAtMs);
-      setRecords(sorted);
+      setRecords(body.records);
       setError(null);
     } catch (e) {
       const msg = e instanceof FetchReceiveLogsError ? e.message : '載入失敗';
@@ -119,7 +125,7 @@ export function ReceiveLogPage({
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl, range, storeNumber]);
+  }, [apiBaseUrl, storeNumber]);
 
   useEffect(() => {
     void load();
@@ -180,7 +186,7 @@ export function ReceiveLogPage({
     [],
   );
 
-  const tableData = disabled ? [] : records;
+  const tableData = disabled ? [] : filteredRecords;
 
   return (
     <div style={{ padding: 16 }} data-testid="receive-log-page">
