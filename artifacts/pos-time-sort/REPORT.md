@@ -46,14 +46,18 @@ Cloud VM snapshot (2026-10-20); layout/cream-band checks need a live board harne
 | `main` run | tests | pass | fail |
 |------------|------:|-----:|-----:|
 | 1 | 352 | 342 | 10 |
-| 2 | _(see §3× stability below)_ | | |
-| 3 | | | |
+| 2 | 352 | 342 | 10 |
+| 3 | 352 | 342 | 10 |
 
 | PR head run | tests | pass | fail |
 |-------------|------:|-----:|-----:|
-| 1 | _(see §3× stability below)_ | | |
-| 2 | | | |
-| 3 | | | |
+| 1 | 375 | 365 | 10 |
+| 2 | 375 | 365 | 10 |
+| 3 | 375 | 365 | 10 |
+
+Details and QA “3 extra failures” analysis: `artifacts/pos-time-sort/STABILITY-3X.md`.
+
+**Note:** This VM consistently sees **10** harness failures on `main`; QA reported **0–1** on `main` when Playwright layout probes succeed locally.
 
 PR adds 23 focused tests in `milksha-board-pos-time-sort.test.js` (all pass when run alone).
 
