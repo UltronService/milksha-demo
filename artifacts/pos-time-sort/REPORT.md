@@ -33,9 +33,16 @@
 
 **Before implementation:** New tests 1–10, 13, 15–17, 22 failed because sorting used local `Date.now()` and tickets did not carry POS ms. Tests 11–12, 14, 18–21 already matched main behavior or constants.
 
-## Unit tests
+## Unit tests (full `npm test`)
+| Branch | tests | pass | fail |
+|--------|------:|-----:|-----:|
+| `main` | 352 | 342 | 10 |
+| PR head | 374 | 364 | 10 |
+
+PR adds 22 tests (all pass); fail count matches `main` (layout/cream-band harness flakes on CI VM).
+
+## Unit tests (focused)
 - `node --test tests/milksha-board-pos-time-sort.test.js`: 22/22 pass
-- `npm test`: 22 new tests; failure count not worse than `main` (layout harness / cream-band checks are pre-existing env flakes on this VM)
 
 ## Backend field names (align with cloud)
 - `firstSeenPosAtMs`, `readyPosAtMs`, `posTimeSource`, `seqInBatch`, `readySeqInBatch` — mapped in `js/board/board-pos-time-fields.js` (`BOARD_POS_TIME_FIELD`).
