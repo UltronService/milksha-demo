@@ -14,6 +14,7 @@ import {
   httpStatusForApiErrorCode,
 } from './dev-command-validation.mjs';
 import { FAKE_CLOUD_POS_SIGN_SECRET } from './sign-secret.mjs';
+import { evaluatePosSentAtClock } from '../../js/transport/pos-sent-at-clock.mjs';
 import { taipeiBusinessDate, isCurrentBusinessDate } from './taipei-business-date.mjs';
 
 const SIGN_SECRET = FAKE_CLOUD_POS_SIGN_SECRET;
@@ -648,18 +649,23 @@ const server = http.createServer(async (req, res) => {
             clearedAt: tickets.length ? null : new Date().toISOString(),
           });
         }
+        const cloudNowMs = Date.now();
+        const clockEval = evaluatePosSentAtClock(body.sentAtMs, cloudNowMs);
         docs.set(receiveLogKey(storeId, `r-${Date.now()}`), {
           at: new Date().toISOString(),
           kind: 'posReceiver',
           isSuccess: allowWrite,
           information: info,
           seq: seq,
+          posSentAtMs: clockEval.posSentAtMs,
+          posSentAtIgnored: clockEval.posSentAtIgnored,
         });
         return json(res, 200, {
           isSuccess: allowWrite,
           information: info,
           seq: seq,
           boxOnline: online,
+          posSentAtIgnored: clockEval.posSentAtIgnored,
         });
       }
 

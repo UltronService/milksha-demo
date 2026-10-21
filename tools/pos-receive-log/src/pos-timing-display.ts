@@ -1,4 +1,5 @@
 import { formatTaipeiWithMs } from './format-taipei-time';
+import { resolvePosSentAtIgnored } from './pos-sent-at-clock';
 
 export interface ProcessingDurationDisplay {
   text: string;
@@ -9,8 +10,13 @@ export function formatSentTimeCell(
   posSentAtMs: number | null | undefined,
   posTimeStmpRaw: string | null | undefined,
   posSentAtIgnored?: boolean | null,
+  receivedAtMs?: number,
 ): string {
-  if (posSentAtIgnored === true) {
+  const ignored =
+    receivedAtMs !== undefined && Number.isFinite(receivedAtMs)
+      ? resolvePosSentAtIgnored(receivedAtMs, posSentAtMs, posSentAtIgnored)
+      : posSentAtIgnored === true;
+  if (ignored) {
     return '時間異常';
   }
   if (posSentAtMs !== null && posSentAtMs !== undefined && Number.isFinite(posSentAtMs)) {

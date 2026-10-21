@@ -71,12 +71,28 @@ describe('controller send-time receive-log (8–12)', () => {
     expect(screen.getByTestId('sent-at-cell').textContent).toBe(formatTaipeiWithMs(posSentAtMs));
   });
 
-  it('11. diff 10s + 1ms: page shows 時間異常', async () => {
+  it('11. diff 10s + 1ms slow: page shows 時間異常 via skew comparison', async () => {
     await renderRecord({
-      posSentAtMs: null,
-      posSentAtIgnored: true,
+      receivedAtMs: CLOUD_NOW_MS,
+      posSentAtMs: CLOUD_NOW_MS - 10_001,
+      posSentAtIgnored: null,
     });
     expect(screen.getByTestId('sent-at-cell').textContent).toBe('時間異常');
+  });
+
+  it('11b. diff 10s + 1ms fast: page shows 時間異常 via skew comparison', async () => {
+    await renderRecord({
+      receivedAtMs: CLOUD_NOW_MS,
+      posSentAtMs: CLOUD_NOW_MS + 10_001,
+      posSentAtIgnored: null,
+    });
+    expect(screen.getByTestId('sent-at-cell').textContent).toBe('時間異常');
+  });
+
+  it('10b. device fast exactly 10s: time still shown', async () => {
+    const posSentAtMs = CLOUD_NOW_MS + 10_000;
+    await renderRecord({ receivedAtMs: CLOUD_NOW_MS, posSentAtMs, posSentAtIgnored: null });
+    expect(screen.getByTestId('sent-at-cell').textContent).toBe(formatTaipeiWithMs(posSentAtMs));
   });
 
   it('12. legacy controller records without send time show dash', async () => {

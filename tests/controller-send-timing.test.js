@@ -33,6 +33,7 @@ function loadSendTimingStack() {
     'js/transport/milksha-md5.js',
     'js/transport/milksha-pos-sign.js',
     'js/transport/milksha-pos-wire.js',
+    'js/transport/pos-sent-at-clock.js',
     'controller/controller-send-timing.js',
     'js/transport/dev-command-validation.js',
   ];
@@ -214,6 +215,20 @@ test('pos wire preserves top-level sentAtMs', async function () {
   const built = await PosWire.signPosWire(draft, 'zz-qa-test-secret', false);
   const parsed = JSON.parse(built.wireText);
   assert.equal(parsed.sentAtMs, 1_700_000_030_000);
+});
+
+test('applyPosClockWarningToElement toggles DOM visibility', function () {
+  const { SendTiming } = loadSendTimingStack();
+  const el = {
+    hidden: true,
+    textContent: '',
+  };
+  SendTiming.applyPosClockWarningToElement(el, { posSentAtIgnored: true, isSuccess: true });
+  assert.equal(el.hidden, false);
+  assert.equal(el.textContent, '裝置時鐘不準');
+  SendTiming.applyPosClockWarningToElement(el, { posSentAtIgnored: false, isSuccess: true });
+  assert.equal(el.hidden, true);
+  assert.equal(el.textContent, '');
 });
 
 test('push_numbers devCommand carries sentAtMs', function () {

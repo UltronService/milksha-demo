@@ -12,6 +12,10 @@
   const SENT_TIME_ANOMALY_TEXT = '時間異常';
   const MAX_CLOCK_SKEW_MS = 10000;
 
+  function posSentAtClockModule() {
+    return QMS.Transport && QMS.Transport.PosSentAtClock;
+  }
+
   /**
    * @param {() => number} [nowMs]
    * @returns {number}
@@ -97,8 +101,30 @@
    * @returns {boolean}
    */
   function isClockSkewWithinTolerance(deviceSentAtMs, cloudNowMs) {
+    const mod = posSentAtClockModule();
+    if (mod && mod.isWithinPosSentAtSkew) {
+      return mod.isWithinPosSentAtSkew(deviceSentAtMs, cloudNowMs);
+    }
     const diff = Math.abs(Number(cloudNowMs) - Number(deviceSentAtMs));
     return diff <= MAX_CLOCK_SKEW_MS;
+  }
+
+  /**
+   * @param {HTMLElement|null|undefined} el
+   * @param {object|null|undefined} res
+   */
+  function applyPosClockWarningToElement(el, res) {
+    if (!el) {
+      return;
+    }
+    const msg = controllerClockWarningMessage(res);
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.textContent = msg;
+    el.hidden = false;
   }
 
   QMS.Controller.SendTiming = {
@@ -113,5 +139,6 @@
     controllerClockWarningMessage: controllerClockWarningMessage,
     shouldBlockSendOnClockWarning: shouldBlockSendOnClockWarning,
     isClockSkewWithinTolerance: isClockSkewWithinTolerance,
+    applyPosClockWarningToElement: applyPosClockWarningToElement,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

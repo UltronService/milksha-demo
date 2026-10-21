@@ -279,17 +279,10 @@
   function showPosClockWarning(res) {
     const SendTiming = window.QMS.Controller.SendTiming;
     const el = document.getElementById('pos-clock-warning');
-    if (!el || !SendTiming || !SendTiming.controllerClockWarningMessage) {
+    if (!SendTiming || !SendTiming.applyPosClockWarningToElement) {
       return;
     }
-    const msg = SendTiming.controllerClockWarningMessage(res);
-    if (!msg) {
-      el.hidden = true;
-      el.textContent = '';
-      return;
-    }
-    el.textContent = msg;
-    el.hidden = false;
+    SendTiming.applyPosClockWarningToElement(el, res);
   }
 
   const POS_SEND_BUTTON_IDS = new Set([
