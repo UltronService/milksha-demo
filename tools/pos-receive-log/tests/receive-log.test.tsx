@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ReceiveLogPage } from '../src/receive-log-page';
 import { buildManyRecords, buildSampleRecord, SAMPLE_MS_A } from '../mock/fixtures';
 import { mockApiBase, mockControl } from './setup';
@@ -114,8 +114,6 @@ describe('POS receive log page', () => {
   });
 
   it('10. auto-refresh adds rows without collapsing expanded row', async () => {
-    vi.useRealTimers();
-    vi.useFakeTimers({ shouldAdvanceTime: true, now: SAMPLE_MS_A + 3_600_000 });
     const { user } = await renderPage({ refreshIntervalMs: 1000 });
     await user.click(screen.getAllByRole('button', { name: /expand/i })[0]);
     expect(screen.getByTestId('expanded-row')).toBeInTheDocument();
@@ -128,12 +126,13 @@ describe('POS receive log page', () => {
       }),
     });
     await user.click(screen.getByTestId('auto-refresh-switch'));
-    await vi.advanceTimersByTimeAsync(1100);
-    await waitFor(() => {
-      expect(screen.getByText('203.0.113.99')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('203.0.113.99')).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
     expect(screen.getByTestId('expanded-row')).toBeInTheDocument();
-    vi.useRealTimers();
   });
 
   it('11. fetch error shows message and keeps old data', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import realFixture from './fixtures/pos-intake-log-feed-record.json';
+import { LIVE_FEED_RECORD_MS } from '../mock/test-clock.mjs';
 import { normalizeApiRecord } from '../src/normalize-api-record';
+import realFixture from './fixtures/pos-intake-log-feed-record.json';
 
 describe('normalizeApiRecord (posIntakeLogFeed)', () => {
   it('maps milksha-cloud feed fields to UI model', () => {
@@ -15,6 +16,7 @@ describe('normalizeApiRecord (posIntakeLogFeed)', () => {
     expect(row.messageSummary.bodyByteSize).toBe(1794);
     expect(row.rawPayload).toBe('');
     expect(row.messageSummary.disposition).toBe('accepted');
+    expect(row.receivedAtMs).toBe(LIVE_FEED_RECORD_MS);
   });
 
   it('TDD-23: non-empty rawPayload from API is kept verbatim', () => {

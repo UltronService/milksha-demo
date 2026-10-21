@@ -13,6 +13,7 @@ import { formatTaipeiWithMs } from './format-taipei-time';
 import { buildIntakeMessageSummaryLines } from './intake-message-summary-lines';
 import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-display';
 import { sourceTypeLabel } from './source-type-label';
+import { BoxReportsSubtable } from './box-reports-subtable';
 import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
 
 const TaipeiRangePicker = DatePicker.RangePicker;
@@ -75,6 +76,7 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
           </ul>
         </div>
       )}
+      <BoxReportsSubtable rows={record.boxReports} />
       {record.posTimeStmpRaw ? (
         <div style={{ marginBottom: 12 }}>
           <Typography.Text strong>POS timeStmp（raw）</Typography.Text>

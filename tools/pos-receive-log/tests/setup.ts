@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
-import { SAMPLE_MS_A } from '../mock/fixtures';
+import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
+import { FIXED_TEST_NOW_MS } from '../mock/test-clock.mjs';
 import { server, PORT } from '../mock/server.mjs';
 
 Object.defineProperty(window, 'matchMedia', {
@@ -24,16 +24,15 @@ window.getComputedStyle = () =>
     getPropertyValue: () => '',
   }) as CSSStyleDeclaration;
 
-/** Align "today" with fixture records (2026-10-20 Taipei) for date-range filters. */
-beforeEach(() => {
-  vi.useFakeTimers({ now: SAMPLE_MS_A + 3_600_000, shouldAdvanceTime: true });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
+/** Freezes `Date` / `Date.now` for the whole receive-log vitest suite (see mock/test-clock.mjs). */
+function applyFixedTestClock(): void {
+  vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+  vi.setSystemTime(new Date(FIXED_TEST_NOW_MS));
+}
 
 beforeAll(async () => {
+  applyFixedTestClock();
+
   if (server.listening) {
     return;
   }
@@ -44,6 +43,17 @@ beforeAll(async () => {
       resolve();
     });
   });
+});
+
+beforeEach(() => {
+  applyFixedTestClock();
+});
+
+afterAll(async () => {
+  await new Promise<void>((resolve) => {
+    server.close(() => resolve());
+  });
+  vi.useRealTimers();
 });
 
 export const mockApiBase = `http://127.0.0.1:${PORT}`;

@@ -1,3 +1,4 @@
+import { normalizeBoxReportsForIntakeLog } from './normalize-box-reports';
 import type {
   EntryType,
   IntakeMessageSummary,
@@ -163,8 +164,9 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
       ? null
       : String(posTimeStmpRawRaw).slice(0, 64);
 
+  const id = String(r.id ?? '');
   return {
-    id: String(r.id ?? ''),
+    id,
     receivedAtMs: parseReceivedAtMs(r),
     posTimeStmpRaw,
     posSentAtMs,
@@ -177,5 +179,6 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     messageSummary: buildMessageSummary(r, result),
     rawPayload: readRawPayload(r),
     rawPayloadTruncated: Boolean(r.rawPayloadTruncated),
+    boxReports: normalizeBoxReportsForIntakeLog(id, r),
   };
 }

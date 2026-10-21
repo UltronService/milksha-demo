@@ -59,5 +59,6 @@
 | `bodyByteSize`、`httpStatus`、`disposition`、`rejectReason` | 展開列「訊息摘要」 |
 | `rawPayload`、`rawPayloadTruncated` | 展開列「POS 原始訊息」 |
 | `posTimeStmpRaw`（`posSentAtMs` 缺） | 送件時間欄「格式錯誤」；展開列 POS timeStmp（raw） |
+| `boxReports[]`（milksha-cloud PR #48） | 展開列「盒子回報」：`boxId`、`ip`、`status`、`delay`（秒）、`clockSynced`、`clockOffsetMs`；無資料顯示「未回報」 |
 
 空值顯示 `—`；計數欄位數值 `0` 顯示 `0`；作業時間（秒）真實 `0` 顯示 `0.000`。

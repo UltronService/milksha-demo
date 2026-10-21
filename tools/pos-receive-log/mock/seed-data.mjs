@@ -1,4 +1,6 @@
-export const SAMPLE_MS_A = Date.parse('2026-10-20T03:58:03.215Z');
+import { SAMPLE_MS_A } from './test-clock.mjs';
+
+export { SAMPLE_MS_A };
 
 export function defaultRecords() {
   return [
@@ -27,6 +29,15 @@ export function defaultRecords() {
       rejectedSends: [{ number: '3001', reason: '格式錯誤' }],
       rawPayload: '{"apiKey":"<REDACTED>","numbers":["1001"]}',
       rawPayloadTruncated: false,
+      boxReports: [
+        {
+          boxId: 'zz-qa-board-1',
+          ip: '192.0.2.10',
+          status: 'reported',
+          delay: 1.5,
+          clockSynced: true,
+        },
+      ],
     },
     {
       id: 'rec-b',
