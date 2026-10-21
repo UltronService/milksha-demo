@@ -1,57 +1,86 @@
+import type { BoardBoxReportRow, BoxReportStatus } from './types';
+
 export interface BoxReportFieldKeys {
-  intakeLogId: string;
-  boxCode: string;
+  boxId: string;
   ip: string;
-  delayMs: string;
-  lateSeconds: string;
+  status: string;
+  delay: string;
   clockSynced: string;
+  clockOffsetMs: string;
 }
 
-/** Assumed milksha-cloud feed field names until backend PR lands. */
+/** milksha-cloud PR #48 (da36b4b) feed field names. */
 export const DEFAULT_BOX_REPORT_FIELD_KEYS: BoxReportFieldKeys = {
-  intakeLogId: 'intakeLogId',
-  boxCode: 'boxId',
+  boxId: 'boxId',
   ip: 'ip',
-  delayMs: 'delayMs',
-  lateSeconds: 'lateSeconds',
+  status: 'status',
+  delay: 'delay',
   clockSynced: 'clockSynced',
+  clockOffsetMs: 'clockOffsetMs',
 };
 
 export const DEFAULT_BOX_REPORTS_LIST_KEY = 'boxReports';
 
-import type { BoardBoxReportRow } from './types';
-
-function readDelayMs(item: Record<string, unknown>, keys: BoxReportFieldKeys): number | null {
-  const delayRaw = item[keys.delayMs];
-  if (typeof delayRaw === 'number' && Number.isFinite(delayRaw)) {
-    return delayRaw;
-  }
-  const lateRaw = item[keys.lateSeconds];
-  if (typeof lateRaw === 'number' && Number.isFinite(lateRaw)) {
-    return lateRaw * 1000;
+function readStatus(raw: unknown): BoxReportStatus | null {
+  if (raw === 'reported' || raw === 'not_reported') {
+    return raw;
   }
   return null;
 }
 
-function readClockStatus(item: Record<string, unknown>, keys: BoxReportFieldKeys): string {
+function readDelaySec(item: Record<string, unknown>, keys: BoxReportFieldKeys): number | null {
+  const delayRaw = item[keys.delay];
+  if (delayRaw === null || delayRaw === undefined) {
+    return null;
+  }
+  const n = Number(delayRaw);
+  if (!Number.isFinite(n)) {
+    return null;
+  }
+  return n;
+}
+
+function readClockSynced(item: Record<string, unknown>, keys: BoxReportFieldKeys): boolean | null {
   const synced = item[keys.clockSynced];
   if (synced === true) {
-    return '已校正';
+    return true;
   }
-  return '未校正';
+  if (synced === false) {
+    return false;
+  }
+  return null;
+}
+
+function readClockOffsetMs(item: Record<string, unknown>, keys: BoxReportFieldKeys): number | null {
+  const raw = item[keys.clockOffsetMs];
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    return null;
+  }
+  return n;
 }
 
 function normalizeOneRow(
   item: Record<string, unknown>,
   keys: BoxReportFieldKeys,
 ): BoardBoxReportRow {
-  const boxCodeRaw = item[keys.boxCode];
+  const status = readStatus(item[keys.status]);
+  const boxIdRaw = item[keys.boxId];
   const ipRaw = item[keys.ip];
+  const delaySec = status === 'not_reported' ? null : readDelaySec(item, keys);
+  const clockSynced = status === 'not_reported' ? null : readClockSynced(item, keys);
+  const clockOffsetMs = status === 'not_reported' ? null : readClockOffsetMs(item, keys);
+
   return {
-    boxCode: boxCodeRaw === null || boxCodeRaw === undefined ? '' : String(boxCodeRaw),
+    boxId: boxIdRaw === null || boxIdRaw === undefined ? '' : String(boxIdRaw),
     ip: ipRaw === null || ipRaw === undefined ? '' : String(ipRaw),
-    delayMs: readDelayMs(item, keys),
-    clockStatus: readClockStatus(item, keys),
+    status,
+    delaySec,
+    clockSynced,
+    clockOffsetMs,
   };
 }
 
@@ -61,7 +90,7 @@ export interface NormalizeBoxReportsOptions {
 }
 
 export function normalizeBoxReportsForIntakeLog(
-  intakeLogId: string,
+  _intakeLogId: string,
   rawRecord: unknown,
   options: NormalizeBoxReportsOptions = {},
 ): BoardBoxReportRow[] {
@@ -73,14 +102,9 @@ export function normalizeBoxReportsForIntakeLog(
     return [];
   }
 
-  const targetId = String(intakeLogId);
   const rows: BoardBoxReportRow[] = [];
   for (const entry of listRaw) {
     const item = (entry ?? {}) as Record<string, unknown>;
-    const rowIntakeId = item[keys.intakeLogId];
-    if (rowIntakeId !== null && rowIntakeId !== undefined && String(rowIntakeId) !== targetId) {
-      continue;
-    }
     rows.push(normalizeOneRow(item, keys));
   }
   return rows;

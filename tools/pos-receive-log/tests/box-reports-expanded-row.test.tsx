@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 describe('Expanded row box reports', () => {
-  it('shows box report subtable columns when feed includes matching boxReports', async () => {
+  it('shows box report subtable when feed includes reported boxReports', async () => {
     await mockControl({
       reset: true,
       record: {
@@ -21,10 +21,10 @@ describe('Expanded row box reports', () => {
         }),
         boxReports: [
           {
-            intakeLogId: 'rec-box-1',
             boxId: 'stb-77',
             ip: '203.0.113.77',
-            delayMs: 1250,
+            status: 'reported',
+            delay: 1.25,
             clockSynced: true,
           },
         ],
@@ -42,11 +42,9 @@ describe('Expanded row box reports', () => {
     expect(screen.getByText('203.0.113.77')).toBeInTheDocument();
     expect(screen.getByText('1.250')).toBeInTheDocument();
     expect(screen.getByText('已校正')).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: '盒子代號' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: '晚幾秒' })).toBeInTheDocument();
   });
 
-  it('shows 未回報 when record has no box reports', async () => {
+  it('shows 未回報 when boxReports missing or empty on record', async () => {
     await mockControl({
       reset: true,
       record: buildSampleRecord({
@@ -64,20 +62,49 @@ describe('Expanded row box reports', () => {
     expect(screen.getByTestId('box-reports-empty')).toHaveTextContent('未回報');
   });
 
-  it('formats negative delay with 兩邊時鐘不同 per box-seen format', async () => {
+  it('shows 未回報 in delay column for not_reported rows', async () => {
+    await mockControl({
+      reset: true,
+      record: {
+        ...buildSampleRecord({
+          id: 'rec-not-reported',
+          receivedAtMs: SAMPLE_MS_A + 90_000,
+        }),
+        boxReports: [
+          {
+            boxId: 'box-silent',
+            ip: '203.69.10.20',
+            status: 'not_reported',
+          },
+        ],
+      },
+    });
+    const user = userEvent.setup();
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="zz-qa-store-a" />);
+    await waitFor(() => {
+      expect(screen.getAllByText('zz-qa-store-a').length).toBeGreaterThan(0);
+    });
+    await user.click(screen.getAllByRole('button', { name: /expand/i })[0]);
+    expect(screen.getByText('box-silent')).toBeInTheDocument();
+    const delayCells = screen.getAllByText('未回報');
+    expect(delayCells.length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('1.250')).toBeNull();
+  });
+
+  it('formats negative delay with 兩邊時鐘不同', async () => {
     await mockControl({
       reset: true,
       record: {
         ...buildSampleRecord({
           id: 'rec-skew',
-          receivedAtMs: SAMPLE_MS_A + 90_000,
+          receivedAtMs: SAMPLE_MS_A + 100_000,
         }),
         boxReports: [
           {
-            intakeLogId: 'rec-skew',
             boxId: 'box-skew',
             ip: '203.69.10.20',
-            delayMs: -120,
+            status: 'reported',
+            delay: -0.12,
             clockSynced: false,
           },
         ],

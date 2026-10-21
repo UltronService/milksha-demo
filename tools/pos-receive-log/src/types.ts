@@ -4,6 +4,8 @@ export type SourceType = 'store' | 'uber_eats' | 'foodpanda' | 'milksha_points';
 
 export type ReceiveResult = 'success' | 'failed' | 'skipped';
 
+export type BoxReportStatus = 'reported' | 'not_reported';
+
 export interface ZoneNumberItem {
   number: string;
   sourceType?: SourceType;
@@ -26,10 +28,12 @@ export interface RejectedSend {
 }
 
 export interface BoardBoxReportRow {
-  boxCode: string;
+  boxId: string;
   ip: string;
-  delayMs: number | null;
-  clockStatus: string;
+  status: BoxReportStatus | null;
+  delaySec: number | null;
+  clockSynced: boolean | null;
+  clockOffsetMs: number | null;
 }
 
 export interface ReceiveLogRecord {

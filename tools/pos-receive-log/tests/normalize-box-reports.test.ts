@@ -4,55 +4,62 @@ import {
   normalizeBoxReportsForIntakeLog,
 } from '../src/normalize-box-reports';
 
-describe('normalizeBoxReportsForIntakeLog', () => {
-  it('maps boxReports on feed record to rows keyed by intakeLogId', () => {
+describe('normalizeBoxReportsForIntakeLog (milksha-cloud PR #48)', () => {
+  it('maps nested boxReports with delay in seconds and status reported', () => {
     const rows = normalizeBoxReportsForIntakeLog('rec-a', {
       boxReports: [
         {
-          intakeLogId: 'rec-a',
           boxId: 'stb-qa-1',
           ip: '192.0.2.44',
-          delayMs: 2500,
+          status: 'reported',
+          delay: 2.5,
           clockSynced: true,
+          clockOffsetMs: 120,
         },
         {
-          intakeLogId: 'other-rec',
           boxId: 'stb-qa-2',
           ip: '192.0.2.45',
-          delayMs: 1000,
+          status: 'not_reported',
+          delay: null,
           clockSynced: false,
         },
       ],
     });
 
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
-      boxCode: 'stb-qa-1',
+      boxId: 'stb-qa-1',
       ip: '192.0.2.44',
-      delayMs: 2500,
-      clockStatus: '已校正',
+      status: 'reported',
+      delaySec: 2.5,
+      clockSynced: true,
+      clockOffsetMs: 120,
+    });
+    expect(rows[1]).toEqual({
+      boxId: 'stb-qa-2',
+      ip: '192.0.2.45',
+      status: 'not_reported',
+      delaySec: null,
+      clockSynced: null,
+      clockOffsetMs: null,
     });
   });
 
-  it('returns empty when boxReports missing or no rows match intakeLogId', () => {
+  it('returns empty when boxReports missing or empty', () => {
     expect(normalizeBoxReportsForIntakeLog('rec-a', {})).toEqual([]);
-    expect(
-      normalizeBoxReportsForIntakeLog('rec-a', {
-        boxReports: [{ intakeLogId: 'other', boxId: 'x', ip: '1.1.1.1' }],
-      }),
-    ).toEqual([]);
+    expect(normalizeBoxReportsForIntakeLog('rec-a', { boxReports: [] })).toEqual([]);
   });
 
-  it('supports lateSeconds field and custom field keys', () => {
+  it('supports configurable listKey and field keys', () => {
     const rows = normalizeBoxReportsForIntakeLog(
       'log-1',
       {
         boardBoxReports: [
           {
-            intakeLogId: 'log-1',
             boxCode: 'board-a',
             clientIp: '198.51.100.9',
-            lateSeconds: 3,
+            status: 'reported',
+            delaySeconds: 3,
             clockSynced: false,
           },
         ],
@@ -61,17 +68,20 @@ describe('normalizeBoxReportsForIntakeLog', () => {
         listKey: 'boardBoxReports',
         fieldKeys: {
           ...DEFAULT_BOX_REPORT_FIELD_KEYS,
-          boxCode: 'boxCode',
+          boxId: 'boxCode',
           ip: 'clientIp',
+          delay: 'delaySeconds',
         },
       },
     );
     expect(rows).toEqual([
       {
-        boxCode: 'board-a',
+        boxId: 'board-a',
         ip: '198.51.100.9',
-        delayMs: 3000,
-        clockStatus: '未校正',
+        status: 'reported',
+        delaySec: 3,
+        clockSynced: false,
+        clockOffsetMs: null,
       },
     ]);
   });

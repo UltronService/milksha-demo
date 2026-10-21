@@ -29,10 +29,10 @@ export function defaultRecords() {
       rawPayloadTruncated: false,
       boxReports: [
         {
-          intakeLogId: 'rec-a',
           boxId: 'zz-qa-board-1',
           ip: '192.0.2.10',
-          delayMs: 1500,
+          status: 'reported',
+          delay: 1.5,
           clockSynced: true,
         },
       ],

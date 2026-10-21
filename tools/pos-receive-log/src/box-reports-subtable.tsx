@@ -1,14 +1,37 @@
 import { Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { displayText } from './display-value';
-import { formatReceiveDelayCell } from './format-box-report-delay';
+import { formatDelaySecondsCell } from './format-box-report-delay';
 import type { BoardBoxReportRow } from './types';
+
+function formatClockStatus(row: BoardBoxReportRow): string {
+  if (row.status === 'not_reported' || row.status === null) {
+    return '';
+  }
+  if (row.clockSynced === true) {
+    return '已校正';
+  }
+  if (row.clockSynced === false) {
+    return '未校正';
+  }
+  return '';
+}
+
+function formatDelayCell(row: BoardBoxReportRow): string {
+  if (row.status === 'not_reported') {
+    return '未回報';
+  }
+  if (row.status !== 'reported') {
+    return '';
+  }
+  return formatDelaySecondsCell(row.delaySec);
+}
 
 const columns: ColumnsType<BoardBoxReportRow> = [
   {
     title: '盒子代號',
-    dataIndex: 'boxCode',
-    key: 'boxCode',
+    dataIndex: 'boxId',
+    key: 'boxId',
     render: (value: string) => displayText(value),
   },
   {
@@ -19,15 +42,13 @@ const columns: ColumnsType<BoardBoxReportRow> = [
   },
   {
     title: '晚幾秒',
-    dataIndex: 'delayMs',
-    key: 'delayMs',
-    render: (value: number | null) => displayText(formatReceiveDelayCell(value)),
+    key: 'delaySec',
+    render: (_, row) => displayText(formatDelayCell(row)),
   },
   {
     title: '時鐘狀態',
-    dataIndex: 'clockStatus',
     key: 'clockStatus',
-    render: (value: string) => displayText(value),
+    render: (_, row) => displayText(formatClockStatus(row)),
   },
 ];
 
@@ -41,7 +62,7 @@ export function BoxReportsSubtable({ rows }: { rows: BoardBoxReportRow[] }): JSX
         <Table<BoardBoxReportRow>
           size="small"
           pagination={false}
-          rowKey={(row) => `${row.boxCode}-${row.ip}`}
+          rowKey={(row) => `${row.boxId}-${row.ip}`}
           columns={columns}
           dataSource={rows}
           style={{ marginTop: 8 }}

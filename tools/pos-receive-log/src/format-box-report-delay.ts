@@ -1,18 +1,18 @@
-/** Aligned with js/tools/pos-receive-log-format.js on cursor/box-seen-report (#112 group 5). */
+/** Delay display for box reports (seconds, PR #48 / #112 group 5). */
 
-export function formatReceiveDelaySecondsFromMs(delayMs: number | null | undefined): string {
-  if (delayMs === null || delayMs === undefined) {
+export function formatDelaySecondsDisplay(delaySec: number | null | undefined): string {
+  if (delaySec === null || delaySec === undefined) {
     return '';
   }
-  const n = Number(delayMs);
+  const n = Number(delaySec);
   if (!Number.isFinite(n)) {
     return '';
   }
-  return (n / 1000).toFixed(3);
+  return n.toFixed(3);
 }
 
-export function formatReceiveDelayCell(delayMs: number | null | undefined): string {
-  const sec = formatReceiveDelaySecondsFromMs(delayMs);
+export function formatDelaySecondsCell(delaySec: number | null | undefined): string {
+  const sec = formatDelaySecondsDisplay(delaySec);
   if (!sec) {
     return '';
   }
