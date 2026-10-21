@@ -1,3 +1,4 @@
+/** Align with mock/fixtures.ts + tests/setup.ts FIXED_TEST_NOW_MS (2026-10-21T12:00:00.000Z). */
 export const SAMPLE_MS_A = Date.parse('2026-10-21T03:58:03.215Z');
 
 export function defaultRecords() {

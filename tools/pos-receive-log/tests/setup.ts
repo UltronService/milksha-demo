@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
+import { FIXED_TEST_NOW_MS } from '../mock/fixtures';
 import { server, PORT } from '../mock/server.mjs';
 
 Object.defineProperty(window, 'matchMedia', {
@@ -23,9 +24,16 @@ window.getComputedStyle = () =>
     getPropertyValue: () => '',
   }) as CSSStyleDeclaration;
 
+function applyFixedTestClock(): void {
+  vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+  vi.setSystemTime(new Date(FIXED_TEST_NOW_MS));
+}
+
 let listening = false;
 
 beforeAll(async () => {
+  applyFixedTestClock();
+
   if (!listening) {
     await new Promise<void>((resolve) => {
       server.listen(PORT, '127.0.0.1', () => {
@@ -36,10 +44,15 @@ beforeAll(async () => {
   }
 });
 
+beforeEach(() => {
+  applyFixedTestClock();
+});
+
 afterAll(async () => {
   await new Promise<void>((resolve) => {
     server.close(() => resolve());
   });
+  vi.useRealTimers();
 });
 
 export const mockApiBase = `http://127.0.0.1:${PORT}`;
