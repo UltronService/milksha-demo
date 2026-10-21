@@ -183,6 +183,19 @@ export function buildDevCommandRequest(input) {
   if (!body.storeId) {
     return invalidCommandParams('invalid store');
   }
+  if (input.sentAtMs !== undefined && input.sentAtMs !== null) {
+    const sentAt = Number(input.sentAtMs);
+    if (!Number.isFinite(sentAt) || !Number.isInteger(sentAt) || sentAt < 0) {
+      return invalidCommandParams('sentAtMs 必須為非負整數毫秒');
+    }
+    body.sentAtMs = sentAt;
+  }
+  const extra = Object.keys(input || {}).filter(
+    (k) => !['storeId', 'deviceId', 'type', 'params', 'sentAtMs'].includes(k),
+  );
+  if (extra.length > 0) {
+    return invalidCommandParams('請求含有不允許的欄位');
+  }
   const json = JSON.stringify(body);
   if (utf8ByteLength(json) > MAX_JSON_BYTES) {
     return invalidCommandParams('request too large');
@@ -194,7 +207,7 @@ export function validateDevCommandBody(body) {
   if (!body || typeof body !== 'object') {
     return invalidCommandParams('invalid body');
   }
-  if (!hasOnlyKeys(body, ['storeId', 'deviceId', 'type', 'params'])) {
+  if (!hasOnlyKeys(body, ['storeId', 'deviceId', 'type', 'params', 'sentAtMs'])) {
     return invalidCommandParams('invalid body');
   }
   return buildDevCommandRequest(body);

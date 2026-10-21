@@ -56,13 +56,251 @@ test('devCommand validation matches fake-cloud module', async function () {
       },
     },
   ];
+  const sentAtVariants = [
+    {},
+    { sentAtMs: 1_700_000_000_000 },
+    { sentAtMs: 0 },
+  ];
   for (const c of cases) {
-    const b = browser.buildDevCommandRequest(c);
-    const n = node.buildDevCommandRequest(c);
-    assert.equal(b.ok, n.ok);
-    if (b.ok) {
-      assert.equal(JSON.stringify(b.body), JSON.stringify(n.body));
+    for (const extra of sentAtVariants) {
+      const input = { ...c, ...extra };
+      const b = browser.buildDevCommandRequest(input);
+      const n = node.buildDevCommandRequest(input);
+      assert.equal(b.ok, n.ok);
+      if (b.ok) {
+        assert.equal(JSON.stringify(b.body), JSON.stringify(n.body));
+      }
     }
+  }
+});
+
+const SENT_AT_MS_MSG = 'sentAtMs 必須為非負整數毫秒';
+
+test('sentAtMs module rules (fake-cloud matches browser buildDevCommandRequest)', async function () {
+  const browser = loadBrowserDevCmd();
+  const node = await import('../tools/fake-cloud/dev-command-validation.mjs');
+  const base = { storeId: 's120030', deviceId: 'stb-01', type: 'restore', params: {} };
+
+  const a1 = browser.buildDevCommandRequest(base);
+  assert.equal(a1.ok, true);
+  assert.equal(a1.body.sentAtMs, undefined);
+  assert.equal(node.buildDevCommandRequest(base).ok, true);
+  assert.equal(node.buildDevCommandRequest(base).body.sentAtMs, undefined);
+
+  const ms = 1_700_000_012_345;
+  const a2b = browser.buildDevCommandRequest({ ...base, sentAtMs: ms });
+  const a2n = node.buildDevCommandRequest({ ...base, sentAtMs: ms });
+  assert.equal(a2b.ok, true);
+  assert.equal(a2b.body.sentAtMs, ms);
+  assert.equal(a2n.body.sentAtMs, ms);
+
+  const a3 = node.buildDevCommandRequest({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    type: 'clear_now',
+    params: {},
+    sentAtMs: 1,
+  });
+  assert.equal(a3.ok, true);
+  assert.equal(a3.body.sentAtMs, 1);
+
+  const nullOmit = browser.buildDevCommandRequest({ ...base, sentAtMs: null });
+  assert.equal(nullOmit.ok, true);
+  assert.equal(nullOmit.body.sentAtMs, undefined);
+  assert.equal(node.buildDevCommandRequest({ ...base, sentAtMs: null }).body.sentAtMs, undefined);
+
+  for (const bad of ['x', 1.5, NaN, -1]) {
+    const br = browser.buildDevCommandRequest({ ...base, sentAtMs: bad });
+    const nr = node.buildDevCommandRequest({ ...base, sentAtMs: bad });
+    assert.equal(br.ok, false);
+    assert.equal(nr.ok, false);
+    assert.equal(br.code, 'invalid_command_params');
+    assert.equal(nr.code, 'invalid_command_params');
+    assert.equal(br.message, SENT_AT_MS_MSG);
+    assert.equal(nr.message, SENT_AT_MS_MSG);
+  }
+
+  assert.equal(browser.buildDevCommandRequest({ ...base, sentAtMs: 0 }).ok, true);
+  assert.equal(node.buildDevCommandRequest({ ...base, sentAtMs: 0 }).body.sentAtMs, 0);
+  const dec = node.buildDevCommandRequest({ ...base, sentAtMs: 1.5 });
+  assert.equal(dec.ok, false);
+  assert.equal(dec.message, SENT_AT_MS_MSG);
+
+  const extra = node.buildDevCommandRequest({ ...base, sentAtMs: 1, rogue: true });
+  assert.equal(extra.ok, false);
+  assert.equal(extra.code, 'invalid_command_params');
+
+  const badParams = node.buildDevCommandRequest({
+    storeId: 's120030',
+    deviceId: 'stb-01',
+    type: 'slow',
+    params: { delayMs: 70000 },
+    sentAtMs: 100,
+  });
+  assert.equal(badParams.ok, false);
+});
+
+test('validateDevCommandBody browser vs node same ok/code (no sentAtMs in body)', function () {
+  const browser = loadBrowserDevCmd();
+  const cases = [
+    { storeId: 's120030', deviceId: 'stb-01', type: 'restore', params: {} },
+    { storeId: 's120030', deviceId: 'bad id', type: 'restore', params: {} },
+    { storeId: '', deviceId: 'stb-01', type: 'restore', params: {} },
+    { storeId: 's120030', deviceId: 'stb-01', type: 'nope', params: {} },
+  ];
+  return import('../tools/fake-cloud/dev-command-validation.mjs').then(function (node) {
+    for (const body of cases) {
+      const b = browser.validateDevCommandBody(body);
+      const n = node.validateDevCommandBody(body);
+      assert.equal(b.ok, n.ok);
+      if (!b.ok) {
+        assert.equal(b.code, n.code);
+      }
+    }
+  });
+});
+
+test('controller-shaped push_numbers with sentAtMs validates in fake-cloud', async function () {
+  const node = await import('../tools/fake-cloud/dev-command-validation.mjs');
+  const sentAtMs = 1_700_000_040_000;
+  const built = node.buildDevCommandRequest({
+    storeId: 'zz-qa-push-store',
+    deviceId: 'zz-qa-device',
+    type: 'push_numbers',
+    params: { ready: ['1001'], preparing: ['2001'] },
+    sentAtMs,
+  });
+  assert.equal(built.ok, true);
+  assert.equal(built.body.sentAtMs, sentAtMs);
+});
+
+test('fake-cloud devCommand accepts valid sentAtMs (HTTP)', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    await fetch(`http://127.0.0.1:${PORT}/test/reset`, { method: 'POST' });
+    const sentAtMs = 1_700_000_050_000;
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        type: 'reload',
+        params: {},
+        sentAtMs,
+      }),
+    });
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.ok, true);
+  } finally {
+    proc.kill();
+  }
+});
+
+test('fake-cloud devCommand rejects bad sentAtMs (HTTP)', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    for (const sentAtMs of [-1, 'x']) {
+      const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+        body: JSON.stringify({
+          storeId: 's120030',
+          deviceId: 'stb-01',
+          type: 'restore',
+          params: {},
+          sentAtMs,
+        }),
+      });
+      assert.equal(res.status, 400);
+      const json = await res.json();
+      assert.equal(json.code, 'invalid_command_params');
+    }
+  } finally {
+    proc.kill();
+  }
+});
+
+test('fake-cloud devCommand rejects extra top-level key with sentAtMs present (HTTP)', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        type: 'restore',
+        params: {},
+        sentAtMs: 1,
+        extra: true,
+      }),
+    });
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.code, 'invalid_command_params');
+  } finally {
+    proc.kill();
+  }
+});
+
+test('fake-cloud push_numbers with sentAtMs bumps board seq (HTTP)', async function () {
+  const proc = spawn(process.execPath, [join(ROOT, 'tools', 'fake-cloud', 'server.mjs')], {
+    env: { ...process.env, FAKE_CLOUD_PORT: String(PORT) },
+    stdio: 'ignore',
+  });
+  try {
+    await waitHealth();
+    await fetch(`http://127.0.0.1:${PORT}/test/reset`, { method: 'POST' });
+    let seqBefore = 0;
+    const boardBefore = await fetch(
+      `http://127.0.0.1:${PORT}/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/board/today_board`,
+      { headers: { Authorization: 'Bearer fake-id-token' } },
+    );
+    if (boardBefore.ok) {
+      const beforeDoc = await boardBefore.json();
+      seqBefore = beforeDoc.fields?.seq?.integerValue
+        ? parseInt(beforeDoc.fields.seq.integerValue, 10)
+        : 0;
+    }
+
+    const res = await fetch(`http://127.0.0.1:${PORT}/fn/milksha-qms-dev/asia-east1/devCommand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fake-id-token' },
+      body: JSON.stringify({
+        storeId: 's120030',
+        deviceId: 'stb-01',
+        type: 'push_numbers',
+        params: { ready: ['9001'], preparing: [] },
+        sentAtMs: 1_700_000_060_000,
+      }),
+    });
+    assert.equal(res.status, 200);
+
+    const boardAfter = await fetch(
+      `http://127.0.0.1:${PORT}/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/s120030/board/today_board`,
+      { headers: { Authorization: 'Bearer fake-id-token' } },
+    );
+    const afterDoc = await boardAfter.json();
+    const seqAfter = parseInt(afterDoc.fields.seq.integerValue, 10);
+    assert.ok(seqAfter > seqBefore);
+    const tickets = afterDoc.fields.tickets?.arrayValue?.values || [];
+    assert.ok(tickets.length >= 1);
+  } finally {
+    proc.kill();
   }
 });
 
