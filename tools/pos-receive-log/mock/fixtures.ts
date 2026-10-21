@@ -1,4 +1,4 @@
-import type { ReceiveLogRecord } from '../src/types';
+import type { IntakeMessageSummary, ReceiveLogRecord } from '../src/types';
 import {
   FIXED_TEST_NOW_MS,
   LIVE_FEED_RECORD_MS,
@@ -10,6 +10,13 @@ export { FIXED_TEST_NOW_MS, LIVE_FEED_RECORD_MS, SAMPLE_MS_A };
 export const SAMPLE_MS_B = SAMPLE_MS_A;
 
 export const SECRET_PLACEHOLDER = '<REDACTED>';
+
+const defaultMessageSummary: IntakeMessageSummary = {
+  bodyByteSize: 512,
+  httpStatus: 200,
+  disposition: 'accepted',
+  rejectReason: null,
+};
 
 export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): ReceiveLogRecord {
   const id = overrides.id ?? 'rec-zz-qa-1';
@@ -38,6 +45,7 @@ export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): Re
     },
     result: overrides.result ?? 'success',
     rejectedSends: overrides.rejectedSends ?? [{ number: '3001', reason: '格式錯誤' }],
+    messageSummary: overrides.messageSummary ?? defaultMessageSummary,
     rawPayload:
       overrides.rawPayload ??
       `{"apiKey":"${SECRET_PLACEHOLDER}","numbers":["1001"]}`,

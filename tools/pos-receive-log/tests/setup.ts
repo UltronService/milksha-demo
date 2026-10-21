@@ -30,19 +30,19 @@ function applyFixedTestClock(): void {
   vi.setSystemTime(new Date(FIXED_TEST_NOW_MS));
 }
 
-let listening = false;
-
 beforeAll(async () => {
   applyFixedTestClock();
 
-  if (!listening) {
-    await new Promise<void>((resolve) => {
-      server.listen(PORT, '127.0.0.1', () => {
-        listening = true;
-        resolve();
-      });
-    });
+  if (server.listening) {
+    return;
   }
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(PORT, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
 });
 
 beforeEach(() => {

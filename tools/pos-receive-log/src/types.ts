@@ -27,6 +27,13 @@ export interface RejectedSend {
   reason: string;
 }
 
+export interface IntakeMessageSummary {
+  bodyByteSize: number | null;
+  httpStatus: number | null;
+  disposition: string;
+  rejectReason: string | null;
+}
+
 export interface BoardBoxReportRow {
   boxId: string;
   ip: string;
@@ -50,8 +57,9 @@ export interface ReceiveLogRecord {
   };
   result: ReceiveResult;
   rejectedSends: RejectedSend[];
+  messageSummary: IntakeMessageSummary;
   rawPayload: string;
-  rawPayloadTruncated?: boolean;
+  rawPayloadTruncated: boolean;
   boxReports: BoardBoxReportRow[];
 }
 

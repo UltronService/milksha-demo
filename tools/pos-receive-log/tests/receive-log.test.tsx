@@ -174,8 +174,8 @@ describe('POS receive log page', () => {
     await user.click(screen.getAllByRole('button', { name: /expand/i })[0]);
     const expanded = screen.getByTestId('expanded-row');
     expect(within(expanded).getByText('#7805')).toBeInTheDocument();
-    expect(within(expanded).getByTestId('raw-payload').textContent).toContain('1794');
-    expect(within(expanded).getByTestId('raw-payload').textContent).toContain('<REDACTED>');
+    expect(within(expanded).getByTestId('message-summary-body').textContent).toContain('1794');
+    expect(within(expanded).getByText('訊息摘要')).toBeInTheDocument();
   });
 
   it('14. optional store: empty omits storeId and shows all stores; filled sends storeId', async () => {

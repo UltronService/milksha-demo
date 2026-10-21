@@ -56,7 +56,8 @@
 | `disposition` | 結果 |
 | `readyNumbers` / `preparingNumbers` | 展開列（請取餐／準備中區塊內號碼） |
 | `rejectReason` | 展開列「拒絕送出」 |
-| `bodyByteSize` + redacted signature | 展開列 raw payload |
+| `bodyByteSize`、`httpStatus`、`disposition`、`rejectReason` | 展開列「訊息摘要」 |
+| `rawPayload`、`rawPayloadTruncated` | 展開列「POS 原始訊息」 |
 | `posTimeStmpRaw`（`posSentAtMs` 缺） | 送件時間欄「格式錯誤」；展開列 POS timeStmp（raw） |
 | `boxReports[]`（milksha-cloud PR #48） | 展開列「盒子回報」：`boxId`、`ip`、`status`、`delay`（秒）、`clockSynced`、`clockOffsetMs`；無資料顯示「未回報」 |
 
