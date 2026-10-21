@@ -49,7 +49,7 @@ export function defaultRecords() {
         ready: { count: 0, numbers: [], notShown: [] },
         preparing: {
           count: 1,
-          numbers: [{ number: '2002', sourceType: 'store' }],
+          numbers: [{ number: '2002', sourceType: 'milksha_points' }],
           notShown: [],
         },
       },
