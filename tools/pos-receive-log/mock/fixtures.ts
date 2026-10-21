@@ -37,6 +37,7 @@ export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): Re
       overrides.rawPayload ??
       `{"apiKey":"${SECRET_PLACEHOLDER}","numbers":["1001"]}`,
     rawPayloadTruncated: overrides.rawPayloadTruncated ?? false,
+    boxReports: overrides.boxReports ?? [],
     ...overrides,
   };
 }

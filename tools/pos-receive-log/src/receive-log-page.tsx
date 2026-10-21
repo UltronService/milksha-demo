@@ -7,6 +7,7 @@ import { fetchReceiveLogs, FetchReceiveLogsError } from './fetch-receive-logs';
 import { formatTaipeiWithMs } from './format-taipei-time';
 import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-display';
 import { sourceTypeLabel } from './source-type-label';
+import { BoxReportsSubtable } from './box-reports-subtable';
 import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
 
 const TaipeiRangePicker = DatePicker.RangePicker;
@@ -69,6 +70,7 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
           </ul>
         </div>
       )}
+      <BoxReportsSubtable rows={record.boxReports} />
       {record.posTimeStmpRaw ? (
         <div style={{ marginBottom: 12 }}>
           <Typography.Text strong>POS timeStmp（raw）</Typography.Text>
@@ -91,7 +93,7 @@ export function ReceiveLogPage({
 }: ReceiveLogPageProps): JSX.Element {
   const [storeNumber, setStoreNumber] = useState(initialStoreNumber);
   const [range, setRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>(() => [
-    dayjs().subtract(1, 'day'),
+    dayjs().subtract(7, 'day'),
     dayjs().add(1, 'hour'),
   ]);
   const [autoRefresh, setAutoRefresh] = useState(false);

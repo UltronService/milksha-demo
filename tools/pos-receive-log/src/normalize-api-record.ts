@@ -1,3 +1,4 @@
+import { normalizeBoxReportsForIntakeLog } from './normalize-box-reports';
 import type { EntryType, ReceiveLogRecord, ReceiveResult, SourceType, ZoneNumberItem } from './types';
 
 function asZoneBlock(raw: unknown): ReceiveLogRecord['zones']['ready'] {
@@ -139,8 +140,9 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
       ? null
       : String(posTimeStmpRawRaw).slice(0, 64);
 
+  const id = String(r.id ?? '');
   return {
-    id: String(r.id ?? ''),
+    id,
     receivedAtMs: parseReceivedAtMs(r),
     posTimeStmpRaw,
     posSentAtMs,
@@ -152,5 +154,6 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     rejectedSends: rejectedFromFeed(r),
     rawPayload: buildRawPayload(r),
     rawPayloadTruncated: Boolean(r.rawPayloadTruncated),
+    boxReports: normalizeBoxReportsForIntakeLog(id, r),
   };
 }

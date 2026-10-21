@@ -25,6 +25,13 @@ export interface RejectedSend {
   reason: string;
 }
 
+export interface BoardBoxReportRow {
+  boxCode: string;
+  ip: string;
+  delayMs: number | null;
+  clockStatus: string;
+}
+
 export interface ReceiveLogRecord {
   id: string;
   receivedAtMs: number;
@@ -41,6 +48,7 @@ export interface ReceiveLogRecord {
   rejectedSends: RejectedSend[];
   rawPayload: string;
   rawPayloadTruncated?: boolean;
+  boxReports: BoardBoxReportRow[];
 }
 
 export type ReceiveLogsApiResponse =

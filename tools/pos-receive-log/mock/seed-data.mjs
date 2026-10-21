@@ -27,6 +27,15 @@ export function defaultRecords() {
       rejectedSends: [{ number: '3001', reason: '格式錯誤' }],
       rawPayload: '{"apiKey":"<REDACTED>","numbers":["1001"]}',
       rawPayloadTruncated: false,
+      boxReports: [
+        {
+          intakeLogId: 'rec-a',
+          boxId: 'zz-qa-board-1',
+          ip: '192.0.2.10',
+          delayMs: 1500,
+          clockSynced: true,
+        },
+      ],
     },
     {
       id: 'rec-b',
