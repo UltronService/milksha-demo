@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { afterAll, beforeAll } from 'vitest';
+import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { SAMPLE_MS_A } from '../mock/fixtures';
 import { server, PORT } from '../mock/server.mjs';
 
 Object.defineProperty(window, 'matchMedia', {
@@ -23,22 +24,25 @@ window.getComputedStyle = () =>
     getPropertyValue: () => '',
   }) as CSSStyleDeclaration;
 
-let listening = false;
-
-beforeAll(async () => {
-  if (!listening) {
-    await new Promise<void>((resolve) => {
-      server.listen(PORT, '127.0.0.1', () => {
-        listening = true;
-        resolve();
-      });
-    });
-  }
+/** Align "today" with fixture records (2026-10-20 Taipei) for date-range filters. */
+beforeEach(() => {
+  vi.useFakeTimers({ now: SAMPLE_MS_A + 3_600_000, shouldAdvanceTime: true });
 });
 
-afterAll(async () => {
-  await new Promise<void>((resolve) => {
-    server.close(() => resolve());
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+beforeAll(async () => {
+  if (server.listening) {
+    return;
+  }
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(PORT, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
   });
 });
 

@@ -12,9 +12,28 @@ describe('normalizeApiRecord (posIntakeLogFeed)', () => {
     expect(row.zones.preparing.count).toBe(20);
     expect(row.zones.ready.numbers.map((n) => n.number)).toEqual(['#7805', '4D5EB', '4D5ED']);
     expect(row.result).toBe('success');
-    expect(row.rawPayload).toContain('1794');
-    expect(row.rawPayload).toContain('<REDACTED>');
-    expect(row.rawPayload).not.toContain('requestSignature":"deadbeef');
+    expect(row.messageSummary.bodyByteSize).toBe(1794);
+    expect(row.rawPayload).toBe('');
+    expect(row.messageSummary.disposition).toBe('accepted');
+  });
+
+  it('TDD-23: non-empty rawPayload from API is kept verbatim', () => {
+    const row = normalizeApiRecord({
+      ...realFixture,
+      rawPayload: '{"keep":true}',
+    });
+    expect(row.rawPayload).toBe('{"keep":true}');
+  });
+
+  it('TDD-24: missing rawPayload still exposes message summary fields', () => {
+    const row = normalizeApiRecord(realFixture);
+    expect(row.messageSummary.bodyByteSize).toBe(1794);
+    expect(row.messageSummary.httpStatus).toBe(200);
+  });
+
+  it('TDD-25: rawPayloadTruncated maps to boolean', () => {
+    const row = normalizeApiRecord({ ...realFixture, rawPayloadTruncated: true });
+    expect(row.rawPayloadTruncated).toBe(true);
   });
 
   it('maps zero counts without treating as empty', () => {

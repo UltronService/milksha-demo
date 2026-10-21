@@ -1,10 +1,17 @@
-import type { ReceiveLogRecord } from '../src/types';
+import type { IntakeMessageSummary, ReceiveLogRecord } from '../src/types';
 
 /** Fixed Taipei-local wall time for stable tests: 2026-10-20 11:58:03.215 */
 export const SAMPLE_MS_A = Date.parse('2026-10-20T03:58:03.215Z');
 export const SAMPLE_MS_B = SAMPLE_MS_A;
 
 export const SECRET_PLACEHOLDER = '<REDACTED>';
+
+const defaultMessageSummary: IntakeMessageSummary = {
+  bodyByteSize: 512,
+  httpStatus: 200,
+  disposition: 'accepted',
+  rejectReason: null,
+};
 
 export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): ReceiveLogRecord {
   const id = overrides.id ?? 'rec-zz-qa-1';
@@ -33,6 +40,7 @@ export function buildSampleRecord(overrides: Partial<ReceiveLogRecord> = {}): Re
     },
     result: overrides.result ?? 'success',
     rejectedSends: overrides.rejectedSends ?? [{ number: '3001', reason: '格式錯誤' }],
+    messageSummary: overrides.messageSummary ?? defaultMessageSummary,
     rawPayload:
       overrides.rawPayload ??
       `{"apiKey":"${SECRET_PLACEHOLDER}","numbers":["1001"]}`,
