@@ -25,6 +25,13 @@ export interface RejectedSend {
   reason: string;
 }
 
+export interface IntakeMessageSummary {
+  bodyByteSize: number | null;
+  httpStatus: number | null;
+  disposition: string;
+  rejectReason: string | null;
+}
+
 export interface ReceiveLogRecord {
   id: string;
   receivedAtMs: number;
@@ -39,8 +46,9 @@ export interface ReceiveLogRecord {
   };
   result: ReceiveResult;
   rejectedSends: RejectedSend[];
+  messageSummary: IntakeMessageSummary;
   rawPayload: string;
-  rawPayloadTruncated?: boolean;
+  rawPayloadTruncated: boolean;
 }
 
 export type ReceiveLogsApiResponse =

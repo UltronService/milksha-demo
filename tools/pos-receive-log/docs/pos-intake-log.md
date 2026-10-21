@@ -56,7 +56,8 @@
 | `disposition` | 結果 |
 | `readyNumbers` / `preparingNumbers` | 展開列（請取餐／準備中區塊內號碼） |
 | `rejectReason` | 展開列「拒絕送出」 |
-| `bodyByteSize` + redacted signature | 展開列 raw payload |
+| `bodyByteSize`、`httpStatus`、`disposition`、`rejectReason` | 展開列「訊息摘要」 |
+| `rawPayload`、`rawPayloadTruncated` | 展開列「POS 原始訊息」 |
 | `posTimeStmpRaw`（`posSentAtMs` 缺） | 送件時間欄「格式錯誤」；展開列 POS timeStmp（raw） |
 
 空值顯示 `—`；計數欄位數值 `0` 顯示 `0`；作業時間（秒）真實 `0` 顯示 `0.000`。

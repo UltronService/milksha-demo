@@ -4,7 +4,13 @@ import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { displayCount, displayText } from './display-value';
 import { fetchReceiveLogs, FetchReceiveLogsError } from './fetch-receive-logs';
+import {
+  formatRawPayloadForDisplay,
+  POS_RAW_MESSAGE_BODY_STYLE,
+  POS_RAW_MESSAGE_MAX_HEIGHT_PX,
+} from './format-raw-payload-display';
 import { formatTaipeiWithMs } from './format-taipei-time';
+import { buildIntakeMessageSummaryLines } from './intake-message-summary-lines';
 import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-display';
 import { sourceTypeLabel } from './source-type-label';
 import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
@@ -75,10 +81,30 @@ function ExpandedRow({ record }: { record: ReceiveLogRecord }): JSX.Element {
           <div data-testid="pos-time-stmp-raw">{record.posTimeStmpRaw}</div>
         </div>
       ) : null}
-      <div data-testid="raw-payload">
-        <Typography.Text strong>raw payload</Typography.Text>
-        <pre>{record.rawPayload || '—'}</pre>
-        {record.rawPayloadTruncated ? <Typography.Text type="secondary">（已截斷）</Typography.Text> : null}
+      <div data-testid="message-summary" style={{ marginBottom: 12 }}>
+        <Typography.Text strong>訊息摘要</Typography.Text>
+        <div data-testid="message-summary-body">
+          {buildIntakeMessageSummaryLines(record.messageSummary).map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      </div>
+      <div data-testid="pos-raw-message">
+        <Typography.Text strong>POS 原始訊息</Typography.Text>
+        <pre
+          data-testid="raw-payload"
+          style={POS_RAW_MESSAGE_BODY_STYLE}
+          data-max-height-px={POS_RAW_MESSAGE_MAX_HEIGHT_PX}
+        >
+          {record.rawPayload.length > 0
+            ? formatRawPayloadForDisplay(record.rawPayload)
+            : '無原始內容'}
+        </pre>
+        {record.rawPayloadTruncated ? (
+          <Typography.Text type="secondary" data-testid="raw-payload-truncated">
+            內容過長，已截斷
+          </Typography.Text>
+        ) : null}
       </div>
     </div>
   );

@@ -1,4 +1,11 @@
-import type { EntryType, ReceiveLogRecord, ReceiveResult, SourceType, ZoneNumberItem } from './types';
+import type {
+  EntryType,
+  IntakeMessageSummary,
+  ReceiveLogRecord,
+  ReceiveResult,
+  SourceType,
+  ZoneNumberItem,
+} from './types';
 
 function asZoneBlock(raw: unknown): ReceiveLogRecord['zones']['ready'] {
   const z = (raw ?? {}) as Record<string, unknown>;
@@ -86,21 +93,38 @@ function parseReceivedAtMs(r: Record<string, unknown>): number {
   return Number(r.receivedAt ?? 0);
 }
 
-function buildRawPayload(r: Record<string, unknown>): string {
-  if (typeof r.rawPayload === 'string' && r.rawPayload.length > 0) {
+function readRawPayload(r: Record<string, unknown>): string {
+  if (typeof r.rawPayload === 'string') {
     return r.rawPayload;
   }
-  return JSON.stringify(
-    {
-      bodyByteSize: r.bodyByteSize ?? null,
-      httpStatus: r.httpStatus ?? null,
-      deviceId: r.deviceId ?? null,
-      rejectReason: r.rejectReason ?? null,
-      requestSignature: '<REDACTED>',
-    },
-    null,
-    2,
-  );
+  return '';
+}
+
+function nullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function buildMessageSummary(r: Record<string, unknown>, result: ReceiveResult): IntakeMessageSummary {
+  const dispositionRaw = r.disposition;
+  const disposition =
+    dispositionRaw !== null && dispositionRaw !== undefined && String(dispositionRaw).trim() !== ''
+      ? String(dispositionRaw)
+      : result;
+  const rejectRaw = r.rejectReason;
+  const rejectReason =
+    rejectRaw === null || rejectRaw === undefined || String(rejectRaw).trim() === ''
+      ? null
+      : String(rejectRaw);
+  return {
+    bodyByteSize: nullableNumber(r.bodyByteSize),
+    httpStatus: nullableNumber(r.httpStatus),
+    disposition,
+    rejectReason,
+  };
 }
 
 function rejectedFromFeed(r: Record<string, unknown>): ReceiveLogRecord['rejectedSends'] {
@@ -150,7 +174,8 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     zones: zonesFromFeed(r),
     result,
     rejectedSends: rejectedFromFeed(r),
-    rawPayload: buildRawPayload(r),
+    messageSummary: buildMessageSummary(r, result),
+    rawPayload: readRawPayload(r),
     rawPayloadTruncated: Boolean(r.rawPayloadTruncated),
   };
 }
