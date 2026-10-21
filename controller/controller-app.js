@@ -926,6 +926,24 @@
     }
   }
 
+  function applyUrlDeviceParamFromQuery(params) {
+    const p = params || new URLSearchParams(window.location.search);
+    const fromUrl = p.get('device');
+    if (!fromUrl || !String(fromUrl).trim()) {
+      return;
+    }
+    const deviceId = String(fromUrl).trim();
+    const devEl = document.getElementById('fld-device');
+    if (devEl) {
+      devEl.value = deviceId;
+    }
+    try {
+      window.localStorage.setItem('milksha:deviceId', deviceId);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function pinCloudDeviceDefaults() {
     const modeEl = document.getElementById('fld-mode');
     if (!modeEl || modeEl.value !== 'cloud') {
@@ -2400,6 +2418,7 @@
   document.getElementById('fld-tammy').value = JSON.stringify(Validate.TAMMY_SAMPLE_REQUEST, null, 2);
 
   initStoreSelect();
+  applyUrlDeviceParamFromQuery(params);
   if (isCloudPickerMode() && !validateCurrentStoreFormatOrBlock()) {
     syncActionButtonStates();
   }

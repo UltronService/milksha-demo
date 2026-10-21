@@ -215,14 +215,30 @@ function nextSeq(storeId) {
   return (cur?.seq ? Number(cur.seq) : 0) + 1;
 }
 
+const POS_TIME_TICKET_KEYS = [
+  'firstSeenPosAtMs',
+  'readyPosAtMs',
+  'posTimeSource',
+  'seqInBatch',
+  'readySeqInBatch',
+];
+
 function numberToTickets(nc) {
   const now = new Date().toISOString();
-  return (nc || []).map((row) => ({
-    no: row.number,
-    status: row.source_type?.includes('_OK') ? 'ready' : 'preparing',
-    updatedAt: now,
-    source_type: row.source_type || 'From_Store_Preparing',
-  }));
+  return (nc || []).map((row) => {
+    const ticket = {
+      no: row.number,
+      status: row.source_type?.includes('_OK') ? 'ready' : 'preparing',
+      updatedAt: row.updatedAt || now,
+      source_type: row.source_type || 'From_Store_Preparing',
+    };
+    for (const key of POS_TIME_TICKET_KEYS) {
+      if (row[key] !== undefined && row[key] !== null) {
+        ticket[key] = row[key];
+      }
+    }
+    return ticket;
+  });
 }
 
 function pushEntryToRow(entry, zone) {

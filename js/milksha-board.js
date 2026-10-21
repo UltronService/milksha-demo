@@ -249,6 +249,11 @@
         number: normalized,
         payloadIndex: i,
       };
+      const copyPos =
+        QMS.Board && QMS.Board.PosTimeFields && QMS.Board.PosTimeFields.copyPosTimeFields;
+      if (copyPos) {
+        copyPos(row, entry);
+      }
       if (parsed.zone === 'ready') {
         if (readyDedupeKeys.has(entry.id)) {
           continue;
@@ -1255,6 +1260,22 @@
         ringIds = newReadyIds;
       }
 
+      const boardItemSort = QMS.Board && QMS.Board.BoardItemSort;
+      const copyPosMeta =
+        QMS.Board && QMS.Board.PosTimeFields && QMS.Board.PosTimeFields.copyPosTimeFields;
+
+      function mergePosFieldsFromEntry(target, entry, prevMeta) {
+        if (!copyPosMeta) {
+          return;
+        }
+        if (prevMeta) {
+          copyPosMeta(prevMeta, target);
+        }
+        if (entry) {
+          copyPosMeta(entry, target);
+        }
+      }
+
       const nextMeta = {};
       const nextReady = [];
       for (let i = 0; i < parts.ready.length; i += 1) {
@@ -1267,22 +1288,31 @@
             : Number.isFinite(e.payloadIndex)
               ? e.payloadIndex
               : 0;
-        nextMeta[e.id] = {
+        const meta = {
           firstSeenAt: prev && prev.firstSeenAt ? prev.firstSeenAt : now,
           readyAt: newReadyIds.indexOf(e.id) >= 0 ? now : readyAt,
           payloadIndex: payloadIndex,
         };
-        nextReady.push({
+        mergePosFieldsFromEntry(meta, e, prev);
+        nextMeta[e.id] = meta;
+        const row = {
           id: e.id,
           sourceKey: e.sourceKey,
           number: e.number,
-          readyAt: nextMeta[e.id].readyAt,
+          readyAt: meta.readyAt,
           payloadIndex: payloadIndex,
-        });
+        };
+        mergePosFieldsFromEntry(row, e, prev);
+        nextReady.push(row);
       }
-      nextReady.sort(function (a, b) {
-        return compareNewestFirst(a, b, 'readyAt');
-      });
+      if (boardItemSort && boardItemSort.sortBoardZoneItems) {
+        readyItems = boardItemSort.sortBoardZoneItems(nextReady, 'ready');
+      } else {
+        nextReady.sort(function (a, b) {
+          return compareNewestFirst(a, b, 'readyAt');
+        });
+        readyItems = nextReady;
+      }
 
       const nextPrep = [];
       for (let j = 0; j < parts.preparing.length; j += 1) {
@@ -1294,22 +1324,31 @@
             : Number.isFinite(p.payloadIndex)
               ? p.payloadIndex
               : 0;
-        nextMeta[p.id] = {
+        const meta = {
           firstSeenAt: prev && prev.firstSeenAt ? prev.firstSeenAt : now,
           readyAt: prev && prev.readyAt ? prev.readyAt : null,
           payloadIndex: prepPayloadIndex,
         };
-        nextPrep.push({
+        mergePosFieldsFromEntry(meta, p, prev);
+        nextMeta[p.id] = meta;
+        const row = {
           id: p.id,
           sourceKey: p.sourceKey,
           number: p.number,
-          firstSeenAt: nextMeta[p.id].firstSeenAt,
+          firstSeenAt: meta.firstSeenAt,
           payloadIndex: prepPayloadIndex,
-        });
+        };
+        mergePosFieldsFromEntry(row, p, prev);
+        nextPrep.push(row);
       }
-      nextPrep.sort(function (a, b) {
-        return compareNewestFirst(a, b, 'firstSeenAt');
-      });
+      if (boardItemSort && boardItemSort.sortBoardZoneItems) {
+        prepItems = boardItemSort.sortBoardZoneItems(nextPrep, 'preparing');
+      } else {
+        nextPrep.sort(function (a, b) {
+          return compareNewestFirst(a, b, 'firstSeenAt');
+        });
+        prepItems = nextPrep;
+      }
 
       Object.keys(metaById).forEach(function (k) {
         if (!nextMeta[k]) {
@@ -1320,11 +1359,8 @@
         metaById[k] = nextMeta[k];
       });
 
-      readyItems = nextReady;
-      prepItems = nextPrep;
-
-      maybeJumpNoMotionZoneToPageOneOnNewItem('prep', prevPrepBefore, nextPrep, now);
-      maybeJumpNoMotionZoneToPageOneOnNewItem('ready', prevReadyBefore, nextReady, now);
+      maybeJumpNoMotionZoneToPageOneOnNewItem('prep', prevPrepBefore, prepItems, now);
+      maybeJumpNoMotionZoneToPageOneOnNewItem('ready', prevReadyBefore, readyItems, now);
 
       if (!silentApply && ringIds.length > 0) {
         readyPage = 0;

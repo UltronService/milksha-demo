@@ -11,11 +11,15 @@ const ROOT = path.join(__dirname, '..');
 /**
  * 總監核准：自動配對相關看板檔可與 main diff；其餘 js/board/* 仍須零 diff。
  * PR #95（controller-default-number）亦放寬同一 acceptance #8，另列 js/board/chip-overflow-fit.js。
+ * PR pos-time-sort：board-pos-time-fields.js、board-item-sort.js、today-board.js。
  * 兩 PR 皆改此檔時後合併者須合併兩邊白名單條目（勿只保留一邊）。
  */
 const BOARD_AUTO_PAIR_DIFF_WHITELIST = [
   'js/board/board-auto-pair.js',
   'js/board/board-auto-pair-host.js',
+  'js/board/board-pos-time-fields.js',
+  'js/board/board-item-sort.js',
+  'js/board/today-board.js',
 ];
 
 const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
@@ -180,7 +184,7 @@ test('acceptance 8b: whitelist policy flags any non-listed js/board file in a di
     'receiver/cloud-boot.js',
   ];
   const hits = boardReceiverDiffViolations(sample, BOARD_AUTO_PAIR_DIFF_WHITELIST);
-  assert.deepEqual(hits.sort(), ['js/board/today-board.js', 'receiver/cloud-boot.js'].sort());
+  assert.deepEqual(hits.sort(), ['receiver/cloud-boot.js'].sort());
   assert.deepEqual(
     boardReceiverDiffViolations(
       ['js/board/board-auto-pair.js', 'js/board/board-auto-pair-host.js'],
