@@ -14,7 +14,7 @@
     const timeStmp = draft.timeStmp || PosSign.formatTimeStmp();
     const md5Hash = Md5.md5Hex(innerText);
     const isEncrypt = draft.isEncrypt === true;
-    const wireText =
+    let wireText =
       '{"isEncrypt":' +
       (isEncrypt ? 'true' : 'false') +
       ',"serviceSpecialData_Json":' +
@@ -28,8 +28,14 @@
       ',"serviceSpecialData_Json_Md5Hash":' +
       JSON.stringify(md5Hash) +
       ',"signature":' +
-      JSON.stringify(String(signature || '')) +
-      '}';
+      JSON.stringify(String(signature || ''));
+    if (draft.sentAtMs !== undefined && draft.sentAtMs !== null) {
+      const sentAt = Math.floor(Number(draft.sentAtMs));
+      if (Number.isFinite(sentAt) && sentAt >= 0) {
+        wireText += ',"sentAtMs":' + String(sentAt);
+      }
+    }
+    wireText += '}';
     return {
       wireText: wireText,
       innerText: innerText,

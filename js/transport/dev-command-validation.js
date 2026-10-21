@@ -254,8 +254,15 @@
     if (!body.storeId) {
       return invalidCommandParams('門市代碼不可為空');
     }
+    if (input.sentAtMs !== undefined && input.sentAtMs !== null) {
+      const sentAt = Number(input.sentAtMs);
+      if (!Number.isFinite(sentAt) || !Number.isInteger(sentAt) || sentAt < 0) {
+        return invalidCommandParams('sentAtMs 必須為非負整數毫秒');
+      }
+      body.sentAtMs = sentAt;
+    }
     const extra = Object.keys(input || {}).filter(function (k) {
-      return ['storeId', 'deviceId', 'type', 'params'].indexOf(k) < 0;
+      return ['storeId', 'deviceId', 'type', 'params', 'sentAtMs'].indexOf(k) < 0;
     });
     if (extra.length > 0) {
       return invalidCommandParams('請求含有不允許的欄位');

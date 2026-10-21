@@ -163,6 +163,13 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     posTimeStmpRawRaw === null || posTimeStmpRawRaw === undefined
       ? null
       : String(posTimeStmpRawRaw).slice(0, 64);
+  const posSentAtIgnoredRaw = r.posSentAtIgnored;
+  const posSentAtIgnored =
+    posSentAtIgnoredRaw === true
+      ? true
+      : posSentAtIgnoredRaw === false
+        ? false
+        : null;
 
   const id = String(r.id ?? '');
   return {
@@ -170,6 +177,7 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     receivedAtMs: parseReceivedAtMs(r),
     posTimeStmpRaw,
     posSentAtMs,
+    posSentAtIgnored,
     storeNumber: String(r.storeNumber ?? r.storeId ?? ''),
     entry: (r.entry as EntryType | undefined) ?? mapSourceToEntry(r.source),
     sourceIp: String(r.sourceIp ?? r.clientIp ?? ''),

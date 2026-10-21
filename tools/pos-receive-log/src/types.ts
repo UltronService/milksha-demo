@@ -48,6 +48,8 @@ export interface ReceiveLogRecord {
   receivedAtMs: number;
   posTimeStmpRaw: string | null;
   posSentAtMs: number | null;
+  /** Cloud ignored device send time when clock skew exceeds tolerance. */
+  posSentAtIgnored: boolean | null;
   storeNumber: string;
   entry: EntryType;
   sourceIp: string;

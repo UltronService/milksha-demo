@@ -312,17 +312,27 @@
           writeJson(storage, boardKey(sid), board);
           channel({ type: 'board', storeId: sid });
         }
+        const PosClock = QMS.Transport.PosSentAtClock;
+        const cloudNowMs =
+          PosClock && PosClock.readCloudNowMs ? PosClock.readCloudNowMs() : Date.now();
+        const clockEval =
+          PosClock && PosClock.evaluatePosSentAtClock
+            ? PosClock.evaluatePosSentAtClock(parsed.sentAtMs, cloudNowMs)
+            : { posSentAtMs: null, posSentAtIgnored: false };
         appendReceiveLog({
           kind: 'posReceiver',
           isSuccess: allowWrite,
           information: information,
           seq: seq,
+          posSentAtMs: clockEval.posSentAtMs,
+          posSentAtIgnored: clockEval.posSentAtIgnored,
         });
         return {
           isSuccess: allowWrite,
           information: information,
           seq: seq,
           boxOnline: online,
+          posSentAtIgnored: clockEval.posSentAtIgnored,
         };
       },
     };
