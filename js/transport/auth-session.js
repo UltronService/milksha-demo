@@ -491,6 +491,11 @@
       return ensureIdTokenInFlight;
     }
 
+    function hasUsableCachedIdToken() {
+      loadStored();
+      return Boolean(idToken) && expiresAtMs > 0 && Date.now() < expiresAtMs;
+    }
+
     async function authHeaders() {
       const token = await ensureIdToken();
       return { Authorization: 'Bearer ' + token };
@@ -498,6 +503,7 @@
 
     return {
       ensureIdToken: ensureIdToken,
+      hasUsableCachedIdToken: hasUsableCachedIdToken,
       authHeaders: authHeaders,
       refreshIdToken: refreshIdToken,
       devLogin: devLogin,
