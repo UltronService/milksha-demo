@@ -1,7 +1,7 @@
 import type { ReceiveLogRecord } from '../src/types';
 
-/** Fixed Taipei-local wall time for stable tests: 2026-10-20 11:58:03.215 */
-export const SAMPLE_MS_A = Date.parse('2026-10-20T03:58:03.215Z');
+/** Fixed Taipei-local wall time for stable tests: 2026-10-21 11:58:03.215 */
+export const SAMPLE_MS_A = Date.parse('2026-10-21T03:58:03.215Z');
 export const SAMPLE_MS_B = SAMPLE_MS_A;
 
 export const SECRET_PLACEHOLDER = '<REDACTED>';

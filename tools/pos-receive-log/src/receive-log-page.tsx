@@ -93,7 +93,7 @@ export function ReceiveLogPage({
 }: ReceiveLogPageProps): JSX.Element {
   const [storeNumber, setStoreNumber] = useState(initialStoreNumber);
   const [range, setRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>(() => [
-    dayjs().subtract(7, 'day'),
+    dayjs().subtract(1, 'day'),
     dayjs().add(1, 'hour'),
   ]);
   const [autoRefresh, setAutoRefresh] = useState(false);
