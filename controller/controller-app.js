@@ -276,6 +276,22 @@
     el.hidden = false;
   }
 
+  function showPosClockWarning(res) {
+    const SendTiming = window.QMS.Controller.SendTiming;
+    const el = document.getElementById('pos-clock-warning');
+    if (!el || !SendTiming || !SendTiming.controllerClockWarningMessage) {
+      return;
+    }
+    const msg = SendTiming.controllerClockWarningMessage(res);
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
   const POS_SEND_BUTTON_IDS = new Set([
     'btn-send-numbers',
     'btn-add-ticket',
@@ -991,6 +1007,17 @@
 
   function wrapRequest(numberContent) {
     const s = store();
+    const SendTiming = window.QMS.Controller.SendTiming;
+    const sentAtMs = SendTiming ? SendTiming.readSendTimestampMs() : Date.now();
+    if (SendTiming && SendTiming.buildPosReceiverDraft) {
+      return SendTiming.buildPosReceiverDraft({
+        merchant_id: s.merchant_id,
+        account: s.account,
+        target: Validate.milkshaTargetForAccount(s.account),
+        numberContent: numberContent,
+        sentAtMs: sentAtMs,
+      });
+    }
     return {
       isEncrypt: false,
       serviceSpecialData_Json: {
@@ -999,6 +1026,7 @@
       },
       merchant_id: s.merchant_id,
       account: s.account,
+      sentAtMs: sentAtMs,
     };
   }
 
@@ -1057,6 +1085,8 @@
     setPosButtonsDisabled(true);
     persistCloudForm();
     const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const SendTiming = window.QMS.Controller.SendTiming;
+    const sentAtMs = SendTiming ? SendTiming.readSendTimestampMs() : Date.now();
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
     const built = DevCmd
       ? DevCmd.buildDevCommandRequest({
@@ -1064,6 +1094,7 @@
           deviceId: deviceId,
           type: 'push_numbers',
           params: ticketsToPushParams(),
+          sentAtMs: sentAtMs,
         })
       : {
           ok: true,
@@ -1072,6 +1103,7 @@
             deviceId: deviceId,
             type: 'push_numbers',
             params: ticketsToPushParams(),
+            sentAtMs: sentAtMs,
           },
         };
     if (!built.ok) {
@@ -1103,6 +1135,7 @@
           (boardSeq != null ? ' seq=' + boardSeq : ''),
         response: res,
       });
+      showPosClockWarning(res);
       showUserBanner('');
       const BoardRefresh = window.QMS.Transport.BoardRefreshAfterCommand;
       try {
@@ -1211,6 +1244,7 @@
         window.__controllerTelemetry.lastBoardSeq = lastBoardSeq;
       }
       const userMsg = formatPosUserMessage(res);
+      showPosClockWarning(res);
       pushLog({
         kind: 'posReceiver',
         summary:
@@ -1591,6 +1625,8 @@
       return;
     }
     const DevCmd = window.QMS.Transport.DevCommandValidation;
+    const SendTiming = window.QMS.Controller.SendTiming;
+    const sentAtMs = SendTiming ? SendTiming.readSendTimestampMs() : Date.now();
     const deviceId = document.getElementById('fld-device').value.trim() || 'stb-01';
     const built = DevCmd
       ? DevCmd.buildDevCommandRequest({
@@ -1598,8 +1634,18 @@
           deviceId: deviceId,
           type: type,
           params: params || {},
+          sentAtMs: sentAtMs,
         })
-      : { ok: true, body: { storeId: storeId(), deviceId: deviceId, type: type, params: params || {} } };
+      : {
+          ok: true,
+          body: {
+            storeId: storeId(),
+            deviceId: deviceId,
+            type: type,
+            params: params || {},
+            sentAtMs: sentAtMs,
+          },
+        };
     if (!built.ok) {
       presentDevCommandError(
         {
@@ -1613,11 +1659,12 @@
     commandInFlight = true;
     setCommandButtonsDisabled(true);
     try {
-      await cloudCall(function () {
+      const res = await cloudCall(function () {
         return transport.cloudApi.devCommand(built.body);
       });
+      showPosClockWarning(res);
       hideCommandErrorAlert();
-      pushLog({ summary: '指令 ' + type, kind: 'command' });
+      pushLog({ summary: '指令 ' + type, kind: 'command', response: res });
     } catch (e) {
       presentDevCommandError(e);
     } finally {

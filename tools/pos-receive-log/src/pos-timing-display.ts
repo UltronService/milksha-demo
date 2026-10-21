@@ -8,7 +8,11 @@ export interface ProcessingDurationDisplay {
 export function formatSentTimeCell(
   posSentAtMs: number | null | undefined,
   posTimeStmpRaw: string | null | undefined,
+  posSentAtIgnored?: boolean | null,
 ): string {
+  if (posSentAtIgnored === true) {
+    return '時間異常';
+  }
   if (posSentAtMs !== null && posSentAtMs !== undefined && Number.isFinite(posSentAtMs)) {
     return formatTaipeiWithMs(posSentAtMs);
   }

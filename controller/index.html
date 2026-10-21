@@ -25,6 +25,13 @@
       目前是本機測試：控制頁和看板要在同一台電腦、同一個瀏覽器開兩個視窗才會連動。
     </p>
     <p id="user-banner" class="user-banner" hidden role="alert" data-testid="user-banner"></p>
+    <p
+      id="pos-clock-warning"
+      class="user-banner pos-clock-warning"
+      hidden
+      role="status"
+      data-testid="pos-clock-warning"
+    ></p>
     <div
       id="command-error-alert"
       class="controller-alert controller-alert-error"
@@ -348,6 +355,7 @@
     <script src="../js/milksha-board.js?v=20261019a"></script>
     <script src="../js/transport/push-numbers-params.js?v=20261019a"></script>
     <script src="controller-send-number.js?v=20261019a"></script>
+    <script src="controller-send-timing.js?v=20261019a"></script>
     <script src="controller-cloud-ticket-readback.js?v=20261019a"></script>
     <script src="../config/firebase.js?v=20261019a"></script>
     <script src="../js/transport/paths.js?v=20261019a"></script>

@@ -193,7 +193,7 @@ export function ReceiveLogPage({
         key: 'sentAt',
         render: (_, row) => (
           <span data-testid="sent-at-cell">
-            {formatSentTimeCell(row.posSentAtMs, row.posTimeStmpRaw)}
+            {formatSentTimeCell(row.posSentAtMs, row.posTimeStmpRaw, row.posSentAtIgnored)}
           </span>
         ),
       },
