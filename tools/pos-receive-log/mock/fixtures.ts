@@ -1,13 +1,12 @@
 import type { ReceiveLogRecord } from '../src/types';
+import {
+  FIXED_TEST_NOW_MS,
+  LIVE_FEED_RECORD_MS,
+  SAMPLE_MS_A,
+} from './test-clock.mjs';
 
-/** Frozen vitest clock; ReceiveLogPage default 1-day range is relative to this instant. */
-export const FIXED_TEST_NOW_MS = Date.parse('2026-10-21T12:00:00.000Z');
+export { FIXED_TEST_NOW_MS, LIVE_FEED_RECORD_MS, SAMPLE_MS_A };
 
-/** Fixed Taipei-local wall time for stable tests: 2026-10-21 11:58:03.215 */
-export const SAMPLE_MS_A = Date.parse('2026-10-21T03:58:03.215Z');
-
-/** Live feed JSON fixture (test 15); within 1-day window of FIXED_TEST_NOW_MS. */
-export const LIVE_FEED_RECORD_MS = Date.parse('2026-10-21T04:42:07.805Z');
 export const SAMPLE_MS_B = SAMPLE_MS_A;
 
 export const SECRET_PLACEHOLDER = '<REDACTED>';

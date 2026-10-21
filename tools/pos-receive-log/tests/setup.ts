@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
-import { FIXED_TEST_NOW_MS } from '../mock/fixtures';
+import { FIXED_TEST_NOW_MS } from '../mock/test-clock.mjs';
 import { server, PORT } from '../mock/server.mjs';
 
 Object.defineProperty(window, 'matchMedia', {
@@ -24,6 +24,7 @@ window.getComputedStyle = () =>
     getPropertyValue: () => '',
   }) as CSSStyleDeclaration;
 
+/** Freezes `Date` / `Date.now` for the whole receive-log vitest suite (see mock/test-clock.mjs). */
 function applyFixedTestClock(): void {
   vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
   vi.setSystemTime(new Date(FIXED_TEST_NOW_MS));

@@ -1,5 +1,6 @@
-/** Align with mock/fixtures.ts + tests/setup.ts FIXED_TEST_NOW_MS (2026-10-21T12:00:00.000Z). */
-export const SAMPLE_MS_A = Date.parse('2026-10-21T03:58:03.215Z');
+import { SAMPLE_MS_A } from './test-clock.mjs';
+
+export { SAMPLE_MS_A };
 
 export function defaultRecords() {
   return [
@@ -48,7 +49,7 @@ export function defaultRecords() {
         ready: { count: 0, numbers: [], notShown: [] },
         preparing: {
           count: 1,
-          numbers: [{ number: '2002', sourceType: 'milksha_points' }],
+          numbers: [{ number: '2002', sourceType: 'store' }],
           notShown: [],
         },
       },
