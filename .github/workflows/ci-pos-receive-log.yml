@@ -1,0 +1,28 @@
+name: CI POS Receive Log
+
+on:
+  pull_request:
+    paths:
+      - 'tools/pos-receive-log/**'
+      - '.github/workflows/ci-pos-receive-log.yml'
+  push:
+    branches: [cursor/pos-receive-log]
+    paths:
+      - 'tools/pos-receive-log/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/pos-receive-log
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/pos-receive-log/package-lock.json
+      - run: npm ci
+      - run: npm test

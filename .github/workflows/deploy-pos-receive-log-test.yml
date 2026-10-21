@@ -1,0 +1,37 @@
+name: Deploy POS Receive Log (test Firebase)
+
+on:
+  push:
+    branches: [cursor/pos-receive-log]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/pos-receive-log
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/pos-receive-log/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Deploy to milksha-qms-dev Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          MILKSHA_QMS_DEV_FIREBASE_SA: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_SA }}
+        run: |
+          if [ -z "$MILKSHA_QMS_DEV_FIREBASE_SA" ] && [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Missing MILKSHA_QMS_DEV_FIREBASE_SA or MILKSHA_QMS_DEV_FIREBASE_TOKEN"
+            exit 1
+          fi
+          if [ -n "$MILKSHA_QMS_DEV_FIREBASE_SA" ]; then
+            echo "$MILKSHA_QMS_DEV_FIREBASE_SA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          fi
+          npx firebase-tools deploy --only hosting:milksha-pos-receive-log-dev --project milksha-qms-dev --non-interactive

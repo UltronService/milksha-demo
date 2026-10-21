@@ -1,0 +1,17 @@
+{
+  "id": "gMO7qqRkLdeATh2pTQ80",
+  "storeId": "s030570",
+  "deviceId": null,
+  "source": "posReceiver",
+  "clientIp": "2a04:4e41:8:a1c::e1c5:8a1c",
+  "httpStatus": 200,
+  "disposition": "accepted",
+  "rejectReason": null,
+  "readyCount": 3,
+  "preparingCount": 20,
+  "readyNumbers": ["#7805", "4D5EB", "4D5ED"],
+  "preparingNumbers": ["#7802", "#7806"],
+  "bodyByteSize": 1794,
+  "requestSignature": "<REDACTED>",
+  "receivedAtMs": 1792471327805
+}
