@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  compareBoxCount,
+  compareNotReportedCount,
   computeBoxReportsMainTableMetrics,
   countNotReportedBoxes,
   readBoxReportsFeedShape,
+  type ReceiveLogRecordForSort,
 } from '../src/box-reports-main-table';
 import type { BoardBoxReportRow } from '../src/types';
 
@@ -48,5 +51,21 @@ describe('boxReports main table metrics', () => {
       notReportedCount: 2,
     });
     expect(countNotReportedBoxes(rows)).toBe(2);
+  });
+
+  it('sorts numeric counts before dash rows (ascending)', () => {
+    const dashRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'missing', boxReports: [] };
+    const zeroRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'array', boxReports: [] };
+    const twoRow: ReceiveLogRecordForSort = {
+      boxReportsFeedShape: 'array',
+      boxReports: [
+        { boxId: 'a', ip: '1', status: 'reported', delaySec: 0, clockSynced: true, clockOffsetMs: 0 },
+        { boxId: 'b', ip: '2', status: 'reported', delaySec: 0, clockSynced: true, clockOffsetMs: 0 },
+      ],
+    };
+    expect(compareBoxCount(zeroRow, twoRow)).toBeLessThan(0);
+    expect(compareBoxCount(twoRow, dashRow)).toBeLessThan(0);
+    expect(compareBoxCount(zeroRow, dashRow)).toBeLessThan(0);
+    expect(compareNotReportedCount(zeroRow, dashRow)).toBeLessThan(0);
   });
 });

@@ -153,16 +153,18 @@ describe('Main table box report columns', () => {
     expect(counts).toContainEqual({ box: '0', not: '0' });
   });
 
-  it('6. only 未回報台數 header is sortable', async () => {
+  it('6. both 盒子數 and 未回報台數 headers are sortable', async () => {
     await mockControl({ reset: true });
     render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="zz-qa-store-a" />);
     await waitFor(() => {
       expect(screen.getAllByText('zz-qa-store-a').length).toBeGreaterThan(0);
     });
-    const notHeader = screen.getByRole('columnheader', { name: /未回報台數/ });
-    expect(notHeader).toHaveClass('ant-table-column-has-sorters');
-    const boxHeader = screen.getByRole('columnheader', { name: /盒子數/ });
-    expect(boxHeader.className.includes('ant-table-column-has-sorters')).toBe(false);
+    expect(screen.getByRole('columnheader', { name: /未回報台數/ })).toHaveClass(
+      'ant-table-column-has-sorters',
+    );
+    expect(screen.getByRole('columnheader', { name: /盒子數/ })).toHaveClass(
+      'ant-table-column-has-sorters',
+    );
   });
 
   it('7. controller clientIp shows full IP in 來源 IP column', async () => {

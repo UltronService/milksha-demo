@@ -39,8 +39,8 @@
 | 6 | 來源 IP |
 | 7 | 請取餐 |
 | 8 | 準備中 |
-| 9 | 盒子數 |
-| 10 | 未回報台數（可排序） |
+| 9 | 盒子數（可排序；`—` 排在數字之後） |
+| 10 | 未回報台數（可排序；`—` 排在數字之後） |
 | 11 | 結果 |
 
 ## API → UI 對照
@@ -56,7 +56,7 @@
 | `readyCount` | 請取餐 |
 | `preparingCount` | 準備中 |
 | `boxReports[]` | 盒子數（陣列長度）；缺欄或非陣列顯示 `—`；`[]` 顯示 `0` |
-| `boxReports[].status` | 未回報台數（`not_reported` 與缺/null 計入；未知字串不計入）；`>0` 紅字；可排序 |
+| `boxReports[].status` | 未回報台數（`not_reported` 與缺/null 計入；未知字串不計入）；`>0` 紅字；可排序（`—` 在數字後） |
 | `disposition` | 結果 |
 | `readyNumbers` / `preparingNumbers` | 展開列（請取餐／準備中區塊內號碼） |
 | `rejectReason` | 展開列「拒絕送出」 |

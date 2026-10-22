@@ -15,6 +15,7 @@ import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-displ
 import { sourceTypeLabel } from './source-type-label';
 import { BoxReportsSubtable } from './box-reports-subtable';
 import {
+  compareBoxCount,
   compareNotReportedCount,
   computeBoxReportsMainTableMetrics,
   formatMainTableCountCell,
@@ -253,6 +254,7 @@ export function ReceiveLogPage({
       {
         title: '盒子數',
         key: 'boxCount',
+        sorter: (a, b) => compareBoxCount(a, b),
         render: (_, row) => {
           const metrics = computeBoxReportsMainTableMetrics(
             row.boxReportsFeedShape,

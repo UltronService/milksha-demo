@@ -46,21 +46,37 @@ export function formatMainTableCountCell(value: BoxReportsMainCellValue): string
   return String(value);
 }
 
+/** Dash rows sort after all numeric values when ascending. */
+const DASH_SORT_RANK = Number.MAX_SAFE_INTEGER;
+
+export function sortKeyForMainTableCount(value: BoxReportsMainCellValue): number {
+  if (value === 'dash') {
+    return DASH_SORT_RANK;
+  }
+  return value;
+}
+
+export function compareBoxCount(a: ReceiveLogRecordForSort, b: ReceiveLogRecordForSort): number {
+  const av = sortKeyForMainTableCount(
+    computeBoxReportsMainTableMetrics(a.boxReportsFeedShape, a.boxReports).boxCount,
+  );
+  const bv = sortKeyForMainTableCount(
+    computeBoxReportsMainTableMetrics(b.boxReportsFeedShape, b.boxReports).boxCount,
+  );
+  return av - bv;
+}
+
 export function compareNotReportedCount(a: ReceiveLogRecordForSort, b: ReceiveLogRecordForSort): number {
-  const av = sortKeyForNotReported(a);
-  const bv = sortKeyForNotReported(b);
+  const av = sortKeyForMainTableCount(
+    computeBoxReportsMainTableMetrics(a.boxReportsFeedShape, a.boxReports).notReportedCount,
+  );
+  const bv = sortKeyForMainTableCount(
+    computeBoxReportsMainTableMetrics(b.boxReportsFeedShape, b.boxReports).notReportedCount,
+  );
   return av - bv;
 }
 
 export interface ReceiveLogRecordForSort {
   boxReportsFeedShape: BoxReportsFeedShape;
   boxReports: BoardBoxReportRow[];
-}
-
-function sortKeyForNotReported(record: ReceiveLogRecordForSort): number {
-  const metrics = computeBoxReportsMainTableMetrics(record.boxReportsFeedShape, record.boxReports);
-  if (metrics.notReportedCount === 'dash') {
-    return -1;
-  }
-  return metrics.notReportedCount;
 }
