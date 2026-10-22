@@ -53,7 +53,7 @@ describe('POS receive log page', () => {
   it('3. each row shows store, entry, source IP', async () => {
     await renderPage();
     expect(screen.getAllByText('zz-qa-store-a').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('controller').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('控制端').length).toBeGreaterThan(0);
     expect(screen.getByText('203.0.113.10')).toBeInTheDocument();
     expect(screen.getByText('198.51.100.2')).toBeInTheDocument();
   });

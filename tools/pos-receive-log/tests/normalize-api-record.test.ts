@@ -48,6 +48,66 @@ describe('normalizeApiRecord (posIntakeLogFeed)', () => {
     ).toBe('invalid');
   });
 
+  describe('mapSourceToEntry (入口 regression)', () => {
+    it('1) posReceiver maps to entry POS', () => {
+      const row = normalizeApiRecord({ ...realFixture, source: 'posReceiver' });
+      expect(row.entry).toBe('POS');
+    });
+
+    it('2) devCommand_push_numbers (23:01:13 fixture) maps to entry controller', () => {
+      const row = normalizeApiRecord({
+        id: 'UCi1UHnreiRGYRM4cl5v',
+        storeId: 'zz-qa-store-a',
+        deviceId: 'web-qa55-one-1792681272848',
+        source: 'devCommand_push_numbers',
+        receivedAtMs: 1792681273101,
+        disposition: 'rejected',
+      });
+      expect(row.entry).toBe('controller');
+    });
+
+    it('3) legacy source containing controller maps to entry controller', () => {
+      const row = normalizeApiRecord({
+        id: 'legacy-ctrl',
+        storeId: 'zz-qa-store-a',
+        source: 'fooControllerBar',
+        receivedAtMs: LIVE_FEED_RECORD_MS,
+        disposition: 'accepted',
+      });
+      expect(row.entry).toBe('controller');
+    });
+
+    it('4) unrecognised source maps to entry unknown', () => {
+      const row = normalizeApiRecord({
+        id: 'unk',
+        storeId: 'zz-qa-store-a',
+        source: 'mysteryGateway',
+        receivedAtMs: LIVE_FEED_RECORD_MS,
+        disposition: 'accepted',
+      });
+      expect(row.entry).toBe('unknown');
+    });
+
+    it('5) missing or empty source maps to entry unknown', () => {
+      const missing = normalizeApiRecord({
+        id: 'empty-src',
+        storeId: 'zz-qa-store-a',
+        receivedAtMs: LIVE_FEED_RECORD_MS,
+        disposition: 'accepted',
+      });
+      expect(missing.entry).toBe('unknown');
+
+      const empty = normalizeApiRecord({
+        id: 'blank-src',
+        storeId: 'zz-qa-store-a',
+        source: '',
+        receivedAtMs: LIVE_FEED_RECORD_MS,
+        disposition: 'accepted',
+      });
+      expect(empty.entry).toBe('unknown');
+    });
+  });
+
   it('maps zero counts without treating as empty', () => {
     const row = normalizeApiRecord({
       ...realFixture,
