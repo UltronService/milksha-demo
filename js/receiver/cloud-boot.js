@@ -515,8 +515,16 @@
           }
           clearGuestAuthDebug();
           syncAuthUiFromSession();
-          if (root.receiverCloud && root.receiverCloud.scheduleCloudResync) {
-            root.receiverCloud.scheduleCloudResync('auth');
+          if (root.receiverCloud) {
+            if (root.receiverCloud.triggerBoardPoll) {
+              root.receiverCloud.triggerBoardPoll({ force: true });
+            }
+            if (root.receiverCloud.triggerDevicePoll) {
+              root.receiverCloud.triggerDevicePoll();
+            }
+            if (root.receiverCloud.sendHeartbeat) {
+              root.receiverCloud.sendHeartbeat();
+            }
           }
         })
         .catch(function (err) {
@@ -578,25 +586,8 @@
         showCloudOfflineUi: Boolean(homeBoard && milkshaRuntime),
         skipBootReceiverCache: Boolean(homeBoard && transportMode === 'cloud'),
         onCloudResync: function () {
-          if (transport.session && transport.session.refreshIdToken) {
-            return transport.session
-              .refreshIdToken()
-              .catch(function () {
-                return runEnsureIdToken(true);
-              })
-              .then(function () {
-                if (cloud.triggerBoardPoll) {
-                  cloud.triggerBoardPoll({ force: true });
-                }
-                if (cloud.triggerDevicePoll) {
-                  cloud.triggerDevicePoll();
-                }
-                if (cloud.sendHeartbeat) {
-                  cloud.sendHeartbeat();
-                }
-              });
-          }
-          return runEnsureIdToken(true).then(function () {
+          const ResyncAuth = QMS.Receiver && QMS.Receiver.runResyncAuthStep;
+          const pollAfterAuth = function () {
             if (cloud.triggerBoardPoll) {
               cloud.triggerBoardPoll({ force: true });
             }
@@ -606,7 +597,11 @@
             if (cloud.sendHeartbeat) {
               cloud.sendHeartbeat();
             }
-          });
+          };
+          if (ResyncAuth) {
+            return ResyncAuth(transport.session, runEnsureIdToken, pollAfterAuth);
+          }
+          return runEnsureIdToken(true).then(pollAfterAuth);
         },
       });
       cloud.start();
