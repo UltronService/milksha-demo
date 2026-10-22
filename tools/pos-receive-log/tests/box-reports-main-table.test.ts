@@ -53,7 +53,7 @@ describe('boxReports main table metrics', () => {
     expect(countNotReportedBoxes(rows)).toBe(2);
   });
 
-  it('sorts numeric counts before dash rows (ascending)', () => {
+  it('sorts numeric counts before dash rows (ascending compare fn)', () => {
     const dashRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'missing', boxReports: [] };
     const zeroRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'array', boxReports: [] };
     const twoRow: ReceiveLogRecordForSort = {
@@ -63,9 +63,33 @@ describe('boxReports main table metrics', () => {
         { boxId: 'b', ip: '2', status: 'reported', delaySec: 0, clockSynced: true, clockOffsetMs: 0 },
       ],
     };
-    expect(compareBoxCount(zeroRow, twoRow)).toBeLessThan(0);
-    expect(compareBoxCount(twoRow, dashRow)).toBeLessThan(0);
-    expect(compareBoxCount(zeroRow, dashRow)).toBeLessThan(0);
-    expect(compareNotReportedCount(zeroRow, dashRow)).toBeLessThan(0);
+    expect(compareBoxCount(zeroRow, twoRow, 'ascend')).toBeLessThan(0);
+    expect(compareBoxCount(twoRow, dashRow, 'ascend')).toBeLessThan(0);
+    expect(compareBoxCount(zeroRow, dashRow, 'ascend')).toBeLessThan(0);
+    expect(compareNotReportedCount(zeroRow, dashRow, 'ascend')).toBeLessThan(0);
+  });
+
+  it('keeps dash rows last when Ant Design applies descend (negated compare)', () => {
+    const dashRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'missing', boxReports: [] };
+    const zeroRow: ReceiveLogRecordForSort = { boxReportsFeedShape: 'array', boxReports: [] };
+    const twoRow: ReceiveLogRecordForSort = {
+      boxReportsFeedShape: 'array',
+      boxReports: [
+        { boxId: 'a', ip: '1', status: 'reported', delaySec: 0, clockSynced: true, clockOffsetMs: 0 },
+        { boxId: 'b', ip: '2', status: 'reported', delaySec: 0, clockSynced: true, clockOffsetMs: 0 },
+      ],
+    };
+    const applyAntdSort = (
+      cmp: (a: ReceiveLogRecordForSort, b: ReceiveLogRecordForSort, order: 'ascend' | 'descend') => number,
+      order: 'ascend' | 'descend',
+    ) =>
+      [zeroRow, twoRow, dashRow].sort((a, b) => {
+        const result = cmp(a, b, order);
+        return order === 'ascend' ? result : -result;
+      });
+
+    expect(applyAntdSort(compareBoxCount, 'ascend').map((r) => r.boxReports.length)).toEqual([0, 2, 0]);
+    expect(applyAntdSort(compareBoxCount, 'descend').map((r) => r.boxReports.length)).toEqual([2, 0, 0]);
+    expect(applyAntdSort(compareNotReportedCount, 'descend')[2].boxReportsFeedShape).toBe('missing');
   });
 });

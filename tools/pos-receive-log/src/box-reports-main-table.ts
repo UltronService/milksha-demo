@@ -1,3 +1,4 @@
+import type { SortOrder } from 'antd/es/table/interface';
 import type { BoardBoxReportRow, BoxReportsFeedShape } from './types';
 
 export type BoxReportsMainCellValue = number | 'dash';
@@ -46,34 +47,57 @@ export function formatMainTableCountCell(value: BoxReportsMainCellValue): string
   return String(value);
 }
 
-/** Dash rows sort after all numeric values when ascending. */
-const DASH_SORT_RANK = Number.MAX_SAFE_INTEGER;
+function isDashValue(value: BoxReportsMainCellValue): boolean {
+  return value === 'dash';
+}
 
-export function sortKeyForMainTableCount(value: BoxReportsMainCellValue): number {
-  if (value === 'dash') {
-    return DASH_SORT_RANK;
+/** Ant Design negates compare on descend; bias keeps dash rows last in both directions. */
+function compareDashVsNumber(
+  aIsDash: boolean,
+  bIsDash: boolean,
+  sortOrder?: SortOrder,
+): number | null {
+  if (aIsDash && bIsDash) {
+    return 0;
   }
-  return value;
+  if (aIsDash) {
+    return sortOrder === 'descend' ? -1 : 1;
+  }
+  if (bIsDash) {
+    return sortOrder === 'descend' ? 1 : -1;
+  }
+  return null;
 }
 
-export function compareBoxCount(a: ReceiveLogRecordForSort, b: ReceiveLogRecordForSort): number {
-  const av = sortKeyForMainTableCount(
-    computeBoxReportsMainTableMetrics(a.boxReportsFeedShape, a.boxReports).boxCount,
-  );
-  const bv = sortKeyForMainTableCount(
-    computeBoxReportsMainTableMetrics(b.boxReportsFeedShape, b.boxReports).boxCount,
-  );
-  return av - bv;
+function compareMainTableMetric(
+  a: ReceiveLogRecordForSort,
+  b: ReceiveLogRecordForSort,
+  pick: (metrics: BoxReportsMainTableMetrics) => BoxReportsMainCellValue,
+  sortOrder?: SortOrder,
+): number {
+  const aVal = pick(computeBoxReportsMainTableMetrics(a.boxReportsFeedShape, a.boxReports));
+  const bVal = pick(computeBoxReportsMainTableMetrics(b.boxReportsFeedShape, b.boxReports));
+  const dashCmp = compareDashVsNumber(isDashValue(aVal), isDashValue(bVal), sortOrder);
+  if (dashCmp !== null) {
+    return dashCmp;
+  }
+  return (aVal as number) - (bVal as number);
 }
 
-export function compareNotReportedCount(a: ReceiveLogRecordForSort, b: ReceiveLogRecordForSort): number {
-  const av = sortKeyForMainTableCount(
-    computeBoxReportsMainTableMetrics(a.boxReportsFeedShape, a.boxReports).notReportedCount,
-  );
-  const bv = sortKeyForMainTableCount(
-    computeBoxReportsMainTableMetrics(b.boxReportsFeedShape, b.boxReports).notReportedCount,
-  );
-  return av - bv;
+export function compareBoxCount(
+  a: ReceiveLogRecordForSort,
+  b: ReceiveLogRecordForSort,
+  sortOrder?: SortOrder,
+): number {
+  return compareMainTableMetric(a, b, (m) => m.boxCount, sortOrder);
+}
+
+export function compareNotReportedCount(
+  a: ReceiveLogRecordForSort,
+  b: ReceiveLogRecordForSort,
+  sortOrder?: SortOrder,
+): number {
+  return compareMainTableMetric(a, b, (m) => m.notReportedCount, sortOrder);
 }
 
 export interface ReceiveLogRecordForSort {

@@ -254,7 +254,7 @@ export function ReceiveLogPage({
       {
         title: '盒子數',
         key: 'boxCount',
-        sorter: (a, b) => compareBoxCount(a, b),
+        sorter: (a, b, sortOrder) => compareBoxCount(a, b, sortOrder),
         render: (_, row) => {
           const metrics = computeBoxReportsMainTableMetrics(
             row.boxReportsFeedShape,
@@ -268,7 +268,7 @@ export function ReceiveLogPage({
       {
         title: '未回報台數',
         key: 'notReportedCount',
-        sorter: (a, b) => compareNotReportedCount(a, b),
+        sorter: (a, b, sortOrder) => compareNotReportedCount(a, b, sortOrder),
         render: (_, row) => {
           const metrics = computeBoxReportsMainTableMetrics(
             row.boxReportsFeedShape,

@@ -14,6 +14,82 @@ function columnHeaderTexts(): string[] {
   return screen.getAllByRole('columnheader').map((el) => el.textContent?.replace(/\s/g, '') ?? '');
 }
 
+function dataRowsWithBoxCells() {
+  return screen.getAllByRole('row').filter((r) => within(r).queryAllByTestId('box-count-cell').length > 0);
+}
+
+function boxCountOrderInTable(): string[] {
+  return dataRowsWithBoxCells().map(
+    (r) => within(r).getByTestId('box-count-cell').textContent ?? '',
+  );
+}
+
+function notReportedCountOrderInTable(): string[] {
+  return dataRowsWithBoxCells().map(
+    (r) => within(r).getByTestId('not-reported-count-cell').textContent ?? '',
+  );
+}
+
+async function clickColumnSort(user: ReturnType<typeof userEvent.setup>, name: RegExp, clicks = 1) {
+  const header = screen.getByRole('columnheader', { name });
+  for (let i = 0; i < clicks; i += 1) {
+    await user.click(header);
+  }
+}
+
+async function seedSortFixtureRows() {
+  await mockControl({
+    reset: true,
+    records: [
+      buildSampleRecord({
+        id: 'sort-zero',
+        receivedAtMs: SAMPLE_MS_A + 500_000,
+        storeNumber: 'sort-store',
+        sourceIp: '10.0.0.1',
+        boxReports: [],
+        boxReportsFeedShape: 'array',
+      }),
+      buildSampleRecord({
+        id: 'sort-two',
+        receivedAtMs: SAMPLE_MS_A + 501_000,
+        storeNumber: 'sort-store',
+        sourceIp: '10.0.0.2',
+        boxReports: [
+          {
+            boxId: 'b1',
+            ip: '10.0.0.2',
+            status: 'reported',
+            delaySec: 1,
+            clockSynced: true,
+            clockOffsetMs: 0,
+          },
+          {
+            boxId: 'b2',
+            ip: '10.0.0.3',
+            status: 'not_reported',
+            delaySec: null,
+            clockSynced: null,
+            clockOffsetMs: null,
+          },
+        ],
+        boxReportsFeedShape: 'array',
+      }),
+      {
+        id: 'sort-dash',
+        receivedAtMs: SAMPLE_MS_A + 502_000,
+        storeNumber: 'sort-store',
+        entry: 'POS',
+        sourceIp: '10.0.0.9',
+        zones: buildSampleRecord().zones,
+        result: 'success',
+        rejectedSends: [],
+        rawPayload: '{}',
+        rawPayloadTruncated: false,
+      },
+    ],
+  });
+}
+
 describe('Main table box report columns', () => {
   it('1. headers 盒子數 and 未回報台數 sit between 準備中 and 結果', async () => {
     await mockControl({ reset: true });
@@ -151,6 +227,76 @@ describe('Main table box report columns', () => {
     }));
     expect(counts).toContainEqual({ box: '2', not: '1' });
     expect(counts).toContainEqual({ box: '0', not: '0' });
+  });
+
+  it('10. null status in boxReports counts toward 未回報台數 on main table', async () => {
+    await mockControl({
+      reset: true,
+      record: {
+        id: 'rec-null-status',
+        receivedAtMs: SAMPLE_MS_A + 450_000,
+        storeNumber: 'only-null-status',
+        entry: 'POS',
+        sourceIp: '10.0.0.44',
+        zones: buildSampleRecord().zones,
+        result: 'success',
+        rejectedSends: [],
+        rawPayload: '{}',
+        rawPayloadTruncated: false,
+        boxReports: [
+          {
+            boxId: 'reported-one',
+            ip: '10.0.0.50',
+            status: 'reported',
+            delay: 1,
+            clockSynced: true,
+          },
+          {
+            boxId: 'missing-status',
+            ip: '10.0.0.51',
+          },
+        ],
+      },
+    });
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="only-null-status" />);
+    await waitFor(() => {
+      expect(screen.getByTestId('box-count-cell')).toHaveTextContent('2');
+    });
+    expect(screen.getByTestId('not-reported-count-cell')).toHaveTextContent('1');
+  });
+
+  it('11. clicking 盒子數 sorts asc/desc with dash always last', async () => {
+    const user = userEvent.setup();
+    await seedSortFixtureRows();
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="sort-store" />);
+    await waitFor(() => {
+      expect(screen.getAllByText('sort-store').length).toBe(3);
+    });
+    await clickColumnSort(user, /盒子數/, 1);
+    await waitFor(() => {
+      expect(boxCountOrderInTable()).toEqual(['0', '2', '—']);
+    });
+    await clickColumnSort(user, /盒子數/, 1);
+    await waitFor(() => {
+      expect(boxCountOrderInTable()).toEqual(['2', '0', '—']);
+    });
+  });
+
+  it('12. clicking 未回報台數 sorts asc/desc with dash always last', async () => {
+    const user = userEvent.setup();
+    await seedSortFixtureRows();
+    render(<ReceiveLogPage apiBaseUrl={mockApiBase} initialStoreNumber="sort-store" />);
+    await waitFor(() => {
+      expect(screen.getAllByText('sort-store').length).toBe(3);
+    });
+    await clickColumnSort(user, /未回報台數/, 1);
+    await waitFor(() => {
+      expect(notReportedCountOrderInTable()).toEqual(['0', '1', '—']);
+    });
+    await clickColumnSort(user, /未回報台數/, 1);
+    await waitFor(() => {
+      expect(notReportedCountOrderInTable()).toEqual(['1', '0', '—']);
+    });
   });
 
   it('6. both 盒子數 and 未回報台數 headers are sortable', async () => {
