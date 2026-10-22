@@ -1,3 +1,4 @@
+import { readBoxReportsFeedShape } from './box-reports-main-table';
 import { normalizeBoxReportsForIntakeLog } from './normalize-box-reports';
 import type {
   EntryType,
@@ -180,13 +181,14 @@ export function normalizeApiRecord(raw: unknown): ReceiveLogRecord {
     posSentAtIgnored,
     storeNumber: String(r.storeNumber ?? r.storeId ?? ''),
     entry: (r.entry as EntryType | undefined) ?? mapSourceToEntry(r.source),
-    sourceIp: String(r.sourceIp ?? r.clientIp ?? ''),
+    sourceIp: String(r.sourceIp ?? r.clientIp ?? '').trim(),
     zones: zonesFromFeed(r),
     result,
     rejectedSends: rejectedFromFeed(r),
     messageSummary: buildMessageSummary(r, result),
     rawPayload: readRawPayload(r),
     rawPayloadTruncated: Boolean(r.rawPayloadTruncated),
+    boxReportsFeedShape: readBoxReportsFeedShape(r),
     boxReports: normalizeBoxReportsForIntakeLog(id, r),
   };
 }

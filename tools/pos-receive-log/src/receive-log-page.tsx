@@ -14,6 +14,11 @@ import { buildIntakeMessageSummaryLines } from './intake-message-summary-lines';
 import { formatProcessingDuration, formatSentTimeCell } from './pos-timing-display';
 import { sourceTypeLabel } from './source-type-label';
 import { BoxReportsSubtable } from './box-reports-subtable';
+import {
+  compareNotReportedCount,
+  computeBoxReportsMainTableMetrics,
+  formatMainTableCountCell,
+} from './box-reports-main-table';
 import type { EntryType, ReceiveLogRecord, ReceiveResult } from './types';
 
 const TaipeiRangePicker = DatePicker.RangePicker;
@@ -244,6 +249,41 @@ export function ReceiveLogPage({
         title: '準備中',
         key: 'prepCount',
         render: (_, row) => displayCount(row.zones.preparing.count),
+      },
+      {
+        title: '盒子數',
+        key: 'boxCount',
+        render: (_, row) => {
+          const metrics = computeBoxReportsMainTableMetrics(
+            row.boxReportsFeedShape,
+            row.boxReports,
+          );
+          return (
+            <span data-testid="box-count-cell">{formatMainTableCountCell(metrics.boxCount)}</span>
+          );
+        },
+      },
+      {
+        title: '未回報台數',
+        key: 'notReportedCount',
+        sorter: (a, b) => compareNotReportedCount(a, b),
+        render: (_, row) => {
+          const metrics = computeBoxReportsMainTableMetrics(
+            row.boxReportsFeedShape,
+            row.boxReports,
+          );
+          const value = metrics.notReportedCount;
+          const isAlert = typeof value === 'number' && value > 0;
+          return (
+            <span
+              data-testid="not-reported-count-cell"
+              data-not-reported-alert={isAlert ? 'true' : undefined}
+              style={isAlert ? { color: '#cf1322' } : undefined}
+            >
+              {formatMainTableCountCell(value)}
+            </span>
+          );
+        },
       },
       {
         title: '結果',

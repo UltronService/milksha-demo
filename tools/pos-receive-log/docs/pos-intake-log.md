@@ -39,7 +39,9 @@
 | 6 | 來源 IP |
 | 7 | 請取餐 |
 | 8 | 準備中 |
-| 9 | 結果 |
+| 9 | 盒子數 |
+| 10 | 未回報台數（可排序） |
+| 11 | 結果 |
 
 ## API → UI 對照
 
@@ -53,12 +55,14 @@
 | `clientIp` | 來源 IP |
 | `readyCount` | 請取餐 |
 | `preparingCount` | 準備中 |
+| `boxReports[]` | 盒子數（陣列長度）；缺欄或非陣列顯示 `—`；`[]` 顯示 `0` |
+| `boxReports[].status` | 未回報台數（`not_reported` 與缺/null 計入；未知字串不計入）；`>0` 紅字；可排序 |
 | `disposition` | 結果 |
 | `readyNumbers` / `preparingNumbers` | 展開列（請取餐／準備中區塊內號碼） |
 | `rejectReason` | 展開列「拒絕送出」 |
 | `bodyByteSize`、`httpStatus`、`disposition`、`rejectReason` | 展開列「訊息摘要」 |
 | `rawPayload`、`rawPayloadTruncated` | 展開列「POS 原始訊息」 |
 | `posTimeStmpRaw`（`posSentAtMs` 缺） | 送件時間欄「格式錯誤」；展開列 POS timeStmp（raw） |
-| `boxReports[]`（milksha-cloud PR #48） | 展開列「盒子回報」：`boxId`、`ip`、`status`、`delay`（秒）、`clockSynced`、`clockOffsetMs`；無資料顯示「未回報」 |
+| `boxReports[]`（milksha-cloud PR #48） | 主表盒子數／未回報台數；展開列「盒子回報」：`boxId`、`ip`、`status`、`delay`（秒）、`clockSynced`、`clockOffsetMs`；無列表或空陣列時展開顯示「未回報」 |
 
 空值顯示 `—`；計數欄位數值 `0` 顯示 `0`；作業時間（秒）真實 `0` 顯示 `0.000`。
