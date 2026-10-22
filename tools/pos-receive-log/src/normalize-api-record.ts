@@ -76,11 +76,18 @@ function mapDisposition(disposition: unknown): ReceiveResult {
 }
 
 function mapSourceToEntry(source: unknown): EntryType {
-  const value = String(source ?? '').toLowerCase();
-  if (value.includes('controller')) {
+  const value = String(source ?? '').trim();
+  if (value === '') {
+    return 'unknown';
+  }
+  const lower = value.toLowerCase();
+  if (lower.includes('controller') || lower.startsWith('devcommand_')) {
     return 'controller';
   }
-  return 'POS';
+  if (lower === 'posreceiver') {
+    return 'POS';
+  }
+  return 'unknown';
 }
 
 function parseReceivedAtMs(r: Record<string, unknown>): number {
