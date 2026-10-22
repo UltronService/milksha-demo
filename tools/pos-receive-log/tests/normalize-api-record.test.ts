@@ -38,6 +38,16 @@ describe('normalizeApiRecord (posIntakeLogFeed)', () => {
     expect(row.rawPayloadTruncated).toBe(true);
   });
 
+  it('records boxReports feed shape from raw API', () => {
+    expect(normalizeApiRecord(realFixture).boxReportsFeedShape).toBe('missing');
+    expect(
+      normalizeApiRecord({ ...realFixture, boxReports: [] }).boxReportsFeedShape,
+    ).toBe('array');
+    expect(
+      normalizeApiRecord({ ...realFixture, boxReports: 'bad' }).boxReportsFeedShape,
+    ).toBe('invalid');
+  });
+
   it('maps zero counts without treating as empty', () => {
     const row = normalizeApiRecord({
       ...realFixture,

@@ -38,10 +38,14 @@ export interface BoardBoxReportRow {
   boxId: string;
   ip: string;
   status: BoxReportStatus | null;
+  /** Feed had a non-empty status string that is not reported / not_reported. */
+  hasUnknownStatus?: boolean;
   delaySec: number | null;
   clockSynced: boolean | null;
   clockOffsetMs: number | null;
 }
+
+export type BoxReportsFeedShape = 'missing' | 'invalid' | 'array';
 
 export interface ReceiveLogRecord {
   id: string;
@@ -62,6 +66,7 @@ export interface ReceiveLogRecord {
   messageSummary: IntakeMessageSummary;
   rawPayload: string;
   rawPayloadTruncated: boolean;
+  boxReportsFeedShape: BoxReportsFeedShape;
   boxReports: BoardBoxReportRow[];
 }
 

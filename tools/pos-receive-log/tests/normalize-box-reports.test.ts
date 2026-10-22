@@ -39,6 +39,7 @@ describe('normalizeBoxReportsForIntakeLog (milksha-cloud PR #48)', () => {
       boxId: 'stb-qa-2',
       ip: '192.0.2.45',
       status: 'not_reported',
+      hasUnknownStatus: undefined,
       delaySec: null,
       clockSynced: null,
       clockOffsetMs: null,

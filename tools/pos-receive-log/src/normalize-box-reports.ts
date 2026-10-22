@@ -21,11 +21,14 @@ export const DEFAULT_BOX_REPORT_FIELD_KEYS: BoxReportFieldKeys = {
 
 export const DEFAULT_BOX_REPORTS_LIST_KEY = 'boxReports';
 
-function readStatus(raw: unknown): BoxReportStatus | null {
+function readStatus(raw: unknown): { status: BoxReportStatus | null; hasUnknownStatus: boolean } {
   if (raw === 'reported' || raw === 'not_reported') {
-    return raw;
+    return { status: raw, hasUnknownStatus: false };
   }
-  return null;
+  if (raw === null || raw === undefined) {
+    return { status: null, hasUnknownStatus: false };
+  }
+  return { status: null, hasUnknownStatus: true };
 }
 
 function readDelaySec(item: Record<string, unknown>, keys: BoxReportFieldKeys): number | null {
@@ -67,7 +70,7 @@ function normalizeOneRow(
   item: Record<string, unknown>,
   keys: BoxReportFieldKeys,
 ): BoardBoxReportRow {
-  const status = readStatus(item[keys.status]);
+  const { status, hasUnknownStatus } = readStatus(item[keys.status]);
   const boxIdRaw = item[keys.boxId];
   const ipRaw = item[keys.ip];
   const delaySec = status === 'not_reported' ? null : readDelaySec(item, keys);
@@ -78,6 +81,7 @@ function normalizeOneRow(
     boxId: boxIdRaw === null || boxIdRaw === undefined ? '' : String(boxIdRaw),
     ip: ipRaw === null || ipRaw === undefined ? '' : String(ipRaw),
     status,
+    hasUnknownStatus: hasUnknownStatus ? true : undefined,
     delaySec,
     clockSynced,
     clockOffsetMs,
