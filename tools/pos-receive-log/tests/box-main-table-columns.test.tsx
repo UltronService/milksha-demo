@@ -390,7 +390,7 @@ describe('Main table box report columns', () => {
     });
     const row = screen.getAllByRole('row').find((r) => within(r).queryByText('only-store-no-ip'));
     expect(row).toBeDefined();
-    expect(within(row!).getByText('controller')).toBeInTheDocument();
+    expect(within(row!).getByText('控制端')).toBeInTheDocument();
     expect(within(row!).getAllByText('—').length).toBeGreaterThan(0);
   });
 });

@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { displayCount, displayText } from './display-value';
+import { entryTypeLabel } from './entry-type-label';
 import { fetchReceiveLogs, FetchReceiveLogsError } from './fetch-receive-logs';
 import {
   formatRawPayloadForDisplay,
@@ -233,7 +234,9 @@ export function ReceiveLogPage({
         title: '入口',
         dataIndex: 'entry',
         key: 'entry',
-        render: (value: EntryType) => displayText(value),
+        render: (value: EntryType) => (
+          <span data-testid="entry-cell">{entryTypeLabel(value)}</span>
+        ),
       },
       {
         title: '來源 IP',

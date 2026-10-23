@@ -1,4 +1,4 @@
-export type EntryType = 'POS' | 'controller';
+export type EntryType = 'POS' | 'controller' | 'unknown';
 
 export type SourceType = 'store' | 'uber_eats' | 'foodpanda' | 'milksha_points';
 
