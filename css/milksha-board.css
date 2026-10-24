@@ -394,10 +394,27 @@
   position: relative;
 }
 
+.milksha-board-web-build {
+  position: fixed;
+  left: 10px;
+  bottom: 8px;
+  z-index: 99;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .milksha-demo-handle {
   position: fixed;
   left: 16px;
-  bottom: 16px;
+  bottom: 44px;
   z-index: 100;
   width: 120px;
   height: 44px;
@@ -414,11 +431,10 @@
 .milksha-demo-drawer {
   position: fixed;
   left: 16px;
-  bottom: 16px;
+  bottom: 44px;
   z-index: 101;
   width: min(340px, calc(100vw - 32px));
   max-height: min(70vh, 720px);
-  z-index: 101;
   background: #fff;
   border: 3px solid #333;
   border-radius: 12px;
