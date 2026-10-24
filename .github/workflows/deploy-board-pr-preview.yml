@@ -111,7 +111,7 @@ jobs:
         run: |
           set -euo pipefail
           sleep 15
-          curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js" | grep -q "10/24 16:34"
+          curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js" | grep -q "10/24 17:05"
 
   comment:
     needs: deploy
@@ -128,7 +128,7 @@ jobs:
             const base = process.env.PREVIEW_BASE;
             const board = `${base}?mode=cloud&store=zz-qa-store-a&motion=on&demo=1`;
             const controller = `${base}controller/?mode=cloud&store=zz-qa-store-a`;
-            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 路徑預覽；正式站 [根目錄](https://ultronservice.github.io/milksha-demo/) 不變。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角版本號應為 \`10/24 16:34\`。`;
+            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 路徑預覽；正式站 [根目錄](https://ultronservice.github.io/milksha-demo/) 不變。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角版本號應為 \`10/24 17:05\`。`;
             const issue_number = Number(process.env.PR_NUMBER);
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
