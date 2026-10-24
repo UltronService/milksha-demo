@@ -924,7 +924,10 @@
      * @param {Array<{ number?: string } | null>} cells
      * @returns {boolean}
      */
-    function zoneDomMissingAllExpectedNumbers(slotEls, cells) {
+    function zoneDomMissingAllExpectedNumbers(slotEls, cells, prevItems) {
+      if (!prevItems || prevItems.length === 0) {
+        return false;
+      }
       let expected = 0;
       let visible = 0;
       for (let zi = 0; zi < cells.length; zi += 1) {
@@ -1038,7 +1041,7 @@
       const promises = [];
       const pendingRemove = new Set();
 
-      if (zoneDomMissingAllExpectedNumbers(slotEls, cells)) {
+      if (zoneDomMissingAllExpectedNumbers(slotEls, cells, prevItems)) {
         abortColumnMoveLayerState(numbersLayer);
         abortPageTurnLayerState(numbersLayer);
         hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
