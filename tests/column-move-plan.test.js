@@ -68,15 +68,21 @@ function ids(n, prefix) {
   return out;
 }
 
-test('detectColumnMovePlan page 2 prepend 15->16 uses right-column-fade-in not left-overflow', function () {
+test('detectColumnMovePlan page 2 prepend 15->16 matches page 0 left-overflow', function () {
   const Anim = loadAnim();
   const prev = newestFirstIds(15, 'store');
   const next = [{ id: 'store:1099', number: '1099' }].concat(prev);
   const diff = Anim.diffVisibleSlots(prev, next, 1, 1, 10, layoutPageGrid);
   const plan = Anim.detectColumnMovePlan(prev, next, 1, 10, layoutPageGrid, diff);
-  assert.equal(plan.kind, 'right-column-fade-in');
-  assert.equal(plan.focusId, 'store:1001');
-  assert.equal(plan.enterSlot, 5);
+  assert.equal(plan.kind, 'left-column-overflow');
+  assert.equal(plan.pushedId, 'store:1001');
+  assert.equal(plan.enterSlot, 0);
+});
+
+test('isCrossColumnSlotMove detects left-bottom to right-top', function () {
+  const Anim = loadAnim();
+  assert.equal(Anim.isCrossColumnSlotMove(4, 5), true);
+  assert.equal(Anim.isCrossColumnSlotMove(3, 4), false);
 });
 
 test('detectColumnMovePlan right-column-fade-in on page 1 (5->6 visible)', function () {

@@ -10,6 +10,7 @@ import {
 import {
   assertEnterFromAboveMotion,
   assertFadeInPlaceMotion,
+  assertNoDiagonalWhileVisible,
   pollMotionSamplesInPage,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
@@ -66,6 +67,7 @@ test.describe('column-move animation boundary 1–10', () => {
     assertDownwardExitMotion(exitSamples);
     assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
+    assertNoDiagonalWhileVisible(enterSamples);
     expect(newSamples.every((s) => !s || transformTranslateY(s.transform) > -6)).toBe(true);
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
@@ -87,6 +89,7 @@ test.describe('column-move animation boundary 1–10', () => {
     );
     assertFadeInPlaceMotion(samples);
     assertNoHorizontalWhileVisible(samples);
+    assertNoDiagonalWhileVisible(samples);
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
   });
@@ -100,7 +103,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
     await page.waitForTimeout(600);
     const rows = prepPayload([Number(newest), ...fifteen.map(Number)].map(String));
-    const pushed = String(fifteen[4]);
+    const pushed = String(fifteen[fifteen.length - 1]);
     const combined = await pollMotionSamplesInPage(
       page,
       rows,
@@ -110,6 +113,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
     assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
+    assertNoDiagonalWhileVisible(enterSamples);
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
   });
@@ -312,8 +316,11 @@ for (const zone of ['prep', 'ready']) {
         const exitSamples = combined.map((c) => c.exit).filter(Boolean);
         const enterSamples = combined.map((c) => c.enter).filter(Boolean);
         assertDownwardExitMotion(exitSamples);
-        assertEnterFromAboveMotion(enterSamples);
+        assertNoDiagonalWhileVisible(enterSamples);
         assertNoHorizontalWhileVisible(enterSamples);
+        if (count === 6) {
+          assertFadeInPlaceMotion(enterSamples);
+        }
         await page.waitForTimeout(zone === 'ready' ? 4500 : 450);
         await assertZoneSlotOrderExact(page, zone);
         await assertChipsOpaqueAndUnique(page);
