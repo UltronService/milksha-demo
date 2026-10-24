@@ -1026,8 +1026,18 @@
             columnMoveSkipFlipIds[diff.moved[cmi].id] = true;
           }
         } else if (columnMovePlan.kind === 'right-column-fade-in') {
-          columnMoveFadeInPlaceIds[columnMovePlan.focusId] = true;
-          columnMoveSkipFlipIds[columnMovePlan.focusId] = true;
+          const focusId = columnMovePlan.focusId;
+          columnMoveFadeInPlaceIds[focusId] = true;
+          columnMoveSkipFlipIds[focusId] = true;
+          delete rectsBefore[focusId];
+          for (let rfi = 0; rfi < diff.moved.length; rfi += 1) {
+            const mvFade = diff.moved[rfi];
+            if (mvFade.to === GRID_ROWS) {
+              columnMoveFadeInPlaceIds[mvFade.id] = true;
+              columnMoveSkipFlipIds[mvFade.id] = true;
+              delete rectsBefore[mvFade.id];
+            }
+          }
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {
           const rbSlot = columnMovePlan.rightBottomSlot;
           const prevCells = deps.layoutPageGrid(prevItems, page, deps.pageSize);

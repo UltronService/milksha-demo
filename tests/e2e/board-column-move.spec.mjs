@@ -71,6 +71,26 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
+  test('2b prep: page 2/2 right column 6th fades in place (15->16)', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    const fifteen = sequentialNumbers(7501, 15);
+    const sixteen = sequentialNumbers(7501, 16);
+    await applyPayload(page, prepPayload(fifteen));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+    await page.waitForTimeout(600);
+    const samples = await pollMotionSamplesInPage(
+      page,
+      prepPayload(sixteen),
+      { kind: 'slot', zone: 'prep', slotIndex: GRID_ROWS },
+      { samples: 28, intervalMs: 16 },
+    );
+    assertFadeInPlaceMotion(samples);
+    assertNoHorizontalWhileVisible(samples);
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
   test('3 prep and ready: right column bottom slides down and out on page-2 overflow', async ({ page }) => {
     await primeBoardForAnimation(page);
     const prepTen = sequentialNumbers(6401, 10);
