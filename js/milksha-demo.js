@@ -88,6 +88,7 @@
         '<div class="milksha-demo-row"><b>自動播放</b> <button type="button" class="milksha-demo-btn" id="ms-demo-auto">關</button>' +
         '<span id="ms-demo-auto-label">每 8 秒</span></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">間隔</span>' +
+        '<button type="button" class="milksha-demo-btn" data-interval="1">1 秒</button>' +
         '<button type="button" class="milksha-demo-btn" data-interval="5">5 秒</button>' +
         '<button type="button" class="milksha-demo-btn sel" data-interval="8">8 秒</button>' +
         '<button type="button" class="milksha-demo-btn" data-interval="10">10 秒</button></div>' +
