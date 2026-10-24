@@ -135,6 +135,9 @@
     function setDrawerOpen(open) {
       drawerOpen = open;
       drawer.classList.toggle('open', open);
+      if (doc.body) {
+        doc.body.classList.toggle('milksha-demo-drawer-open', open);
+      }
       handle.hidden = open;
       if (open) {
         resetIdle();
