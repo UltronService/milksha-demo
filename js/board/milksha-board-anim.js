@@ -455,23 +455,53 @@
    * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
    * @returns {null | { kind: string, addedId: string, pushedId?: string, enterSlot: number, leftBottomSlot?: number, rightTopSlot?: number, rightBottomSlot?: number }}
    */
-  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
-    if (diff.pageTurn || diff.removed.length > 0) {
+  function detectRightBottomPageOverflowPlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.added.length !== 1 || diff.removed.length !== 1) {
       return null;
     }
     const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
     const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
-    if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
-      const nextMapEarly = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
-      const addedIdOverflow = diff.added.length === 1 ? diff.added[0] : '';
-      const enterSlotOverflow = addedIdOverflow ? nextMapEarly.get(addedIdOverflow) : -1;
-      return {
-        kind: 'right-bottom-page-two',
-        addedId: addedIdOverflow,
-        enterSlot: enterSlotOverflow === undefined ? -1 : enterSlotOverflow,
-        rightBottomSlot: pageSize - 1,
-      };
+    if (prevN !== 10 || nextN !== 10 || nextItems.length !== prevItems.length + 1) {
+      return null;
     }
+    const prevCells = layoutPageGrid(prevItems, page, pageSize);
+    const exitCell = prevCells[pageSize - 1];
+    const exitId = exitCell && exitCell.id ? exitCell.id : '';
+    if (!exitId || diff.removed[0] !== exitId) {
+      return null;
+    }
+    const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
+    const addedId = diff.added[0];
+    const enterSlot = nextMap.get(addedId);
+    return {
+      kind: 'right-bottom-page-two',
+      addedId: addedId,
+      enterSlot: enterSlot === undefined ? -1 : enterSlot,
+      rightBottomSlot: pageSize - 1,
+      exitId: exitId,
+    };
+  }
+
+  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.pageTurn) {
+      return null;
+    }
+    const overflowPlan = detectRightBottomPageOverflowPlan(
+      prevItems,
+      nextItems,
+      page,
+      pageSize,
+      layoutPageGrid,
+      diff,
+    );
+    if (overflowPlan) {
+      return overflowPlan;
+    }
+    if (diff.removed.length > 0) {
+      return null;
+    }
+    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
+    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
     if (diff.added.length !== 1) {
       return null;
     }
@@ -480,14 +510,6 @@
     const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
     const enterSlot = nextMap.get(addedId);
     if (enterSlot === undefined) {
-      if (prevN === 10 && nextItems.length === 11) {
-        return {
-          kind: 'right-bottom-page-two',
-          addedId: addedId,
-          enterSlot: -1,
-          rightBottomSlot: pageSize - 1,
-        };
-      }
       return null;
     }
     if (nextN !== prevN + 1) {
@@ -996,19 +1018,18 @@
         deps.layoutPageGrid,
         diff,
       );
-      if (
-        !columnMovePlan &&
-        page === 0 &&
-        items.length === 11 &&
-        prevItems.length === 10 &&
-        !pageTurn
-      ) {
-        columnMovePlan = {
-          kind: 'right-bottom-page-two',
-          addedId: '',
-          enterSlot: -1,
-          rightBottomSlot: deps.pageSize - 1,
-        };
+      if (!columnMovePlan && !pageTurn && items.length === prevItems.length + 1) {
+        const fallbackOverflow = detectRightBottomPageOverflowPlan(
+          prevItems,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          diff,
+        );
+        if (fallbackOverflow) {
+          columnMovePlan = fallbackOverflow;
+        }
       }
       const columnMoveEnterFromAboveIds = {};
       const columnMoveFadeInPlaceIds = {};
@@ -1262,6 +1283,14 @@
       }
 
       diff.removed.forEach(function (id) {
+        if (
+          columnMovePlan &&
+          columnMovePlan.kind === 'right-bottom-page-two' &&
+          columnMovePlan.exitId &&
+          id === columnMovePlan.exitId
+        ) {
+          return;
+        }
         const chip = chipById[id];
         if (!chip || pendingRemove.has(chip)) {
           return;
