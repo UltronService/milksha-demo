@@ -919,6 +919,34 @@
       snapOpacity(numbersLayer, 1);
     }
 
+    /**
+     * @param {NodeListOf<Element> | Element[]} slotEls
+     * @param {Array<{ number?: string } | null>} cells
+     * @returns {boolean}
+     */
+    function zoneDomMissingAllExpectedNumbers(slotEls, cells) {
+      let expected = 0;
+      let visible = 0;
+      for (let zi = 0; zi < cells.length; zi += 1) {
+        const cell = cells[zi];
+        if (!cell || !cell.number) {
+          continue;
+        }
+        expected += 1;
+        const slot = slotEls[zi];
+        if (!slot) {
+          continue;
+        }
+        const numEl = slot.querySelector(
+          '.milksha-board-chip:not(.milksha-board-chip--layer-float) .milksha-num',
+        );
+        if (numEl && numEl.textContent.trim()) {
+          visible += 1;
+        }
+      }
+      return expected > 0 && visible === 0;
+    }
+
     function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
       abortPageTurnLayerState(numbersLayer);
       removeOrphanLayerFloatChips(numbersLayer);
@@ -1009,6 +1037,19 @@
 
       const promises = [];
       const pendingRemove = new Set();
+
+      if (zoneDomMissingAllExpectedNumbers(slotEls, cells)) {
+        abortColumnMoveLayerState(numbersLayer);
+        abortPageTurnLayerState(numbersLayer);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        snapOpacity(numbersLayer, 1);
+        numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+          const id = chip.getAttribute('data-item-id');
+          if (id) {
+            chipById[id] = chip;
+          }
+        });
+      }
 
       if (interruptedPageTurn) {
         abortColumnMoveLayerState(numbersLayer);

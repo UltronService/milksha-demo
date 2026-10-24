@@ -42,6 +42,22 @@ test('page turn during two-phase column move does not leave prep layer blank', a
   expect(count).toBeGreaterThan(0);
 });
 
+test('new prep on page 2+ jumps to page 1 with motion on', async ({ page }) => {
+  await primeBoardForAnimation(page);
+  const eleven = sequentialNumbers(8101, 11);
+  await applyPayload(page, prepPayload(eleven));
+  await page.waitForTimeout(400);
+  await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+  await page.waitForTimeout(500);
+  await applyPayload(page, prepPayload([...eleven, 8112]));
+  await expect(page.locator('.milksha-prep .milksha-pg-indicator')).toHaveText('1/2', {
+    timeout: 4000,
+  });
+  await expect(page.locator('.milksha-prep .milksha-num').first()).toHaveText('8112', {
+    timeout: 4000,
+  });
+});
+
 test('new ready on page 2+ jumps to page 1 and plays ready pulse', async ({ page }) => {
   await primeBoardForAnimation(page);
   const eleven = sequentialNumbers(8201, 11);
@@ -51,9 +67,6 @@ test('new ready on page 2+ jumps to page 1 and plays ready pulse', async ({ page
   await page.waitForTimeout(500);
   const newest = '8212';
   await applyPayload(page, readyPayload([...eleven, Number(newest)]));
-  const dbg = await page.evaluate(() => window.QMS.runtime.getZonePageDebug());
-  expect(dbg.motionOn).toBe(true);
-  expect(dbg.readyPage).toBe(0);
   await expect(page.locator('.milksha-ready .milksha-pg-indicator')).toHaveText('1/2', {
     timeout: 4000,
   });

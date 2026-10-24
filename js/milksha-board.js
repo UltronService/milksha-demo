@@ -690,16 +690,13 @@
     }
 
     /**
-     * Default (no motion): viewing page 2+ and a new number lands in this zone → show page 1 and restart turn timer.
+     * Viewing page 2+ and a new number lands in this zone → show page 1 and restart turn timer.
      * @param {'prep' | 'ready'} zoneKey
      * @param {Array<{ id: string }>} prevItems
      * @param {Array<{ id: string }>} nextItems
      * @param {number} now
      */
-    function maybeJumpNoMotionZoneToPageOneOnNewItem(zoneKey, prevItems, nextItems, now) {
-      if (isBoardMotionOn()) {
-        return;
-      }
+    function maybeJumpZoneToPageOneOnNewItem(zoneKey, prevItems, nextItems, now) {
       const items = zoneKey === 'prep' ? prepItems : readyItems;
       const pages = pageCountForItems(items.length, PAGE_SIZE);
       if (pages <= 1) {
@@ -891,9 +888,11 @@
           Promise.all([prepDone, readyDone]).then(function () {
             if (prepTurn) {
               updateZonePageIndicator(prepZone, prepPage, prepPages);
+              lastRenderedPrepPage = prepPage;
             }
             if (readyTurn) {
               updateZonePageIndicator(readyZone, readyPage, readyPages);
+              lastRenderedReadyPage = readyPage;
             }
           });
         }
@@ -901,8 +900,22 @@
 
       lastRenderedPrep = prepItems.slice();
       lastRenderedReady = readyItems.slice();
-      lastRenderedPrepPage = prepPage;
-      lastRenderedReadyPage = readyPage;
+      if (motion.skip || !animator || !zonesDomReady()) {
+        lastRenderedPrepPage = prepPage;
+        lastRenderedReadyPage = readyPage;
+      } else if (!viewOpts.clearAll) {
+        const prepTurnDone = prevPrepPage !== prepPage;
+        const readyTurnDone = prevReadyPage !== readyPage;
+        if (!prepTurnDone) {
+          lastRenderedPrepPage = prepPage;
+        }
+        if (!readyTurnDone) {
+          lastRenderedReadyPage = readyPage;
+        }
+      } else {
+        lastRenderedPrepPage = prepPage;
+        lastRenderedReadyPage = readyPage;
+      }
     }
 
     /**
@@ -1326,13 +1339,8 @@
       readyItems = nextReady;
       prepItems = nextPrep;
 
-      maybeJumpNoMotionZoneToPageOneOnNewItem('prep', prevPrepBefore, nextPrep, now);
-      maybeJumpNoMotionZoneToPageOneOnNewItem('ready', prevReadyBefore, nextReady, now);
-
-      if (isBoardMotionOn() && zoneGainedNewItem(prevReadyBefore, nextReady)) {
-        readyPage = 0;
-        readyPageStartedAt = now;
-      }
+      maybeJumpZoneToPageOneOnNewItem('prep', prevPrepBefore, nextPrep, now);
+      maybeJumpZoneToPageOneOnNewItem('ready', prevReadyBefore, nextReady, now);
 
       if (!silentApply && ringIds.length > 0) {
         readyPage = 0;
@@ -1430,16 +1438,6 @@
         return {
           ready: readyItems.slice(),
           preparing: prepItems.slice(),
-        };
-      },
-      getZonePageDebug: function () {
-        return {
-          motionOn: isBoardMotionOn(),
-          prepPage: prepPage,
-          readyPage: readyPage,
-          prepPages: pageCountForItems(prepItems.length, PAGE_SIZE),
-          readyPages: pageCountForItems(readyItems.length, PAGE_SIZE),
-          lastRenderedReadyPage: lastRenderedReadyPage,
         };
       },
       isAnnouncing: function () {
