@@ -119,7 +119,7 @@
         '<div class="milksha-demo-sec"></div>' +
         '<div class="milksha-demo-row"><b>動態節奏</b> <span class="milksha-demo-lbl">（欄位搬移）</span></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">兩段式</span> ' +
-        '<button type="button" class="milksha-demo-btn sel" id="ms-demo-anim-two">開</button></div>' +
+        '<button type="button" class="milksha-demo-btn" id="ms-demo-anim-two">關</button></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">段間隔</span> ' +
         '<input id="ms-demo-anim-gap" class="milksha-demo-num" type="number" min="0" max="500" step="10" value="80" />' +
         '<span class="milksha-demo-lbl"> ms</span></div>' +
@@ -129,7 +129,7 @@
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">進場段</span> ' +
         '<input id="ms-demo-anim-enter" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
         '<span class="milksha-demo-lbl"> ms</span></div>' +
-        '<div class="milksha-demo-lbl">先下移／退出 → 間隔 → 新號與右欄淡入</div>' +
+        '<div class="milksha-demo-lbl">先下移／退出 → 間隔 → 新號與右欄淡入（1 秒自動播放時建議下移+間隔+進場合計約 900ms 內）</div>' +
         '<div class="milksha-demo-sec"></div>' +
         '<div class="milksha-demo-lbl">最近一次推送的資料</div>' +
         '<pre class="milksha-demo-pre" id="ms-demo-pre">[]</pre>' +
@@ -549,18 +549,18 @@
       applyDemoAnimOverrides();
       resetIdle();
     });
-    inpAnimGap.addEventListener('change', function () {
-      applyDemoAnimOverrides();
-      resetIdle();
-    });
-    inpAnimMove.addEventListener('change', function () {
-      applyDemoAnimOverrides();
-      resetIdle();
-    });
-    inpAnimEnter.addEventListener('change', function () {
-      applyDemoAnimOverrides();
-      resetIdle();
-    });
+    function bindAnimInput(inp) {
+      inp.addEventListener('change', function () {
+        applyDemoAnimOverrides();
+        resetIdle();
+      });
+      inp.addEventListener('input', function () {
+        applyDemoAnimOverrides();
+      });
+    }
+    bindAnimInput(inpAnimGap);
+    bindAnimInput(inpAnimMove);
+    bindAnimInput(inpAnimEnter);
 
     applyDemoAnimOverrides();
 

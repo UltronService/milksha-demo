@@ -1293,8 +1293,6 @@
                 getGeneration,
               ),
             );
-          } else if (useColumnMoveTwoPhase && columnMovePlan) {
-            snapOpacity(chip, 0);
           }
         }
         if (!chip || pendingRemove.has(chip)) {
