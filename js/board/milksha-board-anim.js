@@ -888,6 +888,10 @@
       let timeoutId = null;
       if (deps.window && typeof deps.window.setTimeout === 'function') {
         timeoutId = deps.window.setTimeout(function () {
+          if (getGeneration() !== gen) {
+            pendingRemove.delete(chip);
+            return;
+          }
           if (chip.parentNode) {
             chip.parentNode.removeChild(chip);
           }
@@ -898,6 +902,10 @@
         runOpacityAnim(chip, from, 0, opacityInMs, gen).then(function () {
           if (timeoutId !== null && deps.window.clearTimeout) {
             deps.window.clearTimeout(timeoutId);
+          }
+          if (getGeneration() !== gen) {
+            pendingRemove.delete(chip);
+            return;
           }
           if (chip.parentNode) {
             chip.parentNode.removeChild(chip);
@@ -1036,6 +1044,15 @@
         }
         chipById[id] = chip;
         rectsBefore[id] = chip.getBoundingClientRect();
+      });
+
+      numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+        const stalePulseId = chip.getAttribute('data-item-id');
+        if (!stalePulseId || scalePulseSet[stalePulseId]) {
+          return;
+        }
+        snapOpacity(chip, 1);
+        chip.style.transform = '';
       });
 
       const promises = [];
@@ -1289,6 +1306,9 @@
           const chip = existing[c];
           promises.push(
             runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
+              if (getGeneration() !== gen) {
+                return;
+              }
               if (chip.parentNode) {
                 chip.parentNode.removeChild(chip);
               }

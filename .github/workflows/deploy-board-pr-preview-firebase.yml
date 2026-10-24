@@ -15,7 +15,7 @@ jobs:
       preview_url: ${{ steps.channel.outputs.preview_url }}
     env:
       PREVIEW_SITE: milksha-demo-board-preview
-      PR_NUMBER: '122'
+      PR_NUMBER: '123'
     steps:
       - uses: actions/checkout@v4
       - name: Prepare static site
