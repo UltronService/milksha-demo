@@ -460,6 +460,17 @@
     if (nextN !== prevN + 1) {
       return null;
     }
+    if (page > 0 && prevN === 5 && nextN === 6) {
+      const nextCellsPageTwo = layoutPageGrid(nextItems, page, pageSize);
+      const occupantPageTwo = nextCellsPageTwo[GRID_ROWS];
+      if (occupantPageTwo && occupantPageTwo.id) {
+        return {
+          kind: 'right-column-fade-in',
+          focusId: occupantPageTwo.id,
+          enterSlot: GRID_ROWS,
+        };
+      }
+    }
     if (prevN >= 5 && prevN <= 9 && enterSlot === 0) {
       const prevCells = layoutPageGrid(prevItems, page, pageSize);
       const lbCell = prevCells[GRID_ROWS - 1];
@@ -1036,6 +1047,14 @@
               columnMoveFadeInPlaceIds[mvFade.id] = true;
               columnMoveSkipFlipIds[mvFade.id] = true;
               delete rectsBefore[mvFade.id];
+            }
+          }
+          for (let rfa = 0; rfa < diff.added.length; rfa += 1) {
+            delete rectsBefore[diff.added[rfa]];
+          }
+          if (page > 0) {
+            for (let rfm = 0; rfm < diff.moved.length; rfm += 1) {
+              delete rectsBefore[diff.moved[rfm].id];
             }
           }
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {

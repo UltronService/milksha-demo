@@ -71,7 +71,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('2b prep: page 2/2 right column 6th fades in place (15->16)', async ({ page }) => {
+  test('2b prep: page 2/2 right column 6th fades in place (15->16 append)', async ({ page }) => {
     await primeBoardForAnimation(page);
     const fifteen = sequentialNumbers(7501, 15);
     const sixteen = sequentialNumbers(7501, 16);
@@ -87,6 +87,29 @@ test.describe('column-move animation boundary 1–10', () => {
     );
     assertFadeInPlaceMotion(samples);
     assertNoHorizontalWhileVisible(samples);
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
+  test('2c prep: page 2/2 right column 6th fades in place (prepend like demo)', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    const fifteen = sequentialNumbers(7601, 15);
+    const newest = '7699';
+    await applyPayload(page, prepPayload(fifteen));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+    await page.waitForTimeout(600);
+    const rows = prepPayload([Number(newest), ...fifteen.map(Number)].map(String));
+    const pushed = String(fifteen[4]);
+    const combined = await pollMotionSamplesInPage(
+      page,
+      rows,
+      { kind: 'enterExit', zone: 'prep', pushedNumber: pushed, enterSlotIndex: GRID_ROWS },
+      { samples: 32, intervalMs: 16 },
+    );
+    const enterSamples = combined.map((c) => c.enter).filter(Boolean);
+    assertFadeInPlaceMotion(enterSamples);
+    assertNoHorizontalWhileVisible(enterSamples);
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
   });
