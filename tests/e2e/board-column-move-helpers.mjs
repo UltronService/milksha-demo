@@ -261,6 +261,16 @@ export function assertEnterFromAboveMotion(samples) {
   expect(fromAbove, JSON.stringify(samples)).toBe(true);
 }
 
+export function assertFadeInPlaceMotion(samples) {
+  for (let i = 0; i < samples.length; i += 1) {
+    const s = samples[i];
+    if (!s) {
+      continue;
+    }
+    expect(Math.abs(transformTranslateY(s.transform)), JSON.stringify(s)).toBeLessThan(8);
+  }
+}
+
 /** Payload order oldest→newest: left-bottom before overflow is always the first entry. */
 export function leftBottomNumber(numbers) {
   return String(numbers[0]);

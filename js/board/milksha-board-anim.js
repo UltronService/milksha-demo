@@ -481,6 +481,17 @@
       }
       return null;
     }
+    if (prevN === 5 && nextN === 6) {
+      const nextCells = layoutPageGrid(nextItems, page, pageSize);
+      const occupant = nextCells[GRID_ROWS];
+      if (occupant && occupant.id) {
+        return {
+          kind: 'right-column-fade-in',
+          focusId: occupant.id,
+          enterSlot: GRID_ROWS,
+        };
+      }
+    }
     return null;
   }
 
@@ -961,6 +972,7 @@
         };
       }
       const columnMoveEnterFromAboveIds = {};
+      const columnMoveFadeInPlaceIds = {};
       const columnMoveSkipFlipIds = {};
       let columnMoveDurationMs = opacityInMs;
       if (columnMovePlan) {
@@ -1007,12 +1019,15 @@
             );
           }
           if (pushedId) {
-            columnMoveEnterFromAboveIds[pushedId] = true;
+            columnMoveFadeInPlaceIds[pushedId] = true;
             columnMoveSkipFlipIds[pushedId] = true;
           }
           for (let cmi = 0; cmi < diff.moved.length; cmi += 1) {
             columnMoveSkipFlipIds[diff.moved[cmi].id] = true;
           }
+        } else if (columnMovePlan.kind === 'right-column-fade-in') {
+          columnMoveFadeInPlaceIds[columnMovePlan.focusId] = true;
+          columnMoveSkipFlipIds[columnMovePlan.focusId] = true;
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {
           const rbSlot = columnMovePlan.rightBottomSlot;
           const prevCells = deps.layoutPageGrid(prevItems, page, deps.pageSize);
@@ -1159,7 +1174,10 @@
           }
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
           slot.appendChild(chip);
-          if (columnMoveEnterFromAboveIds[id]) {
+          if (columnMoveFadeInPlaceIds[id]) {
+            snapOpacity(chip, 0);
+            promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchMoved = estimateRowPitchPx(slot, numbersLayer);
             promises.push(
@@ -1190,7 +1208,9 @@
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
-          if (columnMoveEnterFromAboveIds[id]) {
+          if (columnMoveFadeInPlaceIds[id]) {
+            promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
             promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
@@ -1219,7 +1239,11 @@
           for (let hi = 0; hi < holdChips.length; hi += 1) {
             const holdChip = holdChips[hi];
             const holdId = holdChip.getAttribute('data-item-id');
-            if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
+            if (
+              pendingRemove.has(holdChip) ||
+              (holdId &&
+                (columnMoveEnterFromAboveIds[holdId] || columnMoveFadeInPlaceIds[holdId]))
+            ) {
               continue;
             }
             ensureVisibleOpacity(holdChip);
@@ -1231,6 +1255,10 @@
             return;
           }
           if (columnMoveSkipFlipIds[mv.id]) {
+            if (columnMoveFadeInPlaceIds[mv.id]) {
+              ensureVisibleOpacity(chip);
+              return;
+            }
             if (columnMoveEnterFromAboveIds[mv.id]) {
               return;
             }
@@ -1302,7 +1330,10 @@
                     continue;
                   }
                   const settledId = settled.getAttribute('data-item-id');
-                  if (settledId && columnMoveEnterFromAboveIds[settledId]) {
+                  if (settledId && columnMoveFadeInPlaceIds[settledId]) {
+                    snapOpacity(settled, 1);
+                    settled.style.transform = '';
+                  } else if (settledId && columnMoveEnterFromAboveIds[settledId]) {
                     snapOpacity(settled, 1);
                     settled.style.transform = '';
                   } else {

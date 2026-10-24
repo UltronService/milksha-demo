@@ -68,6 +68,16 @@ function ids(n, prefix) {
   return out;
 }
 
+test('detectColumnMovePlan right-column-fade-in on page 1 (5->6 visible)', function () {
+  const Anim = loadAnim();
+  const prev = ids(15, 'store');
+  const next = ids(16, 'store');
+  const diff = Anim.diffVisibleSlots(prev, next, 1, 1, 10, layoutPageGrid);
+  const plan = Anim.detectColumnMovePlan(prev, next, 1, 10, layoutPageGrid, diff);
+  assert.equal(plan.kind, 'right-column-fade-in');
+  assert.equal(plan.enterSlot, 5);
+});
+
 test('detectColumnMovePlan right-bottom page two overflow', function () {
   const Anim = loadAnim();
   const prev = ids(10, 'store');

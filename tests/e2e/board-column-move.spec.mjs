@@ -9,6 +9,7 @@ import {
 } from './board-animation-helpers.mjs';
 import {
   assertEnterFromAboveMotion,
+  assertFadeInPlaceMotion,
   pollMotionSamplesInPage,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
@@ -46,7 +47,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('2 prep: pushed slot-4 chip exits down then enters slot 5 from above (not new number)', async ({ page }) => {
+  test('2 prep: pushed slot-4 chip exits down then slot 5 fades in place (not new number)', async ({ page }) => {
     await primeBoardForAnimation(page);
     const nums = sequentialNumbers(6301, 5);
     const pushed = leftBottomNumber(nums);
@@ -63,7 +64,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
     const newSamples = combined.map((c) => c.newest).filter(Boolean);
     assertDownwardExitMotion(exitSamples);
-    assertEnterFromAboveMotion(enterSamples);
+    assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
     expect(newSamples.every((s) => !s || transformTranslateY(s.transform) > -6)).toBe(true);
     await page.waitForTimeout(400);
@@ -115,7 +116,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('5 ready: new number 1.3x pulse; pushed slot-4 chip enters slot 5 from above', async ({ page }) => {
+  test('5 ready: new number 1.3x pulse; pushed slot-4 chip fades in at slot 5', async ({ page }) => {
     await primeBoardForAnimation(page);
     const nums = sequentialNumbers(6701, 5);
     const pushed = leftBottomNumber(nums);
@@ -131,7 +132,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
     assertDownwardExitMotion(exitSamples);
-    assertEnterFromAboveMotion(enterSamples);
+    assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
     await assertReadyPulseOnNumber(page, newest);
     await page.waitForTimeout(500);
