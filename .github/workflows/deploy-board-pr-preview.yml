@@ -1,11 +1,11 @@
-# PM board preview: GitHub Pages path /pr-preview/pr-<N>/ (same github.io origin as production).
-# Does not replace the production site root (artifact = main @ root + PR under pr-preview/).
+# PM board preview: /pr-preview/pr-122/ on GitHub Pages (main @ site root + trial branch under pr-preview).
+# Triggered by push to cursor/** or manual dispatch so GITHUB_REF is the trial branch (not refs/pull/*/merge).
 name: Deploy board PR preview (GitHub Pages)
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches: [main]
+  push:
+    branches:
+      - 'cursor/**'
   workflow_dispatch:
 
 permissions:
@@ -15,12 +15,14 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pages-board-pr-preview-${{ github.event.pull_request.number || 'manual' }}
+  group: pages-board-pr-preview-${{ github.ref_name }}
   cancel-in-progress: true
+
+env:
+  PREVIEW_PR_NUMBER: '122'
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     outputs:
       preview_base: ${{ steps.urls.outputs.preview_base }}
@@ -28,6 +30,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Show deploy ref (must be cursor/* branch, not pull merge ref)
+        run: |
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+
       - name: Checkout main (production tree at site root)
         uses: actions/checkout@v4
         with:
@@ -52,19 +60,17 @@ jobs:
           node main-tree/scripts/inject-firebase-config.mjs deploy-site/config/firebase.js
           touch deploy-site/.nojekyll
 
-      - name: Checkout pull request head
-        if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
+      - name: Checkout trial branch (preview content)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           path: pr-tree
 
       - name: Add PR preview subtree
-        if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
         env:
           MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
           MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
-          PR_NUMBER: ${{ github.event.pull_request.number || '122' }}
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
         run: |
           set -euo pipefail
           preview_dir="deploy-site/pr-preview/pr-${PR_NUMBER}"
@@ -92,31 +98,29 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Preview URLs
-        if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
         id: urls
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number || '122' }}
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
         run: |
           base="https://ultronservice.github.io/milksha-demo/pr-preview/pr-${PR_NUMBER}/"
           echo "preview_base=${base}" >> "$GITHUB_OUTPUT"
 
       - name: Verify build stamp in preview static file
-        if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
         env:
           PREVIEW_BASE: ${{ steps.urls.outputs.preview_base }}
         run: |
           set -euo pipefail
+          sleep 15
           curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js" | grep -q "10/24 11:50"
 
   comment:
-    if: (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name == 'workflow_dispatch' || github.event.action != 'closed')
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Comment preview URLs on PR
+      - name: Comment preview URLs on PR #122
         uses: actions/github-script@v7
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number || '122' }}
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
           PREVIEW_BASE: ${{ needs.deploy.outputs.preview_base }}
         with:
           script: |
