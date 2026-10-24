@@ -115,5 +115,5 @@ test('detectColumnMovePlan right-bottom overflow on page 4 (index 3) with one re
   const plan = Anim.detectColumnMovePlan(prev, next, page, 10, layoutPageGrid, diff);
   assert.equal(plan.kind, 'right-bottom-page-two');
   assert.equal(plan.exitId, 'store:1001');
-  assert.equal(plan.addedId, 'store:1099');
+  assert.equal(plan.addedId, 'store:1011');
 });

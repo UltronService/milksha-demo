@@ -147,7 +147,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('3b prep: page 4 full grid — slot 10 exits downward on 11th add', async ({ page }) => {
+  test('3b prep: on page 4, new number jumps to page 1 (PM spec v1)', async ({ page }) => {
     await primeBoardForAnimation(page);
     const forty = sequentialNumbers(7401, 40);
     await applyPayload(page, prepPayload(forty));
@@ -156,13 +156,13 @@ test.describe('column-move animation boundary 1–10', () => {
       await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
       await page.waitForTimeout(300);
     }
-    const prepSamples = await pollMotionSamplesInPage(
-      page,
-      prepPayload([...forty, 7441]),
-      { kind: 'slot', zone: 'prep', slotIndex: 9 },
-      { samples: 22, intervalMs: 16 },
-    );
-    assertDownwardExitMotion(prepSamples);
+    await applyPayload(page, prepPayload([...forty, 7441]));
+    await expect(page.locator('.milksha-prep .milksha-pg-indicator')).toHaveText('1/5', {
+      timeout: 4000,
+    });
+    await expect(page.locator('.milksha-prep .milksha-num').first()).toHaveText('7441', {
+      timeout: 4000,
+    });
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
   });

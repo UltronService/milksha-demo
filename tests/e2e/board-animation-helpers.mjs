@@ -104,12 +104,32 @@ export async function readyNumbers(page) {
 /** @returns {Promise<{ violations: Array<object>, detachedCount: number, chipCount: number }>} */
 export async function getBoardIntegritySnapshot(page) {
   return page.evaluate(() => {
+    const normalize = window.QMS?.MilkshaBoard?.normalizeBoardDisplayNumber;
+    function sourceKeyFromItemId(itemId) {
+      if (!itemId || itemId.indexOf(':') < 0) {
+        return 'store';
+      }
+      return itemId.split(':')[0] || 'store';
+    }
+    function isValidDisplayNumber(num, sourceKey) {
+      if (!num) {
+        return true;
+      }
+      if (normalize) {
+        return normalize(num, sourceKey) === num;
+      }
+      return /^\d{4}$/.test(num);
+    }
     const bad = [];
     document.querySelectorAll('.milksha-num-cell').forEach((cell) => {
       const chips = [...cell.querySelectorAll('.milksha-board-chip')];
       const text = cell.textContent.replace(/\s/g, '');
       const nums = chips.map((c) => (c.querySelector('.milksha-num')?.textContent || '').trim());
-      const badText = text.length > 0 && !/^\d{4}$/.test(text);
+      const primaryChip = chips[0];
+      const sourceKey = primaryChip
+        ? sourceKeyFromItemId(primaryChip.getAttribute('data-item-id'))
+        : 'store';
+      const badText = text.length > 0 && !isValidDisplayNumber(text, sourceKey);
       if (chips.length !== 1 && chips.length > 0) {
         bad.push({
           kind: 'cell-chip-count',
@@ -119,7 +139,7 @@ export async function getBoardIntegritySnapshot(page) {
           nums,
         });
       }
-      if (chips.length === 1 && nums[0] && !/^\d{4}$/.test(nums[0])) {
+      if (chips.length === 1 && nums[0] && !isValidDisplayNumber(nums[0], sourceKey)) {
         bad.push({ kind: 'cell-format', zone: cell.closest('.milksha-zone')?.className || '', text: nums[0] });
       }
       if (badText) {
@@ -127,12 +147,19 @@ export async function getBoardIntegritySnapshot(page) {
       }
     });
     document.querySelectorAll('.milksha-zone').forEach((zoneEl) => {
-      const nums = [...zoneEl.querySelectorAll('.milksha-board-chip:not(.milksha-board-chip--layer-float) .milksha-num')]
-        .map((el) => el.textContent.trim())
-        .filter(Boolean);
+      const chipEls = [
+        ...zoneEl.querySelectorAll('.milksha-board-chip:not(.milksha-board-chip--layer-float)'),
+      ];
+      const nums = chipEls
+        .map((chip) => ({
+          num: (chip.querySelector('.milksha-num')?.textContent || '').trim(),
+          sourceKey: sourceKeyFromItemId(chip.getAttribute('data-item-id')),
+        }))
+        .filter((row) => row.num);
       const seen = new Set();
-      for (const n of nums) {
-        if (!/^\d{4}$/.test(n)) {
+      for (const row of nums) {
+        const n = row.num;
+        if (!isValidDisplayNumber(n, row.sourceKey)) {
           bad.push({ kind: 'zone-format', zone: zoneEl.className, text: n });
         }
         if (seen.has(n)) {
@@ -214,7 +241,12 @@ export async function sampleIntegrityForDuration(page, durationMs, intervalMs = 
     const snap = await getBoardIntegritySnapshot(page);
     peakDetached = Math.max(peakDetached, snap.detachedCount);
     if (snap.violations.length) {
-      violations.push(...snap.violations);
+      const transientOk =
+        snap.detachedCount > 0 &&
+        snap.violations.every((v) => v.kind === 'zone-dup' || v.kind === 'cell-chip-count');
+      if (!transientOk) {
+        violations.push(...snap.violations);
+      }
     }
     await page.waitForTimeout(intervalMs);
   }

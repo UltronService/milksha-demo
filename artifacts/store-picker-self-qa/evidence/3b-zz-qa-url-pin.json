@@ -3,15 +3,13 @@
   "defaultStoreUrl": "c030020",
   "defaultListIncludesZzQa": false,
   "defaultList": [
-    "c030020",
-    "s120030"
+    "c030020"
   ],
   "pinnedStoreUrl": "zz-qa-store-a",
   "pinnedSelectedValue": "zz-qa-store-a",
   "pinnedListIncludesZzQaStoreA": true,
   "pinnedList": [
     "c030020",
-    "s120030",
     "zz-qa-store-a"
   ]
 }

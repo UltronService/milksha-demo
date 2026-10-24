@@ -11,11 +11,14 @@ const ROOT = path.join(__dirname, '..');
 /**
  * 總監核准：自動配對相關看板檔可與 main diff；其餘 js/board/* 仍須零 diff。
  * PR #95（controller-default-number）亦放寬同一 acceptance #8，另列 js/board/chip-overflow-fit.js。
- * 兩 PR 皆改此檔時後合併者須合併兩邊白名單條目（勿只保留一邊）。
+ * PR #123（PM board anim spec v1）另列 milksha-board-anim*.js。
+ * 多 PR 皆改此檔時後合併者須合併白名單條目（勿只保留一邊）。
  */
 const BOARD_AUTO_PAIR_DIFF_WHITELIST = [
   'js/board/board-auto-pair.js',
   'js/board/board-auto-pair-host.js',
+  'js/board/milksha-board-anim.js',
+  'js/board/milksha-board-anim-config.js',
 ];
 
 const RECEIVER_DIFF_FORBIDDEN_PREFIX = 'receiver/';
