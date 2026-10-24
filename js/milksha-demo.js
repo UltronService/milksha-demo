@@ -71,6 +71,10 @@
     const stateReady = drawer.querySelector('#ms-demo-state-ready');
     const btnLand = drawer.querySelector('#ms-demo-land');
     const btnPort = drawer.querySelector('#ms-demo-port');
+    const btnAnimTwo = drawer.querySelector('#ms-demo-anim-two');
+    const inpAnimGap = drawer.querySelector('#ms-demo-anim-gap');
+    const inpAnimMove = drawer.querySelector('#ms-demo-anim-move');
+    const inpAnimEnter = drawer.querySelector('#ms-demo-anim-enter');
 
     function buildDrawerHtml() {
       let srcOpts = '';
@@ -112,6 +116,20 @@
         '<span class="milksha-demo-lbl">　版面</span>' +
         '<button type="button" class="milksha-demo-btn sel" id="ms-demo-land">橫</button>' +
         '<button type="button" class="milksha-demo-btn" id="ms-demo-port">直</button></div>' +
+        '<div class="milksha-demo-sec"></div>' +
+        '<div class="milksha-demo-row"><b>動態節奏</b> <span class="milksha-demo-lbl">（欄位搬移）</span></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">兩段式</span> ' +
+        '<button type="button" class="milksha-demo-btn sel" id="ms-demo-anim-two">開</button></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">段間隔</span> ' +
+        '<input id="ms-demo-anim-gap" class="milksha-demo-num" type="number" min="0" max="500" step="10" value="80" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">下移段</span> ' +
+        '<input id="ms-demo-anim-move" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">進場段</span> ' +
+        '<input id="ms-demo-anim-enter" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-lbl">先下移／退出 → 間隔 → 新號與右欄淡入</div>' +
         '<div class="milksha-demo-sec"></div>' +
         '<div class="milksha-demo-lbl">最近一次推送的資料</div>' +
         '<pre class="milksha-demo-pre" id="ms-demo-pre">[]</pre>' +
@@ -493,6 +511,58 @@
       btnLand.classList.remove('sel');
       resetIdle();
     });
+
+    function clampAnimMs(raw, fallback) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        return fallback;
+      }
+      return Math.min(2000, Math.max(50, Math.round(n)));
+    }
+
+    function clampAnimGap(raw, fallback) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        return fallback;
+      }
+      return Math.min(500, Math.max(0, Math.round(n)));
+    }
+
+    function applyDemoAnimOverrides() {
+      const cfgMod = QMS.MilkshaBoardAnimConfig;
+      if (!cfgMod || !cfgMod.setRuntimeOverrides) {
+        return;
+      }
+      const twoOn = btnAnimTwo.classList.contains('sel');
+      cfgMod.setRuntimeOverrides({
+        columnMoveTwoPhase: twoOn,
+        columnMovePhaseGapMs: clampAnimGap(inpAnimGap.value, 80),
+        columnMoveMs: clampAnimMs(inpAnimMove.value, 300),
+        columnMoveEnterMs: clampAnimMs(inpAnimEnter.value, 300),
+      });
+    }
+
+    btnAnimTwo.addEventListener('click', function () {
+      const on = !btnAnimTwo.classList.contains('sel');
+      btnAnimTwo.classList.toggle('sel', on);
+      btnAnimTwo.textContent = on ? '開' : '關';
+      applyDemoAnimOverrides();
+      resetIdle();
+    });
+    inpAnimGap.addEventListener('change', function () {
+      applyDemoAnimOverrides();
+      resetIdle();
+    });
+    inpAnimMove.addEventListener('change', function () {
+      applyDemoAnimOverrides();
+      resetIdle();
+    });
+    inpAnimEnter.addEventListener('change', function () {
+      applyDemoAnimOverrides();
+      resetIdle();
+    });
+
+    applyDemoAnimOverrides();
 
     doc.addEventListener('keydown', function (ev) {
       const tag = ev.target && ev.target.tagName ? ev.target.tagName.toLowerCase() : '';

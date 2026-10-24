@@ -510,6 +510,16 @@
   padding-top: 8px;
 }
 
+.milksha-demo-num {
+  width: 4.2rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
+}
+
 .milksha-demo-lbl {
   color: #777;
   font-size: 14px;
