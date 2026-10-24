@@ -291,6 +291,32 @@
   }
 
   /**
+   * @param {Element} numbersLayer
+   */
+  function abortColumnMoveLayerState(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+      numbersLayer.removeAttribute('data-column-move-anim');
+    }
+    const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+    for (let ec = 0; ec < exitClones.length; ec += 1) {
+      const clone = exitClones[ec];
+      cancelElementAnimations(clone);
+      if (clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
+    }
+    const inCellChips = numbersLayer.querySelectorAll(
+      '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+    );
+    for (let ci = 0; ci < inCellChips.length; ci += 1) {
+      clearMotionStyles(inCellChips[ci]);
+    }
+  }
+
+  /**
    * @param {Element} el
    * @param {number} from
    * @param {number} to
@@ -791,6 +817,7 @@
       }
       const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
       for (let j = 0; j < layers.length; j += 1) {
+        abortColumnMoveLayerState(layers[j]);
         abortPageTurnLayerState(layers[j]);
         removeOrphanLayerFloatChips(layers[j]);
         clearMotionStyles(layers[j]);
@@ -978,6 +1005,8 @@
       const pendingRemove = new Set();
 
       if (interruptedPageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+        abortPageTurnLayerState(numbersLayer);
         hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
         return Promise.resolve();
       }
@@ -986,6 +1015,9 @@
         hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
       }
 
+      if (pageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+      }
       abortPageTurnLayerState(numbersLayer);
 
       if (

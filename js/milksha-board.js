@@ -989,8 +989,10 @@
       readyTimer = setInterval(function () {
         const pages = pageCountForItems(readyItems.length, PAGE_SIZE);
         if (pages <= 1) {
+          readyPage = clampPage(readyPage, pages);
           return;
         }
+        readyPage = clampPage(readyPage, pages);
         readyPage = (readyPage + 1) % pages;
         readyPageStartedAt = Date.now();
         patchZonePage('ready', readyItems, readyPage, pages);
@@ -998,8 +1000,10 @@
       prepTimer = setInterval(function () {
         const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
         if (pages <= 1) {
+          prepPage = clampPage(prepPage, pages);
           return;
         }
+        prepPage = clampPage(prepPage, pages);
         prepPage = (prepPage + 1) % pages;
         prepPageStartedAt = Date.now();
         patchZonePage('prep', prepItems, prepPage, pages);
