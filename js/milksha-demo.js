@@ -96,7 +96,7 @@
         '<div class="milksha-demo-row"><b>手動加號</b></div>' +
         '<div class="milksha-demo-row"><select id="ms-demo-source">' +
         srcOpts +
-        '</select><input id="ms-demo-number" type="text" placeholder="號碼" maxlength="8" /></div>' +
+        '</select><input id="ms-demo-number" type="text" placeholder="留空＝自動產號" maxlength="8" /></div>' +
         '<div class="milksha-demo-row">' +
         '<button type="button" class="milksha-demo-btn sel" id="ms-demo-state-prep">準備中</button>' +
         '<button type="button" class="milksha-demo-btn" id="ms-demo-state-ready">可取餐</button>' +
@@ -120,6 +120,120 @@
     }
 
     let manualState = 'preparing';
+    const demoSeq = { storeLast: 0, uddLast: 3000 };
+
+    function demoRng() {
+      return Math.random();
+    }
+
+    function demoCompositeKey(sourceKey, number) {
+      return String(sourceKey || 'store') + ':' + String(number);
+    }
+
+    function demoUsedOnBoard() {
+      const used = new Set();
+      const parse = QMS.MilkshaBoard && QMS.MilkshaBoard.parseSourceType;
+      for (let i = 0; i < currentContent.length; i += 1) {
+        const row = currentContent[i];
+        let key = 'store';
+        if (parse) {
+          const parsed = parse(row.source_type);
+          if (parsed && parsed.sourceKey) {
+            key = parsed.sourceKey;
+          }
+        }
+        used.add(demoCompositeKey(key, row.number));
+      }
+      return used;
+    }
+
+    function syncDemoSeqFromContent() {
+      const parse = QMS.MilkshaBoard && QMS.MilkshaBoard.parseSourceType;
+      let maxStore = 0;
+      let maxUdd = 3000;
+      for (let i = 0; i < currentContent.length; i += 1) {
+        const row = currentContent[i];
+        if (!parse) {
+          continue;
+        }
+        const parsed = parse(row.source_type);
+        if (!parsed) {
+          continue;
+        }
+        const n = parseInt(String(row.number), 10);
+        if (!Number.isFinite(n)) {
+          continue;
+        }
+        if (parsed.sourceKey === 'store') {
+          maxStore = Math.max(maxStore, n);
+        }
+        if (parsed.sourceKey === 'udd') {
+          maxUdd = Math.max(maxUdd, n);
+        }
+      }
+      demoSeq.storeLast = maxStore;
+      demoSeq.uddLast = maxUdd;
+    }
+
+    function nextSequentialFourDigit(sourceKey, counterObj, startAt) {
+      const used = demoUsedOnBoard();
+      const Sim = QMS.Controller && QMS.Controller.StoreSimulation;
+      let n = counterObj.last >= startAt ? counterObj.last + 1 : startAt;
+      let guard = 0;
+      while (guard < 10020) {
+        guard += 1;
+        if (n > 9999) {
+          n = startAt;
+        }
+        const formatted =
+          Sim && Sim.formatOrderNo ? Sim.formatOrderNo(n) : String(n).padStart(4, '0');
+        if (!used.has(demoCompositeKey(sourceKey, formatted))) {
+          counterObj.last = n;
+          return formatted;
+        }
+        n += 1;
+      }
+      return null;
+    }
+
+    function allocateDemoNumber(sourceKey) {
+      const key = sourceKey || 'store';
+      const Sim = QMS.Controller && QMS.Controller.StoreSimulation;
+      if (key === 'store') {
+        const c = { last: demoSeq.storeLast };
+        const num = nextSequentialFourDigit('store', c, 1);
+        demoSeq.storeLast = c.last;
+        return num;
+      }
+      if (key === 'udd') {
+        const c = { last: demoSeq.uddLast };
+        const num = nextSequentialFourDigit('udd', c, 3001);
+        demoSeq.uddLast = c.last;
+        return num;
+      }
+      if (Sim && typeof Sim.allocateNumberForSource === 'function') {
+        const state = { lastIssuedNumber: demoSeq.storeLast };
+        return Sim.allocateNumberForSource(key, state, demoUsedOnBoard(), demoRng);
+      }
+      return nextSequentialFourDigit('store', demoSeq, 1);
+    }
+
+    function normalizeManualNumber(sourceKey, raw) {
+      const trimmed = String(raw == null ? '' : raw).trim();
+      if (!trimmed) {
+        return null;
+      }
+      const Send = QMS.Controller && QMS.Controller.SendNumber;
+      if (Send && typeof Send.validateQuickSendNumber === 'function') {
+        const res = Send.validateQuickSendNumber(sourceKey, trimmed);
+        return res.ok ? res.normalized : null;
+      }
+      const MB = QMS.MilkshaBoard;
+      if (MB && typeof MB.normalizeBoardDisplayNumber === 'function') {
+        return MB.normalizeBoardDisplayNumber(trimmed, sourceKey);
+      }
+      return trimmed;
+    }
 
     function resetIdle() {
       if (idleTimer) {
@@ -191,6 +305,7 @@
 
     function pushContent(content) {
       currentContent = content.slice();
+      syncDemoSeqFromContent();
       board.applyPayload(currentContent);
       updatePreview();
       nextPushAt = autoPlay ? Date.now() + autoIntervalSec * 1000 : 0;
@@ -287,9 +402,20 @@
 
     btnAdd.addEventListener('click', function () {
       const key = selSource.value;
-      const num = (inpNumber.value || '').trim();
+      let num = (inpNumber.value || '').trim();
       if (!num) {
-        return;
+        num = allocateDemoNumber(key);
+        if (!num) {
+          return;
+        }
+        inpNumber.value = num;
+      } else {
+        const normalized = normalizeManualNumber(key, num);
+        if (!normalized) {
+          return;
+        }
+        num = normalized;
+        inpNumber.value = num;
       }
       const st = sourceTypeFor(key, manualState === 'ready' ? 'ready' : 'preparing');
       currentContent = currentContent.concat([{ source_type: st, number: num }]);
