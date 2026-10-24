@@ -75,6 +75,7 @@
     const inpAnimGap = drawer.querySelector('#ms-demo-anim-gap');
     const inpAnimMove = drawer.querySelector('#ms-demo-anim-move');
     const inpAnimEnter = drawer.querySelector('#ms-demo-anim-enter');
+    const elAnimHint = drawer.querySelector('#ms-demo-anim-hint');
 
     function buildDrawerHtml() {
       let srcOpts = '';
@@ -121,8 +122,9 @@
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">兩段式</span> ' +
         '<button type="button" class="milksha-demo-btn" id="ms-demo-anim-two">關</button></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">段間隔</span> ' +
-        '<input id="ms-demo-anim-gap" class="milksha-demo-num" type="number" min="0" max="500" step="10" value="80" />' +
+        '<input id="ms-demo-anim-gap" class="milksha-demo-num" type="number" min="0" max="3000" step="50" value="80" />' +
         '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-lbl" id="ms-demo-anim-hint"></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">下移段</span> ' +
         '<input id="ms-demo-anim-move" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
         '<span class="milksha-demo-lbl"> ms</span></div>' +
@@ -525,7 +527,30 @@
       if (!Number.isFinite(n)) {
         return fallback;
       }
-      return Math.min(500, Math.max(0, Math.round(n)));
+      return Math.min(3000, Math.max(0, Math.round(n)));
+    }
+
+    function updateAnimHint() {
+      if (!elAnimHint) {
+        return;
+      }
+      const twoOn = btnAnimTwo.classList.contains('sel');
+      const gap = clampAnimGap(inpAnimGap.value, 80);
+      const move = clampAnimMs(inpAnimMove.value, 300);
+      const enter = clampAnimMs(inpAnimEnter.value, 300);
+      if (!twoOn) {
+        elAnimHint.textContent =
+          '兩段式為「關」時：段間隔無效，新號與下移仍同時播放。請先開啟兩段式再調間隔。';
+        return;
+      }
+      elAnimHint.textContent =
+        '兩段式為「開」：約 ' +
+        move +
+        'ms 下移／退出 → 停 ' +
+        gap +
+        'ms → 約 ' +
+        enter +
+        'ms 新號與右欄第 6 格淡入（僅滿欄推挤時）。';
     }
 
     function applyDemoAnimOverrides() {
@@ -540,6 +565,7 @@
         columnMoveMs: clampAnimMs(inpAnimMove.value, 300),
         columnMoveEnterMs: clampAnimMs(inpAnimEnter.value, 300),
       });
+      updateAnimHint();
     }
 
     btnAnimTwo.addEventListener('click', function () {

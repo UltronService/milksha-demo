@@ -1019,28 +1019,53 @@
           ? animCfg.columnMoveEnterMs
           : opacityInMs;
       const useColumnMoveTwoPhase = Boolean(animCfg.columnMoveTwoPhase) && Boolean(columnMovePlan);
-      const phaseMovePromises = [];
-      const phaseEnterPromises = [];
-      function animQueue(phase, promise) {
-        if (!promise) {
+      const phaseMoveThunks = [];
+      const phaseEnterThunks = [];
+      function runAnimThunks(thunks) {
+        if (!thunks.length) {
+          return Promise.resolve();
+        }
+        return Promise.all(
+          thunks.map(function (startAnim) {
+            return startAnim();
+          }),
+        );
+      }
+      function animQueue(phase, startAnim) {
+        if (!startAnim) {
           return;
         }
         if (useColumnMoveTwoPhase && phase === 'move') {
-          phaseMovePromises.push(promise);
+          phaseMoveThunks.push(startAnim);
           return;
         }
         if (useColumnMoveTwoPhase && phase === 'enter') {
-          phaseEnterPromises.push(promise);
+          phaseEnterThunks.push(startAnim);
           return;
         }
-        promises.push(promise);
+        promises.push(startAnim());
       }
-      function columnMoveEnterAnim(promise) {
+      function columnMoveEnterAnim(startAnim) {
         if (useColumnMoveTwoPhase) {
-          animQueue('enter', promise);
+          animQueue('enter', startAnim);
           return;
         }
-        promises.push(promise);
+        promises.push(startAnim());
+      }
+      function isPhaseTwoEnterHoldId(id) {
+        if (!useColumnMoveTwoPhase || !id || !columnMovePlan) {
+          return false;
+        }
+        if (columnMoveFadeInPlaceIds[id] || columnMoveEnterFromAboveIds[id]) {
+          return true;
+        }
+        if (columnMovePlan.addedId && id === columnMovePlan.addedId) {
+          return true;
+        }
+        if (columnMovePlan.focusId && id === columnMovePlan.focusId) {
+          return true;
+        }
+        return false;
       }
       if (columnMovePlan) {
         if (zoneKey === 'ready' && columnMovePlan.addedId) {
@@ -1073,9 +1098,8 @@
             exitClone.style.pointerEvents = 'none';
             snapOpacity(exitClone, 1);
             numbersLayer.appendChild(exitClone);
-            animQueue(
-              'move',
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 exitClone,
                 numbersLayer,
                 pitch,
@@ -1083,8 +1107,8 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
           if (pushedId) {
             columnMoveFadeInPlaceIds[pushedId] = true;
@@ -1141,9 +1165,8 @@
             rbClone.style.pointerEvents = 'none';
             snapOpacity(rbClone, 1);
             numbersLayer.appendChild(rbClone);
-            animQueue(
-              'move',
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 rbClone,
                 numbersLayer,
                 pitch,
@@ -1151,8 +1174,8 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
         }
       }
@@ -1280,19 +1303,21 @@
           if (columnMoveFadeInPlaceIds[id]) {
             chip.style.transform = '';
             snapOpacity(chip, 0);
-            columnMoveEnterAnim(runOpacityAnim(chip, 0, 1, enterDurationMs, gen));
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
           } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchMoved = estimateRowPitchPx(slot, numbersLayer);
-            columnMoveEnterAnim(
-              animateColumnMoveEnterFromAbove(
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(
                 chip,
                 pitchMoved,
                 columnMoveDurationMs,
                 gen,
                 getGeneration,
-              ),
-            );
+              );
+            });
           }
         }
         if (!chip || pendingRemove.has(chip)) {
@@ -1314,13 +1339,15 @@
           chipById[id] = chip;
           if (columnMoveFadeInPlaceIds[id]) {
             chip.style.transform = '';
-            columnMoveEnterAnim(runOpacityAnim(chip, 0, 1, enterDurationMs, gen));
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
           } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
-            columnMoveEnterAnim(
-              animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration),
-            );
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration);
+            });
           } else if (
             zoneKey === 'ready' &&
             !skipReadyScale &&
@@ -1328,15 +1355,21 @@
             columnMovePlan.kind === 'left-column-overflow' &&
             id === columnMovePlan.addedId
           ) {
-            columnMoveEnterAnim(runReadyPulseAnim(chip, numbersLayer, gen));
+            columnMoveEnterAnim(function () {
+              return runReadyPulseAnim(chip, numbersLayer, gen);
+            });
           } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
             if (useColumnMoveTwoPhase && columnMovePlan) {
-              columnMoveEnterAnim(runReadyPulseAnim(chip, numbersLayer, gen));
+              columnMoveEnterAnim(function () {
+                return runReadyPulseAnim(chip, numbersLayer, gen);
+              });
             } else {
               promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
             }
           } else if (useColumnMoveTwoPhase && columnMovePlan) {
-            columnMoveEnterAnim(runOpacityAnim(chip, 0, 1, enterDurationMs, gen));
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
           } else {
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
@@ -1352,11 +1385,7 @@
           for (let hi = 0; hi < holdChips.length; hi += 1) {
             const holdChip = holdChips[hi];
             const holdId = holdChip.getAttribute('data-item-id');
-            if (
-              pendingRemove.has(holdChip) ||
-              (holdId &&
-                (columnMoveEnterFromAboveIds[holdId] || columnMoveFadeInPlaceIds[holdId]))
-            ) {
+            if (pendingRemove.has(holdChip) || (holdId && isPhaseTwoEnterHoldId(holdId))) {
               continue;
             }
             ensureVisibleOpacity(holdChip);
@@ -1374,7 +1403,9 @@
           if (columnMoveFadeInPlaceIds[mv.id] || isCrossColumnSlotMove(mv.from, mv.to)) {
             chip.style.transform = '';
             snapOpacity(chip, 0);
-            columnMoveEnterAnim(runOpacityAnim(chip, 0, 1, enterDurationMs, gen));
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
             return;
           }
           const before = rectsBefore[mv.id];
@@ -1390,10 +1421,14 @@
           if (isDiagonalLayoutDelta(dx, dy)) {
             chip.style.transform = '';
             snapOpacity(chip, 0);
-            columnMoveEnterAnim(runOpacityAnim(chip, 0, 1, enterDurationMs, gen));
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
             return;
           }
-          animQueue('move', animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration));
+          animQueue('move', function () {
+            return animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration);
+          });
         });
       };
 
@@ -1446,24 +1481,27 @@
       }
 
       function runPhasedColumnMoveChain() {
+        const cfgNow = getAnimConfig();
         const gapMs =
-          typeof animCfg.columnMovePhaseGapMs === 'number' && animCfg.columnMovePhaseGapMs >= 0
-            ? animCfg.columnMovePhaseGapMs
+          typeof cfgNow.columnMovePhaseGapMs === 'number' && cfgNow.columnMovePhaseGapMs >= 0
+            ? cfgNow.columnMovePhaseGapMs
             : 0;
         let chain = Promise.all(promises).then(function () {
-          return Promise.all(phaseMovePromises);
+          return runAnimThunks(phaseMoveThunks);
         });
         if (useColumnMoveTwoPhase) {
-          chain = chain.then(function () {
-            if (gapMs <= 0) {
-              return undefined;
-            }
-            return new Promise(function (resolveGap) {
-              deps.window.setTimeout(resolveGap, gapMs);
+          chain = chain
+            .then(function () {
+              if (gapMs <= 0) {
+                return undefined;
+              }
+              return new Promise(function (resolveGap) {
+                deps.window.setTimeout(resolveGap, gapMs);
+              });
+            })
+            .then(function () {
+              return runAnimThunks(phaseEnterThunks);
             });
-          }).then(function () {
-            return Promise.all(phaseEnterPromises);
-          });
         }
         return chain.then(finishColumnMoveAnimWindow);
       }
