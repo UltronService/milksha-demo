@@ -291,6 +291,32 @@
   }
 
   /**
+   * @param {Element} numbersLayer
+   */
+  function abortColumnMoveLayerState(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+      numbersLayer.removeAttribute('data-column-move-anim');
+    }
+    const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+    for (let ec = 0; ec < exitClones.length; ec += 1) {
+      const clone = exitClones[ec];
+      cancelElementAnimations(clone);
+      if (clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
+    }
+    const inCellChips = numbersLayer.querySelectorAll(
+      '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+    );
+    for (let ci = 0; ci < inCellChips.length; ci += 1) {
+      clearMotionStyles(inCellChips[ci]);
+    }
+  }
+
+  /**
    * @param {Element} el
    * @param {number} from
    * @param {number} to
@@ -395,6 +421,39 @@
   }
 
   const GRID_ROWS = 5;
+  const SLOT_MOVE_EPSILON_PX = 2;
+
+  /**
+   * @param {number} slot
+   * @returns {number}
+   */
+  function slotColumnIndex(slot) {
+    return slot < GRID_ROWS ? 0 : 1;
+  }
+
+  /**
+   * @param {number} fromSlot
+   * @param {number} toSlot
+   * @returns {boolean}
+   */
+  function isCrossColumnSlotMove(fromSlot, toSlot) {
+    if (!Number.isFinite(fromSlot) || !Number.isFinite(toSlot) || fromSlot < 0 || toSlot < 0) {
+      return false;
+    }
+    return slotColumnIndex(fromSlot) !== slotColumnIndex(toSlot);
+  }
+
+  /**
+   * @param {number} dx
+   * @param {number} dy
+   * @returns {boolean}
+   */
+  function isDiagonalLayoutDelta(dx, dy) {
+    return (
+      Math.abs(dx) > SLOT_MOVE_EPSILON_PX &&
+      Math.abs(dy) > SLOT_MOVE_EPSILON_PX
+    );
+  }
 
   /**
    * @param {Array<{ id: string }>} items
@@ -422,23 +481,53 @@
    * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
    * @returns {null | { kind: string, addedId: string, pushedId?: string, enterSlot: number, leftBottomSlot?: number, rightTopSlot?: number, rightBottomSlot?: number }}
    */
-  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
-    if (diff.pageTurn || diff.removed.length > 0) {
+  function detectRightBottomPageOverflowPlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.added.length !== 1 || diff.removed.length !== 1) {
       return null;
     }
     const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
     const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
-    if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
-      const nextMapEarly = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
-      const addedIdOverflow = diff.added.length === 1 ? diff.added[0] : '';
-      const enterSlotOverflow = addedIdOverflow ? nextMapEarly.get(addedIdOverflow) : -1;
-      return {
-        kind: 'right-bottom-page-two',
-        addedId: addedIdOverflow,
-        enterSlot: enterSlotOverflow === undefined ? -1 : enterSlotOverflow,
-        rightBottomSlot: pageSize - 1,
-      };
+    if (prevN !== 10 || nextN !== 10 || nextItems.length !== prevItems.length + 1) {
+      return null;
     }
+    const prevCells = layoutPageGrid(prevItems, page, pageSize);
+    const exitCell = prevCells[pageSize - 1];
+    const exitId = exitCell && exitCell.id ? exitCell.id : '';
+    if (!exitId || diff.removed[0] !== exitId) {
+      return null;
+    }
+    const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
+    const addedId = diff.added[0];
+    const enterSlot = nextMap.get(addedId);
+    return {
+      kind: 'right-bottom-page-two',
+      addedId: addedId,
+      enterSlot: enterSlot === undefined ? -1 : enterSlot,
+      rightBottomSlot: pageSize - 1,
+      exitId: exitId,
+    };
+  }
+
+  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.pageTurn) {
+      return null;
+    }
+    const overflowPlan = detectRightBottomPageOverflowPlan(
+      prevItems,
+      nextItems,
+      page,
+      pageSize,
+      layoutPageGrid,
+      diff,
+    );
+    if (overflowPlan) {
+      return overflowPlan;
+    }
+    if (diff.removed.length > 0) {
+      return null;
+    }
+    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
+    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
     if (diff.added.length !== 1) {
       return null;
     }
@@ -447,14 +536,6 @@
     const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
     const enterSlot = nextMap.get(addedId);
     if (enterSlot === undefined) {
-      if (prevN === 10 && nextItems.length === 11) {
-        return {
-          kind: 'right-bottom-page-two',
-          addedId: addedId,
-          enterSlot: -1,
-          rightBottomSlot: pageSize - 1,
-        };
-      }
       return null;
     }
     if (nextN !== prevN + 1) {
@@ -480,6 +561,17 @@
         };
       }
       return null;
+    }
+    if (prevN === 5 && nextN === 6) {
+      const nextCells = layoutPageGrid(nextItems, page, pageSize);
+      const occupant = nextCells[GRID_ROWS];
+      if (occupant && occupant.id) {
+        return {
+          kind: 'right-column-fade-in',
+          focusId: occupant.id,
+          enterSlot: GRID_ROWS,
+        };
+      }
     }
     return null;
   }
@@ -725,6 +817,7 @@
       }
       const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
       for (let j = 0; j < layers.length; j += 1) {
+        abortColumnMoveLayerState(layers[j]);
         abortPageTurnLayerState(layers[j]);
         removeOrphanLayerFloatChips(layers[j]);
         clearMotionStyles(layers[j]);
@@ -820,6 +913,12 @@
      * @param {Array<{ id?: string, number?: string } | null>} cells
      * @param {Record<string, Element>} chipById
      */
+    function settleInterruptedPageTurn(numbersLayer, slotEls, cells) {
+      numbersLayer.removeAttribute('data-page-turn-anim');
+      hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {});
+      snapOpacity(numbersLayer, 1);
+    }
+
     function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
       abortPageTurnLayerState(numbersLayer);
       removeOrphanLayerFloatChips(numbersLayer);
@@ -879,6 +978,12 @@
       const prevItems = opts.prevItems || [];
       const prevPage = opts.prevPage || 0;
       const diff = diffVisibleSlots(prevItems, items, prevPage, page, deps.pageSize, deps.layoutPageGrid);
+      const prevVisibleSlotMap = visibleIdToSlot(
+        prevItems,
+        prevPage,
+        deps.pageSize,
+        deps.layoutPageGrid,
+      );
       const pageTurn = Boolean(opts.pageTurn) || diff.pageTurn;
       const cells = deps.layoutPageGrid(items, page, deps.pageSize);
       const slotEls = numbersLayer.querySelectorAll('.milksha-num-cell');
@@ -906,6 +1011,8 @@
       const pendingRemove = new Set();
 
       if (interruptedPageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+        abortPageTurnLayerState(numbersLayer);
         hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
         return Promise.resolve();
       }
@@ -914,6 +1021,9 @@
         hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
       }
 
+      if (pageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+      }
       abortPageTurnLayerState(numbersLayer);
 
       if (
@@ -946,23 +1056,76 @@
         deps.layoutPageGrid,
         diff,
       );
-      if (
-        !columnMovePlan &&
-        page === 0 &&
-        items.length === 11 &&
-        prevItems.length === 10 &&
-        !pageTurn
-      ) {
-        columnMovePlan = {
-          kind: 'right-bottom-page-two',
-          addedId: '',
-          enterSlot: -1,
-          rightBottomSlot: deps.pageSize - 1,
-        };
+      if (!columnMovePlan && !pageTurn && items.length === prevItems.length + 1) {
+        const fallbackOverflow = detectRightBottomPageOverflowPlan(
+          prevItems,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          diff,
+        );
+        if (fallbackOverflow) {
+          columnMovePlan = fallbackOverflow;
+        }
       }
       const columnMoveEnterFromAboveIds = {};
+      const columnMoveFadeInPlaceIds = {};
       const columnMoveSkipFlipIds = {};
       let columnMoveDurationMs = opacityInMs;
+      const enterDurationMs =
+        typeof animCfg.columnMoveEnterMs === 'number' && animCfg.columnMoveEnterMs > 0
+          ? animCfg.columnMoveEnterMs
+          : opacityInMs;
+      const useColumnMoveTwoPhase = Boolean(animCfg.columnMoveTwoPhase) && Boolean(columnMovePlan);
+      const phaseMoveThunks = [];
+      const phaseEnterThunks = [];
+      function runAnimThunks(thunks) {
+        if (!thunks.length) {
+          return Promise.resolve();
+        }
+        return Promise.all(
+          thunks.map(function (startAnim) {
+            return startAnim();
+          }),
+        );
+      }
+      function animQueue(phase, startAnim) {
+        if (!startAnim) {
+          return;
+        }
+        if (useColumnMoveTwoPhase && phase === 'move') {
+          phaseMoveThunks.push(startAnim);
+          return;
+        }
+        if (useColumnMoveTwoPhase && phase === 'enter') {
+          phaseEnterThunks.push(startAnim);
+          return;
+        }
+        promises.push(startAnim());
+      }
+      function columnMoveEnterAnim(startAnim) {
+        if (useColumnMoveTwoPhase) {
+          animQueue('enter', startAnim);
+          return;
+        }
+        promises.push(startAnim());
+      }
+      function isPhaseTwoEnterHoldId(id) {
+        if (!useColumnMoveTwoPhase || !id || !columnMovePlan) {
+          return false;
+        }
+        if (columnMoveFadeInPlaceIds[id] || columnMoveEnterFromAboveIds[id]) {
+          return true;
+        }
+        if (columnMovePlan.addedId && id === columnMovePlan.addedId) {
+          return true;
+        }
+        if (columnMovePlan.focusId && id === columnMovePlan.focusId) {
+          return true;
+        }
+        return false;
+      }
       if (columnMovePlan) {
         if (zoneKey === 'ready' && columnMovePlan.addedId) {
           scalePulseSet[columnMovePlan.addedId] = true;
@@ -994,8 +1157,8 @@
             exitClone.style.pointerEvents = 'none';
             snapOpacity(exitClone, 1);
             numbersLayer.appendChild(exitClone);
-            promises.push(
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 exitClone,
                 numbersLayer,
                 pitch,
@@ -1003,15 +1166,42 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
           if (pushedId) {
-            columnMoveEnterFromAboveIds[pushedId] = true;
+            columnMoveFadeInPlaceIds[pushedId] = true;
             columnMoveSkipFlipIds[pushedId] = true;
+            delete rectsBefore[pushedId];
           }
           for (let cmi = 0; cmi < diff.moved.length; cmi += 1) {
-            columnMoveSkipFlipIds[diff.moved[cmi].id] = true;
+            const mvCol = diff.moved[cmi];
+            columnMoveSkipFlipIds[mvCol.id] = true;
+            if (isCrossColumnSlotMove(mvCol.from, mvCol.to)) {
+              columnMoveFadeInPlaceIds[mvCol.id] = true;
+              delete rectsBefore[mvCol.id];
+            }
+          }
+        } else if (columnMovePlan.kind === 'right-column-fade-in') {
+          const focusId = columnMovePlan.focusId;
+          columnMoveFadeInPlaceIds[focusId] = true;
+          columnMoveSkipFlipIds[focusId] = true;
+          delete rectsBefore[focusId];
+          for (let rfi = 0; rfi < diff.moved.length; rfi += 1) {
+            const mvFade = diff.moved[rfi];
+            if (mvFade.to === GRID_ROWS) {
+              columnMoveFadeInPlaceIds[mvFade.id] = true;
+              columnMoveSkipFlipIds[mvFade.id] = true;
+              delete rectsBefore[mvFade.id];
+            }
+          }
+          for (let rfa = 0; rfa < diff.added.length; rfa += 1) {
+            delete rectsBefore[diff.added[rfa]];
+          }
+          if (page > 0) {
+            for (let rfm = 0; rfm < diff.moved.length; rfm += 1) {
+              delete rectsBefore[diff.moved[rfm].id];
+            }
           }
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {
           const rbSlot = columnMovePlan.rightBottomSlot;
@@ -1034,8 +1224,8 @@
             rbClone.style.pointerEvents = 'none';
             snapOpacity(rbClone, 1);
             numbersLayer.appendChild(rbClone);
-            promises.push(
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 rbClone,
                 numbersLayer,
                 pitch,
@@ -1043,8 +1233,8 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
         }
       }
@@ -1065,6 +1255,25 @@
       }
 
       if (pageTurn) {
+        if (zoneKey === 'ready' && pulseIds.length > 0 && !skipReadyScale) {
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          snapOpacity(numbersLayer, 1);
+          numbersLayer.removeAttribute('data-page-turn-anim');
+          const readyJumpPulses = [];
+          for (let rpi = 0; rpi < pulseIds.length; rpi += 1) {
+            const readyPulseId = pulseIds[rpi];
+            if (!scalePulseSet[readyPulseId]) {
+              continue;
+            }
+            const readyPulseChip = numbersLayer.querySelector(
+              '.milksha-board-chip[data-item-id="' + readyPulseId + '"]',
+            );
+            if (readyPulseChip) {
+              readyJumpPulses.push(runReadyPulseAnim(readyPulseChip, numbersLayer, gen));
+            }
+          }
+          return Promise.all(readyJumpPulses);
+        }
         removeOrphanLayerFloatChips(numbersLayer);
         const domShowsPrevPage = domVisibleLayoutMatches(
           slotEls,
@@ -1082,7 +1291,7 @@
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
-              numbersLayer.removeAttribute('data-page-turn-anim');
+              settleInterruptedPageTurn(numbersLayer, slotEls, cells);
               return;
             }
             removeOrphanLayerFloatChips(numbersLayer);
@@ -1099,8 +1308,26 @@
             }
             snapOpacity(numbersLayer, 0);
             return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen).then(function () {
-              if (getGeneration() === gen) {
-                numbersLayer.removeAttribute('data-page-turn-anim');
+              if (getGeneration() !== gen) {
+                settleInterruptedPageTurn(numbersLayer, slotEls, cells);
+                return;
+              }
+              numbersLayer.removeAttribute('data-page-turn-anim');
+              if (zoneKey === 'ready' && !skipReadyScale && pulseIds.length > 0) {
+                const pulsePromises = [];
+                for (let pxi = 0; pxi < pulseIds.length; pxi += 1) {
+                  const pulseId = pulseIds[pxi];
+                  if (!scalePulseSet[pulseId]) {
+                    continue;
+                  }
+                  const pulseChip = numbersLayer.querySelector(
+                    '.milksha-board-chip[data-item-id="' + pulseId + '"]',
+                  );
+                  if (pulseChip) {
+                    pulsePromises.push(runReadyPulseAnim(pulseChip, numbersLayer, gen));
+                  }
+                }
+                return Promise.all(pulsePromises);
               }
             });
           }),
@@ -1131,6 +1358,14 @@
       }
 
       diff.removed.forEach(function (id) {
+        if (
+          columnMovePlan &&
+          columnMovePlan.kind === 'right-bottom-page-two' &&
+          columnMovePlan.exitId &&
+          id === columnMovePlan.exitId
+        ) {
+          return;
+        }
         const chip = chipById[id];
         if (!chip || pendingRemove.has(chip)) {
           return;
@@ -1158,19 +1393,35 @@
             }
           }
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          const fromSlotReparent = prevVisibleSlotMap.get(id);
+          if (fromSlotReparent !== undefined && isCrossColumnSlotMove(fromSlotReparent, i)) {
+            columnMoveFadeInPlaceIds[id] = true;
+            columnMoveSkipFlipIds[id] = true;
+            delete rectsBefore[id];
+          } else if (!prevVisibleSlotMap.has(id)) {
+            columnMoveFadeInPlaceIds[id] = true;
+            columnMoveSkipFlipIds[id] = true;
+            delete rectsBefore[id];
+          }
           slot.appendChild(chip);
-          if (columnMoveEnterFromAboveIds[id]) {
+          if (columnMoveFadeInPlaceIds[id]) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchMoved = estimateRowPitchPx(slot, numbersLayer);
-            promises.push(
-              animateColumnMoveEnterFromAbove(
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(
                 chip,
                 pitchMoved,
                 columnMoveDurationMs,
                 gen,
                 getGeneration,
-              ),
-            );
+              );
+            });
           }
         }
         if (!chip || pendingRemove.has(chip)) {
@@ -1190,10 +1441,17 @@
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
           chipById[id] = chip;
-          if (columnMoveEnterFromAboveIds[id]) {
+          if (columnMoveFadeInPlaceIds[id]) {
+            chip.style.transform = '';
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
-            promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration);
+            });
           } else if (
             zoneKey === 'ready' &&
             !skipReadyScale &&
@@ -1201,9 +1459,21 @@
             columnMovePlan.kind === 'left-column-overflow' &&
             id === columnMovePlan.addedId
           ) {
-            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            columnMoveEnterAnim(function () {
+              return runReadyPulseAnim(chip, numbersLayer, gen);
+            });
           } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
-            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            if (useColumnMoveTwoPhase && columnMovePlan) {
+              columnMoveEnterAnim(function () {
+                return runReadyPulseAnim(chip, numbersLayer, gen);
+              });
+            } else {
+              promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            }
+          } else if (useColumnMoveTwoPhase && columnMovePlan) {
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
           } else {
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
@@ -1219,7 +1489,7 @@
           for (let hi = 0; hi < holdChips.length; hi += 1) {
             const holdChip = holdChips[hi];
             const holdId = holdChip.getAttribute('data-item-id');
-            if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
+            if (pendingRemove.has(holdChip) || (holdId && isPhaseTwoEnterHoldId(holdId))) {
               continue;
             }
             ensureVisibleOpacity(holdChip);
@@ -1230,30 +1500,16 @@
           if (!chip || pendingRemove.has(chip)) {
             return;
           }
-          if (columnMoveSkipFlipIds[mv.id]) {
-            if (columnMoveEnterFromAboveIds[mv.id]) {
-              return;
-            }
-            const beforeSkipped = rectsBefore[mv.id];
-            if (!beforeSkipped) {
-              return;
-            }
-            const afterSkipped = chip.getBoundingClientRect();
-            let dxSkipped = beforeSkipped.left - afterSkipped.left;
-            const dySkipped = beforeSkipped.top - afterSkipped.top;
-            if (Math.abs(dxSkipped) > 2) {
-              snapOpacity(chip, 0);
-              dxSkipped = 0;
-            }
-            promises.push(
-              animateTranslate(chip, dxSkipped, dySkipped, columnMoveDurationMs, gen, getGeneration).then(
-                function () {
-                  if (getGeneration() === gen) {
-                    ensureVisibleOpacity(chip);
-                  }
-                },
-              ),
-            );
+          if (columnMoveEnterFromAboveIds[mv.id]) {
+            return;
+          }
+          const moveDurationMs = columnMovePlan ? columnMoveDurationMs : opacityInMs;
+          if (columnMoveFadeInPlaceIds[mv.id] || isCrossColumnSlotMove(mv.from, mv.to)) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
             return;
           }
           const before = rectsBefore[mv.id];
@@ -1263,7 +1519,20 @@
           const after = chip.getBoundingClientRect();
           const dx = before.left - after.left;
           const dy = before.top - after.top;
-          promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
+          if (Math.abs(dx) < SLOT_MOVE_EPSILON_PX && Math.abs(dy) < SLOT_MOVE_EPSILON_PX) {
+            return;
+          }
+          if (isDiagonalLayoutDelta(dx, dy)) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+            return;
+          }
+          animQueue('move', function () {
+            return animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration);
+          });
         });
       };
 
@@ -1279,40 +1548,73 @@
         }
       }
 
+      function finishColumnMoveAnimWindow() {
+        if (!columnMovePlan) {
+          return;
+        }
+        removeOrphanLayerFloatChips(numbersLayer);
+        const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+        for (let ec = 0; ec < exitClones.length; ec += 1) {
+          const clone = exitClones[ec];
+          if (clone.parentNode) {
+            clone.parentNode.removeChild(clone);
+          }
+        }
+        const inCellChips = numbersLayer.querySelectorAll(
+          '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+        );
+        for (let si = 0; si < inCellChips.length; si += 1) {
+          const settled = inCellChips[si];
+          if (pendingRemove.has(settled)) {
+            continue;
+          }
+          const settledId = settled.getAttribute('data-item-id');
+          if (settledId && columnMoveFadeInPlaceIds[settledId]) {
+            snapOpacity(settled, 1);
+            settled.style.transform = '';
+          } else if (settledId && columnMoveEnterFromAboveIds[settledId]) {
+            snapOpacity(settled, 1);
+            settled.style.transform = '';
+          } else {
+            ensureVisibleOpacity(settled);
+          }
+        }
+        if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+          numbersLayer.removeAttribute('data-column-move-anim');
+        }
+      }
+
+      function runPhasedColumnMoveChain() {
+        const cfgNow = getAnimConfig();
+        const gapMs =
+          typeof cfgNow.columnMovePhaseGapMs === 'number' && cfgNow.columnMovePhaseGapMs >= 0
+            ? cfgNow.columnMovePhaseGapMs
+            : 0;
+        let chain = Promise.all(promises).then(function () {
+          return runAnimThunks(phaseMoveThunks);
+        });
+        if (useColumnMoveTwoPhase) {
+          chain = chain
+            .then(function () {
+              if (gapMs <= 0) {
+                return undefined;
+              }
+              return new Promise(function (resolveGap) {
+                deps.window.setTimeout(resolveGap, gapMs);
+              });
+            })
+            .then(function () {
+              return runAnimThunks(phaseEnterThunks);
+            });
+        }
+        return chain.then(finishColumnMoveAnimWindow);
+      }
+
       return Promise.all([]).then(function () {
         return new Promise(function (resolve) {
           deps.window.requestAnimationFrame(function () {
             afterLayout();
-            Promise.all(promises).then(function () {
-              if (columnMovePlan) {
-                removeOrphanLayerFloatChips(numbersLayer);
-                const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
-                for (let ec = 0; ec < exitClones.length; ec += 1) {
-                  const clone = exitClones[ec];
-                  if (clone.parentNode) {
-                    clone.parentNode.removeChild(clone);
-                  }
-                }
-                const inCellChips = numbersLayer.querySelectorAll(
-                  '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
-                );
-                for (let si = 0; si < inCellChips.length; si += 1) {
-                  const settled = inCellChips[si];
-                  if (pendingRemove.has(settled)) {
-                    continue;
-                  }
-                  const settledId = settled.getAttribute('data-item-id');
-                  if (settledId && columnMoveEnterFromAboveIds[settledId]) {
-                    snapOpacity(settled, 1);
-                    settled.style.transform = '';
-                  } else {
-                    ensureVisibleOpacity(settled);
-                  }
-                }
-                if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
-                  numbersLayer.removeAttribute('data-column-move-anim');
-                }
-              }
+            runPhasedColumnMoveChain().then(function () {
               resolve();
             });
           });
@@ -1348,6 +1650,9 @@
     detectColumnMovePlan: detectColumnMovePlan,
     countVisibleOnPage: countVisibleOnPage,
     GRID_ROWS: GRID_ROWS,
+    slotColumnIndex: slotColumnIndex,
+    isCrossColumnSlotMove: isCrossColumnSlotMove,
+    isDiagonalLayoutDelta: isDiagonalLayoutDelta,
     isBulkSnapshotReplace: isBulkSnapshotReplace,
     shouldSkipBoardAnimations: shouldSkipBoardAnimations,
     createBoardAnimator: createBoardAnimator,

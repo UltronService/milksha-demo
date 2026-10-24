@@ -36,3 +36,20 @@ test('anim config accepts valid URL overrides', function () {
   assert.equal(c.readyScaleHoldMs, 2500);
   assert.equal(c.readyScaleInMs, 400);
 });
+
+test('anim config runtime overrides merge for demo panel', function () {
+  const cfg = loadConfig('');
+  cfg.setRuntimeOverrides({
+    columnMoveTwoPhase: true,
+    columnMovePhaseGapMs: 120,
+    columnMoveMs: 280,
+    columnMoveEnterMs: 350,
+  });
+  const c = cfg.getConfig();
+  assert.equal(c.columnMoveTwoPhase, true);
+  assert.equal(c.columnMovePhaseGapMs, 120);
+  assert.equal(c.columnMoveMs, 280);
+  assert.equal(c.columnMoveEnterMs, 350);
+  cfg.setRuntimeOverrides(null);
+  assert.equal(cfg.getConfig().columnMoveTwoPhase, false);
+});

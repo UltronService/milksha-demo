@@ -261,9 +261,39 @@ export function assertEnterFromAboveMotion(samples) {
   expect(fromAbove, JSON.stringify(samples)).toBe(true);
 }
 
+export function assertFadeInPlaceMotion(samples) {
+  for (let i = 0; i < samples.length; i += 1) {
+    const s = samples[i];
+    if (!s) {
+      continue;
+    }
+    expect(Math.abs(transformTranslateY(s.transform)), JSON.stringify(s)).toBeLessThan(8);
+  }
+}
+
 /** Payload order oldest→newest: left-bottom before overflow is always the first entry. */
 export function leftBottomNumber(numbers) {
   return String(numbers[0]);
+}
+
+export function assertNoDiagonalWhileVisible(samples) {
+  let prevLeft = null;
+  let prevTop = null;
+  for (let i = 0; i < samples.length; i += 1) {
+    const s = samples[i];
+    if (!s || Number.parseFloat(s.opacity) <= 0.85) {
+      prevLeft = null;
+      prevTop = null;
+      continue;
+    }
+    if (prevLeft !== null && prevTop !== null) {
+      const movedX = Math.abs(s.left - prevLeft) > 2;
+      const movedY = Math.abs(s.top - prevTop) > 2;
+      expect(movedX && movedY, JSON.stringify(s)).toBe(false);
+    }
+    prevLeft = s.left;
+    prevTop = s.top;
+  }
 }
 
 export function assertNoHorizontalWhileVisible(samples) {

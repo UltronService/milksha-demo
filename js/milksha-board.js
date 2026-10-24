@@ -879,6 +879,9 @@
             scalePulseIds: motion.skip ? [] : viewOpts.newReadyIdsForPulse || [],
             skipReadyScale: motion.skip,
           });
+          if (readyTurn) {
+            updateZonePageIndicator(readyZone, readyPage, readyPages);
+          }
           if (!prepTurn) {
             updateZonePageIndicator(prepZone, prepPage, prepPages);
           }
@@ -941,21 +944,17 @@
           prevPage: prevPage,
           pageTurn: true,
         });
-        if (zoneKey === 'prep') {
-          lastRenderedPrepPage = page;
-        } else {
-          lastRenderedReadyPage = page;
-        }
         return Promise.resolve(animDone).then(function () {
-          const currentPage = zoneKey === 'prep' ? lastRenderedPrepPage : lastRenderedReadyPage;
-          if (currentPage !== page) {
-            return undefined;
+          if (zoneKey === 'prep') {
+            lastRenderedPrepPage = page;
+          } else {
+            lastRenderedReadyPage = page;
           }
           const pagesNow = pageCountForItems(
             zoneKey === 'prep' ? prepItems.length : readyItems.length,
             PAGE_SIZE,
           );
-          updateZonePageIndicator(zone, currentPage, pagesNow);
+          updateZonePageIndicator(zone, page, pagesNow);
           return undefined;
         });
       } else {
@@ -989,8 +988,10 @@
       readyTimer = setInterval(function () {
         const pages = pageCountForItems(readyItems.length, PAGE_SIZE);
         if (pages <= 1) {
+          readyPage = clampPage(readyPage, pages);
           return;
         }
+        readyPage = clampPage(readyPage, pages);
         readyPage = (readyPage + 1) % pages;
         readyPageStartedAt = Date.now();
         patchZonePage('ready', readyItems, readyPage, pages);
@@ -998,8 +999,10 @@
       prepTimer = setInterval(function () {
         const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
         if (pages <= 1) {
+          prepPage = clampPage(prepPage, pages);
           return;
         }
+        prepPage = clampPage(prepPage, pages);
         prepPage = (prepPage + 1) % pages;
         prepPageStartedAt = Date.now();
         patchZonePage('prep', prepItems, prepPage, pages);
@@ -1326,6 +1329,11 @@
       maybeJumpNoMotionZoneToPageOneOnNewItem('prep', prevPrepBefore, nextPrep, now);
       maybeJumpNoMotionZoneToPageOneOnNewItem('ready', prevReadyBefore, nextReady, now);
 
+      if (isBoardMotionOn() && zoneGainedNewItem(prevReadyBefore, nextReady)) {
+        readyPage = 0;
+        readyPageStartedAt = now;
+      }
+
       if (!silentApply && ringIds.length > 0) {
         readyPage = 0;
         readyPageStartedAt = now;
@@ -1422,6 +1430,16 @@
         return {
           ready: readyItems.slice(),
           preparing: prepItems.slice(),
+        };
+      },
+      getZonePageDebug: function () {
+        return {
+          motionOn: isBoardMotionOn(),
+          prepPage: prepPage,
+          readyPage: readyPage,
+          prepPages: pageCountForItems(prepItems.length, PAGE_SIZE),
+          readyPages: pageCountForItems(readyItems.length, PAGE_SIZE),
+          lastRenderedReadyPage: lastRenderedReadyPage,
         };
       },
       isAnnouncing: function () {

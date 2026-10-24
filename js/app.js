@@ -14,6 +14,28 @@
     return params.get(name) === '1' || params.get(name) === 'true';
   }
 
+  function mountWebBuildLabel() {
+    const doc = root.document;
+    if (!doc || !doc.body) {
+      return;
+    }
+    const label =
+      typeof root.MILKSHA_BOARD_WEB_BUILD_LABEL === 'string'
+        ? root.MILKSHA_BOARD_WEB_BUILD_LABEL.trim()
+        : '';
+    if (!label) {
+      return;
+    }
+    if (doc.querySelector('.milksha-board-web-build')) {
+      return;
+    }
+    const el = doc.createElement('div');
+    el.className = 'milksha-board-web-build';
+    el.textContent = label;
+    el.setAttribute('aria-hidden', 'true');
+    doc.body.appendChild(el);
+  }
+
   function showBootError(message) {
     const rootEl = root.document.getElementById('board-root');
     if (!rootEl) {
@@ -55,10 +77,14 @@
   QMS.showBootError = showBootError;
 
   if (root.document) {
-    if (root.document.readyState === 'loading') {
-      root.document.addEventListener('DOMContentLoaded', boot);
-    } else {
+    const onReady = function () {
+      mountWebBuildLabel();
       boot();
+    };
+    if (root.document.readyState === 'loading') {
+      root.document.addEventListener('DOMContentLoaded', onReady);
+    } else {
+      onReady();
     }
   }
 })(typeof window !== 'undefined' ? window : globalThis);

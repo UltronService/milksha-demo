@@ -1,4 +1,9 @@
 {
+  "hosting": {
+    "site": "milksha-demo-board-preview",
+    "public": "_site",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+  },
   "firestore": {
     "rules": "tests/firestore-rules/firestore.rules"
   },

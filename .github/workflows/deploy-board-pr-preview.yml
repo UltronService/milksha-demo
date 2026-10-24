@@ -1,0 +1,155 @@
+# PM board preview: /pr-preview/pr-122/ on GitHub Pages (main @ site root + trial branch under pr-preview).
+# Triggered by push to cursor/** or manual dispatch so GITHUB_REF is the trial branch (not refs/pull/*/merge).
+name: Deploy board PR preview (GitHub Pages)
+
+on:
+  push:
+    branches:
+      - 'cursor/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: pages-board-pr-preview-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  PREVIEW_PR_NUMBER: '122'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      preview_base: ${{ steps.urls.outputs.preview_base }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Show deploy ref (must be cursor/* branch, not pull merge ref)
+        run: |
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+
+      - name: Checkout main (production tree at site root)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-tree
+
+      - name: Prepare production site root
+        env:
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
+        run: |
+          set -euo pipefail
+          mkdir -p deploy-site
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.cursor' \
+            --exclude 'tests' \
+            --exclude 'tools' \
+            --exclude 'node_modules' \
+            main-tree/ deploy-site/
+          node main-tree/scripts/inject-firebase-config.mjs deploy-site/config/firebase.js
+          touch deploy-site/.nojekyll
+
+      - name: Checkout trial branch (preview content)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: pr-tree
+
+      - name: Add PR preview subtree
+        env:
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
+        run: |
+          set -euo pipefail
+          preview_dir="deploy-site/pr-preview/pr-${PR_NUMBER}"
+          mkdir -p "$preview_dir"
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.cursor' \
+            --exclude 'tests' \
+            --exclude 'tools' \
+            --exclude 'node_modules' \
+            pr-tree/ "$preview_dir/"
+          node main-tree/scripts/inject-firebase-config.mjs "$preview_dir/config/firebase.js"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: deploy-site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Preview URLs
+        id: urls
+        env:
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
+        run: |
+          base="https://ultronservice.github.io/milksha-demo/pr-preview/pr-${PR_NUMBER}/"
+          echo "preview_base=${base}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify build stamp in preview static file
+        env:
+          PREVIEW_BASE: ${{ steps.urls.outputs.preview_base }}
+        run: |
+          set -euo pipefail
+          sleep 15
+          ver="$(curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js")"
+          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261024p'"
+          echo "$ver" | grep -q "10/24 21:55"
+
+  comment:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment preview URLs on PR #122
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ env.PREVIEW_PR_NUMBER }}
+          PREVIEW_BASE: ${{ needs.deploy.outputs.preview_base }}
+        with:
+          script: |
+            const marker = '<!-- milksha-board-pr-preview -->';
+            const base = process.env.PREVIEW_BASE;
+            const board = `${base}?mode=cloud&store=zz-qa-store-a&motion=on&demo=1`;
+            const controller = `${base}controller/?mode=cloud&store=zz-qa-store-a`;
+            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 路徑預覽；正式站 [根目錄](https://ultronservice.github.io/milksha-demo/) 不變。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角版本號應為 \`10/24 21:55\`。`;
+            const issue_number = Number(process.env.PR_NUMBER);
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
