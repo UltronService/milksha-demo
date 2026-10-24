@@ -1,70 +1,45 @@
-# PR board preview under /pr-preview/pr-<N>/ (does not replace production root on purpose:
-# artifact is main @ root + PR files under pr-preview/). Uses same github.io origin as live Pages.
-name: Deploy board PR preview (GitHub Pages)
+# Board PR preview via Firebase Hosting preview channel (milksha-qms-dev).
+# Does not deploy to the live Hosting channel or GitHub Pages production.
+name: Deploy board PR preview (Firebase Hosting)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
   pull-requests: write
 
 concurrency:
-  group: pages-board-pr-preview-${{ github.event.pull_request.number }}
+  group: firebase-board-pr-preview-${{ github.event.pull_request.number || 'manual' }}
   cancel-in-progress: true
 
 jobs:
   deploy:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      preview_url: ${{ steps.channel.outputs.preview_url }}
+    env:
+      PREVIEW_SITE: milksha-demo-board-preview
+      PR_NUMBER: ${{ github.event.pull_request.number || '122' }}
     steps:
-      - name: Checkout main (production tree at site root)
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: main-tree
-
-      - name: Prepare production site root
-        env:
-          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
-          MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
-        run: |
-          set -euo pipefail
-          mkdir -p deploy-site
-          rsync -a \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '.cursor' \
-            --exclude 'tests' \
-            --exclude 'tools' \
-            --exclude 'node_modules' \
-            main-tree/ deploy-site/
-          node main-tree/scripts/inject-firebase-config.mjs deploy-site/config/firebase.js
-          touch deploy-site/.nojekyll
-
       - name: Checkout pull request head
         if: github.event.action != 'closed'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: pr-tree
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-      - name: Add PR preview subtree
+      - name: Prepare static site
         if: github.event.action != 'closed'
         env:
           MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
           MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
         run: |
           set -euo pipefail
-          preview_dir="deploy-site/pr-preview/pr-${{ github.event.pull_request.number }}"
-          mkdir -p "$preview_dir"
+          mkdir -p _site
           rsync -a \
             --exclude '.git' \
             --exclude '.github' \
@@ -72,45 +47,93 @@ jobs:
             --exclude 'tests' \
             --exclude 'tools' \
             --exclude 'node_modules' \
-            pr-tree/ "$preview_dir/"
-          node main-tree/scripts/inject-firebase-config.mjs "$preview_dir/config/firebase.js"
+            ./ _site/
+          node scripts/inject-firebase-config.mjs _site/config/firebase.js
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Ensure Firebase Hosting preview site exists
+        if: github.event.action != 'closed'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          MILKSHA_QMS_DEV_FIREBASE_SA: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_SA }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MILKSHA_QMS_DEV_FIREBASE_SA" ] && [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Missing MILKSHA_QMS_DEV_FIREBASE_SA or MILKSHA_QMS_DEV_FIREBASE_TOKEN"
+            exit 1
+          fi
+          if [ -n "$MILKSHA_QMS_DEV_FIREBASE_SA" ]; then
+            echo "$MILKSHA_QMS_DEV_FIREBASE_SA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          fi
+          npx firebase-tools hosting:sites:list --project milksha-qms-dev --json > sites.json
+          node -e "
+            const fs = require('fs');
+            const site = process.env.PREVIEW_SITE;
+            const data = JSON.parse(fs.readFileSync('sites.json','utf8'));
+            const list = data.result && data.result.sites ? data.result.sites : [];
+            if (!list.some((s) => s.name && s.name.endsWith('/' + site))) {
+              console.log('Creating hosting site', site);
+            } else {
+              console.log('Hosting site already exists:', site);
+            }
+          "
+          npx firebase-tools hosting:sites:create "$PREVIEW_SITE" --project milksha-qms-dev --non-interactive 2>/dev/null || true
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: deploy-site
+      - name: Deploy preview channel
+        if: github.event.action != 'closed'
+        id: channel
+        env:
+          FIREBASE_TOKEN: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          MILKSHA_QMS_DEV_FIREBASE_SA: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_SA }}
+        run: |
+          set -euo pipefail
+          if [ -n "$MILKSHA_QMS_DEV_FIREBASE_SA" ]; then
+            echo "$MILKSHA_QMS_DEV_FIREBASE_SA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          fi
+          channel="pr${PR_NUMBER}"
+          npx firebase-tools hosting:channel:deploy "$channel" \
+            --project milksha-qms-dev \
+            --only "hosting:${PREVIEW_SITE}" \
+            --expires 30d \
+            --non-interactive | tee channel-deploy.log
+          url=$(grep -Eo 'https://[^ ]+' channel-deploy.log | head -1)
+          if [ -z "$url" ]; then
+            echo "Could not parse preview URL from firebase deploy output"
+            exit 1
+          fi
+          echo "preview_url=${url%/}/" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Verify build stamp in preview
+        if: github.event.action != 'closed'
+        env:
+          PREVIEW_URL: ${{ steps.channel.outputs.preview_url }}
+        run: |
+          set -euo pipefail
+          curl -fsSL "${PREVIEW_URL}js/milksha-asset-version.js" | grep -q "MILKSHA_BOARD_WEB_BUILD_LABEL"
 
   comment:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository) && github.event.action != 'closed'
     needs: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Comment preview URLs on PR
         uses: actions/github-script@v7
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          IS_CLOSED: ${{ github.event.action == 'closed' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '122' }}
+          PREVIEW_URL: ${{ needs.deploy.outputs.preview_url || '' }}
         with:
           script: |
             const marker = '<!-- milksha-board-pr-preview -->';
-            const n = process.env.PR_NUMBER;
-            const base = `https://ultronservice.github.io/milksha-demo/pr-preview/pr-${n}/`;
+            const base = process.env.PREVIEW_URL || '';
             const board = `${base}?mode=cloud&store=zz-qa-store-a&motion=on&demo=1`;
             const controller = `${base}controller/?mode=cloud&store=zz-qa-store-a`;
-            const body = process.env.IS_CLOSED === 'true'
-              ? `${marker}\n## 看板試作預覽已移除\n\nPR 已關閉，預覽路徑不再更新。`
-              : `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 僅供試作；正式站仍是 [根目錄](https://ultronservice.github.io/milksha-demo/)。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角應顯示試作版本號（例如 \`10/24 11:50\`）。`;
+            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- Firebase Hosting **預覽頻道**（不動 live、不併主線）。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角應顯示試作版本號。`;
+            const issue_number = Number(process.env.PR_NUMBER);
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number,
             });
             const existing = comments.find((c) => c.body && c.body.includes(marker));
             if (existing) {
@@ -124,7 +147,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number,
                 body,
               });
             }
