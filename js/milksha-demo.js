@@ -408,7 +408,6 @@
         if (!num) {
           return;
         }
-        inpNumber.value = num;
       } else {
         const normalized = normalizeManualNumber(key, num);
         if (!normalized) {
