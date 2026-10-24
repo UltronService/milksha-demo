@@ -913,6 +913,12 @@
      * @param {Array<{ id?: string, number?: string } | null>} cells
      * @param {Record<string, Element>} chipById
      */
+    function settleInterruptedPageTurn(numbersLayer, slotEls, cells) {
+      numbersLayer.removeAttribute('data-page-turn-anim');
+      hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {});
+      snapOpacity(numbersLayer, 1);
+    }
+
     function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
       abortPageTurnLayerState(numbersLayer);
       removeOrphanLayerFloatChips(numbersLayer);
@@ -1249,6 +1255,25 @@
       }
 
       if (pageTurn) {
+        if (zoneKey === 'ready' && pulseIds.length > 0 && !skipReadyScale) {
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          snapOpacity(numbersLayer, 1);
+          numbersLayer.removeAttribute('data-page-turn-anim');
+          const readyJumpPulses = [];
+          for (let rpi = 0; rpi < pulseIds.length; rpi += 1) {
+            const readyPulseId = pulseIds[rpi];
+            if (!scalePulseSet[readyPulseId]) {
+              continue;
+            }
+            const readyPulseChip = numbersLayer.querySelector(
+              '.milksha-board-chip[data-item-id="' + readyPulseId + '"]',
+            );
+            if (readyPulseChip) {
+              readyJumpPulses.push(runReadyPulseAnim(readyPulseChip, numbersLayer, gen));
+            }
+          }
+          return Promise.all(readyJumpPulses);
+        }
         removeOrphanLayerFloatChips(numbersLayer);
         const domShowsPrevPage = domVisibleLayoutMatches(
           slotEls,
@@ -1266,7 +1291,7 @@
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
-              numbersLayer.removeAttribute('data-page-turn-anim');
+              settleInterruptedPageTurn(numbersLayer, slotEls, cells);
               return;
             }
             removeOrphanLayerFloatChips(numbersLayer);
@@ -1283,8 +1308,26 @@
             }
             snapOpacity(numbersLayer, 0);
             return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen).then(function () {
-              if (getGeneration() === gen) {
-                numbersLayer.removeAttribute('data-page-turn-anim');
+              if (getGeneration() !== gen) {
+                settleInterruptedPageTurn(numbersLayer, slotEls, cells);
+                return;
+              }
+              numbersLayer.removeAttribute('data-page-turn-anim');
+              if (zoneKey === 'ready' && !skipReadyScale && pulseIds.length > 0) {
+                const pulsePromises = [];
+                for (let pxi = 0; pxi < pulseIds.length; pxi += 1) {
+                  const pulseId = pulseIds[pxi];
+                  if (!scalePulseSet[pulseId]) {
+                    continue;
+                  }
+                  const pulseChip = numbersLayer.querySelector(
+                    '.milksha-board-chip[data-item-id="' + pulseId + '"]',
+                  );
+                  if (pulseChip) {
+                    pulsePromises.push(runReadyPulseAnim(pulseChip, numbersLayer, gen));
+                  }
+                }
+                return Promise.all(pulsePromises);
               }
             });
           }),
