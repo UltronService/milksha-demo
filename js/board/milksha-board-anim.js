@@ -485,7 +485,11 @@
     if (numbersLayer && typeof numbersLayer.querySelectorAll === 'function') {
       const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
       for (let fi = 0; fi < floats.length; fi += 1) {
-        const fr = floats[fi].getBoundingClientRect();
+        const floatChip = floats[fi];
+        if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+          continue;
+        }
+        const fr = floatChip.getBoundingClientRect();
         if (fr.width > 0.5 && fr.height > 0.5 && chipRectsOverlap(fr, slotRect)) {
           rects.push(fr);
         }
