@@ -398,69 +398,87 @@ test('motion=on: primed board uses animate path; anim module pulse still runs op
     document: harness.sandbox.document,
     window: harness.sandbox,
   });
-  runtime.applyPayload([], { silent: true });
-  runtime.applyPayload([], { silent: true });
-  runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '5101' }]);
-  assert.equal(runtime.getAnimSkipReason(), 'animate');
+  try {
+    runtime.applyPayload([], { silent: true });
+    runtime.applyPayload([], { silent: true });
+    runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '5101' }]);
+    assert.equal(runtime.getAnimSkipReason(), 'animate');
 
-  const animCode = fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8');
-  const animSandbox = { globalThis: {}, window: null };
-  animSandbox.globalThis = animSandbox;
-  animSandbox.window = animSandbox;
-  vm.runInNewContext(
-    fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'),
-    animSandbox,
-  );
-  vm.runInNewContext(animCode, animSandbox);
-  const Anim = animSandbox.QMS.MilkshaBoardAnim;
+    const animCode = fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim.js'), 'utf8');
+    const animSandbox = { globalThis: {}, window: null };
+    animSandbox.globalThis = animSandbox;
+    animSandbox.window = animSandbox;
+    vm.runInNewContext(
+      fs.readFileSync(path.join(ROOT, 'js', 'board', 'milksha-board-anim-config.js'), 'utf8'),
+      animSandbox,
+    );
+    vm.runInNewContext(animCode, animSandbox);
+    const Anim = animSandbox.QMS.MilkshaBoardAnim;
 
-  const el = {
-    style: { opacity: '', transform: '', transformOrigin: '' },
-    classList: { contains: () => true },
-    setAttribute: function () {},
-    getAttribute: function () {
-      return 'store:9001';
-    },
-    animate: function (_kf, _opt) {
-      const anim = {
-        _cancelled: false,
-        onfinish: null,
-        oncancel: null,
-        cancel: function () {
-          if (anim._cancelled) {
-            return;
-          }
-          anim._cancelled = true;
-          if (anim.oncancel) {
-            anim.oncancel();
-          }
-        },
-        finish: function () {
-          if (anim._cancelled) {
-            return;
-          }
-          if (anim.onfinish) {
-            anim.onfinish();
-          }
-        },
-      };
-      el._lastAnim = anim;
-      el.style.opacity = '0';
-      return anim;
-    },
-    getAnimations: function () {
-      if (!el._lastAnim || el._lastAnim._cancelled) {
+    const numEl = {
+      style: { transform: '', transformOrigin: '' },
+      animate: function () {
+        return { onfinish: null, oncancel: null, cancel: function () {}, finish: function () {} };
+      },
+      getAnimations: function () {
         return [];
-      }
-      return [el._lastAnim];
-    },
-  };
-  const done = Anim.animateReadyPulse(el, 1.3, 300, 3000, 300, 1, function () {
-    return 1;
-  });
-  assert.equal(el.style.opacity, '0');
-  el._lastAnim.cancel();
-  await done;
-  assert.equal(el.style.opacity, '1');
-  runtime.destroy();
+      },
+    };
+    const el = {
+      style: { opacity: '', transform: '', transformOrigin: '' },
+      classList: { contains: () => true },
+      setAttribute: function () {},
+      getAttribute: function () {
+        return 'ready::store:9001';
+      },
+      querySelector: function (sel) {
+        if (sel === '.milksha-num') {
+          return numEl;
+        }
+        return null;
+      },
+      animate: function (_kf, _opt) {
+        const anim = {
+          _cancelled: false,
+          onfinish: null,
+          oncancel: null,
+          cancel: function () {
+            if (anim._cancelled) {
+              return;
+            }
+            anim._cancelled = true;
+            if (anim.oncancel) {
+              anim.oncancel();
+            }
+          },
+          finish: function () {
+            if (anim._cancelled) {
+              return;
+            }
+            if (anim.onfinish) {
+              anim.onfinish();
+            }
+          },
+        };
+        el._lastAnim = anim;
+        el.style.opacity = '0';
+        return anim;
+      },
+      getAnimations: function () {
+        if (!el._lastAnim || el._lastAnim._cancelled) {
+          return [];
+        }
+        return [el._lastAnim];
+      },
+    };
+    const done = Anim.animateReadyPulse(el, 1.3, 300, 3000, 300, 1, function () {
+      return 1;
+    });
+    assert.equal(el.style.opacity, '0');
+    el._lastAnim.cancel();
+    await done;
+    assert.equal(el.style.opacity, '1');
+  } finally {
+    runtime.destroy();
+  }
 });
