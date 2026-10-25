@@ -138,8 +138,8 @@ jobs:
           set -euo pipefail
           sleep 15
           ver="$(curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js")"
-          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261025a'"
-          echo "$ver" | grep -q "10/25 06:45"
+          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261025b'"
+          echo "$ver" | grep -q "10/25 18:10"
 
   comment:
     needs: deploy

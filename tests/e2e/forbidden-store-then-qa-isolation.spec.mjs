@@ -46,7 +46,8 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
     await denied.close();
     const scrubStorage = await ctx.newPage();
-    await scrubStorage.goto('about:blank');
+    await installBundledCloudRouteShim(scrubStorage);
+    await scrubStorage.goto(`${BASE}/`);
     await scrubStorage.evaluate(() => {
       try {
         const remove = [];
@@ -64,32 +65,30 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     });
     await scrubStorage.close();
 
+    const deviceId = 'stb-01';
     const boardA = await ctx.newPage();
+    await installBundledCloudRouteShim(boardA);
+    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}&device=${deviceId}`);
+    await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
+    await waitForFakeCloudDevicesOnline([{ page: boardA, storeId: STORE_A, deviceId }], 120000);
+
     const boardB = await ctx.newPage();
+    await installBundledCloudRouteShim(boardB);
+    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}&device=${deviceId}`);
+    await boardB.bringToFront();
+    await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
+    await waitForFakeCloudDevicesOnline([{ page: boardB, storeId: STORE_B, deviceId }], 120000);
+
     const ctrlA = await ctx.newPage();
     const ctrlB = await ctx.newPage();
-    for (const p of [boardA, boardB, ctrlA, ctrlB]) {
+    for (const p of [ctrlA, ctrlB]) {
       await installBundledCloudRouteShim(p);
     }
-    const deviceId = 'stb-01';
-    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}&device=${deviceId}`);
-    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}&device=${deviceId}`);
-    await boardA.bringToFront();
-    await boardB.bringToFront();
     await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}&device=${deviceId}`);
     await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}&device=${deviceId}`);
-    await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
-    await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await waitForFakeCloudDevicesOnline(
-      [
-        { page: boardA, storeId: STORE_A, deviceId },
-        { page: boardB, storeId: STORE_B, deviceId },
-      ],
-      180000,
-    );
     await waitForControllerBoardOnline(ctrlA);
     await waitForControllerBoardOnline(ctrlB);
     await boardA.bringToFront();

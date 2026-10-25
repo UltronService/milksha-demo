@@ -462,6 +462,9 @@
     }
 
     function applyNumberContent(numberContent, seq, opts) {
+      if (isDemoMode()) {
+        return { isOK: true, skippedDemo: true };
+      }
       const list = Array.isArray(numberContent) ? numberContent : [];
       const nextReady = BoardSeq.readyIdSetFromContent(
         list,
@@ -522,6 +525,9 @@
     }
 
     function tryApplyTodayBoard(boardDoc, opts) {
+      if (isDemoMode()) {
+        return { ignored: true, reason: 'demo_mode' };
+      }
       if (!boardDoc || !boardDoc.data) {
         return null;
       }
@@ -1505,7 +1511,11 @@
 
       if (!skipBootReceiverCache) {
         tryApplyBootCache();
-      } else if (milkshaRuntime && typeof milkshaRuntime.applyPayload === 'function') {
+      } else if (
+        milkshaRuntime &&
+        typeof milkshaRuntime.applyPayload === 'function' &&
+        !isDemoMode()
+      ) {
         milkshaRuntime.applyPayload([], { silent: true });
       }
       syncGuestClockAfterBoot();

@@ -742,6 +742,95 @@
       return typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function';
     }
 
+    function isLocalDevHost() {
+      try {
+        const host = win.location && win.location.hostname;
+        return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function autoPageIntervalMs() {
+      if (!isLocalDevHost()) {
+        return PAGE_INTERVAL_MS;
+      }
+      try {
+        const params = new URLSearchParams(win.location.search);
+        if (params.get('demo') !== '1') {
+          return PAGE_INTERVAL_MS;
+        }
+        const n = Number(params.get('testPageIntervalMs'));
+        if (Number.isFinite(n) && n >= 20) {
+          return n;
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      return PAGE_INTERVAL_MS;
+    }
+
+    function restoreVisibleNumbersLayers() {
+      if (!boardEl) {
+        return;
+      }
+      const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
+      for (let i = 0; i < layers.length; i += 1) {
+        const layer = layers[i];
+        layer.removeAttribute('data-page-turn-anim');
+        layer.style.opacity = '1';
+        const chips = layer.querySelectorAll('.milksha-board-chip');
+        for (let j = 0; j < chips.length; j += 1) {
+          chips[j].style.opacity = '1';
+        }
+      }
+    }
+
+    function clampZonePagesToItemCounts() {
+      const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
+      const prepPages = pageCountForItems(prepItems.length, PAGE_SIZE);
+      readyPage = clampPage(readyPage, readyPages);
+      prepPage = clampPage(prepPage, prepPages);
+    }
+
+    function beginBoardMutationSync() {
+      const animator = ensureBoardAnimator();
+      if (animator) {
+        animator.cancelAll(boardEl);
+      }
+      restoreVisibleNumbersLayers();
+      return animator ? animator.getGeneration() : 0;
+    }
+
+    function ensureBoardPresentationConsistent() {
+      clampZonePagesToItemCounts();
+      const snap = { prep: prepItems.length, ready: readyItems.length };
+      if (snap.prep + snap.ready === 0) {
+        return;
+      }
+      const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
+      const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
+      let visible = 0;
+      boardEl.querySelectorAll('.milksha-num').forEach(function (el) {
+        const st = win.getComputedStyle(el);
+        if (parseFloat(st.opacity || '1') > 0.12) {
+          visible += 1;
+        }
+      });
+      if (visible === 0 && zonesDomReady()) {
+        const animator = ensureBoardAnimator();
+        if (animator) {
+          animator.cancelAll(boardEl);
+        }
+        restoreVisibleNumbersLayers();
+        renderBoard();
+        lastRenderedPrep = prepItems.slice();
+        lastRenderedReady = readyItems.slice();
+        lastRenderedPrepPage = prepPage;
+        lastRenderedReadyPage = readyPage;
+      }
+    }
+
     function ensureBoardAnimator() {
       if (boardAnimator || !QMS.MilkshaBoardAnim || !QMS.MilkshaBoardAnim.createBoardAnimator) {
         return boardAnimator;
@@ -847,8 +936,7 @@
         }
         renderBoard();
       } else {
-        animator.cancelAll(boardEl);
-        const syncGen = animator.getGeneration();
+        const syncGen = beginBoardMutationSync();
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
@@ -928,6 +1016,14 @@
      */
     function patchZonePage(zoneClass, items, page, totalPages) {
       const zoneKey = zoneClass.indexOf('prep') >= 0 ? 'prep' : 'ready';
+      clampZonePagesToItemCounts();
+      if (zoneKey === 'prep') {
+        page = prepPage;
+        totalPages = pageCountForItems(prepItems.length, PAGE_SIZE);
+      } else {
+        page = readyPage;
+        totalPages = pageCountForItems(readyItems.length, PAGE_SIZE);
+      }
       const zoneSel =
         zoneClass.indexOf('prep') >= 0 ? '.milksha-zone.milksha-prep' : '.milksha-zone.milksha-ready';
       const zone = boardEl.querySelector(zoneSel);
@@ -957,10 +1053,12 @@
       const animator = ensureBoardAnimator();
       const pageMotionOk = isBoardMotionOn() && !prefersReducedMotion() && canUseWebAnimations();
       if (pageMotionOk && animator) {
+        const syncGen = beginBoardMutationSync();
         const animDone = animator.syncZone(zone, zoneKey, items, page, {
           prevItems: prevItems,
           prevPage: prevPage,
           pageTurn: true,
+          useGeneration: syncGen,
         });
         return Promise.resolve(animDone).then(function () {
           if (zoneKey === 'prep') {
@@ -1013,7 +1111,7 @@
         readyPage = (readyPage + 1) % pages;
         readyPageStartedAt = Date.now();
         patchZonePage('ready', readyItems, readyPage, pages);
-      }, PAGE_INTERVAL_MS);
+      }, autoPageIntervalMs());
       prepTimer = setInterval(function () {
         const pages = pageCountForItems(prepItems.length, PAGE_SIZE);
         if (pages <= 1) {
@@ -1024,7 +1122,7 @@
         prepPage = (prepPage + 1) % pages;
         prepPageStartedAt = Date.now();
         patchZonePage('prep', prepItems, prepPage, pages);
-      }, PAGE_INTERVAL_MS);
+      }, autoPageIntervalMs());
     }
 
     function renderZoneHtmlArt(cls, x, y, w, h, titleZh, titleEn, page, totalPages, items, pageStartedAt) {
@@ -1359,12 +1457,14 @@
 
       prevReadyIdSet = nextReadyIdSet;
       const clearAll = !wasBoardEmpty && isBoardFullyEmpty(readyItems, prepItems);
+      clampZonePagesToItemCounts();
       commitBoardView({
         silentApply: silentApply,
         clearAll: clearAll,
         forceSnapshotSkip: Boolean(opts && opts.forceSnapshotSkip),
         newReadyIdsForPulse: newReadyIds,
       });
+      ensureBoardPresentationConsistent();
       isFirstPayload = false;
     }
 
@@ -1480,6 +1580,42 @@
       },
       getPerfEvents: function () {
         return (win.__milkshaBoardPerfEvents || []).slice();
+      },
+      getBoardPresentationHealth: function () {
+        clampZonePagesToItemCounts();
+        let visibleChips = 0;
+        boardEl.querySelectorAll('.milksha-num').forEach(function (el) {
+          const st = win.getComputedStyle(el);
+          if (parseFloat(st.opacity || '1') > 0.12 && st.visibility !== 'hidden') {
+            visibleChips += 1;
+          }
+        });
+        function zoneIndicator(zoneSel) {
+          const zone = boardEl.querySelector(zoneSel);
+          if (!zone) {
+            return '';
+          }
+          const layer = zone.querySelector('.milksha-zone-numbers');
+          if (!layer) {
+            return '';
+          }
+          for (let i = 0; i < layer.children.length; i += 1) {
+            const t = (layer.children[i].textContent || '').trim();
+            if (/^\d+\s*\/\s*\d+$/.test(t)) {
+              return t;
+            }
+          }
+          return '';
+        }
+        return {
+          modelPrep: prepItems.length,
+          modelReady: readyItems.length,
+          visibleChips: visibleChips,
+          prepPage: prepPage,
+          readyPage: readyPage,
+          prepIndicator: zoneIndicator('.milksha-zone.milksha-prep'),
+          readyIndicator: zoneIndicator('.milksha-zone.milksha-ready'),
+        };
       },
       advanceZonePageForTest: function (zoneKey) {
         if (zoneKey === 'prep') {
