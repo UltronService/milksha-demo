@@ -848,6 +848,7 @@
         renderBoard();
       } else {
         animator.cancelAll(boardEl);
+        const syncGen = animator.getGeneration();
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
@@ -855,11 +856,13 @@
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
+            useGeneration: syncGen,
           });
           animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
+            useGeneration: syncGen,
           });
         } else {
           const prepTurn = prevPrepPage !== prepPage;
@@ -868,6 +871,7 @@
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             pageTurn: prepTurn,
+            useGeneration: syncGen,
           });
           const readyDone = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
@@ -875,6 +879,7 @@
             pageTurn: readyTurn,
             scalePulseIds: motion.skip ? [] : viewOpts.newReadyIdsForPulse || [],
             skipReadyScale: motion.skip,
+            useGeneration: syncGen,
           });
           if (readyTurn) {
             updateZonePageIndicator(readyZone, readyPage, readyPages);

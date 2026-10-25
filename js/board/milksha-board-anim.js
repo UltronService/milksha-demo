@@ -993,13 +993,17 @@
      *   skipReadyScale?: boolean,
      *   prevItems: Array<{ id: string, number: string }>,
      *   prevPage: number,
+     *   useGeneration?: number,
      * }} opts
      */
     function syncZone(zoneEl, zoneKey, items, page, opts) {
       const animCfg = getAnimConfig();
       const opacityInMs = animCfg.opacityInMs;
       const pageDurationMs = animCfg.pageDurationMs;
-      const gen = bumpGeneration();
+      const gen =
+        typeof opts.useGeneration === 'number' && Number.isFinite(opts.useGeneration)
+          ? opts.useGeneration
+          : bumpGeneration();
       const numbersLayer = zoneEl.querySelector('.milksha-zone-numbers');
       const scalePulseSet = {};
       const pulseIds = opts.scalePulseIds || [];
