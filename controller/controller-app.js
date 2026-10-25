@@ -687,6 +687,10 @@
     }
     const nextStr = String(next);
     document.getElementById('fld-no').value = nextStr;
+    const quickEl = document.getElementById('fld-quick-no');
+    if (quickEl) {
+      quickEl.value = nextStr;
+    }
   }
 
   function readQuickSendStatus() {

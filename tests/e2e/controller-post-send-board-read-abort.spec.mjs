@@ -185,8 +185,8 @@ test.describe('controller post-send today_board read abort (fake-cloud)', () => 
     await ctrl.waitForSelector('#online-state[data-connected="1"]', { timeout: 25000 });
 
     await clickControllerDevButtonByTestId(ctrl, 'btn-send-numbers');
-    await expect(ctrl.locator('[data-testid="command-error-alert"]')).toBeVisible({ timeout: 12000 });
-    await expect(ctrl.locator('[data-testid="command-error-message"]')).toContainText('雲端暫時出錯');
+    await expect(ctrl.locator('[data-testid="quick-send-error"]')).toBeVisible({ timeout: 12000 });
+    await expect(ctrl.locator('[data-testid="quick-send-error"]')).toContainText('雲端暫時出錯');
     await expect(ctrl.locator('#list-ready li')).toHaveCount(0, { timeout: 8000 });
 
     await ctx.close();

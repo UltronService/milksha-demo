@@ -165,6 +165,9 @@
       lastAuthSyncErrorCode = null;
       return true;
     }
+    if (session && session.getIdToken && session.getIdToken()) {
+      return false;
+    }
     if (!session || !session.devLogin) {
       return false;
     }

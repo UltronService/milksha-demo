@@ -20,7 +20,7 @@ test('local quick send: store 1234 and uber 1234 are two ready cells', async ({ 
   await controller.fill('[data-testid="fld-quick-no"]', '1234');
   await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
   await controller.selectOption('[data-testid="fld-quick-source"]', 'uber');
-  await controller.fill('[data-testid="fld-quick-no"]', '1234');
+  await controller.fill('[data-testid="fld-quick-no"]', '12340');
   await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
 
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(2, { timeout: 8000 });
