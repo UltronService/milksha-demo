@@ -456,6 +456,52 @@
   }
 
   /**
+   * @param {{ left: number, top: number, right: number, bottom: number }} a
+   * @param {{ left: number, top: number, right: number, bottom: number }} b
+   * @returns {boolean}
+   */
+  function chipRectsOverlap(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  }
+
+  /**
+   * @param {Element} slotEl
+   * @param {Element} numbersLayer
+   * @returns {boolean}
+   */
+  function slotHasOverlappingChipRects(slotEl, numbersLayer) {
+    if (!slotEl || !slotEl.getBoundingClientRect) {
+      return false;
+    }
+    const slotRect = slotEl.getBoundingClientRect();
+    const rects = [];
+    const chips = slotEl.querySelectorAll('.milksha-board-chip');
+    for (let ci = 0; ci < chips.length; ci += 1) {
+      const r = chips[ci].getBoundingClientRect();
+      if (r.width > 0.5 && r.height > 0.5) {
+        rects.push(r);
+      }
+    }
+    if (numbersLayer && typeof numbersLayer.querySelectorAll === 'function') {
+      const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+      for (let fi = 0; fi < floats.length; fi += 1) {
+        const fr = floats[fi].getBoundingClientRect();
+        if (fr.width > 0.5 && fr.height > 0.5 && chipRectsOverlap(fr, slotRect)) {
+          rects.push(fr);
+        }
+      }
+    }
+    for (let i = 0; i < rects.length; i += 1) {
+      for (let j = i + 1; j < rects.length; j += 1) {
+        if (chipRectsOverlap(rects[i], rects[j])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * @param {Array<{ id: string }>} items
    * @param {number} page
    * @param {number} pageSize
@@ -1045,7 +1091,7 @@
         const inSlot = slotEls[overlapIdx].querySelectorAll(
           '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
         );
-        if (inSlot.length > 1) {
+        if (inSlot.length > 1 || slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer)) {
           abortColumnMoveLayerState(numbersLayer);
           abortPageTurnLayerState(numbersLayer);
           removeOrphanLayerFloatChips(numbersLayer);
@@ -1586,6 +1632,9 @@
         diff.moved.forEach(function (mv) {
           const chip = chipById[mv.id];
           if (!chip || pendingRemove.has(chip)) {
+            return;
+          }
+          if (columnMoveSkipFlipIds[mv.id] || scalePulseSet[mv.id]) {
             return;
           }
           if (columnMoveEnterFromAboveIds[mv.id]) {
