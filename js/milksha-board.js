@@ -806,6 +806,12 @@
       clampZonePagesToItemCounts();
       const snap = { prep: prepItems.length, ready: readyItems.length };
       if (snap.prep + snap.ready === 0) {
+        const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
+        const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
+        const prepPages = pageCountForItems(0, PAGE_SIZE);
+        const readyPages = pageCountForItems(0, PAGE_SIZE);
+        updateZonePageIndicator(prepZone, 0, prepPages);
+        updateZonePageIndicator(readyZone, 0, readyPages);
         return;
       }
       const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
@@ -940,17 +946,23 @@
         const prepZone = boardEl.querySelector('.milksha-zone.milksha-prep');
         const readyZone = boardEl.querySelector('.milksha-zone.milksha-ready');
         if (viewOpts.clearAll) {
-          animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
+          const prepClearDone = animator.syncZone(prepZone, 'prep', prepItems, prepPage, {
             prevItems: prevPrep,
             prevPage: prevPrepPage,
             clearAll: true,
             useGeneration: syncGen,
           });
-          animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+          const readyClearDone = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
             prevItems: prevReady,
             prevPage: prevReadyPage,
             clearAll: true,
             useGeneration: syncGen,
+          });
+          updateZonePageIndicator(prepZone, prepPage, prepPages);
+          updateZonePageIndicator(readyZone, readyPage, readyPages);
+          Promise.all([prepClearDone, readyClearDone]).then(function () {
+            updateZonePageIndicator(prepZone, prepPage, prepPages);
+            updateZonePageIndicator(readyZone, readyPage, readyPages);
           });
         } else {
           const prepTurn = prevPrepPage !== prepPage;
@@ -1008,6 +1020,15 @@
       } else {
         lastRenderedPrepPage = prepPage;
         lastRenderedReadyPage = readyPage;
+      }
+
+      const prepZoneFinal = boardEl.querySelector('.milksha-zone.milksha-prep');
+      const readyZoneFinal = boardEl.querySelector('.milksha-zone.milksha-ready');
+      if (prepZoneFinal) {
+        updateZonePageIndicator(prepZoneFinal, prepPage, prepPages);
+      }
+      if (readyZoneFinal) {
+        updateZonePageIndicator(readyZoneFinal, readyPage, readyPages);
       }
     }
 
@@ -1594,6 +1615,10 @@
           const zone = boardEl.querySelector(zoneSel);
           if (!zone) {
             return '';
+          }
+          const ind = zone.querySelector('.milksha-pg-indicator');
+          if (ind) {
+            return (ind.textContent || '').trim();
           }
           const layer = zone.querySelector('.milksha-zone-numbers');
           if (!layer) {

@@ -890,6 +890,9 @@
         timeoutId = deps.window.setTimeout(function () {
           if (getGeneration() !== gen) {
             pendingRemove.delete(chip);
+            if (chip.parentNode) {
+              chip.parentNode.removeChild(chip);
+            }
             return;
           }
           if (chip.parentNode) {
@@ -905,6 +908,9 @@
           }
           if (getGeneration() !== gen) {
             pendingRemove.delete(chip);
+            if (chip.parentNode) {
+              chip.parentNode.removeChild(chip);
+            }
             return;
           }
           if (chip.parentNode) {
@@ -1033,6 +1039,20 @@
 
       if (slotEls.length !== deps.pageSize) {
         return Promise.resolve();
+      }
+
+      for (let overlapIdx = 0; overlapIdx < slotEls.length; overlapIdx += 1) {
+        const inSlot = slotEls[overlapIdx].querySelectorAll(
+          '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
+        );
+        if (inSlot.length > 1) {
+          abortColumnMoveLayerState(numbersLayer);
+          abortPageTurnLayerState(numbersLayer);
+          removeOrphanLayerFloatChips(numbersLayer);
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {});
+          snapOpacity(numbersLayer, 1);
+          return Promise.resolve();
+        }
       }
 
       const interruptedPageTurn =
