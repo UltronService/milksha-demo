@@ -150,6 +150,14 @@ test.describe('PR #123 QA agent method (demo panel)', () => {
         await page.locator('#ms-demo-add').dispatchEvent('click');
       }
       if (i % 3 === 0) {
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(resolve);
+              });
+            }),
+        );
         const snap = await page.evaluate(qaMixed40Snap);
         if (snap.bad.length || snap.dupPrep || snap.dupReady) {
           issues.push({ i, snap });

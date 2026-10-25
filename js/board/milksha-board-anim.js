@@ -591,9 +591,6 @@
         settled.add(text);
       }
     }
-    if (settled.size === 0) {
-      return;
-    }
     const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
     for (let fi = 0; fi < floats.length; fi += 1) {
       const floatChip = floats[fi];
@@ -602,7 +599,10 @@
       }
       const numEl = floatChip.querySelector('.milksha-num');
       const text = numEl ? String(numEl.textContent || '').trim() : '';
-      if (!text || !settled.has(text)) {
+      if (!text) {
+        continue;
+      }
+      if (!settled.has(text)) {
         continue;
       }
       cancelElementAnimations(floatChip);
@@ -1133,7 +1133,23 @@
       }
       removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
       pendingRemove.add(chip);
+      const existingFloats = numbersLayer
+        ? numbersLayer.querySelectorAll('.milksha-board-chip--layer-float').length
+        : 0;
+      if (existingFloats > 0) {
+        cancelElementAnimations(chip);
+        clearMotionStyles(chip);
+        if (chip.parentNode) {
+          chip.parentNode.removeChild(chip);
+        }
+        pendingRemove.delete(chip);
+        removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+        removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+        return;
+      }
       detachChipFromSlotForFade(chip, numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
       const fromOpacity = Number.parseFloat(chip.style.opacity);
       const from = Number.isFinite(fromOpacity) ? fromOpacity : 1;
       let timeoutId = null;
@@ -1837,7 +1853,11 @@
         }
       }
 
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+
       const afterLayout = function () {
+        removeFloatChipsWithoutVisibleNumbers(numbersLayer);
         removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
         if (columnMovePlan) {
           removeOrphanLayerFloatChips(numbersLayer);
