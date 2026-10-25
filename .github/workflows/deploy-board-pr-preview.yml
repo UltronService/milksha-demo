@@ -20,8 +20,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pages-board-pr-preview-${{ github.ref_name }}
-  cancel-in-progress: true
+  group: github-pages-milksha-demo
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -101,6 +101,15 @@ jobs:
             --exclude 'node_modules' \
             pr-tree/ "$preview_dir/"
           node main-tree/scripts/inject-firebase-config.mjs "$preview_dir/config/firebase.js"
+
+      - name: Preserve other PR preview folders from live Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.prnum.outputs.number }}
+        run: |
+          set -euo pipefail
+          chmod +x main-tree/scripts/preserve-pages-pr-preview.sh
+          main-tree/scripts/preserve-pages-pr-preview.sh deploy-site "$PR_NUMBER"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
