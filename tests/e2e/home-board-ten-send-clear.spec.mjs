@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { clickControllerDevButton, clickControllerDevButtonByTestId, freshContext, urlsLocalHomePoc, waitForReceiverOnline } from './harness.mjs';
+import {
+  clickControllerDevButton,
+  clickControllerDevButtonByTestId,
+  expandControllerZone,
+  freshContext,
+  urlsLocalHomePoc,
+  waitForReceiverOnline,
+} from './harness.mjs';
 
 function todayBusinessDate() {
   const d = new Date();
@@ -81,7 +88,7 @@ async function assertTenSendsAndClear(board, controller) {
     await clickControllerDevButtonByTestId(controller, 'btn-send-numbers');
     await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(i + 1, { timeout: 8000 });
   }
-  await controller.locator('[data-testid="zone-toggle-special"]').click();
+  await expandControllerZone(controller, 'sec-special');
   await clickControllerDevButtonByTestId(controller, 'btn-clear-now');
   await expect(controller.locator('[data-testid="user-banner"]')).toContainText('看板已清空', { timeout: 8000 });
   await expect(board.locator('.milksha-ready .milksha-num')).toHaveCount(0, { timeout: 8000 });

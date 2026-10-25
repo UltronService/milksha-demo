@@ -687,10 +687,6 @@
     }
     const nextStr = String(next);
     document.getElementById('fld-no').value = nextStr;
-    const quickEl = document.getElementById('fld-quick-no');
-    if (quickEl) {
-      quickEl.value = nextStr;
-    }
   }
 
   function readQuickSendStatus() {
@@ -2188,6 +2184,9 @@
     }
     const sourceKey = readQuickSendSourceKey();
     const rawNo = readQuickSendRawNumber();
+    const fldNoEl = document.getElementById('fld-no');
+    const fldNoBefore = fldNoEl ? String(fldNoEl.value || '').trim() : '';
+    const quickSyncedWithFldNo = rawNo.trim() === fldNoBefore;
     let no = rawNo;
     if (SendNumberModule && SendNumberModule.validateQuickSendNumber) {
       const validated = SendNumberModule.validateQuickSendNumber(sourceKey, rawNo || allocateOrderNumber());
@@ -2229,6 +2228,12 @@
         showQuickSendSuccess(ticket);
         if (sourceKey === 'store') {
           bumpNumberFieldAfterSend(no);
+          if (quickSyncedWithFldNo && fldNoEl) {
+            const quickEl = document.getElementById('fld-quick-no');
+            if (quickEl) {
+              quickEl.value = fldNoEl.value;
+            }
+          }
         }
       })
       .catch(function (e) {
