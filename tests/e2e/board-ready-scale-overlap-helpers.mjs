@@ -4,7 +4,7 @@ import { primeBoardForAnimation } from './board-animation-helpers.mjs';
 export const PULSE_NUMBERS = ['9999', '9998', '9997', '9996', '9995', '9994', '9993', '9992', '9991', '9990'];
 
 export function itemIdForNumber(num) {
-  return `store:${num}`;
+  return `ready::store:${num}`;
 }
 
 export function numberForCellIndex(cellIndex) {
@@ -28,7 +28,8 @@ export async function waitForPulseHold(page, itemId, expectedScale = 1.3) {
       if (!el) {
         return false;
       }
-      const tr = getComputedStyle(el).transform;
+      const scaleEl = el.querySelector('.milksha-num') || el;
+      const tr = getComputedStyle(scaleEl).transform;
       const m = tr.match(/matrix\(([^)]+)\)/);
       const s = m ? Number.parseFloat(m[1].split(',')[0]) : 1;
       return s >= min && s <= max;
@@ -69,7 +70,8 @@ export async function measurePulseOverlap(page, pulseItemId) {
     if (!pulse || !zone) {
       return { ok: false, reason: 'missing pulse or zone' };
     }
-    const tr = getComputedStyle(pulse).transform;
+    const scaleEl = pulse.querySelector('.milksha-num') || pulse;
+    const tr = getComputedStyle(scaleEl).transform;
     const m = tr.match(/matrix\(([^)]+)\)/);
     const scale = m ? Number.parseFloat(m[1].split(',')[0]) : 1;
     const r = pulse.getBoundingClientRect();

@@ -39,7 +39,7 @@ test('two-phase: new number stays hidden until after move phase', async ({ page 
   await page.waitForFunction(
     (num) => {
       const chip = document.querySelector(
-        '.milksha-prep .milksha-board-chip[data-item-id="store:' + num + '"]',
+        '.milksha-prep .milksha-board-chip[data-item-id="prep::store:' + num + '"]',
       );
       return chip && Number.parseFloat(getComputedStyle(chip).opacity) > 0.9;
     },
@@ -74,7 +74,7 @@ test('phase gap 800ms delays enter vs gap 0', async ({ page }) => {
       return new Promise((resolve) => {
         function tick() {
           const chip = document.querySelector(
-            '.milksha-prep .milksha-board-chip[data-item-id="store:' + newestNum + '"]',
+            '.milksha-prep .milksha-board-chip[data-item-id="prep::store:' + newestNum + '"]',
           );
           if (chip && Number.parseFloat(getComputedStyle(chip).opacity) > 0.5) {
             resolve(performance.now() - t0);

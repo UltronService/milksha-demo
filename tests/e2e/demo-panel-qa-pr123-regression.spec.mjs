@@ -8,14 +8,18 @@ import {
   startSite,
 } from './harness.mjs';
 import { blockNonLocalNetwork } from './helpers/block-non-local-network.mjs';
+import {
+  QA_SAMPLE_INTERVAL_MS,
+  buildDiagonalMotionTracker,
+  qaSampleMotionAndCells,
+  qaMixed40Snap,
+} from './demo-panel-qa-agent-method-helpers.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
-const CENTER_TOLERANCE_PX = 3;
-const SAMPLE_INTERVAL_MS = 24;
 
 const VIEWPORTS = [
-  { width: 1920, height: 1080, tag: '1920x1080' },
-  { width: 3840, height: 2160, tag: '3840x2160' },
+  { width: 1920, height: 1080, tag: '1080p' },
+  { width: 3840, height: 2160, tag: '4k' },
 ];
 
 async function openDemoBoard(page) {
@@ -28,7 +32,14 @@ async function openDemoBoard(page) {
   await page.locator('.milksha-demo-handle').click();
 }
 
-test.describe('PR #123 QA regressions (demo panel)', () => {
+async function primeSilent(page) {
+  await page.evaluate(() => {
+    window.QMS.runtime.applyPayload([], { silent: true });
+    window.QMS.runtime.applyPayload([], { silent: true });
+  });
+}
+
+test.describe('PR #123 QA agent method (demo panel)', () => {
   test.beforeAll(async () => {
     await restartCloud();
     await startSite();
@@ -39,219 +50,114 @@ test.describe('PR #123 QA regressions (demo panel)', () => {
   });
 
   for (const vp of VIEWPORTS) {
-    test(`ready pulse: chip center stays on cell center @ ${vp.tag}`, async ({ browser }) => {
-      test.setTimeout(120000);
+    test(`pulse 8102 prep→ready: no diagonal bbox move @ ${vp.tag}`, async ({ browser }) => {
+      test.setTimeout(180000);
       const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
       const page = await ctx.newPage();
-      await openDemoBoard(page);
+      await blockNonLocalNetwork(page, { sitePort: PORT_SITE, cloudPort: PORT_CLOUD });
+      await installBundledCloudRouteShim(page);
+      await page.goto(
+        `${BASE}/?mode=cloud&store=zz-qa-store-a&motion=on&demo=1&testPageIntervalMs=60000&device=stb-01`,
+      );
+      await page.waitForFunction(() => window.QMS?.runtime?.applyPayload, undefined, { timeout: 45000 });
+      await primeSilent(page);
 
-      await page.evaluate(async () => {
-        window.QMS.runtime.applyPayload([], { silent: true });
-        window.QMS.runtime.applyPayload([], { silent: true });
-        window.QMS.runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '8102' }], {
-          silent: true,
-        });
-        window.QMS.runtime.applyPayload([{ source_type: 'From_Store_OK', number: '8102' }]);
+      const motionTracker = buildDiagonalMotionTracker();
+      await page.evaluate(() => {
+        window.QMS.runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '8102' }]);
+      });
+      await page.waitForTimeout(200);
+      await page.evaluate(() => {
+        window.QMS.runtime.applyPayload([
+          { source_type: 'From_Store_Preparing', number: '8102' },
+          { source_type: 'From_Store_OK', number: '8102' },
+        ]);
       });
 
       const pulseMs = await page.evaluate(() => {
         const cfg = window.QMS.MilkshaBoardAnimConfig.getConfig();
-        return cfg.readyScaleInMs + cfg.readyScaleHoldMs + cfg.readyScaleOutMs;
+        return cfg.readyScaleInMs + cfg.readyScaleHoldMs + cfg.readyScaleOutMs + 200;
       });
 
-      const started = Date.now();
-      let maxGap = 0;
-      let worst = null;
-      while (Date.now() - started < pulseMs + 80) {
-        const sample = await page.evaluate((tol) => {
-          const chip = document.querySelector(
-            '.milksha-ready .milksha-board-chip[data-item-id="store:8102"]',
-          );
-          if (!chip) {
-            return { ok: false, reason: 'no-chip' };
-          }
-          const cell = chip.closest('.milksha-num-cell');
-          if (!cell) {
-            return { ok: false, reason: 'no-cell' };
-          }
-          const cr = chip.getBoundingClientRect();
-          const cellR = cell.getBoundingClientRect();
-          const ccx = cr.left + cr.width / 2;
-          const ccy = cr.top + cr.height / 2;
-          const cellCx = cellR.left + cellR.width / 2;
-          const cellCy = cellR.top + cellR.height / 2;
-          const dx = ccx - cellCx;
-          const dy = ccy - cellCy;
-          const dist = Math.hypot(dx, dy);
-          const tr = getComputedStyle(chip).transform;
-          const m = tr.match(/matrix\(([^)]+)\)/);
-          const scale = m ? Number.parseFloat(m[1].split(',')[0]) : 1;
-          return {
-            ok: true,
-            dx,
-            dy,
-            dist,
-            scale: Math.round(scale * 1000) / 1000,
-            number: chip.querySelector('.milksha-num')?.textContent?.trim() || '',
-          };
-        }, CENTER_TOLERANCE_PX);
-        if (sample.ok && sample.dist > maxGap) {
-          maxGap = sample.dist;
-          worst = sample;
-        }
-        if (sample.ok && sample.dist > CENTER_TOLERANCE_PX) {
-          throw new Error(
-            `${vp.tag} pulse center drift: dist=${sample.dist.toFixed(2)} dx=${sample.dx.toFixed(2)} dy=${sample.dy.toFixed(2)} scale=${sample.scale}`,
-          );
-        }
-        await page.waitForTimeout(SAMPLE_INTERVAL_MS);
+      const violations = [];
+      const end = Date.now() + pulseMs;
+      while (Date.now() < end) {
+        violations.push(...(await qaSampleMotionAndCells(page, motionTracker)));
+        await page.waitForTimeout(QA_SAMPLE_INTERVAL_MS);
       }
-      expect(worst?.number || '8102').toBe('8102');
-      expect(maxGap).toBeLessThanOrEqual(CENTER_TOLERANCE_PX);
+      expect(violations, JSON.stringify(violations.slice(0, 5))).toEqual([]);
       await ctx.close();
     });
 
-    test(`rapid demo add: no chip bbox overlap (incl. float) @ ${vp.tag}`, async ({ browser }) => {
-      test.setTimeout(120000);
-      const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
-      const page = await ctx.newPage();
-      await openDemoBoard(page);
+    test(`push spam ×3: no in-cell overlap or diagonal bbox @ ${vp.tag}`, async ({ browser }) => {
+      test.setTimeout(240000);
+      for (let run = 1; run <= 3; run += 1) {
+        const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+        const page = await ctx.newPage();
+        await openDemoBoard(page);
+        await primeSilent(page);
 
-      const clickCount = 15;
-      await page.evaluate((n) => {
-        const btn = document.querySelector('#ms-demo-add');
-        for (let i = 0; i < n; i += 1) {
-          btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const motionTracker = buildDiagonalMotionTracker();
+        const violations = [];
+        let frameIdx = 0;
+
+        const sampleOnce = async () => {
+          const v = await qaSampleMotionAndCells(page, motionTracker);
+          if (v.length) {
+            violations.push(...v.map((x) => ({ frame: frameIdx, run, ...x })));
+          }
+          frameIdx += 1;
+        };
+
+        await sampleOnce();
+        for (let i = 0; i < 30; i += 1) {
+          if (i % 3 === 0) {
+            await page.locator('#ms-demo-push').dispatchEvent('click');
+          } else {
+            await page.locator('#ms-demo-add').dispatchEvent('click');
+          }
+          await page.waitForTimeout(35);
+          await sampleOnce();
         }
-      }, clickCount);
-
-      const observeMs = 2200;
-      const started = Date.now();
-      const tracked = new Map();
-      while (Date.now() - started < observeMs) {
-        const snap = await page.evaluate(() => {
-          function rectsOverlap(a, b) {
-            return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-          }
-          function rectFromEl(el) {
-            const r = el.getBoundingClientRect();
-            if (r.width < 0.5 || r.height < 0.5) {
-              return null;
-            }
-            const o = Number.parseFloat(getComputedStyle(el).opacity || '1');
-            if (!Number.isFinite(o) || o < 0.08) {
-              return null;
-            }
-            return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
-          }
-
-          const zones = [...document.querySelectorAll('.milksha-zone.prep, .milksha-zone.ready')];
-          const overlaps = [];
-          const diagonal = [];
-
-          for (let zi = 0; zi < zones.length; zi += 1) {
-            const zone = zones[zi];
-            const layer = zone.querySelector('.milksha-zone-numbers');
-            if (!layer) {
-              continue;
-            }
-            const cells = [...layer.querySelectorAll('.milksha-num-cell')];
-            for (let ci = 0; ci < cells.length; ci += 1) {
-              const cell = cells[ci];
-              const cellRect = cell.getBoundingClientRect();
-              const chips = [];
-              cell.querySelectorAll('.milksha-board-chip').forEach((el) => {
-                const r = rectFromEl(el);
-                if (r) {
-                  chips.push({
-                    el,
-                    rect: r,
-                    id: el.getAttribute('data-item-id') || '',
-                    num: el.querySelector('.milksha-num')?.textContent?.trim() || '',
-                    float: el.classList.contains('milksha-board-chip--layer-float'),
-                  });
-                }
-              });
-              layer.querySelectorAll('.milksha-board-chip--layer-float').forEach((el) => {
-                const r = rectFromEl(el);
-                if (!r || !rectsOverlap(r, cellRect)) {
-                  return;
-                }
-                const id = el.getAttribute('data-item-id') || '';
-                if (chips.some((c) => c.el === el)) {
-                  return;
-                }
-                chips.push({
-                  el,
-                  rect: r,
-                  id,
-                  num: el.querySelector('.milksha-num')?.textContent?.trim() || '',
-                  float: true,
-                });
-              });
-              for (let a = 0; a < chips.length; a += 1) {
-                for (let b = a + 1; b < chips.length; b += 1) {
-                  if (rectsOverlap(chips[a].rect, chips[b].rect)) {
-                    overlaps.push({
-                      cellIndex: ci,
-                      a: chips[a].num || chips[a].id,
-                      b: chips[b].num || chips[b].id,
-                      floatPair: chips[a].float || chips[b].float,
-                    });
-                  }
-                }
-              }
-              for (let c = 0; c < chips.length; c += 1) {
-                const chip = chips[c];
-                if (chip.float) {
-                  continue;
-                }
-                const cr = chip.el.getBoundingClientRect();
-                const ccx = cr.left + cr.width / 2;
-                const ccy = cr.top + cr.height / 2;
-                const cellCx = cellRect.left + cellRect.width / 2;
-                const cellCy = cellRect.top + cellRect.height / 2;
-                const dx = ccx - cellCx;
-                const dy = ccy - cellCy;
-                const dist = Math.hypot(dx, dy);
-                if (dist > 3) {
-                  diagonal.push({
-                    num: chip.num,
-                    dx,
-                    dy,
-                    dist,
-                    cellIndex: ci,
-                  });
-                }
-              }
-            }
-          }
-          return { overlaps, diagonal };
-        });
-
-        for (const d of snap.diagonal) {
-          const key = d.num || `cell-${d.cellIndex}`;
-          const prev = tracked.get(key);
-          if (!prev) {
-            tracked.set(key, { dx: d.dx, dy: d.dy, dist: d.dist });
-            continue;
-          }
-          const shiftX = Math.abs(d.dx - prev.dx);
-          const shiftY = Math.abs(d.dy - prev.dy);
-          if (shiftX > 2 && shiftY > 2) {
-            throw new Error(
-              `${vp.tag} diagonal drift on ${key}: dx=${d.dx.toFixed(1)} dy=${d.dy.toFixed(1)} (was dx=${prev.dx.toFixed(1)} dy=${prev.dy.toFixed(1)})`,
-            );
-          }
-          tracked.set(key, { dx: d.dx, dy: d.dy, dist: d.dist });
+        const observeEnd = Date.now() + 2200;
+        while (Date.now() < observeEnd) {
+          await page.waitForTimeout(QA_SAMPLE_INTERVAL_MS);
+          await sampleOnce();
         }
-
-        if (snap.overlaps.length > 0) {
-          throw new Error(`${vp.tag} chip overlap: ${JSON.stringify(snap.overlaps)}`);
-        }
-        await page.waitForTimeout(SAMPLE_INTERVAL_MS);
+        expect(violations, `run ${run}: ${JSON.stringify(violations.slice(0, 8))}`).toEqual([]);
+        await ctx.close();
       }
-      await ctx.close();
     });
   }
+
+  test('mixed 40 clicks: no stacked cells or duplicate visible prep/ready nums @ 1080p', async ({
+    browser,
+  }) => {
+    test.setTimeout(120000);
+    const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    const page = await ctx.newPage();
+    await openDemoBoard(page);
+    await primeSilent(page);
+
+    const issues = [];
+    for (let i = 0; i < 40; i += 1) {
+      const pick = i % 5;
+      if (pick === 0) {
+        await page.locator('#ms-demo-push').dispatchEvent('click');
+      } else if (pick === 4 && i > 20) {
+        await page.locator('#ms-demo-clear').dispatchEvent('click');
+      } else {
+        await page.locator('#ms-demo-add').dispatchEvent('click');
+      }
+      if (i % 3 === 0) {
+        const snap = await page.evaluate(qaMixed40Snap);
+        if (snap.bad.length || snap.dupPrep || snap.dupReady) {
+          issues.push({ i, snap });
+        }
+      }
+      await page.waitForTimeout(30);
+    }
+    expect(issues, JSON.stringify(issues)).toEqual([]);
+    await ctx.close();
+  });
 });

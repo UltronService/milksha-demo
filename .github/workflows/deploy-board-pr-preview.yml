@@ -138,7 +138,7 @@ jobs:
           set -euo pipefail
           sleep 15
           ver="$(curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js")"
-          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261025d'"
+          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261026a'"
           echo "$ver" | grep -q "10/25 23:12"
 
   comment:

@@ -915,7 +915,13 @@
     }
 
     /**
-     * @param {{ silentApply: boolean, clearAll: boolean, forceSnapshotSkip?: boolean, newReadyIdsForPulse?: string[] }} viewOpts
+     * @param {{
+     *   silentApply: boolean,
+     *   clearAll: boolean,
+     *   forceSnapshotSkip?: boolean,
+     *   newReadyIdsForPulse?: string[],
+     *   crossZoneReadyIds?: string[],
+     * }} viewOpts
      */
     function commitBoardView(viewOpts) {
       const readyPages = pageCountForItems(readyItems.length, PAGE_SIZE);
@@ -973,13 +979,16 @@
             pageTurn: prepTurn,
             useGeneration: syncGen,
           });
-          const readyDone = animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
-            prevItems: prevReady,
-            prevPage: prevReadyPage,
-            pageTurn: readyTurn,
-            scalePulseIds: motion.skip ? [] : viewOpts.newReadyIdsForPulse || [],
-            skipReadyScale: motion.skip,
-            useGeneration: syncGen,
+          const readyDone = prepDone.then(function () {
+            return animator.syncZone(readyZone, 'ready', readyItems, readyPage, {
+              prevItems: prevReady,
+              prevPage: prevReadyPage,
+              pageTurn: readyTurn,
+              scalePulseIds: motion.skip ? [] : viewOpts.newReadyIdsForPulse || [],
+              skipReadyScale: motion.skip,
+              crossZoneReadyIds: viewOpts.crossZoneReadyIds || [],
+              useGeneration: syncGen,
+            });
           });
           if (readyTurn) {
             updateZonePageIndicator(readyZone, readyPage, readyPages);
@@ -1478,12 +1487,30 @@
 
       prevReadyIdSet = nextReadyIdSet;
       const clearAll = !wasBoardEmpty && isBoardFullyEmpty(readyItems, prepItems);
+      const prevReadyIdSetBefore = new Set();
+      for (let prb = 0; prb < prevReadyBefore.length; prb += 1) {
+        prevReadyIdSetBefore.add(prevReadyBefore[prb].id);
+      }
+      const crossZoneReadyIds = [];
+      for (let cz = 0; cz < nextReady.length; cz += 1) {
+        const readyId = nextReady[cz].id;
+        if (!readyId || prevReadyIdSetBefore.has(readyId)) {
+          continue;
+        }
+        for (let pp = 0; pp < prevPrepBefore.length; pp += 1) {
+          if (prevPrepBefore[pp].id === readyId) {
+            crossZoneReadyIds.push(readyId);
+            break;
+          }
+        }
+      }
       clampZonePagesToItemCounts();
       commitBoardView({
         silentApply: silentApply,
         clearAll: clearAll,
         forceSnapshotSkip: Boolean(opts && opts.forceSnapshotSkip),
         newReadyIdsForPulse: newReadyIds,
+        crossZoneReadyIds: crossZoneReadyIds,
       });
       ensureBoardPresentationConsistent();
       isFirstPayload = false;

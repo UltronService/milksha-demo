@@ -15,7 +15,9 @@ export async function chipMotionSampleForNumber(page, zone, number) {
       if (!zoneEl) {
         return null;
       }
-      const chip = zoneEl.querySelector('.milksha-board-chip[data-item-id="store:' + num + '"]');
+      const chip = zoneEl.querySelector(
+        '.milksha-board-chip[data-item-id="' + zoneKey + '::store:' + num + '"]',
+      );
       if (!chip || chip.classList.contains('milksha-board-chip--layer-float')) {
         return null;
       }
@@ -153,7 +155,9 @@ export async function pollMotionSamplesInPage(page, payloadRows, layout, opts = 
 
       function chipMotionSampleForNumber(zoneKey, num) {
         const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
-        const chip = zoneEl?.querySelector('.milksha-board-chip[data-item-id="store:' + num + '"]');
+        const chip = zoneEl?.querySelector(
+          '.milksha-board-chip[data-item-id="' + zoneKey + '::store:' + num + '"]',
+        );
         if (!chip || chip.classList.contains('milksha-board-chip--layer-float')) {
           return null;
         }
@@ -342,7 +346,9 @@ export async function chipMotionSampleForNumberWithLeft(page, zone, number) {
   return page.evaluate(
     ({ zoneKey, num }) => {
       const zoneEl = document.querySelector('.milksha-zone.' + zoneKey);
-      const chip = zoneEl?.querySelector('.milksha-board-chip[data-item-id="store:' + num + '"]');
+      const chip = zoneEl?.querySelector(
+        '.milksha-board-chip[data-item-id="' + zoneKey + '::store:' + num + '"]',
+      );
       if (!chip || chip.classList.contains('milksha-board-chip--layer-float')) {
         return null;
       }
@@ -380,7 +386,7 @@ export async function assertZoneSlotOrderExact(page, zone) {
 }
 
 export async function assertReadyPulseOnNumber(page, number) {
-  const itemId = 'store:' + number;
+  const itemId = 'ready::store:' + number;
   const cfg = await page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getConfig());
   const windowMs = cfg.readyScaleInMs + cfg.readyScaleHoldMs + cfg.readyScaleOutMs + 500;
   await page.waitForFunction(
@@ -389,7 +395,8 @@ export async function assertReadyPulseOnNumber(page, number) {
       if (!el) {
         return false;
       }
-      const tr = getComputedStyle(el).transform;
+      const scaleEl = el.querySelector('.milksha-num') || el;
+      const tr = getComputedStyle(scaleEl).transform;
       const m = tr.match(/matrix\(([^)]+)\)/);
       const s = m ? Number.parseFloat(m[1].split(',')[0]) : 1;
       return s >= min;

@@ -26,6 +26,33 @@
   const BULK_SNAPSHOT_MAX_OVERLAP_RATIO = 0.35;
 
   /**
+   * @param {'prep' | 'ready'} zoneKey
+   * @param {string} modelId
+   * @returns {string}
+   */
+  function chipDomItemId(zoneKey, modelId) {
+    if (!modelId) {
+      return '';
+    }
+    return zoneKey + '::' + modelId;
+  }
+
+  /**
+   * @param {string | null} domId
+   * @returns {string}
+   */
+  function modelIdFromChipDomId(domId) {
+    if (!domId || typeof domId !== 'string') {
+      return '';
+    }
+    const sep = domId.indexOf('::');
+    if (sep < 0) {
+      return domId;
+    }
+    return domId.slice(sep + 2);
+  }
+
+  /**
    * @param {Array<{ id: string }>} items
    * @param {number} page
    * @param {number} pageSize
@@ -102,7 +129,7 @@
    * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
    * @returns {boolean}
    */
-  function domVisibleLayoutMatches(slotEls, items, page, pageSize, layoutPageGrid) {
+  function domVisibleLayoutMatches(slotEls, items, page, pageSize, layoutPageGrid, zoneKey) {
     const cells = layoutPageGrid(items, page, pageSize);
     for (let i = 0; i < pageSize; i += 1) {
       const slot = slotEls[i];
@@ -113,7 +140,9 @@
       const expectedId = cell && cell.id ? cell.id : '';
       const chip = slot.querySelector('.milksha-board-chip[data-item-id]');
       const domId = chip ? chip.getAttribute('data-item-id') || '' : '';
-      if (domId !== expectedId) {
+      const visibleModelId = modelIdFromChipDomId(domId);
+      const expectedDomId = expectedId ? chipDomItemId(zoneKey, expectedId) : '';
+      if (domId !== expectedDomId && visibleModelId !== expectedId) {
         return false;
       }
     }
@@ -245,6 +274,11 @@
     const parent = chip.parentNode;
     if (!parent || !parent.classList || !parent.classList.contains('milksha-num-cell')) {
       return;
+    }
+    const fadeItemId = chip.getAttribute('data-item-id');
+    if (fadeItemId) {
+      chip.setAttribute('data-motion-fade-item-id', fadeItemId);
+      chip.removeAttribute('data-item-id');
     }
     const layerRect = numbersLayer.getBoundingClientRect();
     const chipRect = chip.getBoundingClientRect();
@@ -379,23 +413,35 @@
     }
     const peak = Math.max(1, peakScale);
     const total = inMs + holdMs + outMs;
+    const scaleEl = el.querySelector('.milksha-num') || el;
     if (!el.animate || total <= 0) {
       snapOpacity(el, 1);
       el.style.transform = '';
+      scaleEl.style.transform = '';
       return Promise.resolve();
     }
     cancelElementAnimations(el);
-    el.style.transformOrigin = 'center center';
+    cancelElementAnimations(scaleEl);
+    el.style.transform = '';
+    scaleEl.style.transformOrigin = 'center center';
     el.style.opacity = '0';
-    el.style.transform = 'scale(1)';
+    scaleEl.style.transform = 'scale(1)';
     const inEnd = inMs / total;
     const holdEnd = (inMs + holdMs) / total;
     const anim = el.animate(
       [
-        { opacity: 0, transform: 'scale(1)' },
-        { opacity: 1, transform: 'scale(' + peak + ')', offset: inEnd },
-        { opacity: 1, transform: 'scale(' + peak + ')', offset: holdEnd },
-        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, offset: 0 },
+        { opacity: 1, offset: inEnd },
+        { opacity: 1, offset: 1 },
+      ],
+      { duration: total, easing: 'ease-out', fill: 'forwards' },
+    );
+    const scaleAnim = scaleEl.animate(
+      [
+        { transform: 'scale(1)' },
+        { transform: 'scale(' + peak + ')', offset: inEnd },
+        { transform: 'scale(' + peak + ')', offset: holdEnd },
+        { transform: 'scale(1)' },
       ],
       { duration: total, easing: 'ease-out', fill: 'forwards' },
     );
@@ -403,6 +449,7 @@
       function snapReadyPulseEndState() {
         snapOpacity(el, 1);
         el.style.transform = '';
+        scaleEl.style.transform = '';
       }
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
@@ -416,6 +463,14 @@
       anim.oncancel = function () {
         snapReadyPulseEndState();
         resolve();
+      };
+      scaleAnim.onfinish = function () {
+        if (getGeneration() !== generation) {
+          scaleEl.style.transform = '';
+        }
+      };
+      scaleAnim.oncancel = function () {
+        scaleEl.style.transform = '';
       };
     });
   }
@@ -469,6 +524,123 @@
    * @param {Element} numbersLayer
    * @returns {boolean}
    */
+  /**
+   * @param {Element} slotEl
+   * @param {Element} numbersLayer
+   */
+  function removeOverlappingFloatChipsInSlot(slotEl, numbersLayer) {
+    if (!slotEl || !numbersLayer) {
+      return;
+    }
+    const slotRect = slotEl.getBoundingClientRect();
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const fr = floatChip.getBoundingClientRect();
+      if (fr.width > 0.5 && fr.height > 0.5 && chipRectsOverlap(fr, slotRect)) {
+        cancelElementAnimations(floatChip);
+        clearMotionStyles(floatChip);
+        if (floatChip.parentNode) {
+          floatChip.parentNode.removeChild(floatChip);
+        }
+      }
+    }
+  }
+
+  /**
+   * @param {Element} numbersLayer
+   * @param {string} numberText
+   */
+  function removeZoneFloatsDuplicatingSettledNumbers(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    const settled = new Set();
+    const inCellNums = numbersLayer.querySelectorAll(
+      '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float) .milksha-num',
+    );
+    for (let si = 0; si < inCellNums.length; si += 1) {
+      const text = String(inCellNums[si].textContent || '').trim();
+      if (text) {
+        settled.add(text);
+      }
+    }
+    if (settled.size === 0) {
+      return;
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (!text || !settled.has(text)) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
+  function removeZoneFloatChipsWithNumber(numbersLayer, numberText) {
+    if (!numbersLayer || !numberText) {
+      return;
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (text !== numberText) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
+  /**
+   * @param {Element} chip
+   * @param {string} id
+   * @param {Record<string, DOMRect>} rectsBeforeMap
+   */
+  function applyMovedChipFlipPreflight(chip, id, rectsBeforeMap) {
+    const before = rectsBeforeMap[id];
+    if (!chip || !before) {
+      return;
+    }
+    const after = chip.getBoundingClientRect();
+    const dx = before.left - after.left;
+    const dy = before.top - after.top;
+    if (Math.abs(dx) < SLOT_MOVE_EPSILON_PX && Math.abs(dy) < SLOT_MOVE_EPSILON_PX) {
+      return;
+    }
+    if (isDiagonalLayoutDelta(dx, dy)) {
+      return;
+    }
+    if (Math.abs(dx) > SLOT_MOVE_EPSILON_PX && Math.abs(dy) <= SLOT_MOVE_EPSILON_PX) {
+      chip.style.transform = 'translate(' + dx + 'px,0px)';
+      return;
+    }
+    if (Math.abs(dy) > SLOT_MOVE_EPSILON_PX && Math.abs(dx) <= SLOT_MOVE_EPSILON_PX) {
+      chip.style.transform = 'translate(0px,' + dy + 'px)';
+    }
+  }
+
   function slotHasOverlappingChipRects(slotEl, numbersLayer) {
     if (!slotEl || !slotEl.getBoundingClientRect) {
       return false;
@@ -912,7 +1084,7 @@
       const all = boardRoot.querySelectorAll('.milksha-board-chip[data-item-id]');
       for (let i = 0; i < all.length; i += 1) {
         const other = all[i];
-        if (other.getAttribute('data-item-id') !== id) {
+        if (modelIdFromChipDomId(other.getAttribute('data-item-id')) !== id) {
           continue;
         }
         if (keepChip && other === keepChip) {
@@ -931,6 +1103,12 @@
       if (!chip || pendingRemove.has(chip)) {
         return;
       }
+      const fadeOutId = chip.getAttribute('data-item-id');
+      if (fadeOutId) {
+        chip.setAttribute('data-motion-fade-item-id', fadeOutId);
+        chip.removeAttribute('data-item-id');
+      }
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
       pendingRemove.add(chip);
       detachChipFromSlotForFade(chip, numbersLayer);
       const fromOpacity = Number.parseFloat(chip.style.opacity);
@@ -977,9 +1155,9 @@
      * @param {Array<{ id?: string, number?: string } | null>} cells
      * @param {Record<string, Element>} chipById
      */
-    function settleInterruptedPageTurn(numbersLayer, slotEls, cells) {
+    function settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKeyForDom) {
       numbersLayer.removeAttribute('data-page-turn-anim');
-      hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {});
+      hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {}, zoneKeyForDom);
       snapOpacity(numbersLayer, 1);
     }
 
@@ -1014,7 +1192,7 @@
       return expected > 0 && visible === 0;
     }
 
-    function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
+    function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKeyForDom) {
       abortPageTurnLayerState(numbersLayer);
       removeOrphanLayerFloatChips(numbersLayer);
       for (let i = 0; i < deps.pageSize; i += 1) {
@@ -1027,7 +1205,7 @@
         const id = cell.id || '';
         const chip = deps.document.createElement('div');
         chip.className = chipClassForCell(cell);
-        chip.setAttribute('data-item-id', id);
+        chip.setAttribute('data-item-id', chipDomItemId(zoneKeyForDom, id));
         chip.innerHTML = chipInnerHtml(cell);
         snapOpacity(chip, 1);
         slot.appendChild(chip);
@@ -1047,6 +1225,7 @@
      *   clearAll?: boolean,
      *   scalePulseIds?: string[],
      *   skipReadyScale?: boolean,
+     *   crossZoneReadyIds?: string[],
      *   prevItems: Array<{ id: string, number: string }>,
      *   prevPage: number,
      *   useGeneration?: number,
@@ -1119,13 +1298,12 @@
         const inSlot = slotEls[overlapIdx].querySelectorAll(
           '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
         );
-        const floatOverlap =
-          !columnMoveAnimActive && slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer);
-        if (inSlot.length > 1 || floatOverlap) {
+        const floatOverlap = slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer);
+        if (inSlot.length > 1 || (!columnMoveAnimActive && floatOverlap)) {
           abortColumnMoveLayerState(numbersLayer);
           abortPageTurnLayerState(numbersLayer);
           removeOrphanLayerFloatChips(numbersLayer);
-          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {});
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {}, zoneKey);
           snapOpacity(numbersLayer, 1);
           return Promise.resolve();
         }
@@ -1138,7 +1316,7 @@
       const chipById = {};
       const rectsBefore = {};
       numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
-        const id = chip.getAttribute('data-item-id');
+        const id = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
         if (!id) {
           return;
         }
@@ -1147,7 +1325,7 @@
       });
 
       numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
-        const stalePulseId = chip.getAttribute('data-item-id');
+        const stalePulseId = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
         if (!stalePulseId || scalePulseSet[stalePulseId]) {
           return;
         }
@@ -1161,10 +1339,10 @@
       if (zoneDomMissingAllExpectedNumbers(slotEls, cells, prevItems)) {
         abortColumnMoveLayerState(numbersLayer);
         abortPageTurnLayerState(numbersLayer);
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
         snapOpacity(numbersLayer, 1);
         numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
-          const id = chip.getAttribute('data-item-id');
+          const id = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
           if (id) {
             chipById[id] = chip;
           }
@@ -1174,12 +1352,12 @@
       if (interruptedPageTurn) {
         abortColumnMoveLayerState(numbersLayer);
         abortPageTurnLayerState(numbersLayer);
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
         return Promise.resolve();
       }
 
       if (pageTurn && numbersLayer.getAttribute('data-page-turn-anim') === '1') {
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
       }
 
       if (pageTurn) {
@@ -1195,6 +1373,7 @@
           page,
           deps.pageSize,
           deps.layoutPageGrid,
+          zoneKey,
         ) &&
         !domVisibleLayoutMatches(
           slotEls,
@@ -1202,9 +1381,10 @@
           prevPage,
           deps.pageSize,
           deps.layoutPageGrid,
+          zoneKey,
         )
       ) {
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
         snapOpacity(numbersLayer, 1);
         return Promise.resolve();
       }
@@ -1399,7 +1579,7 @@
 
       if (pageTurn) {
         if (zoneKey === 'ready' && pulseIds.length > 0 && !skipReadyScale) {
-          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
           snapOpacity(numbersLayer, 1);
           numbersLayer.removeAttribute('data-page-turn-anim');
           const readyJumpPulses = [];
@@ -1409,7 +1589,7 @@
               continue;
             }
             const readyPulseChip = numbersLayer.querySelector(
-              '.milksha-board-chip[data-item-id="' + readyPulseId + '"]',
+              '.milksha-board-chip[data-item-id="' + chipDomItemId(zoneKey, readyPulseId) + '"]',
             );
             if (readyPulseChip) {
               readyJumpPulses.push(runReadyPulseAnim(readyPulseChip, numbersLayer, gen));
@@ -1424,9 +1604,10 @@
           prevPage,
           deps.pageSize,
           deps.layoutPageGrid,
+          zoneKey,
         );
         if (!domShowsPrevPage) {
-          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
           snapOpacity(numbersLayer, 1);
           return Promise.resolve();
         }
@@ -1434,7 +1615,7 @@
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
-              settleInterruptedPageTurn(numbersLayer, slotEls, cells);
+              settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKey);
               return;
             }
             removeOrphanLayerFloatChips(numbersLayer);
@@ -1445,14 +1626,14 @@
               if (cell && cell.number) {
                 const chip = deps.document.createElement('div');
                 fillChipElement(chip, cell);
-                chip.setAttribute('data-item-id', cell.id || '');
+                chip.setAttribute('data-item-id', chipDomItemId(zoneKey, cell.id || ''));
                 slot.appendChild(chip);
               }
             }
             snapOpacity(numbersLayer, 0);
             return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen).then(function () {
               if (getGeneration() !== gen) {
-                settleInterruptedPageTurn(numbersLayer, slotEls, cells);
+                settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKey);
                 return;
               }
               numbersLayer.removeAttribute('data-page-turn-anim');
@@ -1464,7 +1645,7 @@
                     continue;
                   }
                   const pulseChip = numbersLayer.querySelector(
-                    '.milksha-board-chip[data-item-id="' + pulseId + '"]',
+                    '.milksha-board-chip[data-item-id="' + chipDomItemId(zoneKey, pulseId) + '"]',
                   );
                   if (pulseChip) {
                     pulsePromises.push(runReadyPulseAnim(pulseChip, numbersLayer, gen));
@@ -1490,7 +1671,7 @@
         const slotChips = slotReconcile.querySelectorAll('.milksha-board-chip');
         for (let sc = 0; sc < slotChips.length; sc += 1) {
           const slotChip = slotChips[sc];
-          const slotChipId = slotChip.getAttribute('data-item-id');
+          const slotChipId = modelIdFromChipDomId(slotChip.getAttribute('data-item-id'));
           if (!expectedId || slotChipId !== expectedId) {
             if (slotChipId && movedIdSet[slotChipId]) {
               continue;
@@ -1528,7 +1709,7 @@
           const stray = slot.querySelectorAll('.milksha-board-chip');
           for (let st = 0; st < stray.length; st += 1) {
             if (stray[st] !== chip) {
-              const strayId = stray[st].getAttribute('data-item-id');
+              const strayId = modelIdFromChipDomId(stray[st].getAttribute('data-item-id'));
               if (strayId && movedIdSet[strayId]) {
                 continue;
               }
@@ -1536,6 +1717,8 @@
             }
           }
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          removeOverlappingFloatChipsInSlot(slot, numbersLayer);
+          removeZoneFloatChipsWithNumber(numbersLayer, cell.number || '');
           const fromSlotReparent = prevVisibleSlotMap.get(id);
           if (fromSlotReparent !== undefined && isCrossColumnSlotMove(fromSlotReparent, i)) {
             columnMoveFadeInPlaceIds[id] = true;
@@ -1547,6 +1730,9 @@
             delete rectsBefore[id];
           }
           slot.appendChild(chip);
+          if (!columnMoveFadeInPlaceIds[id]) {
+            applyMovedChipFlipPreflight(chip, id, rectsBefore);
+          }
           if (columnMoveFadeInPlaceIds[id]) {
             chip.style.transform = '';
             snapOpacity(chip, 0);
@@ -1570,7 +1756,7 @@
         if (!chip || pendingRemove.has(chip)) {
           const strayBefore = slot.querySelectorAll('.milksha-board-chip');
           for (let sb = 0; sb < strayBefore.length; sb += 1) {
-            const strayId = strayBefore[sb].getAttribute('data-item-id');
+            const strayId = modelIdFromChipDomId(strayBefore[sb].getAttribute('data-item-id'));
             if (strayId && movedIdSet[strayId]) {
               continue;
             }
@@ -1578,12 +1764,15 @@
           }
           chip = deps.document.createElement('div');
           fillChipElement(chip, cell);
-          chip.setAttribute('data-item-id', id);
           snapOpacity(chip, 0);
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          removeOverlappingFloatChipsInSlot(slot, numbersLayer);
+          removeZoneFloatChipsWithNumber(numbersLayer, cell.number || '');
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
+          chip.setAttribute('data-item-id', chipDomItemId(zoneKey, id));
           chipById[id] = chip;
+          removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
           if (columnMoveFadeInPlaceIds[id]) {
             chip.style.transform = '';
             columnMoveEnterAnim(function () {
@@ -1624,6 +1813,7 @@
       }
 
       const afterLayout = function () {
+        removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
         if (columnMovePlan) {
           removeOrphanLayerFloatChips(numbersLayer);
           const holdChips = numbersLayer.querySelectorAll(
@@ -1631,7 +1821,7 @@
           );
           for (let hi = 0; hi < holdChips.length; hi += 1) {
             const holdChip = holdChips[hi];
-            const holdId = holdChip.getAttribute('data-item-id');
+            const holdId = modelIdFromChipDomId(holdChip.getAttribute('data-item-id'));
             if (pendingRemove.has(holdChip) || (holdId && isPhaseTwoEnterHoldId(holdId))) {
               continue;
             }
@@ -1676,8 +1866,26 @@
             });
             return;
           }
-          animQueue('move', function () {
-            return animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration);
+          const horizOnly =
+            Math.abs(dx) > SLOT_MOVE_EPSILON_PX && Math.abs(dy) <= SLOT_MOVE_EPSILON_PX;
+          const vertOnly =
+            Math.abs(dy) > SLOT_MOVE_EPSILON_PX && Math.abs(dx) <= SLOT_MOVE_EPSILON_PX;
+          if (horizOnly) {
+            animQueue('move', function () {
+              return animateTranslate(chip, dx, 0, moveDurationMs, gen, getGeneration);
+            });
+            return;
+          }
+          if (vertOnly) {
+            animQueue('move', function () {
+              return animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration);
+            });
+            return;
+          }
+          chip.style.transform = '';
+          snapOpacity(chip, 0);
+          columnMoveEnterAnim(function () {
+            return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
           });
         });
       };
@@ -1714,7 +1922,7 @@
           if (pendingRemove.has(settled)) {
             continue;
           }
-          const settledId = settled.getAttribute('data-item-id');
+          const settledId = modelIdFromChipDomId(settled.getAttribute('data-item-id'));
           if (settledId && columnMoveFadeInPlaceIds[settledId]) {
             snapOpacity(settled, 1);
             settled.style.transform = '';

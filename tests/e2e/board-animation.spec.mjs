@@ -25,7 +25,7 @@ test.describe('board call animation specs 1–7', () => {
     await page.evaluate(() => {
       window.QMS.runtime.applyPayload([{ source_type: 'From_Store_Preparing', number: '5101' }]);
     });
-    await expect(page.locator('[data-item-id="store:5101"]')).toBeAttached({ timeout: 500 });
+    await expect(page.locator('[data-item-id="prep::store:5101"]')).toBeAttached({ timeout: 500 });
     expect(Date.now() - t0).toBeLessThan(3000);
     await page.waitForTimeout(50);
     const runs = await opacityAnimRunsSinceReset(page);
@@ -48,8 +48,8 @@ test.describe('board call animation specs 1–7', () => {
         { source_type: 'From_Store_OK', number: '5201' },
       ]);
     });
-    await expect(page.locator('.milksha-prep [data-item-id="store:5201"]')).toHaveCount(0);
-    const chip = page.locator('.milksha-ready [data-item-id="store:5201"]');
+    await expect(page.locator('.milksha-prep [data-item-id="prep::store:5201"]')).toHaveCount(0);
+    const chip = page.locator('.milksha-ready [data-item-id="ready::store:5201"]');
     await expect(chip).toBeVisible();
     expect(await opacityAnimRunsSinceReset(page)).toBeGreaterThan(0);
     await expect(chip).not.toHaveClass(/milksha-board-chip--highlight/);
@@ -230,7 +230,7 @@ test.describe('board call animation specs 1–7', () => {
     });
     expect(await page.evaluate(() => window.QMS.runtime.getAnimSkipReason())).toBe('no-web-animations-api');
     expect(await opacityAnimRunsSinceReset(page)).toBe(0);
-    await expect(page.locator('[data-item-id="store:5961"]')).toBeVisible();
+    await expect(page.locator('[data-item-id="ready::store:5961"]')).toBeVisible();
     await ctx.close();
   });
 });
