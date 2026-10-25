@@ -35,6 +35,24 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await denied.goto(`${BASE}/?mode=cloud&store=zz-deny-test`);
     await expect(denied.locator('#milksha-cloud-paused')).toHaveText('連線暫停', { timeout: 60000 });
     await denied.close();
+    const scrubStorage = await ctx.newPage();
+    await scrubStorage.goto('about:blank');
+    await scrubStorage.evaluate(() => {
+      try {
+        const remove = [];
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (!key) continue;
+          if (key.indexOf('milksha:auth:devlogin-peer:') === 0 || key.indexOf(':zz-deny-') >= 0) {
+            remove.push(key);
+          }
+        }
+        remove.forEach((k) => localStorage.removeItem(k));
+      } catch {
+        /* ignore */
+      }
+    });
+    await scrubStorage.close();
 
     const boardA = await ctx.newPage();
     const boardB = await ctx.newPage();
@@ -43,15 +61,21 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     for (const p of [boardA, boardB, ctrlA, ctrlB]) {
       await installBundledCloudRouteShim(p);
     }
-    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}`);
-    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}`);
-    await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}`);
-    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}`);
+    const devA = 'stb-a';
+    const devB = 'stb-b';
+    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}&device=${devA}`);
+    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}&device=${devB}`);
+    await boardA.bringToFront();
+    await boardB.bringToFront();
+    await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}&device=${devA}`);
+    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}&device=${devB}`);
     await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
+    await expect(ctrlA.locator('#online-state')).toContainText('在線', { timeout: 90000 });
+    await expect(ctrlB.locator('#online-state')).toContainText('在線', { timeout: 90000 });
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);

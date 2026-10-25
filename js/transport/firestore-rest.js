@@ -188,10 +188,15 @@
       inflightByPath.clear();
     }
 
+    function resetBackoff() {
+      backoffMs = 0;
+    }
+
     return {
       getDocument: getDocument,
       listDocuments: listDocuments,
       destroy: destroy,
+      resetBackoff: resetBackoff,
     };
   }
 

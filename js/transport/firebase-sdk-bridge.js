@@ -38,6 +38,25 @@
     return Boolean(fb && fb.app && fb.auth && fb.firestore);
   }
 
+  async function useInMemoryAuthPersistence(auth) {
+    if (!auth || !auth.setPersistence) {
+      return;
+    }
+    const fb = firebaseGlobal();
+    const persistence =
+      fb.auth && fb.auth.Auth && fb.auth.Auth.Persistence
+        ? fb.auth.Auth.Persistence.NONE
+        : null;
+    if (!persistence) {
+      return;
+    }
+    try {
+      await auth.setPersistence(persistence);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function initApp(config) {
     if (!isSdkLoaded()) {
       return false;
@@ -83,6 +102,7 @@
       return false;
     }
     const auth = firebaseGlobal().auth();
+    await useInMemoryAuthPersistence(auth);
     if (auth.currentUser) {
       return true;
     }
@@ -116,8 +136,13 @@
       return;
     }
     const auth = firebaseGlobal().auth();
+    await useInMemoryAuthPersistence(auth);
     if (auth.currentUser) {
-      return;
+      try {
+        await auth.signOut();
+      } catch (signOutErr) {
+        /* ignore */
+      }
     }
     try {
       await auth.signInWithCustomToken(customToken);
@@ -149,6 +174,7 @@
       return false;
     }
     const auth = firebaseGlobal().auth();
+    await useInMemoryAuthPersistence(auth);
     if (auth.currentUser) {
       lastAuthSyncErrorCode = null;
       return true;

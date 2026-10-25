@@ -12,12 +12,18 @@
   const DEVLOGIN_PEER_LOCK_PREFIX = 'milksha:auth:devlogin-peer:';
   const DEVLOGIN_PEER_TTL_MS = 20000;
 
-  function devLoginPeerLockKey(config) {
+  function devLoginPeerLockKey(config, creds) {
     const apiKey = String(config && config.apiKey ? config.apiKey : '').trim();
+    let fingerprint = 'none';
     if (apiKey.length >= 8) {
-      return DEVLOGIN_PEER_LOCK_PREFIX + apiKey.slice(-8);
+      fingerprint = apiKey.slice(-8);
+    } else if (apiKey) {
+      fingerprint = apiKey;
     }
-    return DEVLOGIN_PEER_LOCK_PREFIX + (apiKey || 'none');
+    const storeId = String(creds && creds.storeId != null ? creds.storeId : '');
+    const role = String(creds && creds.role != null ? creds.role : '');
+    const deviceId = String(creds && creds.deviceId != null ? creds.deviceId : '');
+    return DEVLOGIN_PEER_LOCK_PREFIX + fingerprint + ':' + storeId + ':' + role + ':' + deviceId;
   }
 
   function sleepMs(ms) {
@@ -26,12 +32,75 @@
     });
   }
 
-  async function withDevLoginPeerLock(config, run) {
+  function clearDeniedTestAuthKeys(storage, activeStoreId) {
+    const active = String(activeStoreId || '').trim();
+    const store = storage || root.localStorage;
+    if (!store || !store.key || !active || active.indexOf('zz-deny-') === 0) {
+      return;
+    }
+    const remove = [];
+    try {
+      for (let i = 0; ; i += 1) {
+        const key = store.key(i);
+        if (!key) {
+          break;
+        }
+        if (key.indexOf(STORAGE_PREFIX) === 0 && key.indexOf(':zz-deny-') >= 0) {
+          remove.push(key);
+        }
+      }
+      for (let j = 0; j < remove.length; j += 1) {
+        store.removeItem(remove[j]);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function scrubStaleDevLoginPeerLocks(storage) {
+    const store = storage || root.localStorage;
+    if (!store || !store.key) {
+      return;
+    }
+    const now = Date.now();
+    const remove = [];
+    try {
+      for (let i = 0; ; i += 1) {
+        const key = store.key(i);
+        if (!key) {
+          break;
+        }
+        if (key.indexOf(DEVLOGIN_PEER_LOCK_PREFIX) !== 0) {
+          continue;
+        }
+        let stale = true;
+        try {
+          const raw = store.getItem(key);
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed && parsed.at && now - Number(parsed.at) < DEVLOGIN_PEER_TTL_MS) {
+            stale = false;
+          }
+        } catch (e) {
+          stale = true;
+        }
+        if (stale) {
+          remove.push(key);
+        }
+      }
+      for (let j = 0; j < remove.length; j += 1) {
+        store.removeItem(remove[j]);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  async function withDevLoginPeerLock(config, creds, run) {
     const store = root.localStorage;
     if (!store) {
       return run();
     }
-    const key = devLoginPeerLockKey(config);
+    const key = devLoginPeerLockKey(config, creds);
     const owner = String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
     const deadline = Date.now() + 25000;
     while (Date.now() < deadline) {
@@ -166,6 +235,8 @@
   function createAuthSession(config, creds) {
     const onAuthSuccess = creds.onAuthSuccess;
     const storage = creds.storage || root.localStorage;
+    scrubStaleDevLoginPeerLocks(storage);
+    clearDeniedTestAuthKeys(storage, creds.storeId);
     const storageKey = authStorageKey(config, creds);
 
     let idToken = '';
@@ -300,7 +371,7 @@
     }
 
     async function devLoginOnce() {
-      return withDevLoginPeerLock(config, async function () {
+      return withDevLoginPeerLock(config, creds, async function () {
         throwIfAuthStopped();
         const loginUrl = functionsUrl('devLogin');
         assertSecureTargetUrl(loginUrl);
