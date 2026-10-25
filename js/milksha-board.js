@@ -1365,7 +1365,9 @@
         forceSnapshotSkip: Boolean(opts && opts.forceSnapshotSkip),
         newReadyIdsForPulse: newReadyIds,
       });
-      isFirstPayload = false;
+      if (readyItems.length > 0 || prepItems.length > 0) {
+        isFirstPayload = false;
+      }
     }
 
     function setOrientation(next) {
