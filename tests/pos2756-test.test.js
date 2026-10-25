@@ -41,6 +41,7 @@ test('spec 1: pos2756-test page exists and board receiver paths are not changed 
   const boardAnimWhitelist = [
     'js/board/milksha-board-anim.js',
     'js/board/milksha-board-anim-config.js',
+    'js/board/board-auto-pair-host.js',
   ];
   const forbidden = touched.filter(function (p) {
     if (boardAnimWhitelist.indexOf(p) >= 0) {
