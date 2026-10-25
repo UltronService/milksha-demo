@@ -1091,11 +1091,37 @@
         return Promise.resolve();
       }
 
+      let columnMovePlan = detectColumnMovePlan(
+        prevItems,
+        items,
+        page,
+        deps.pageSize,
+        deps.layoutPageGrid,
+        diff,
+      );
+      if (!columnMovePlan && !pageTurn && items.length === prevItems.length + 1) {
+        const fallbackOverflow = detectRightBottomPageOverflowPlan(
+          prevItems,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          diff,
+        );
+        if (fallbackOverflow) {
+          columnMovePlan = fallbackOverflow;
+        }
+      }
+      const columnMoveAnimActive =
+        Boolean(columnMovePlan) || numbersLayer.getAttribute('data-column-move-anim') === '1';
+
       for (let overlapIdx = 0; overlapIdx < slotEls.length; overlapIdx += 1) {
         const inSlot = slotEls[overlapIdx].querySelectorAll(
           '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
         );
-        if (inSlot.length > 1 || slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer)) {
+        const floatOverlap =
+          !columnMoveAnimActive && slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer);
+        if (inSlot.length > 1 || floatOverlap) {
           abortColumnMoveLayerState(numbersLayer);
           abortPageTurnLayerState(numbersLayer);
           removeOrphanLayerFloatChips(numbersLayer);
@@ -1183,27 +1209,6 @@
         return Promise.resolve();
       }
 
-      let columnMovePlan = detectColumnMovePlan(
-        prevItems,
-        items,
-        page,
-        deps.pageSize,
-        deps.layoutPageGrid,
-        diff,
-      );
-      if (!columnMovePlan && !pageTurn && items.length === prevItems.length + 1) {
-        const fallbackOverflow = detectRightBottomPageOverflowPlan(
-          prevItems,
-          items,
-          page,
-          deps.pageSize,
-          deps.layoutPageGrid,
-          diff,
-        );
-        if (fallbackOverflow) {
-          columnMovePlan = fallbackOverflow;
-        }
-      }
       const columnMoveEnterFromAboveIds = {};
       const columnMoveFadeInPlaceIds = {};
       const columnMoveSkipFlipIds = {};
@@ -1638,7 +1643,7 @@
           if (!chip || pendingRemove.has(chip)) {
             return;
           }
-          if (columnMoveSkipFlipIds[mv.id] || scalePulseSet[mv.id]) {
+          if (scalePulseSet[mv.id]) {
             return;
           }
           if (columnMoveEnterFromAboveIds[mv.id]) {
