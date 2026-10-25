@@ -464,6 +464,34 @@ export async function waitForControllerBoardOnline(controller, timeoutMs = 12000
   await expect(controller.locator('#online-state')).toContainText('在線', { timeout: timeoutMs });
 }
 
+export async function waitForHomeBoardReadyCount(boardPage, minCount, timeoutMs = 60000) {
+  const need = Math.max(1, Number(minCount) || 1);
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await boardPage.bringToFront();
+    try {
+      await boardPage.evaluate(() => {
+        const rc = window.receiverCloud;
+        if (rc && typeof rc.scheduleCloudResync === 'function') {
+          return rc.scheduleCloudResync('e2e_wait');
+        }
+        if (rc && typeof rc.sendHeartbeat === 'function') {
+          return rc.sendHeartbeat();
+        }
+        return undefined;
+      });
+    } catch {
+      /* ignore */
+    }
+    const count = await boardPage.locator('.milksha-ready .milksha-num').count();
+    if (count >= need) {
+      return;
+    }
+    await boardPage.waitForTimeout(500);
+  }
+  throw new Error(`home board ready count < ${need}`);
+}
+
 const CONTROLLER_ZONE_PARENT = {
   'sec-connect': 'sec-test-tools',
   'sec-pos': 'sec-test-tools',

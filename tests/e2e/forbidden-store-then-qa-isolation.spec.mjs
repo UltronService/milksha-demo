@@ -8,6 +8,7 @@ import {
   startSite,
   waitForControllerBoardOnline,
   waitForFakeCloudDeviceOnline,
+  waitForHomeBoardReadyCount,
 } from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
@@ -70,28 +71,31 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     for (const p of [boardA, boardB, ctrlA, ctrlB]) {
       await installBundledCloudRouteShim(p);
     }
-    const devA = 'stb-a';
-    const devB = 'stb-b';
-    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}&device=${devA}`);
-    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}&device=${devB}`);
+    const deviceId = 'stb-01';
+    await boardA.goto(`${BASE}/?mode=cloud&store=${STORE_A}&device=${deviceId}`);
+    await boardB.goto(`${BASE}/?mode=cloud&store=${STORE_B}&device=${deviceId}`);
     await boardA.bringToFront();
     await boardB.bringToFront();
-    await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}&device=${devA}`);
-    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}&device=${devB}`);
+    await ctrlA.goto(`${BASE}/controller/?mode=cloud&store=${STORE_A}&device=${deviceId}`);
+    await ctrlB.goto(`${BASE}/controller/?mode=cloud&store=${STORE_B}&device=${deviceId}`);
     await boardA.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await boardB.waitForFunction(() => Boolean(window.receiverCloud), undefined, { timeout: 30000 });
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await waitForFakeCloudDeviceOnline(boardA, STORE_A, devA);
-    await waitForFakeCloudDeviceOnline(boardB, STORE_B, devB);
+    await waitForFakeCloudDeviceOnline(boardA, STORE_A, deviceId);
+    await waitForFakeCloudDeviceOnline(boardB, STORE_B, deviceId);
     await waitForControllerBoardOnline(ctrlA);
     await waitForControllerBoardOnline(ctrlB);
+    await boardA.bringToFront();
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
-    await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
+    await waitForHomeBoardReadyCount(boardA, 1, 60000);
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
+    await boardB.bringToFront();
+    await waitForFakeCloudDeviceOnline(boardB, STORE_B, deviceId);
+    await waitForControllerBoardOnline(ctrlB);
     await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
-    await expect(boardB.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
+    await waitForHomeBoardReadyCount(boardB, 1, 60000);
     await ctx.close();
   });
 });
