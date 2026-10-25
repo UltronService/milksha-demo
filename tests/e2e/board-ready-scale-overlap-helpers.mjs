@@ -20,6 +20,7 @@ export function rectFromDom(r) {
 }
 
 export async function waitForPulseHold(page, itemId, expectedScale = 1.3) {
+  const domItemId = itemId.includes('::') ? itemId : `ready::${itemId}`;
   const inMs = await page.evaluate(() => window.QMS.MilkshaBoardAnimConfig.getConfig().readyScaleInMs);
   await page.waitForTimeout(inMs + 100);
   await page.waitForFunction(
@@ -34,7 +35,7 @@ export async function waitForPulseHold(page, itemId, expectedScale = 1.3) {
       const s = m ? Number.parseFloat(m[1].split(',')[0]) : 1;
       return s >= min && s <= max;
     },
-    { id: itemId, min: expectedScale - 0.04, max: expectedScale + 0.04 },
+    { id: domItemId, min: expectedScale - 0.04, max: expectedScale + 0.04 },
     { timeout: 12000 },
   );
 }

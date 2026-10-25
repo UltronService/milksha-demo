@@ -230,7 +230,7 @@ test.describe('board call animation specs 1–7', () => {
     });
     expect(await page.evaluate(() => window.QMS.runtime.getAnimSkipReason())).toBe('no-web-animations-api');
     expect(await opacityAnimRunsSinceReset(page)).toBe(0);
-    await expect(page.locator('[data-item-id="ready::store:5961"]')).toBeVisible();
+    await expect(page.locator('[data-item-id="store:5961"]')).toBeVisible();
     await ctx.close();
   });
 });

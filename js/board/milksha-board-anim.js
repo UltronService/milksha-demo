@@ -554,6 +554,29 @@
    * @param {Element} numbersLayer
    * @param {string} numberText
    */
+  function removeFloatChipsWithoutVisibleNumbers(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (text) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
   function removeZoneFloatsDuplicatingSettledNumbers(numbersLayer) {
     if (!numbersLayer) {
       return;
@@ -1253,6 +1276,8 @@
       if (!numbersLayer) {
         return Promise.resolve();
       }
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
       const prevItems = opts.prevItems || [];
       const prevPage = opts.prevPage || 0;
       const diff = diffVisibleSlots(prevItems, items, prevPage, page, deps.pageSize, deps.layoutPageGrid);
