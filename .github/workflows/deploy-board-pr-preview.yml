@@ -108,8 +108,8 @@ jobs:
           PR_NUMBER: ${{ steps.prnum.outputs.number }}
         run: |
           set -euo pipefail
-          chmod +x main-tree/scripts/preserve-pages-pr-preview.sh
-          main-tree/scripts/preserve-pages-pr-preview.sh deploy-site "$PR_NUMBER"
+          chmod +x pr-tree/scripts/preserve-pages-pr-preview.sh
+          pr-tree/scripts/preserve-pages-pr-preview.sh deploy-site "$PR_NUMBER"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
