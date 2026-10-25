@@ -119,11 +119,14 @@
     const status = err && err.status ? String(err.status) : '';
     const response = err && err.response ? err.response : null;
     const code = response && response.code != null ? String(response.code) : '';
+    const existingCode = stage.getAttribute('data-auth-debug-code') || '';
     const tag = code || status || 'auth';
     stage.setAttribute('data-auth-error', tag);
-    if (code) {
+    if (code === 'auth_stopped' && existingCode && existingCode !== 'auth_stopped') {
+      /* keep first API error code after retries stop */
+    } else if (code) {
       stage.setAttribute('data-auth-debug-code', code);
-    } else {
+    } else if (!existingCode) {
       stage.removeAttribute('data-auth-debug-code');
     }
     if (status) {

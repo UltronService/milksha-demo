@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { PORT_SITE, clickControllerDevButton, clickControllerDevButtonByTestId, installBundledCloudRouteShim, resetCloudState, restartCloud, startSite } from './harness.mjs';
+import {
+  PORT_SITE,
+  clickControllerDevButtonByTestId,
+  installBundledCloudRouteShim,
+  resetCloudState,
+  restartCloud,
+  startSite,
+  waitForControllerBoardOnline,
+  waitForFakeCloudDeviceOnline,
+} from './harness.mjs';
 
 const BASE = `http://127.0.0.1:${PORT_SITE}`;
 const STORE_A = 'zz-qa-store-a';
@@ -74,8 +83,10 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await expect(ctrlA.locator('#online-state')).toContainText('在線', { timeout: 90000 });
-    await expect(ctrlB.locator('#online-state')).toContainText('在線', { timeout: 90000 });
+    await waitForFakeCloudDeviceOnline(boardA, STORE_A, devA);
+    await waitForFakeCloudDeviceOnline(boardB, STORE_B, devB);
+    await waitForControllerBoardOnline(ctrlA);
+    await waitForControllerBoardOnline(ctrlB);
     await clickControllerDevButtonByTestId(ctrlA, 'btn-send-numbers');
     await expect(boardA.locator('.milksha-ready .milksha-num').first()).toBeVisible({ timeout: 45000 });
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);

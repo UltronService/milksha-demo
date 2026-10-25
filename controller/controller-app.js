@@ -942,7 +942,10 @@
     }
     const params = new URLSearchParams(window.location.search);
     const devEl = document.getElementById('fld-device');
-    if (devEl && !params.get('device')) {
+    const deviceFromUrl = params.get('device');
+    if (devEl && deviceFromUrl && deviceFromUrl.trim()) {
+      devEl.value = deviceFromUrl.trim();
+    } else if (devEl && !params.get('device')) {
       devEl.value = 'stb-01';
     }
     try {

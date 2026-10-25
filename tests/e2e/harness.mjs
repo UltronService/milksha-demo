@@ -413,6 +413,57 @@ export async function waitForReceiverOnline(receiver, mode, storeOverride) {
   throw new Error('firestore receiver device not online on fake-cloud');
 }
 
+export async function waitForFakeCloudDeviceOnline(page, storeId, deviceId, timeoutMs = 120000) {
+  const deadline = Date.now() + timeoutMs;
+  const docPath = `stores/${storeId}/devices/${deviceId}`;
+  while (Date.now() < deadline) {
+    const online = await page.evaluate(async (path) => {
+      try {
+        const url =
+          'https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/' +
+          path;
+        const res = await fetch(url, { headers: { Authorization: 'Bearer fake' } });
+        if (!res.ok) {
+          return false;
+        }
+        const json = await res.json();
+        const fields = json.fields || {};
+        if (!fields.online || fields.online.booleanValue !== true) {
+          return false;
+        }
+        const last =
+          fields.lastSeen && fields.lastSeen.stringValue ? fields.lastSeen.stringValue : '';
+        if (!last) {
+          return false;
+        }
+        return Date.now() - Date.parse(last) < 120000;
+      } catch {
+        return false;
+      }
+    }, docPath);
+    if (online) {
+      return;
+    }
+    try {
+      await page.evaluate(() => {
+        const rc = window.receiverCloud;
+        if (rc && typeof rc.sendHeartbeat === 'function') {
+          return rc.sendHeartbeat();
+        }
+        return undefined;
+      });
+    } catch {
+      /* ignore */
+    }
+    await page.waitForTimeout(500);
+  }
+  throw new Error(`fake-cloud device not online: ${storeId}/${deviceId}`);
+}
+
+export async function waitForControllerBoardOnline(controller, timeoutMs = 120000) {
+  await expect(controller.locator('#online-state')).toContainText('在線', { timeout: timeoutMs });
+}
+
 const CONTROLLER_ZONE_PARENT = {
   'sec-connect': 'sec-test-tools',
   'sec-pos': 'sec-test-tools',
