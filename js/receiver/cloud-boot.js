@@ -688,11 +688,10 @@
           });
           pairCtl.whenPaired
             .then(function (pairResult) {
-              if (!pairResult || !pairResult.storeId) {
-                return;
+              if (pairResult && pairResult.storeId) {
+                creds.storeId = pairResult.storeId;
+                clearOtherReceiverCaches(creds.storeId);
               }
-              creds.storeId = pairResult.storeId;
-              clearOtherReceiverCaches(creds.storeId);
               startCloudRuntime(root.QMS.runtime);
               return runEnsureIdToken();
             })
