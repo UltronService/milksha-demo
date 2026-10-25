@@ -413,51 +413,86 @@ export async function waitForReceiverOnline(receiver, mode, storeOverride) {
   throw new Error('firestore receiver device not online on fake-cloud');
 }
 
-export async function waitForFakeCloudDeviceOnline(page, storeId, deviceId, timeoutMs = 120000) {
-  const deadline = Date.now() + timeoutMs;
-  const docPath = `stores/${storeId}/devices/${deviceId}`;
-  while (Date.now() < deadline) {
-    const online = await page.evaluate(async (path) => {
-      try {
-        const url =
-          'https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/' +
-          path;
-        const res = await fetch(url, { headers: { Authorization: 'Bearer fake' } });
-        if (!res.ok) {
-          return false;
-        }
-        const json = await res.json();
-        const fields = json.fields || {};
-        if (!fields.online || fields.online.booleanValue !== true) {
-          return false;
-        }
-        const last =
-          fields.lastSeen && fields.lastSeen.stringValue ? fields.lastSeen.stringValue : '';
-        if (!last) {
-          return false;
-        }
-        return Date.now() - Date.parse(last) < 120000;
-      } catch {
+async function pokeBoardCloudHeartbeat(page) {
+  try {
+    await page.bringToFront();
+    await page.evaluate(() => {
+      const rc = window.receiverCloud;
+      if (rc && typeof rc.scheduleCloudResync === 'function') {
+        return rc.scheduleCloudResync('e2e_device_wait');
+      }
+      if (rc && typeof rc.sendHeartbeat === 'function') {
+        return rc.sendHeartbeat();
+      }
+      return undefined;
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+async function readFakeCloudDeviceOnline(page, docPath) {
+  return page.evaluate(async (path) => {
+    try {
+      const url =
+        'https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/' +
+        path;
+      const res = await fetch(url, { headers: { Authorization: 'Bearer fake' } });
+      if (!res.ok) {
         return false;
       }
-    }, docPath);
-    if (online) {
+      const json = await res.json();
+      const fields = json.fields || {};
+      if (!fields.online || fields.online.booleanValue !== true) {
+        return false;
+      }
+      const last = fields.lastSeen && fields.lastSeen.stringValue ? fields.lastSeen.stringValue : '';
+      if (!last) {
+        return false;
+      }
+      return Date.now() - Date.parse(last) < 120000;
+    } catch {
+      return false;
+    }
+  }, docPath);
+}
+
+export async function waitForFakeCloudDeviceOnline(page, storeId, deviceId, timeoutMs = 120000) {
+  await waitForFakeCloudDevicesOnline([{ page, storeId, deviceId }], timeoutMs);
+}
+
+export async function waitForFakeCloudDevicesOnline(targets, timeoutMs = 180000) {
+  const list = Array.isArray(targets) ? targets : [];
+  if (!list.length) {
+    return;
+  }
+  const pending = list.map(function (t) {
+    return {
+      page: t.page,
+      docPath: `stores/${t.storeId}/devices/${t.deviceId}`,
+      label: `${t.storeId}/${t.deviceId}`,
+      done: false,
+    };
+  });
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    for (const entry of pending) {
+      if (entry.done) {
+        continue;
+      }
+      await pokeBoardCloudHeartbeat(entry.page);
+      const online = await readFakeCloudDeviceOnline(entry.page, entry.docPath);
+      if (online) {
+        entry.done = true;
+      }
+    }
+    if (pending.every(function (e) { return e.done; })) {
       return;
     }
-    try {
-      await page.evaluate(() => {
-        const rc = window.receiverCloud;
-        if (rc && typeof rc.sendHeartbeat === 'function') {
-          return rc.sendHeartbeat();
-        }
-        return undefined;
-      });
-    } catch {
-      /* ignore */
-    }
-    await page.waitForTimeout(500);
+    await list[0].page.waitForTimeout(500);
   }
-  throw new Error(`fake-cloud device not online: ${storeId}/${deviceId}`);
+  const missing = pending.filter(function (e) { return !e.done; }).map(function (e) { return e.label; });
+  throw new Error(`fake-cloud device not online: ${missing.join(', ')}`);
 }
 
 export async function waitForControllerBoardOnline(controller, timeoutMs = 120000) {

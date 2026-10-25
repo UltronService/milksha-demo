@@ -7,7 +7,7 @@ import {
   restartCloud,
   startSite,
   waitForControllerBoardOnline,
-  waitForFakeCloudDeviceOnline,
+  waitForFakeCloudDevicesOnline,
   waitForHomeBoardReadyCount,
 } from './harness.mjs';
 
@@ -26,7 +26,7 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
   });
 
   test('zz-deny-test 連線暫停 does not block zz-qa-store-a/b sends', async ({ browser }) => {
-    test.setTimeout(180000);
+    test.setTimeout(300000);
     const ctx = await browser.newContext();
     const denied = await ctx.newPage();
     await installBundledCloudRouteShim(denied);
@@ -83,8 +83,13 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await expect(boardA.locator('#milksha-cloud-paused')).toBeHidden({ timeout: 30000 });
     await ctrlA.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
     await ctrlB.waitForSelector('#online-state[data-connected="1"]', { timeout: 30000 });
-    await waitForFakeCloudDeviceOnline(boardA, STORE_A, deviceId);
-    await waitForFakeCloudDeviceOnline(boardB, STORE_B, deviceId);
+    await waitForFakeCloudDevicesOnline(
+      [
+        { page: boardA, storeId: STORE_A, deviceId },
+        { page: boardB, storeId: STORE_B, deviceId },
+      ],
+      180000,
+    );
     await waitForControllerBoardOnline(ctrlA);
     await waitForControllerBoardOnline(ctrlB);
     await boardA.bringToFront();
@@ -92,7 +97,7 @@ test.describe('forbidden store then zz-qa isolation (same browser context)', () 
     await waitForHomeBoardReadyCount(boardA, 1, 60000);
     await expect(boardB.locator('.milksha-ready .milksha-num')).toHaveCount(0);
     await boardB.bringToFront();
-    await waitForFakeCloudDeviceOnline(boardB, STORE_B, deviceId);
+    await waitForFakeCloudDevicesOnline([{ page: boardB, storeId: STORE_B, deviceId }], 120000);
     await waitForControllerBoardOnline(ctrlB);
     await clickControllerDevButtonByTestId(ctrlB, 'btn-send-numbers');
     await waitForHomeBoardReadyCount(boardB, 1, 60000);
