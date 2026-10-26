@@ -398,6 +398,23 @@
    * @returns {Promise<void>}
    */
   /**
+   * Icon + number scale around one point (chip frame unchanged).
+   * @param {Element} numEl
+   * @param {Element} iconBoxEl
+   */
+  function setReadyPulseSharedScaleOrigin(numEl, iconBoxEl) {
+    if (!numEl || !iconBoxEl || !numEl.getBoundingClientRect) {
+      return;
+    }
+    const numR = numEl.getBoundingClientRect();
+    const iconR = iconBoxEl.getBoundingClientRect();
+    const cx = (iconR.left + numR.right) / 2;
+    const cy = (Math.min(numR.top, iconR.top) + Math.max(numR.bottom, iconR.bottom)) / 2;
+    numEl.style.transformOrigin = cx - numR.left + 'px ' + (cy - numR.top) + 'px';
+    iconBoxEl.style.transformOrigin = cx - iconR.left + 'px ' + (cy - iconR.top) + 'px';
+  }
+
+  /**
    * @param {Element} el
    * @param {number} peakScale
    * @param {number} inMs
@@ -414,18 +431,31 @@
     const peak = Math.max(1, peakScale);
     const total = inMs + holdMs + outMs;
     const scaleEl = el.querySelector('.milksha-num') || el;
+    const iconBoxEl = el.querySelector('.milksha-board-icon-box');
+    const scaleTargets = iconBoxEl ? [scaleEl, iconBoxEl] : [scaleEl];
     if (!el.animate || total <= 0) {
       snapOpacity(el, 1);
       el.style.transform = '';
       scaleEl.style.transform = '';
+      if (iconBoxEl) {
+        iconBoxEl.style.transform = '';
+      }
       return Promise.resolve();
     }
     cancelElementAnimations(el);
-    cancelElementAnimations(scaleEl);
+    scaleTargets.forEach(function (target) {
+      cancelElementAnimations(target);
+    });
     el.style.transform = '';
-    scaleEl.style.transformOrigin = 'center center';
+    if (iconBoxEl) {
+      setReadyPulseSharedScaleOrigin(scaleEl, iconBoxEl);
+    } else {
+      scaleEl.style.transformOrigin = 'center center';
+    }
+    scaleTargets.forEach(function (target) {
+      target.style.transform = 'scale(1)';
+    });
     el.style.opacity = '0';
-    scaleEl.style.transform = 'scale(1)';
     const inEnd = inMs / total;
     const holdEnd = (inMs + holdMs) / total;
     const anim = el.animate(
@@ -436,20 +466,23 @@
       ],
       { duration: total, easing: 'ease-out', fill: 'forwards' },
     );
-    const scaleAnim = scaleEl.animate(
-      [
-        { transform: 'scale(1)' },
-        { transform: 'scale(' + peak + ')', offset: inEnd },
-        { transform: 'scale(' + peak + ')', offset: holdEnd },
-        { transform: 'scale(1)' },
-      ],
-      { duration: total, easing: 'ease-out', fill: 'forwards' },
-    );
+    const scaleKeyframes = [
+      { transform: 'scale(1)' },
+      { transform: 'scale(' + peak + ')', offset: inEnd },
+      { transform: 'scale(' + peak + ')', offset: holdEnd },
+      { transform: 'scale(1)' },
+    ];
+    const scaleAnimOpts = { duration: total, easing: 'ease-out', fill: 'forwards' };
+    const scaleAnims = scaleTargets.map(function (target) {
+      return target.animate(scaleKeyframes, scaleAnimOpts);
+    });
     return new Promise(function (resolve) {
       function snapReadyPulseEndState() {
         snapOpacity(el, 1);
         el.style.transform = '';
-        scaleEl.style.transform = '';
+        scaleTargets.forEach(function (target) {
+          target.style.transform = '';
+        });
       }
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
@@ -464,14 +497,20 @@
         snapReadyPulseEndState();
         resolve();
       };
-      scaleAnim.onfinish = function () {
-        if (getGeneration() !== generation) {
-          scaleEl.style.transform = '';
-        }
-      };
-      scaleAnim.oncancel = function () {
-        scaleEl.style.transform = '';
-      };
+      scaleAnims.forEach(function (scaleAnim) {
+        scaleAnim.onfinish = function () {
+          if (getGeneration() !== generation) {
+            scaleTargets.forEach(function (target) {
+              target.style.transform = '';
+            });
+          }
+        };
+        scaleAnim.oncancel = function () {
+          scaleTargets.forEach(function (target) {
+            target.style.transform = '';
+          });
+        };
+      });
     });
   }
 
