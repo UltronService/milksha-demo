@@ -9,9 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       preview_pr_number:
-        description: 'PR number for /pr-preview/pr-N/ path (default 123)'
+        description: 'PR number for /pr-preview/pr-N/ (manual dispatch only; otherwise from commit)'
         required: false
-        default: '123'
 
 permissions:
   contents: read
@@ -29,6 +28,7 @@ jobs:
     outputs:
       preview_base: ${{ steps.urls.outputs.preview_base }}
       preview_pr_number: ${{ steps.prnum.outputs.number }}
+      preview_build_label: ${{ steps.stamp.outputs.build_label }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -39,17 +39,24 @@ jobs:
           echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
           echo "GITHUB_SHA=${GITHUB_SHA}"
 
+      - name: Checkout trial branch (preview content + CI scripts)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: pr-tree
+
       - name: Resolve preview PR number
         id: prnum
         env:
           GH_TOKEN: ${{ github.token }}
-          FALLBACK_PR: ${{ github.event.inputs.preview_pr_number || '123' }}
+          DISPATCH_PR: ${{ github.event.inputs.preview_pr_number || '' }}
         run: |
           set -euo pipefail
-          num="$(gh pr list --head "${GITHUB_REF_NAME}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
-          if [ -z "$num" ] || [ "$num" = "null" ]; then
-            num="$FALLBACK_PR"
-          fi
+          associated="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[].number' 2>/dev/null | tr '\n' ' ' || true)"
+          head_num="$(gh pr list --head "${GITHUB_REF_NAME}" --state open --json number --jq '.[0].number' 2>/dev/null || true)"
+          export ASSOCIATED_PR_NUMBERS="$associated"
+          export HEAD_PR_NUMBER="$head_num"
+          num="$(node pr-tree/scripts/resolve-board-pr-preview-pr-number.mjs)"
           echo "number=$num" >> "$GITHUB_OUTPUT"
           echo "Using pr-preview/pr-${num}/"
 
@@ -77,12 +84,6 @@ jobs:
           node main-tree/scripts/inject-firebase-config.mjs deploy-site/config/firebase.js
           touch deploy-site/.nojekyll
 
-      - name: Checkout trial branch (preview content)
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          path: pr-tree
-
       - name: Add PR preview subtree
         env:
           MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
@@ -108,8 +109,7 @@ jobs:
           PR_NUMBER: ${{ steps.prnum.outputs.number }}
         run: |
           set -euo pipefail
-          chmod +x pr-tree/scripts/preserve-pages-pr-preview.sh
-          pr-tree/scripts/preserve-pages-pr-preview.sh deploy-site "$PR_NUMBER"
+          node pr-tree/scripts/preserve-pages-pr-preview.mjs deploy-site "$PR_NUMBER"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -128,18 +128,30 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.prnum.outputs.number }}
         run: |
-          base="https://ultronservice.github.io/milksha-demo/pr-preview/pr-${PR_NUMBER}/"
+          set -euo pipefail
+          base="$(node -e "import { buildPreviewBaseUrl } from './pr-tree/scripts/lib/board-pr-preview-deploy.mjs'; console.log(buildPreviewBaseUrl(process.env.PR_NUMBER));")"
           echo "preview_base=${base}" >> "$GITHUB_OUTPUT"
+
+      - name: Read expected build stamp from trial branch
+        id: stamp
+        run: |
+          set -euo pipefail
+          label="$(node -e "
+            import { readFileSync } from 'node:fs';
+            import { parseMilkshaAssetVersionJs } from './pr-tree/scripts/lib/board-pr-preview-deploy.mjs';
+            const t = readFileSync('pr-tree/js/milksha-asset-version.js','utf8');
+            const p = parseMilkshaAssetVersionJs(t);
+            if (!p.boardWebBuildLabel) process.exit(1);
+            console.log(p.boardWebBuildLabel);
+          ")"
+          echo "build_label=${label}" >> "$GITHUB_OUTPUT"
 
       - name: Verify build stamp in preview static file
         env:
           PREVIEW_BASE: ${{ steps.urls.outputs.preview_base }}
         run: |
           set -euo pipefail
-          sleep 15
-          ver="$(curl -fsSL "${PREVIEW_BASE}js/milksha-asset-version.js")"
-          echo "$ver" | grep -q "MILKSHA_ASSET_VERSION = '20261026a'"
-          echo "$ver" | grep -q "10/26 00:00"
+          node pr-tree/scripts/verify-board-pr-preview-live.mjs pr-tree "$PREVIEW_BASE"
 
   comment:
     needs: deploy
@@ -150,14 +162,16 @@ jobs:
         env:
           PR_NUMBER: ${{ needs.deploy.outputs.preview_pr_number }}
           PREVIEW_BASE: ${{ needs.deploy.outputs.preview_base }}
+          BUILD_LABEL: ${{ needs.deploy.outputs.preview_build_label }}
         with:
           script: |
             const marker = '<!-- milksha-board-pr-preview -->';
             const base = process.env.PREVIEW_BASE;
             const prNum = process.env.PR_NUMBER;
+            const buildLabel = process.env.BUILD_LABEL || '(see js/milksha-asset-version.js)';
             const board = `${base}?mode=cloud&store=zz-qa-store-a&motion=on&demo=1`;
             const controller = `${base}controller/?mode=cloud&store=zz-qa-store-a`;
-            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 路徑：\`pr-preview/pr-${prNum}/\`；正式站 [根目錄](https://ultronservice.github.io/milksha-demo/) 不變。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角版本號應為 \`10/25 06:45\`。`;
+            const body = `${marker}\n## 看板試作預覽（PM）\n\n| | 連結 |\n|---|---|\n| **看板** | ${board} |\n| **控制端** | ${controller} |\n\n- 路徑：\`pr-preview/pr-${prNum}/\`；正式站 [根目錄](https://ultronservice.github.io/milksha-demo/) 不變。\n- 測試店：\`zz-qa-store-a\`。\n- 左下角版本號應為 \`${buildLabel}\`。`;
             const issue_number = Number(prNum);
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
