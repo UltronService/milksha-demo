@@ -44,10 +44,10 @@ jobs:
       - name: Preserve PR preview folders from live Pages
         env:
           GH_TOKEN: ${{ github.token }}
+          PAGES_PRESERVE_STRICT: "1"
         run: |
           set -euo pipefail
-          chmod +x scripts/preserve-pages-pr-preview.sh
-          scripts/preserve-pages-pr-preview.sh _site ""
+          node scripts/preserve-pages-pr-preview.mjs _site ""
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
