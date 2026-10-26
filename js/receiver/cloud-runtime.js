@@ -462,6 +462,9 @@
     }
 
     function applyNumberContent(numberContent, seq, opts) {
+      if (isDemoMode()) {
+        return { isOK: true, skippedDemo: true };
+      }
       const list = Array.isArray(numberContent) ? numberContent : [];
       const nextReady = BoardSeq.readyIdSetFromContent(
         list,
@@ -522,6 +525,9 @@
     }
 
     function tryApplyTodayBoard(boardDoc, opts) {
+      if (isDemoMode()) {
+        return { ignored: true, reason: 'demo_mode' };
+      }
       if (!boardDoc || !boardDoc.data) {
         return null;
       }
@@ -622,10 +628,21 @@
       return heartbeatMs;
     }
 
+    function heartbeatEverySec() {
+      return Math.max(1, Math.round(effectiveHeartbeatIntervalMs() / 1000));
+    }
+
+    function documentHiddenForHeartbeat() {
+      return Boolean(root.document && root.document.visibilityState === 'hidden');
+    }
+
     function scheduleHeartbeatLoop() {
       if (heartbeatTimer) {
         root.clearInterval(heartbeatTimer);
         heartbeatTimer = null;
+      }
+      if (documentHiddenForHeartbeat()) {
+        return;
       }
       const intervalMs = effectiveHeartbeatIntervalMs();
       heartbeatTimer = root.setInterval(function () {
@@ -634,6 +651,7 @@
     }
 
     function onVisibilityForHeartbeat() {
+      scheduleHeartbeatLoop();
       if (!root.document || root.document.visibilityState !== 'visible') {
         sendHeartbeat();
         return;
@@ -746,6 +764,7 @@
       boardRecoveryKickCount += 1;
       beginPostOfflineFastPollWindow();
       lastBoardUpdateTime = '';
+      resetTransportFirestoreBackoff();
       boardRecoveryInFlight = Promise.resolve()
         .then(function () {
           return resyncFirebaseAuthAfterOffline();
@@ -779,10 +798,17 @@
       return boardRecoveryInFlight;
     }
 
+    function resetTransportFirestoreBackoff() {
+      if (transport && transport.resetFirestoreBackoff) {
+        transport.resetFirestoreBackoff();
+      }
+    }
+
     function markCloudReachable() {
       const wasOffline = !cloudReachable;
       cloudReachable = true;
       if (wasOffline) {
+        resetTransportFirestoreBackoff();
         syncCloudOfflineUi(false);
         kickBoardRecoveryAfterOffline('reachable');
       }
@@ -1485,7 +1511,11 @@
 
       if (!skipBootReceiverCache) {
         tryApplyBootCache();
-      } else if (milkshaRuntime && typeof milkshaRuntime.applyPayload === 'function') {
+      } else if (
+        milkshaRuntime &&
+        typeof milkshaRuntime.applyPayload === 'function' &&
+        !isDemoMode()
+      ) {
         milkshaRuntime.applyPayload([], { silent: true });
       }
       syncGuestClockAfterBoot();
@@ -1500,6 +1530,9 @@
         ensureAuth()
           .then(function () {
             kick();
+            for (let burst = 1; burst <= 4; burst += 1) {
+              root.setTimeout(sendHeartbeat, burst * 500);
+            }
             startFirestoreRealtimeIfPossible().catch(function () {
               /* fallback poll already active */
             });
@@ -1541,6 +1574,9 @@
         noteTickWallClock();
         onSyncAuthUi();
         syncCloudGuestStatusUi();
+        if (documentHiddenForHeartbeat() && tickMs % heartbeatEverySec() === 0) {
+          sendHeartbeat();
+        }
         if (
           commandListenMode === 'poll' &&
           !pauseAutoDevicePoll &&

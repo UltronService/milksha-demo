@@ -265,6 +265,59 @@ test('host minute timer updates suffix only on Taipei minute boundary', function
   assert.match(suffixEl.textContent, /14:30$/);
 });
 
+test('explicit storeNumber overrides bind record from another store (shared localStorage)', async function () {
+  const { sandbox } = loadHostStack();
+  const local = memoryStorage();
+  const session = memoryStorage();
+  const AP = sandbox.QMS.Board.AutoPair;
+  AP.writeBindRecord(local, {
+    brandId: 'zz-qa',
+    storeId: 'zz-qa-store-a',
+    deviceId: 'stb-01',
+    storeName: 'A',
+    storeNumber: 'zz-qa-store-a',
+  });
+  let posted = null;
+  sandbox.QMS.Transport.BoardBindApi.requestBoardAutoPair = async function (_api, payload) {
+    posted = payload;
+    return {
+      storeId: 'zz-qa-store-b',
+      storeName: 'B',
+      storeNumber: 'zz-qa-store-b',
+      isFirstBind: false,
+      customToken: 'fake-b',
+    };
+  };
+  const win = sandbox.window;
+  win.localStorage = local;
+  win.sessionStorage = session;
+  win.__milkshaBoardAutoPairController = null;
+  win.setTimeout = function () {
+    return 0;
+  };
+  win.clearTimeout = function () {};
+  win.addEventListener = function () {};
+  const ctl = sandbox.QMS.Board.AutoPairHost.startBoardAutoPair({
+    window: win,
+    document: sandbox.document,
+    localStorage: local,
+    sessionStorage: session,
+    brandId: 'zz-qa',
+    storeNumber: 'zz-qa-store-b',
+    deviceId: 'stb-01',
+    cloudApi: {},
+    signInWithCustomToken: async function () {
+      return 'token';
+    },
+  });
+  const result = await ctl.whenPaired;
+  assert.equal(result.storeId, 'zz-qa-store-b');
+  assert.equal(posted.brand, 'zz-qa');
+  assert.equal(posted.storeNumber, 'zz-qa-store-b');
+  assert.equal(posted.deviceId, 'stb-01');
+  assert.equal(posted.mode, undefined);
+});
+
 test('warnBindFailedOnce logs at most once per window boot', function () {
   const { sandbox } = loadHostStack();
   let warns = 0;

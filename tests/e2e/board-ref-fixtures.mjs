@@ -1,15 +1,16 @@
 /** Reference-board numbers for art QA — prep and ready must differ (ready wins on overlap). */
+/** Point (迷點) preparing numbers must be 3 digits per normalizeBoardDisplayNumber. */
 export const REF_BOARD_NUMBERS_PREP = [
-  '2907',
-  '2906',
-  '2905',
-  '2904',
-  '2903',
-  '2902',
-  '2901',
-  '2900',
-  '2899',
-  '2898',
+  '907',
+  '906',
+  '905',
+  '904',
+  '903',
+  '902',
+  '901',
+  '900',
+  '899',
+  '898',
 ];
 
 export const REF_BOARD_NUMBERS_READY = [

@@ -26,6 +26,33 @@
   const BULK_SNAPSHOT_MAX_OVERLAP_RATIO = 0.35;
 
   /**
+   * @param {'prep' | 'ready'} zoneKey
+   * @param {string} modelId
+   * @returns {string}
+   */
+  function chipDomItemId(zoneKey, modelId) {
+    if (!modelId) {
+      return '';
+    }
+    return zoneKey + '::' + modelId;
+  }
+
+  /**
+   * @param {string | null} domId
+   * @returns {string}
+   */
+  function modelIdFromChipDomId(domId) {
+    if (!domId || typeof domId !== 'string') {
+      return '';
+    }
+    const sep = domId.indexOf('::');
+    if (sep < 0) {
+      return domId;
+    }
+    return domId.slice(sep + 2);
+  }
+
+  /**
    * @param {Array<{ id: string }>} items
    * @param {number} page
    * @param {number} pageSize
@@ -102,7 +129,7 @@
    * @param {(items: unknown[], page: number, pageSize: number) => Array<{ id?: string } | null>} layoutPageGrid
    * @returns {boolean}
    */
-  function domVisibleLayoutMatches(slotEls, items, page, pageSize, layoutPageGrid) {
+  function domVisibleLayoutMatches(slotEls, items, page, pageSize, layoutPageGrid, zoneKey) {
     const cells = layoutPageGrid(items, page, pageSize);
     for (let i = 0; i < pageSize; i += 1) {
       const slot = slotEls[i];
@@ -113,7 +140,9 @@
       const expectedId = cell && cell.id ? cell.id : '';
       const chip = slot.querySelector('.milksha-board-chip[data-item-id]');
       const domId = chip ? chip.getAttribute('data-item-id') || '' : '';
-      if (domId !== expectedId) {
+      const visibleModelId = modelIdFromChipDomId(domId);
+      const expectedDomId = expectedId ? chipDomItemId(zoneKey, expectedId) : '';
+      if (domId !== expectedDomId && visibleModelId !== expectedId) {
         return false;
       }
     }
@@ -246,6 +275,11 @@
     if (!parent || !parent.classList || !parent.classList.contains('milksha-num-cell')) {
       return;
     }
+    const fadeItemId = chip.getAttribute('data-item-id');
+    if (fadeItemId) {
+      chip.setAttribute('data-motion-fade-item-id', fadeItemId);
+      chip.removeAttribute('data-item-id');
+    }
     const layerRect = numbersLayer.getBoundingClientRect();
     const chipRect = chip.getBoundingClientRect();
     chip.classList.add('milksha-board-chip--layer-float');
@@ -288,6 +322,32 @@
     cancelElementAnimations(numbersLayer);
     snapOpacity(numbersLayer, 1);
     removeOrphanLayerFloatChips(numbersLayer);
+  }
+
+  /**
+   * @param {Element} numbersLayer
+   */
+  function abortColumnMoveLayerState(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+      numbersLayer.removeAttribute('data-column-move-anim');
+    }
+    const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+    for (let ec = 0; ec < exitClones.length; ec += 1) {
+      const clone = exitClones[ec];
+      cancelElementAnimations(clone);
+      if (clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
+    }
+    const inCellChips = numbersLayer.querySelectorAll(
+      '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+    );
+    for (let ci = 0; ci < inCellChips.length; ci += 1) {
+      clearMotionStyles(inCellChips[ci]);
+    }
   }
 
   /**
@@ -353,23 +413,35 @@
     }
     const peak = Math.max(1, peakScale);
     const total = inMs + holdMs + outMs;
+    const scaleEl = el.querySelector('.milksha-num') || el;
     if (!el.animate || total <= 0) {
       snapOpacity(el, 1);
       el.style.transform = '';
+      scaleEl.style.transform = '';
       return Promise.resolve();
     }
     cancelElementAnimations(el);
-    el.style.transformOrigin = 'center center';
+    cancelElementAnimations(scaleEl);
+    el.style.transform = '';
+    scaleEl.style.transformOrigin = 'center center';
     el.style.opacity = '0';
-    el.style.transform = 'scale(1)';
+    scaleEl.style.transform = 'scale(1)';
     const inEnd = inMs / total;
     const holdEnd = (inMs + holdMs) / total;
     const anim = el.animate(
       [
-        { opacity: 0, transform: 'scale(1)' },
-        { opacity: 1, transform: 'scale(' + peak + ')', offset: inEnd },
-        { opacity: 1, transform: 'scale(' + peak + ')', offset: holdEnd },
-        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, offset: 0 },
+        { opacity: 1, offset: inEnd },
+        { opacity: 1, offset: 1 },
+      ],
+      { duration: total, easing: 'ease-out', fill: 'forwards' },
+    );
+    const scaleAnim = scaleEl.animate(
+      [
+        { transform: 'scale(1)' },
+        { transform: 'scale(' + peak + ')', offset: inEnd },
+        { transform: 'scale(' + peak + ')', offset: holdEnd },
+        { transform: 'scale(1)' },
       ],
       { duration: total, easing: 'ease-out', fill: 'forwards' },
     );
@@ -377,6 +449,7 @@
       function snapReadyPulseEndState() {
         snapOpacity(el, 1);
         el.style.transform = '';
+        scaleEl.style.transform = '';
       }
       anim.onfinish = function () {
         if (getGeneration() !== generation) {
@@ -391,10 +464,241 @@
         snapReadyPulseEndState();
         resolve();
       };
+      scaleAnim.onfinish = function () {
+        if (getGeneration() !== generation) {
+          scaleEl.style.transform = '';
+        }
+      };
+      scaleAnim.oncancel = function () {
+        scaleEl.style.transform = '';
+      };
     });
   }
 
   const GRID_ROWS = 5;
+  const SLOT_MOVE_EPSILON_PX = 2;
+
+  /**
+   * @param {number} slot
+   * @returns {number}
+   */
+  function slotColumnIndex(slot) {
+    return slot < GRID_ROWS ? 0 : 1;
+  }
+
+  /**
+   * @param {number} fromSlot
+   * @param {number} toSlot
+   * @returns {boolean}
+   */
+  function isCrossColumnSlotMove(fromSlot, toSlot) {
+    if (!Number.isFinite(fromSlot) || !Number.isFinite(toSlot) || fromSlot < 0 || toSlot < 0) {
+      return false;
+    }
+    return slotColumnIndex(fromSlot) !== slotColumnIndex(toSlot);
+  }
+
+  /**
+   * @param {number} dx
+   * @param {number} dy
+   * @returns {boolean}
+   */
+  function isDiagonalLayoutDelta(dx, dy) {
+    return (
+      Math.abs(dx) > SLOT_MOVE_EPSILON_PX &&
+      Math.abs(dy) > SLOT_MOVE_EPSILON_PX
+    );
+  }
+
+  /**
+   * @param {{ left: number, top: number, right: number, bottom: number }} a
+   * @param {{ left: number, top: number, right: number, bottom: number }} b
+   * @returns {boolean}
+   */
+  function chipRectsOverlap(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  }
+
+  /**
+   * @param {Element} slotEl
+   * @param {Element} numbersLayer
+   * @returns {boolean}
+   */
+  /**
+   * @param {Element} slotEl
+   * @param {Element} numbersLayer
+   */
+  function removeOverlappingFloatChipsInSlot(slotEl, numbersLayer) {
+    if (!slotEl || !numbersLayer) {
+      return;
+    }
+    const slotRect = slotEl.getBoundingClientRect();
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const fr = floatChip.getBoundingClientRect();
+      if (fr.width > 0.5 && fr.height > 0.5 && chipRectsOverlap(fr, slotRect)) {
+        cancelElementAnimations(floatChip);
+        clearMotionStyles(floatChip);
+        if (floatChip.parentNode) {
+          floatChip.parentNode.removeChild(floatChip);
+        }
+      }
+    }
+  }
+
+  /**
+   * @param {Element} numbersLayer
+   * @param {string} numberText
+   */
+  function removeFloatChipsWithoutVisibleNumbers(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (text) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
+  function removeZoneFloatsDuplicatingSettledNumbers(numbersLayer) {
+    if (!numbersLayer) {
+      return;
+    }
+    const settled = new Set();
+    const inCellNums = numbersLayer.querySelectorAll(
+      '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float) .milksha-num',
+    );
+    for (let si = 0; si < inCellNums.length; si += 1) {
+      const text = String(inCellNums[si].textContent || '').trim();
+      if (text) {
+        settled.add(text);
+      }
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (!text) {
+        continue;
+      }
+      if (!settled.has(text)) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
+  function removeZoneFloatChipsWithNumber(numbersLayer, numberText) {
+    if (!numbersLayer || !numberText) {
+      return;
+    }
+    const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+    for (let fi = 0; fi < floats.length; fi += 1) {
+      const floatChip = floats[fi];
+      if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+        continue;
+      }
+      const numEl = floatChip.querySelector('.milksha-num');
+      const text = numEl ? String(numEl.textContent || '').trim() : '';
+      if (text !== numberText) {
+        continue;
+      }
+      cancelElementAnimations(floatChip);
+      clearMotionStyles(floatChip);
+      if (floatChip.parentNode) {
+        floatChip.parentNode.removeChild(floatChip);
+      }
+    }
+  }
+
+  /**
+   * @param {Element} chip
+   * @param {string} id
+   * @param {Record<string, DOMRect>} rectsBeforeMap
+   */
+  function applyMovedChipFlipPreflight(chip, id, rectsBeforeMap) {
+    const before = rectsBeforeMap[id];
+    if (!chip || !before) {
+      return;
+    }
+    const after = chip.getBoundingClientRect();
+    const dx = before.left - after.left;
+    const dy = before.top - after.top;
+    if (Math.abs(dx) < SLOT_MOVE_EPSILON_PX && Math.abs(dy) < SLOT_MOVE_EPSILON_PX) {
+      return;
+    }
+    if (isDiagonalLayoutDelta(dx, dy)) {
+      return;
+    }
+    if (Math.abs(dx) > SLOT_MOVE_EPSILON_PX && Math.abs(dy) <= SLOT_MOVE_EPSILON_PX) {
+      chip.style.transform = 'translate(' + dx + 'px,0px)';
+      return;
+    }
+    if (Math.abs(dy) > SLOT_MOVE_EPSILON_PX && Math.abs(dx) <= SLOT_MOVE_EPSILON_PX) {
+      chip.style.transform = 'translate(0px,' + dy + 'px)';
+    }
+  }
+
+  function slotHasOverlappingChipRects(slotEl, numbersLayer) {
+    if (!slotEl || !slotEl.getBoundingClientRect) {
+      return false;
+    }
+    const slotRect = slotEl.getBoundingClientRect();
+    const rects = [];
+    const chips = slotEl.querySelectorAll('.milksha-board-chip');
+    for (let ci = 0; ci < chips.length; ci += 1) {
+      const r = chips[ci].getBoundingClientRect();
+      if (r.width > 0.5 && r.height > 0.5) {
+        rects.push(r);
+      }
+    }
+    if (numbersLayer && typeof numbersLayer.querySelectorAll === 'function') {
+      const floats = numbersLayer.querySelectorAll('.milksha-board-chip--layer-float');
+      for (let fi = 0; fi < floats.length; fi += 1) {
+        const floatChip = floats[fi];
+        if (floatChip.getAttribute('data-column-move-exit-clone') === '1') {
+          continue;
+        }
+        const fr = floatChip.getBoundingClientRect();
+        if (fr.width > 0.5 && fr.height > 0.5 && chipRectsOverlap(fr, slotRect)) {
+          rects.push(fr);
+        }
+      }
+    }
+    for (let i = 0; i < rects.length; i += 1) {
+      for (let j = i + 1; j < rects.length; j += 1) {
+        if (chipRectsOverlap(rects[i], rects[j])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   /**
    * @param {Array<{ id: string }>} items
@@ -422,23 +726,53 @@
    * @param {{ added: string[], removed: string[], moved: Array<{ id: string, from: number, to: number }>, pageTurn: boolean }} diff
    * @returns {null | { kind: string, addedId: string, pushedId?: string, enterSlot: number, leftBottomSlot?: number, rightTopSlot?: number, rightBottomSlot?: number }}
    */
-  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
-    if (diff.pageTurn || diff.removed.length > 0) {
+  function detectRightBottomPageOverflowPlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.added.length !== 1 || diff.removed.length !== 1) {
       return null;
     }
     const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
     const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
-    if (prevN === 10 && nextN === 10 && nextItems.length === 11) {
-      const nextMapEarly = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
-      const addedIdOverflow = diff.added.length === 1 ? diff.added[0] : '';
-      const enterSlotOverflow = addedIdOverflow ? nextMapEarly.get(addedIdOverflow) : -1;
-      return {
-        kind: 'right-bottom-page-two',
-        addedId: addedIdOverflow,
-        enterSlot: enterSlotOverflow === undefined ? -1 : enterSlotOverflow,
-        rightBottomSlot: pageSize - 1,
-      };
+    if (prevN !== 10 || nextN !== 10 || nextItems.length !== prevItems.length + 1) {
+      return null;
     }
+    const prevCells = layoutPageGrid(prevItems, page, pageSize);
+    const exitCell = prevCells[pageSize - 1];
+    const exitId = exitCell && exitCell.id ? exitCell.id : '';
+    if (!exitId || diff.removed[0] !== exitId) {
+      return null;
+    }
+    const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
+    const addedId = diff.added[0];
+    const enterSlot = nextMap.get(addedId);
+    return {
+      kind: 'right-bottom-page-two',
+      addedId: addedId,
+      enterSlot: enterSlot === undefined ? -1 : enterSlot,
+      rightBottomSlot: pageSize - 1,
+      exitId: exitId,
+    };
+  }
+
+  function detectColumnMovePlan(prevItems, nextItems, page, pageSize, layoutPageGrid, diff) {
+    if (diff.pageTurn) {
+      return null;
+    }
+    const overflowPlan = detectRightBottomPageOverflowPlan(
+      prevItems,
+      nextItems,
+      page,
+      pageSize,
+      layoutPageGrid,
+      diff,
+    );
+    if (overflowPlan) {
+      return overflowPlan;
+    }
+    if (diff.removed.length > 0) {
+      return null;
+    }
+    const prevN = countVisibleOnPage(prevItems, page, pageSize, layoutPageGrid);
+    const nextN = countVisibleOnPage(nextItems, page, pageSize, layoutPageGrid);
     if (diff.added.length !== 1) {
       return null;
     }
@@ -447,14 +781,6 @@
     const nextMap = visibleIdToSlot(nextItems, page, pageSize, layoutPageGrid);
     const enterSlot = nextMap.get(addedId);
     if (enterSlot === undefined) {
-      if (prevN === 10 && nextItems.length === 11) {
-        return {
-          kind: 'right-bottom-page-two',
-          addedId: addedId,
-          enterSlot: -1,
-          rightBottomSlot: pageSize - 1,
-        };
-      }
       return null;
     }
     if (nextN !== prevN + 1) {
@@ -480,6 +806,17 @@
         };
       }
       return null;
+    }
+    if (prevN === 5 && nextN === 6) {
+      const nextCells = layoutPageGrid(nextItems, page, pageSize);
+      const occupant = nextCells[GRID_ROWS];
+      if (occupant && occupant.id) {
+        return {
+          kind: 'right-column-fade-in',
+          focusId: occupant.id,
+          enterSlot: GRID_ROWS,
+        };
+      }
     }
     return null;
   }
@@ -725,6 +1062,7 @@
       }
       const layers = boardEl.querySelectorAll('.milksha-zone-numbers');
       for (let j = 0; j < layers.length; j += 1) {
+        abortColumnMoveLayerState(layers[j]);
         abortPageTurnLayerState(layers[j]);
         removeOrphanLayerFloatChips(layers[j]);
         clearMotionStyles(layers[j]);
@@ -769,7 +1107,7 @@
       const all = boardRoot.querySelectorAll('.milksha-board-chip[data-item-id]');
       for (let i = 0; i < all.length; i += 1) {
         const other = all[i];
-        if (other.getAttribute('data-item-id') !== id) {
+        if (modelIdFromChipDomId(other.getAttribute('data-item-id')) !== id) {
           continue;
         }
         if (keepChip && other === keepChip) {
@@ -788,13 +1126,42 @@
       if (!chip || pendingRemove.has(chip)) {
         return;
       }
+      const fadeOutId = chip.getAttribute('data-item-id');
+      if (fadeOutId) {
+        chip.setAttribute('data-motion-fade-item-id', fadeOutId);
+        chip.removeAttribute('data-item-id');
+      }
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
       pendingRemove.add(chip);
+      const existingFloats = numbersLayer
+        ? numbersLayer.querySelectorAll('.milksha-board-chip--layer-float').length
+        : 0;
+      if (existingFloats > 0) {
+        cancelElementAnimations(chip);
+        clearMotionStyles(chip);
+        if (chip.parentNode) {
+          chip.parentNode.removeChild(chip);
+        }
+        pendingRemove.delete(chip);
+        removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+        removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+        return;
+      }
       detachChipFromSlotForFade(chip, numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
       const fromOpacity = Number.parseFloat(chip.style.opacity);
       const from = Number.isFinite(fromOpacity) ? fromOpacity : 1;
       let timeoutId = null;
       if (deps.window && typeof deps.window.setTimeout === 'function') {
         timeoutId = deps.window.setTimeout(function () {
+          if (getGeneration() !== gen) {
+            pendingRemove.delete(chip);
+            if (chip.parentNode) {
+              chip.parentNode.removeChild(chip);
+            }
+            return;
+          }
           if (chip.parentNode) {
             chip.parentNode.removeChild(chip);
           }
@@ -805,6 +1172,13 @@
         runOpacityAnim(chip, from, 0, opacityInMs, gen).then(function () {
           if (timeoutId !== null && deps.window.clearTimeout) {
             deps.window.clearTimeout(timeoutId);
+          }
+          if (getGeneration() !== gen) {
+            pendingRemove.delete(chip);
+            if (chip.parentNode) {
+              chip.parentNode.removeChild(chip);
+            }
+            return;
           }
           if (chip.parentNode) {
             chip.parentNode.removeChild(chip);
@@ -820,7 +1194,44 @@
      * @param {Array<{ id?: string, number?: string } | null>} cells
      * @param {Record<string, Element>} chipById
      */
-    function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById) {
+    function settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKeyForDom) {
+      numbersLayer.removeAttribute('data-page-turn-anim');
+      hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {}, zoneKeyForDom);
+      snapOpacity(numbersLayer, 1);
+    }
+
+    /**
+     * @param {NodeListOf<Element> | Element[]} slotEls
+     * @param {Array<{ number?: string } | null>} cells
+     * @returns {boolean}
+     */
+    function zoneDomMissingAllExpectedNumbers(slotEls, cells, prevItems) {
+      if (!prevItems || prevItems.length === 0) {
+        return false;
+      }
+      let expected = 0;
+      let visible = 0;
+      for (let zi = 0; zi < cells.length; zi += 1) {
+        const cell = cells[zi];
+        if (!cell || !cell.number) {
+          continue;
+        }
+        expected += 1;
+        const slot = slotEls[zi];
+        if (!slot) {
+          continue;
+        }
+        const numEl = slot.querySelector(
+          '.milksha-board-chip:not(.milksha-board-chip--layer-float) .milksha-num',
+        );
+        if (numEl && numEl.textContent.trim()) {
+          visible += 1;
+        }
+      }
+      return expected > 0 && visible === 0;
+    }
+
+    function hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKeyForDom) {
       abortPageTurnLayerState(numbersLayer);
       removeOrphanLayerFloatChips(numbersLayer);
       for (let i = 0; i < deps.pageSize; i += 1) {
@@ -833,7 +1244,7 @@
         const id = cell.id || '';
         const chip = deps.document.createElement('div');
         chip.className = chipClassForCell(cell);
-        chip.setAttribute('data-item-id', id);
+        chip.setAttribute('data-item-id', chipDomItemId(zoneKeyForDom, id));
         chip.innerHTML = chipInnerHtml(cell);
         snapOpacity(chip, 1);
         slot.appendChild(chip);
@@ -853,15 +1264,20 @@
      *   clearAll?: boolean,
      *   scalePulseIds?: string[],
      *   skipReadyScale?: boolean,
+     *   crossZoneReadyIds?: string[],
      *   prevItems: Array<{ id: string, number: string }>,
      *   prevPage: number,
+     *   useGeneration?: number,
      * }} opts
      */
     function syncZone(zoneEl, zoneKey, items, page, opts) {
       const animCfg = getAnimConfig();
       const opacityInMs = animCfg.opacityInMs;
       const pageDurationMs = animCfg.pageDurationMs;
-      const gen = bumpGeneration();
+      const gen =
+        typeof opts.useGeneration === 'number' && Number.isFinite(opts.useGeneration)
+          ? opts.useGeneration
+          : bumpGeneration();
       const numbersLayer = zoneEl.querySelector('.milksha-zone-numbers');
       const scalePulseSet = {};
       const pulseIds = opts.scalePulseIds || [];
@@ -876,65 +1292,22 @@
       if (!numbersLayer) {
         return Promise.resolve();
       }
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
       const prevItems = opts.prevItems || [];
       const prevPage = opts.prevPage || 0;
       const diff = diffVisibleSlots(prevItems, items, prevPage, page, deps.pageSize, deps.layoutPageGrid);
+      const prevVisibleSlotMap = visibleIdToSlot(
+        prevItems,
+        prevPage,
+        deps.pageSize,
+        deps.layoutPageGrid,
+      );
       const pageTurn = Boolean(opts.pageTurn) || diff.pageTurn;
       const cells = deps.layoutPageGrid(items, page, deps.pageSize);
       const slotEls = numbersLayer.querySelectorAll('.milksha-num-cell');
 
       if (slotEls.length !== deps.pageSize) {
-        return Promise.resolve();
-      }
-
-      const interruptedPageTurn =
-        numbersLayer.getAttribute('data-page-turn-anim') === '1' && !pageTurn;
-      removeOrphanLayerFloatChips(numbersLayer);
-
-      const chipById = {};
-      const rectsBefore = {};
-      numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
-        const id = chip.getAttribute('data-item-id');
-        if (!id) {
-          return;
-        }
-        chipById[id] = chip;
-        rectsBefore[id] = chip.getBoundingClientRect();
-      });
-
-      const promises = [];
-      const pendingRemove = new Set();
-
-      if (interruptedPageTurn) {
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
-        return Promise.resolve();
-      }
-
-      if (pageTurn && numbersLayer.getAttribute('data-page-turn-anim') === '1') {
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
-      }
-
-      abortPageTurnLayerState(numbersLayer);
-
-      if (
-        pageTurn &&
-        !domVisibleLayoutMatches(
-          slotEls,
-          items,
-          page,
-          deps.pageSize,
-          deps.layoutPageGrid,
-        ) &&
-        !domVisibleLayoutMatches(
-          slotEls,
-          prevItems,
-          prevPage,
-          deps.pageSize,
-          deps.layoutPageGrid,
-        )
-      ) {
-        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
-        snapOpacity(numbersLayer, 1);
         return Promise.resolve();
       }
 
@@ -946,23 +1319,174 @@
         deps.layoutPageGrid,
         diff,
       );
-      if (
-        !columnMovePlan &&
-        page === 0 &&
-        items.length === 11 &&
-        prevItems.length === 10 &&
-        !pageTurn
-      ) {
-        columnMovePlan = {
-          kind: 'right-bottom-page-two',
-          addedId: '',
-          enterSlot: -1,
-          rightBottomSlot: deps.pageSize - 1,
-        };
+      if (!columnMovePlan && !pageTurn && items.length === prevItems.length + 1) {
+        const fallbackOverflow = detectRightBottomPageOverflowPlan(
+          prevItems,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          diff,
+        );
+        if (fallbackOverflow) {
+          columnMovePlan = fallbackOverflow;
+        }
       }
+      const columnMoveAnimActive =
+        Boolean(columnMovePlan) || numbersLayer.getAttribute('data-column-move-anim') === '1';
+
+      for (let overlapIdx = 0; overlapIdx < slotEls.length; overlapIdx += 1) {
+        const inSlot = slotEls[overlapIdx].querySelectorAll(
+          '.milksha-board-chip:not(.milksha-board-chip--layer-float)',
+        );
+        const floatOverlap = slotHasOverlappingChipRects(slotEls[overlapIdx], numbersLayer);
+        if (inSlot.length > 1 || (!columnMoveAnimActive && floatOverlap)) {
+          abortColumnMoveLayerState(numbersLayer);
+          abortPageTurnLayerState(numbersLayer);
+          removeOrphanLayerFloatChips(numbersLayer);
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, {}, zoneKey);
+          snapOpacity(numbersLayer, 1);
+          return Promise.resolve();
+        }
+      }
+
+      const interruptedPageTurn =
+        numbersLayer.getAttribute('data-page-turn-anim') === '1' && !pageTurn;
+      removeOrphanLayerFloatChips(numbersLayer);
+
+      const chipById = {};
+      const rectsBefore = {};
+      numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+        const id = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
+        if (!id) {
+          return;
+        }
+        chipById[id] = chip;
+        rectsBefore[id] = chip.getBoundingClientRect();
+      });
+
+      numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+        const stalePulseId = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
+        if (!stalePulseId || scalePulseSet[stalePulseId]) {
+          return;
+        }
+        snapOpacity(chip, 1);
+        chip.style.transform = '';
+      });
+
+      const promises = [];
+      const pendingRemove = new Set();
+
+      if (zoneDomMissingAllExpectedNumbers(slotEls, cells, prevItems)) {
+        abortColumnMoveLayerState(numbersLayer);
+        abortPageTurnLayerState(numbersLayer);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
+        snapOpacity(numbersLayer, 1);
+        numbersLayer.querySelectorAll('.milksha-board-chip[data-item-id]').forEach(function (chip) {
+          const id = modelIdFromChipDomId(chip.getAttribute('data-item-id'));
+          if (id) {
+            chipById[id] = chip;
+          }
+        });
+      }
+
+      if (interruptedPageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+        abortPageTurnLayerState(numbersLayer);
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
+        return Promise.resolve();
+      }
+
+      if (pageTurn && numbersLayer.getAttribute('data-page-turn-anim') === '1') {
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
+      }
+
+      if (pageTurn) {
+        abortColumnMoveLayerState(numbersLayer);
+      }
+      abortPageTurnLayerState(numbersLayer);
+
+      if (
+        pageTurn &&
+        !domVisibleLayoutMatches(
+          slotEls,
+          items,
+          page,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          zoneKey,
+        ) &&
+        !domVisibleLayoutMatches(
+          slotEls,
+          prevItems,
+          prevPage,
+          deps.pageSize,
+          deps.layoutPageGrid,
+          zoneKey,
+        )
+      ) {
+        hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
+        snapOpacity(numbersLayer, 1);
+        return Promise.resolve();
+      }
+
       const columnMoveEnterFromAboveIds = {};
+      const columnMoveFadeInPlaceIds = {};
       const columnMoveSkipFlipIds = {};
       let columnMoveDurationMs = opacityInMs;
+      const enterDurationMs =
+        typeof animCfg.columnMoveEnterMs === 'number' && animCfg.columnMoveEnterMs > 0
+          ? animCfg.columnMoveEnterMs
+          : opacityInMs;
+      const useColumnMoveTwoPhase = Boolean(animCfg.columnMoveTwoPhase) && Boolean(columnMovePlan);
+      const phaseMoveThunks = [];
+      const phaseEnterThunks = [];
+      function runAnimThunks(thunks) {
+        if (!thunks.length) {
+          return Promise.resolve();
+        }
+        return Promise.all(
+          thunks.map(function (startAnim) {
+            return startAnim();
+          }),
+        );
+      }
+      function animQueue(phase, startAnim) {
+        if (!startAnim) {
+          return;
+        }
+        if (useColumnMoveTwoPhase && phase === 'move') {
+          phaseMoveThunks.push(startAnim);
+          return;
+        }
+        if (useColumnMoveTwoPhase && phase === 'enter') {
+          phaseEnterThunks.push(startAnim);
+          return;
+        }
+        promises.push(startAnim());
+      }
+      function columnMoveEnterAnim(startAnim) {
+        if (useColumnMoveTwoPhase) {
+          animQueue('enter', startAnim);
+          return;
+        }
+        promises.push(startAnim());
+      }
+      function isPhaseTwoEnterHoldId(id) {
+        if (!useColumnMoveTwoPhase || !id || !columnMovePlan) {
+          return false;
+        }
+        if (columnMoveFadeInPlaceIds[id] || columnMoveEnterFromAboveIds[id]) {
+          return true;
+        }
+        if (columnMovePlan.addedId && id === columnMovePlan.addedId) {
+          return true;
+        }
+        if (columnMovePlan.focusId && id === columnMovePlan.focusId) {
+          return true;
+        }
+        return false;
+      }
       if (columnMovePlan) {
         if (zoneKey === 'ready' && columnMovePlan.addedId) {
           scalePulseSet[columnMovePlan.addedId] = true;
@@ -994,8 +1518,8 @@
             exitClone.style.pointerEvents = 'none';
             snapOpacity(exitClone, 1);
             numbersLayer.appendChild(exitClone);
-            promises.push(
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 exitClone,
                 numbersLayer,
                 pitch,
@@ -1003,15 +1527,42 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
           if (pushedId) {
-            columnMoveEnterFromAboveIds[pushedId] = true;
+            columnMoveFadeInPlaceIds[pushedId] = true;
             columnMoveSkipFlipIds[pushedId] = true;
+            delete rectsBefore[pushedId];
           }
           for (let cmi = 0; cmi < diff.moved.length; cmi += 1) {
-            columnMoveSkipFlipIds[diff.moved[cmi].id] = true;
+            const mvCol = diff.moved[cmi];
+            columnMoveSkipFlipIds[mvCol.id] = true;
+            if (isCrossColumnSlotMove(mvCol.from, mvCol.to)) {
+              columnMoveFadeInPlaceIds[mvCol.id] = true;
+              delete rectsBefore[mvCol.id];
+            }
+          }
+        } else if (columnMovePlan.kind === 'right-column-fade-in') {
+          const focusId = columnMovePlan.focusId;
+          columnMoveFadeInPlaceIds[focusId] = true;
+          columnMoveSkipFlipIds[focusId] = true;
+          delete rectsBefore[focusId];
+          for (let rfi = 0; rfi < diff.moved.length; rfi += 1) {
+            const mvFade = diff.moved[rfi];
+            if (mvFade.to === GRID_ROWS) {
+              columnMoveFadeInPlaceIds[mvFade.id] = true;
+              columnMoveSkipFlipIds[mvFade.id] = true;
+              delete rectsBefore[mvFade.id];
+            }
+          }
+          for (let rfa = 0; rfa < diff.added.length; rfa += 1) {
+            delete rectsBefore[diff.added[rfa]];
+          }
+          if (page > 0) {
+            for (let rfm = 0; rfm < diff.moved.length; rfm += 1) {
+              delete rectsBefore[diff.moved[rfm].id];
+            }
           }
         } else if (columnMovePlan.kind === 'right-bottom-page-two') {
           const rbSlot = columnMovePlan.rightBottomSlot;
@@ -1034,8 +1585,8 @@
             rbClone.style.pointerEvents = 'none';
             snapOpacity(rbClone, 1);
             numbersLayer.appendChild(rbClone);
-            promises.push(
-              animateColumnMoveSlideDownOut(
+            animQueue('move', function () {
+              return animateColumnMoveSlideDownOut(
                 rbClone,
                 numbersLayer,
                 pitch,
@@ -1043,8 +1594,8 @@
                 gen,
                 getGeneration,
                 runOpacityAnim,
-              ),
-            );
+              );
+            });
           }
         }
       }
@@ -1055,6 +1606,9 @@
           const chip = existing[c];
           promises.push(
             runOpacityAnim(chip, 1, 0, opacityInMs, gen).then(function () {
+              if (getGeneration() !== gen) {
+                return;
+              }
               if (chip.parentNode) {
                 chip.parentNode.removeChild(chip);
               }
@@ -1065,6 +1619,25 @@
       }
 
       if (pageTurn) {
+        if (zoneKey === 'ready' && pulseIds.length > 0 && !skipReadyScale) {
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
+          snapOpacity(numbersLayer, 1);
+          numbersLayer.removeAttribute('data-page-turn-anim');
+          const readyJumpPulses = [];
+          for (let rpi = 0; rpi < pulseIds.length; rpi += 1) {
+            const readyPulseId = pulseIds[rpi];
+            if (!scalePulseSet[readyPulseId]) {
+              continue;
+            }
+            const readyPulseChip = numbersLayer.querySelector(
+              '.milksha-board-chip[data-item-id="' + chipDomItemId(zoneKey, readyPulseId) + '"]',
+            );
+            if (readyPulseChip) {
+              readyJumpPulses.push(runReadyPulseAnim(readyPulseChip, numbersLayer, gen));
+            }
+          }
+          return Promise.all(readyJumpPulses);
+        }
         removeOrphanLayerFloatChips(numbersLayer);
         const domShowsPrevPage = domVisibleLayoutMatches(
           slotEls,
@@ -1072,9 +1645,10 @@
           prevPage,
           deps.pageSize,
           deps.layoutPageGrid,
+          zoneKey,
         );
         if (!domShowsPrevPage) {
-          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById);
+          hardRebuildSlotsFromCells(numbersLayer, slotEls, cells, chipById, zoneKey);
           snapOpacity(numbersLayer, 1);
           return Promise.resolve();
         }
@@ -1082,7 +1656,7 @@
         promises.push(
           runOpacityAnim(numbersLayer, 1, 0, pageDurationMs / 2, gen).then(function () {
             if (getGeneration() !== gen) {
-              numbersLayer.removeAttribute('data-page-turn-anim');
+              settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKey);
               return;
             }
             removeOrphanLayerFloatChips(numbersLayer);
@@ -1093,14 +1667,32 @@
               if (cell && cell.number) {
                 const chip = deps.document.createElement('div');
                 fillChipElement(chip, cell);
-                chip.setAttribute('data-item-id', cell.id || '');
+                chip.setAttribute('data-item-id', chipDomItemId(zoneKey, cell.id || ''));
                 slot.appendChild(chip);
               }
             }
             snapOpacity(numbersLayer, 0);
             return runOpacityAnim(numbersLayer, 0, 1, pageDurationMs / 2, gen).then(function () {
-              if (getGeneration() === gen) {
-                numbersLayer.removeAttribute('data-page-turn-anim');
+              if (getGeneration() !== gen) {
+                settleInterruptedPageTurn(numbersLayer, slotEls, cells, zoneKey);
+                return;
+              }
+              numbersLayer.removeAttribute('data-page-turn-anim');
+              if (zoneKey === 'ready' && !skipReadyScale && pulseIds.length > 0) {
+                const pulsePromises = [];
+                for (let pxi = 0; pxi < pulseIds.length; pxi += 1) {
+                  const pulseId = pulseIds[pxi];
+                  if (!scalePulseSet[pulseId]) {
+                    continue;
+                  }
+                  const pulseChip = numbersLayer.querySelector(
+                    '.milksha-board-chip[data-item-id="' + chipDomItemId(zoneKey, pulseId) + '"]',
+                  );
+                  if (pulseChip) {
+                    pulsePromises.push(runReadyPulseAnim(pulseChip, numbersLayer, gen));
+                  }
+                }
+                return Promise.all(pulsePromises);
               }
             });
           }),
@@ -1120,7 +1712,7 @@
         const slotChips = slotReconcile.querySelectorAll('.milksha-board-chip');
         for (let sc = 0; sc < slotChips.length; sc += 1) {
           const slotChip = slotChips[sc];
-          const slotChipId = slotChip.getAttribute('data-item-id');
+          const slotChipId = modelIdFromChipDomId(slotChip.getAttribute('data-item-id'));
           if (!expectedId || slotChipId !== expectedId) {
             if (slotChipId && movedIdSet[slotChipId]) {
               continue;
@@ -1131,6 +1723,14 @@
       }
 
       diff.removed.forEach(function (id) {
+        if (
+          columnMovePlan &&
+          columnMovePlan.kind === 'right-bottom-page-two' &&
+          columnMovePlan.exitId &&
+          id === columnMovePlan.exitId
+        ) {
+          return;
+        }
         const chip = chipById[id];
         if (!chip || pendingRemove.has(chip)) {
           return;
@@ -1150,7 +1750,7 @@
           const stray = slot.querySelectorAll('.milksha-board-chip');
           for (let st = 0; st < stray.length; st += 1) {
             if (stray[st] !== chip) {
-              const strayId = stray[st].getAttribute('data-item-id');
+              const strayId = modelIdFromChipDomId(stray[st].getAttribute('data-item-id'));
               if (strayId && movedIdSet[strayId]) {
                 continue;
               }
@@ -1158,25 +1758,46 @@
             }
           }
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          removeOverlappingFloatChipsInSlot(slot, numbersLayer);
+          removeZoneFloatChipsWithNumber(numbersLayer, cell.number || '');
+          const fromSlotReparent = prevVisibleSlotMap.get(id);
+          if (fromSlotReparent !== undefined && isCrossColumnSlotMove(fromSlotReparent, i)) {
+            columnMoveFadeInPlaceIds[id] = true;
+            columnMoveSkipFlipIds[id] = true;
+            delete rectsBefore[id];
+          } else if (!prevVisibleSlotMap.has(id)) {
+            columnMoveFadeInPlaceIds[id] = true;
+            columnMoveSkipFlipIds[id] = true;
+            delete rectsBefore[id];
+          }
           slot.appendChild(chip);
-          if (columnMoveEnterFromAboveIds[id]) {
+          if (!columnMoveFadeInPlaceIds[id]) {
+            applyMovedChipFlipPreflight(chip, id, rectsBefore);
+          }
+          if (columnMoveFadeInPlaceIds[id]) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchMoved = estimateRowPitchPx(slot, numbersLayer);
-            promises.push(
-              animateColumnMoveEnterFromAbove(
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(
                 chip,
                 pitchMoved,
                 columnMoveDurationMs,
                 gen,
                 getGeneration,
-              ),
-            );
+              );
+            });
           }
         }
         if (!chip || pendingRemove.has(chip)) {
           const strayBefore = slot.querySelectorAll('.milksha-board-chip');
           for (let sb = 0; sb < strayBefore.length; sb += 1) {
-            const strayId = strayBefore[sb].getAttribute('data-item-id');
+            const strayId = modelIdFromChipDomId(strayBefore[sb].getAttribute('data-item-id'));
             if (strayId && movedIdSet[strayId]) {
               continue;
             }
@@ -1184,16 +1805,26 @@
           }
           chip = deps.document.createElement('div');
           fillChipElement(chip, cell);
-          chip.setAttribute('data-item-id', id);
           snapOpacity(chip, 0);
           evictDuplicateItemIdChips(boardRoot, id, chip, numbersLayer, gen, opacityInMs, promises, pendingRemove);
+          removeOverlappingFloatChipsInSlot(slot, numbersLayer);
+          removeZoneFloatChipsWithNumber(numbersLayer, cell.number || '');
           slot.appendChild(chip);
           notePerf('chip-dom', { id: id });
+          chip.setAttribute('data-item-id', chipDomItemId(zoneKey, id));
           chipById[id] = chip;
-          if (columnMoveEnterFromAboveIds[id]) {
+          removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+          if (columnMoveFadeInPlaceIds[id]) {
+            chip.style.transform = '';
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+          } else if (columnMoveEnterFromAboveIds[id]) {
             snapOpacity(chip, 0);
             const pitchIn = estimateRowPitchPx(slot, numbersLayer);
-            promises.push(animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration));
+            columnMoveEnterAnim(function () {
+              return animateColumnMoveEnterFromAbove(chip, pitchIn, columnMoveDurationMs, gen, getGeneration);
+            });
           } else if (
             zoneKey === 'ready' &&
             !skipReadyScale &&
@@ -1201,16 +1832,33 @@
             columnMovePlan.kind === 'left-column-overflow' &&
             id === columnMovePlan.addedId
           ) {
-            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            columnMoveEnterAnim(function () {
+              return runReadyPulseAnim(chip, numbersLayer, gen);
+            });
           } else if (zoneKey === 'ready' && scalePulseSet[id] && !skipReadyScale) {
-            promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            if (useColumnMoveTwoPhase && columnMovePlan) {
+              columnMoveEnterAnim(function () {
+                return runReadyPulseAnim(chip, numbersLayer, gen);
+              });
+            } else {
+              promises.push(runReadyPulseAnim(chip, numbersLayer, gen));
+            }
+          } else if (useColumnMoveTwoPhase && columnMovePlan) {
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
           } else {
             promises.push(runOpacityAnim(chip, 0, 1, opacityInMs, gen));
           }
         }
       }
 
+      removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+      removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
+
       const afterLayout = function () {
+        removeFloatChipsWithoutVisibleNumbers(numbersLayer);
+        removeZoneFloatsDuplicatingSettledNumbers(numbersLayer);
         if (columnMovePlan) {
           removeOrphanLayerFloatChips(numbersLayer);
           const holdChips = numbersLayer.querySelectorAll(
@@ -1218,8 +1866,8 @@
           );
           for (let hi = 0; hi < holdChips.length; hi += 1) {
             const holdChip = holdChips[hi];
-            const holdId = holdChip.getAttribute('data-item-id');
-            if (pendingRemove.has(holdChip) || (holdId && columnMoveEnterFromAboveIds[holdId])) {
+            const holdId = modelIdFromChipDomId(holdChip.getAttribute('data-item-id'));
+            if (pendingRemove.has(holdChip) || (holdId && isPhaseTwoEnterHoldId(holdId))) {
               continue;
             }
             ensureVisibleOpacity(holdChip);
@@ -1230,30 +1878,19 @@
           if (!chip || pendingRemove.has(chip)) {
             return;
           }
-          if (columnMoveSkipFlipIds[mv.id]) {
-            if (columnMoveEnterFromAboveIds[mv.id]) {
-              return;
-            }
-            const beforeSkipped = rectsBefore[mv.id];
-            if (!beforeSkipped) {
-              return;
-            }
-            const afterSkipped = chip.getBoundingClientRect();
-            let dxSkipped = beforeSkipped.left - afterSkipped.left;
-            const dySkipped = beforeSkipped.top - afterSkipped.top;
-            if (Math.abs(dxSkipped) > 2) {
-              snapOpacity(chip, 0);
-              dxSkipped = 0;
-            }
-            promises.push(
-              animateTranslate(chip, dxSkipped, dySkipped, columnMoveDurationMs, gen, getGeneration).then(
-                function () {
-                  if (getGeneration() === gen) {
-                    ensureVisibleOpacity(chip);
-                  }
-                },
-              ),
-            );
+          if (scalePulseSet[mv.id]) {
+            return;
+          }
+          if (columnMoveEnterFromAboveIds[mv.id]) {
+            return;
+          }
+          const moveDurationMs = columnMovePlan ? columnMoveDurationMs : opacityInMs;
+          if (columnMoveFadeInPlaceIds[mv.id] || isCrossColumnSlotMove(mv.from, mv.to)) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
             return;
           }
           const before = rectsBefore[mv.id];
@@ -1263,7 +1900,38 @@
           const after = chip.getBoundingClientRect();
           const dx = before.left - after.left;
           const dy = before.top - after.top;
-          promises.push(animateTranslate(chip, dx, dy, opacityInMs, gen, getGeneration));
+          if (Math.abs(dx) < SLOT_MOVE_EPSILON_PX && Math.abs(dy) < SLOT_MOVE_EPSILON_PX) {
+            return;
+          }
+          if (isDiagonalLayoutDelta(dx, dy)) {
+            chip.style.transform = '';
+            snapOpacity(chip, 0);
+            columnMoveEnterAnim(function () {
+              return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+            });
+            return;
+          }
+          const horizOnly =
+            Math.abs(dx) > SLOT_MOVE_EPSILON_PX && Math.abs(dy) <= SLOT_MOVE_EPSILON_PX;
+          const vertOnly =
+            Math.abs(dy) > SLOT_MOVE_EPSILON_PX && Math.abs(dx) <= SLOT_MOVE_EPSILON_PX;
+          if (horizOnly) {
+            animQueue('move', function () {
+              return animateTranslate(chip, dx, 0, moveDurationMs, gen, getGeneration);
+            });
+            return;
+          }
+          if (vertOnly) {
+            animQueue('move', function () {
+              return animateTranslate(chip, 0, dy, moveDurationMs, gen, getGeneration);
+            });
+            return;
+          }
+          chip.style.transform = '';
+          snapOpacity(chip, 0);
+          columnMoveEnterAnim(function () {
+            return runOpacityAnim(chip, 0, 1, enterDurationMs, gen);
+          });
         });
       };
 
@@ -1279,40 +1947,73 @@
         }
       }
 
+      function finishColumnMoveAnimWindow() {
+        if (!columnMovePlan) {
+          return;
+        }
+        removeOrphanLayerFloatChips(numbersLayer);
+        const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
+        for (let ec = 0; ec < exitClones.length; ec += 1) {
+          const clone = exitClones[ec];
+          if (clone.parentNode) {
+            clone.parentNode.removeChild(clone);
+          }
+        }
+        const inCellChips = numbersLayer.querySelectorAll(
+          '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
+        );
+        for (let si = 0; si < inCellChips.length; si += 1) {
+          const settled = inCellChips[si];
+          if (pendingRemove.has(settled)) {
+            continue;
+          }
+          const settledId = modelIdFromChipDomId(settled.getAttribute('data-item-id'));
+          if (settledId && columnMoveFadeInPlaceIds[settledId]) {
+            snapOpacity(settled, 1);
+            settled.style.transform = '';
+          } else if (settledId && columnMoveEnterFromAboveIds[settledId]) {
+            snapOpacity(settled, 1);
+            settled.style.transform = '';
+          } else {
+            ensureVisibleOpacity(settled);
+          }
+        }
+        if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
+          numbersLayer.removeAttribute('data-column-move-anim');
+        }
+      }
+
+      function runPhasedColumnMoveChain() {
+        const cfgNow = getAnimConfig();
+        const gapMs =
+          typeof cfgNow.columnMovePhaseGapMs === 'number' && cfgNow.columnMovePhaseGapMs >= 0
+            ? cfgNow.columnMovePhaseGapMs
+            : 0;
+        let chain = Promise.all(promises).then(function () {
+          return runAnimThunks(phaseMoveThunks);
+        });
+        if (useColumnMoveTwoPhase) {
+          chain = chain
+            .then(function () {
+              if (gapMs <= 0) {
+                return undefined;
+              }
+              return new Promise(function (resolveGap) {
+                deps.window.setTimeout(resolveGap, gapMs);
+              });
+            })
+            .then(function () {
+              return runAnimThunks(phaseEnterThunks);
+            });
+        }
+        return chain.then(finishColumnMoveAnimWindow);
+      }
+
       return Promise.all([]).then(function () {
         return new Promise(function (resolve) {
           deps.window.requestAnimationFrame(function () {
             afterLayout();
-            Promise.all(promises).then(function () {
-              if (columnMovePlan) {
-                removeOrphanLayerFloatChips(numbersLayer);
-                const exitClones = numbersLayer.querySelectorAll('[data-column-move-exit-clone="1"]');
-                for (let ec = 0; ec < exitClones.length; ec += 1) {
-                  const clone = exitClones[ec];
-                  if (clone.parentNode) {
-                    clone.parentNode.removeChild(clone);
-                  }
-                }
-                const inCellChips = numbersLayer.querySelectorAll(
-                  '.milksha-num-cell .milksha-board-chip:not(.milksha-board-chip--layer-float)',
-                );
-                for (let si = 0; si < inCellChips.length; si += 1) {
-                  const settled = inCellChips[si];
-                  if (pendingRemove.has(settled)) {
-                    continue;
-                  }
-                  const settledId = settled.getAttribute('data-item-id');
-                  if (settledId && columnMoveEnterFromAboveIds[settledId]) {
-                    snapOpacity(settled, 1);
-                    settled.style.transform = '';
-                  } else {
-                    ensureVisibleOpacity(settled);
-                  }
-                }
-                if (numbersLayer.getAttribute('data-column-move-anim') === '1') {
-                  numbersLayer.removeAttribute('data-column-move-anim');
-                }
-              }
+            runPhasedColumnMoveChain().then(function () {
               resolve();
             });
           });
@@ -1348,6 +2049,9 @@
     detectColumnMovePlan: detectColumnMovePlan,
     countVisibleOnPage: countVisibleOnPage,
     GRID_ROWS: GRID_ROWS,
+    slotColumnIndex: slotColumnIndex,
+    isCrossColumnSlotMove: isCrossColumnSlotMove,
+    isDiagonalLayoutDelta: isDiagonalLayoutDelta,
     isBulkSnapshotReplace: isBulkSnapshotReplace,
     shouldSkipBoardAnimations: shouldSkipBoardAnimations,
     createBoardAnimator: createBoardAnimator,

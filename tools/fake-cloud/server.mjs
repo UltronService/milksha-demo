@@ -188,6 +188,8 @@ function seedE2eDevice() {
   docs.set(deviceKey('c030020', 'stb-01'), { ...emptyDevice });
   docs.set(deviceKey('zz-qa-store-a', 'stb-01'), { ...emptyDevice });
   docs.set(deviceKey('zz-qa-store-b', 'stb-01'), { ...emptyDevice });
+  docs.set(deviceKey('zz-qa-store-a', 'stb-a'), { ...emptyDevice });
+  docs.set(deviceKey('zz-qa-store-b', 'stb-b'), { ...emptyDevice });
 }
 
 /** @param {object} board */

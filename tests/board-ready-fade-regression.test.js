@@ -24,47 +24,60 @@ function loadAnimModule() {
   return sandbox.QMS.MilkshaBoardAnim;
 }
 
-/** Element with controllable Web Animations cancel/finish. */
-function makeControllableAnimEl() {
+function wireControllableAnimations(host) {
   const anims = [];
-  const el = {
+  host.animate = function (_keyframes, _options) {
+    const anim = {
+      _cancelled: false,
+      onfinish: null,
+      oncancel: null,
+      cancel: function () {
+        if (this._cancelled) {
+          return;
+        }
+        this._cancelled = true;
+        if (anim.oncancel) {
+          anim.oncancel();
+        }
+      },
+      finish: function () {
+        if (this._cancelled) {
+          return;
+        }
+        if (anim.onfinish) {
+          anim.onfinish();
+        }
+      },
+    };
+    anims.push(anim);
+    host._lastAnim = anim;
+    return anim;
+  };
+  host.getAnimations = function () {
+    return anims.filter((a) => !a._cancelled);
+  };
+  return host;
+}
+
+/** Element with controllable Web Animations cancel/finish (chip + inner .milksha-num scale). */
+function makeControllableAnimEl() {
+  const numEl = wireControllableAnimations({
+    style: { transform: '', transformOrigin: '' },
+  });
+  const el = wireControllableAnimations({
     classList: { contains: () => true },
     style: { opacity: '', transform: '', transformOrigin: '' },
     setAttribute: function () {},
     getAttribute: function () {
-      return 'store:2001';
+      return 'ready::store:2001';
     },
-    animate: function (_keyframes, _options) {
-      const anim = {
-        _cancelled: false,
-        onfinish: null,
-        oncancel: null,
-        cancel: function () {
-          if (this._cancelled) {
-            return;
-          }
-          this._cancelled = true;
-          if (anim.oncancel) {
-            anim.oncancel();
-          }
-        },
-        finish: function () {
-          if (this._cancelled) {
-            return;
-          }
-          if (anim.onfinish) {
-            anim.onfinish();
-          }
-        },
-      };
-      anims.push(anim);
-      el._lastAnim = anim;
-      return anim;
+    querySelector: function (sel) {
+      if (sel === '.milksha-num') {
+        return numEl;
+      }
+      return null;
     },
-    getAnimations: function () {
-      return anims.filter((a) => !a._cancelled);
-    },
-  };
+  });
   return el;
 }
 
@@ -282,11 +295,12 @@ function buildReadyZone(pageSize) {
   return { board: board, zone: zone, layer: layer };
 }
 
-function findInCellChipById(layer, itemId) {
+function findInCellChipById(layer, modelId) {
+  const domId = 'ready::' + modelId;
   const slots = layer.querySelectorAll('.milksha-num-cell');
   for (let i = 0; i < slots.length; i += 1) {
     const chip = slots[i].querySelector('.milksha-board-chip');
-    if (chip && chip.getAttribute('data-item-id') === itemId) {
+    if (chip && chip.getAttribute('data-item-id') === domId) {
       return chip;
     }
   }

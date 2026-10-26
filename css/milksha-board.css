@@ -394,41 +394,61 @@
   position: relative;
 }
 
+.milksha-board-web-build {
+  position: fixed;
+  left: 10px;
+  bottom: 8px;
+  z-index: 99;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .milksha-demo-handle {
   position: fixed;
-  right: 0;
-  bottom: 24px;
+  left: 16px;
+  bottom: 44px;
   z-index: 100;
   width: 120px;
   height: 44px;
   background: rgba(21, 101, 255, 0.85);
   border: none;
-  border-radius: 10px 0 0 10px;
+  border-radius: 10px;
   color: #fff;
   font-weight: 700;
   font-size: 18px;
   cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .milksha-demo-drawer {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(360px, 92vw);
+  left: 16px;
+  bottom: 44px;
   z-index: 101;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(70vh, 720px);
   background: #fff;
-  border-left: 4px solid #333;
-  padding: 16px;
+  border: 3px solid #333;
+  border-radius: 12px;
+  padding: 14px 16px;
   overflow-y: auto;
-  transform: translateX(100%);
+  transform: translateY(calc(100% + 32px));
   transition: transform 0.25s ease-out;
-  font-size: 16px;
+  font-size: 15px;
   color: #222;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
 }
 
 .milksha-demo-drawer.open {
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 .milksha-demo-drawer h3 {
@@ -488,6 +508,16 @@
   border-top: 1px dashed #bbb;
   margin-top: 12px;
   padding-top: 8px;
+}
+
+.milksha-demo-num {
+  width: 4.2rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
 }
 
 .milksha-demo-lbl {

@@ -9,6 +9,8 @@ import {
 } from './board-animation-helpers.mjs';
 import {
   assertEnterFromAboveMotion,
+  assertFadeInPlaceMotion,
+  assertNoDiagonalWhileVisible,
   pollMotionSamplesInPage,
   assertDownwardExitMotion,
   assertNoHorizontalWhileVisible,
@@ -46,7 +48,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('2 prep: pushed slot-4 chip exits down then enters slot 5 from above (not new number)', async ({ page }) => {
+  test('2 prep: pushed slot-4 chip exits down then slot 5 fades in place (not new number)', async ({ page }) => {
     await primeBoardForAnimation(page);
     const nums = sequentialNumbers(6301, 5);
     const pushed = leftBottomNumber(nums);
@@ -63,9 +65,55 @@ test.describe('column-move animation boundary 1–10', () => {
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
     const newSamples = combined.map((c) => c.newest).filter(Boolean);
     assertDownwardExitMotion(exitSamples);
-    assertEnterFromAboveMotion(enterSamples);
+    assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
+    assertNoDiagonalWhileVisible(enterSamples);
     expect(newSamples.every((s) => !s || transformTranslateY(s.transform) > -6)).toBe(true);
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
+  test('2b prep: page 2/2 right column 6th fades in place (15->16 append)', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    const fifteen = sequentialNumbers(7501, 15);
+    const sixteen = sequentialNumbers(7501, 16);
+    await applyPayload(page, prepPayload(fifteen));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+    await page.waitForTimeout(600);
+    const samples = await pollMotionSamplesInPage(
+      page,
+      prepPayload(sixteen),
+      { kind: 'slot', zone: 'prep', slotIndex: GRID_ROWS },
+      { samples: 28, intervalMs: 16 },
+    );
+    assertFadeInPlaceMotion(samples);
+    assertNoHorizontalWhileVisible(samples);
+    assertNoDiagonalWhileVisible(samples);
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
+  test('2c prep: page 2/2 right column 6th fades in place (prepend like demo)', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    const fifteen = sequentialNumbers(7601, 15);
+    const newest = '7699';
+    await applyPayload(page, prepPayload(fifteen));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+    await page.waitForTimeout(600);
+    const rows = prepPayload([Number(newest), ...fifteen.map(Number)].map(String));
+    const pushed = String(fifteen[fifteen.length - 1]);
+    const combined = await pollMotionSamplesInPage(
+      page,
+      rows,
+      { kind: 'enterExit', zone: 'prep', pushedNumber: pushed, enterSlotIndex: GRID_ROWS },
+      { samples: 32, intervalMs: 16 },
+    );
+    const enterSamples = combined.map((c) => c.enter).filter(Boolean);
+    assertFadeInPlaceMotion(enterSamples);
+    assertNoHorizontalWhileVisible(enterSamples);
+    assertNoDiagonalWhileVisible(enterSamples);
     await page.waitForTimeout(400);
     await assertChipsOpaqueAndUnique(page);
   });
@@ -99,6 +147,26 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
+  test('3b prep: on page 4, new number jumps to page 1 (PM spec v1)', async ({ page }) => {
+    await primeBoardForAnimation(page);
+    const forty = sequentialNumbers(7401, 40);
+    await applyPayload(page, prepPayload(forty));
+    await page.waitForTimeout(400);
+    for (let p = 0; p < 3; p += 1) {
+      await page.evaluate(() => window.QMS.runtime.advanceZonePageForTest('prep'));
+      await page.waitForTimeout(300);
+    }
+    await applyPayload(page, prepPayload([...forty, 7441]));
+    await expect(page.locator('.milksha-prep .milksha-pg-indicator')).toHaveText('1/5', {
+      timeout: 4000,
+    });
+    await expect(page.locator('.milksha-prep .milksha-num').first()).toHaveText('7441', {
+      timeout: 4000,
+    });
+    await page.waitForTimeout(400);
+    await assertChipsOpaqueAndUnique(page);
+  });
+
   test('4 ready: left column bottom slides down and out on 6th number', async ({ page }) => {
     await primeBoardForAnimation(page);
     const nums = sequentialNumbers(6601, 5);
@@ -115,7 +183,7 @@ test.describe('column-move animation boundary 1–10', () => {
     await assertChipsOpaqueAndUnique(page);
   });
 
-  test('5 ready: new number 1.3x pulse; pushed slot-4 chip enters slot 5 from above', async ({ page }) => {
+  test('5 ready: new number 1.3x pulse; pushed slot-4 chip fades in at slot 5', async ({ page }) => {
     await primeBoardForAnimation(page);
     const nums = sequentialNumbers(6701, 5);
     const pushed = leftBottomNumber(nums);
@@ -131,7 +199,7 @@ test.describe('column-move animation boundary 1–10', () => {
     const exitSamples = combined.map((c) => c.exit).filter(Boolean);
     const enterSamples = combined.map((c) => c.enter).filter(Boolean);
     assertDownwardExitMotion(exitSamples);
-    assertEnterFromAboveMotion(enterSamples);
+    assertFadeInPlaceMotion(enterSamples);
     assertNoHorizontalWhileVisible(enterSamples);
     await assertReadyPulseOnNumber(page, newest);
     await page.waitForTimeout(500);
@@ -268,8 +336,11 @@ for (const zone of ['prep', 'ready']) {
         const exitSamples = combined.map((c) => c.exit).filter(Boolean);
         const enterSamples = combined.map((c) => c.enter).filter(Boolean);
         assertDownwardExitMotion(exitSamples);
-        assertEnterFromAboveMotion(enterSamples);
+        assertNoDiagonalWhileVisible(enterSamples);
         assertNoHorizontalWhileVisible(enterSamples);
+        if (count === 6) {
+          assertFadeInPlaceMotion(enterSamples);
+        }
         await page.waitForTimeout(zone === 'ready' ? 4500 : 450);
         await assertZoneSlotOrderExact(page, zone);
         await assertChipsOpaqueAndUnique(page);

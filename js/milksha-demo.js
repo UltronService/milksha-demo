@@ -71,6 +71,11 @@
     const stateReady = drawer.querySelector('#ms-demo-state-ready');
     const btnLand = drawer.querySelector('#ms-demo-land');
     const btnPort = drawer.querySelector('#ms-demo-port');
+    const btnAnimTwo = drawer.querySelector('#ms-demo-anim-two');
+    const inpAnimGap = drawer.querySelector('#ms-demo-anim-gap');
+    const inpAnimMove = drawer.querySelector('#ms-demo-anim-move');
+    const inpAnimEnter = drawer.querySelector('#ms-demo-anim-enter');
+    const elAnimHint = drawer.querySelector('#ms-demo-anim-hint');
 
     function buildDrawerHtml() {
       let srcOpts = '';
@@ -88,6 +93,7 @@
         '<div class="milksha-demo-row"><b>自動播放</b> <button type="button" class="milksha-demo-btn" id="ms-demo-auto">關</button>' +
         '<span id="ms-demo-auto-label">每 8 秒</span></div>' +
         '<div class="milksha-demo-row"><span class="milksha-demo-lbl">間隔</span>' +
+        '<button type="button" class="milksha-demo-btn" data-interval="1">1 秒</button>' +
         '<button type="button" class="milksha-demo-btn" data-interval="5">5 秒</button>' +
         '<button type="button" class="milksha-demo-btn sel" data-interval="8">8 秒</button>' +
         '<button type="button" class="milksha-demo-btn" data-interval="10">10 秒</button></div>' +
@@ -95,7 +101,7 @@
         '<div class="milksha-demo-row"><b>手動加號</b></div>' +
         '<div class="milksha-demo-row"><select id="ms-demo-source">' +
         srcOpts +
-        '</select><input id="ms-demo-number" type="text" placeholder="號碼" maxlength="8" /></div>' +
+        '</select><input id="ms-demo-number" type="text" placeholder="留空＝自動產號" maxlength="8" /></div>' +
         '<div class="milksha-demo-row">' +
         '<button type="button" class="milksha-demo-btn sel" id="ms-demo-state-prep">準備中</button>' +
         '<button type="button" class="milksha-demo-btn" id="ms-demo-state-ready">可取餐</button>' +
@@ -112,6 +118,21 @@
         '<button type="button" class="milksha-demo-btn sel" id="ms-demo-land">橫</button>' +
         '<button type="button" class="milksha-demo-btn" id="ms-demo-port">直</button></div>' +
         '<div class="milksha-demo-sec"></div>' +
+        '<div class="milksha-demo-row"><b>動態節奏</b> <span class="milksha-demo-lbl">（欄位搬移）</span></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">兩段式</span> ' +
+        '<button type="button" class="milksha-demo-btn" id="ms-demo-anim-two">關</button></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">段間隔</span> ' +
+        '<input id="ms-demo-anim-gap" class="milksha-demo-num" type="number" min="0" max="3000" step="50" value="80" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-lbl" id="ms-demo-anim-hint"></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">下移段</span> ' +
+        '<input id="ms-demo-anim-move" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-row"><span class="milksha-demo-lbl">進場段</span> ' +
+        '<input id="ms-demo-anim-enter" class="milksha-demo-num" type="number" min="50" max="2000" step="50" value="300" />' +
+        '<span class="milksha-demo-lbl"> ms</span></div>' +
+        '<div class="milksha-demo-lbl">先下移／退出 → 間隔 → 新號與右欄淡入（1 秒自動播放時建議下移+間隔+進場合計約 900ms 內）</div>' +
+        '<div class="milksha-demo-sec"></div>' +
         '<div class="milksha-demo-lbl">最近一次推送的資料</div>' +
         '<pre class="milksha-demo-pre" id="ms-demo-pre">[]</pre>' +
         '<div class="milksha-demo-lbl">快捷鍵：D＝開/關面板　空白鍵＝模擬推送　A＝自動播放</div>'
@@ -119,6 +140,120 @@
     }
 
     let manualState = 'preparing';
+    const demoSeq = { storeLast: 0, uddLast: 3000 };
+
+    function demoRng() {
+      return Math.random();
+    }
+
+    function demoCompositeKey(sourceKey, number) {
+      return String(sourceKey || 'store') + ':' + String(number);
+    }
+
+    function demoUsedOnBoard() {
+      const used = new Set();
+      const parse = QMS.MilkshaBoard && QMS.MilkshaBoard.parseSourceType;
+      for (let i = 0; i < currentContent.length; i += 1) {
+        const row = currentContent[i];
+        let key = 'store';
+        if (parse) {
+          const parsed = parse(row.source_type);
+          if (parsed && parsed.sourceKey) {
+            key = parsed.sourceKey;
+          }
+        }
+        used.add(demoCompositeKey(key, row.number));
+      }
+      return used;
+    }
+
+    function syncDemoSeqFromContent() {
+      const parse = QMS.MilkshaBoard && QMS.MilkshaBoard.parseSourceType;
+      let maxStore = 0;
+      let maxUdd = 3000;
+      for (let i = 0; i < currentContent.length; i += 1) {
+        const row = currentContent[i];
+        if (!parse) {
+          continue;
+        }
+        const parsed = parse(row.source_type);
+        if (!parsed) {
+          continue;
+        }
+        const n = parseInt(String(row.number), 10);
+        if (!Number.isFinite(n)) {
+          continue;
+        }
+        if (parsed.sourceKey === 'store') {
+          maxStore = Math.max(maxStore, n);
+        }
+        if (parsed.sourceKey === 'udd') {
+          maxUdd = Math.max(maxUdd, n);
+        }
+      }
+      demoSeq.storeLast = maxStore;
+      demoSeq.uddLast = maxUdd;
+    }
+
+    function nextSequentialFourDigit(sourceKey, counterObj, startAt) {
+      const used = demoUsedOnBoard();
+      const Sim = QMS.Controller && QMS.Controller.StoreSimulation;
+      let n = counterObj.last >= startAt ? counterObj.last + 1 : startAt;
+      let guard = 0;
+      while (guard < 10020) {
+        guard += 1;
+        if (n > 9999) {
+          n = startAt;
+        }
+        const formatted =
+          Sim && Sim.formatOrderNo ? Sim.formatOrderNo(n) : String(n).padStart(4, '0');
+        if (!used.has(demoCompositeKey(sourceKey, formatted))) {
+          counterObj.last = n;
+          return formatted;
+        }
+        n += 1;
+      }
+      return null;
+    }
+
+    function allocateDemoNumber(sourceKey) {
+      const key = sourceKey || 'store';
+      const Sim = QMS.Controller && QMS.Controller.StoreSimulation;
+      if (key === 'store') {
+        const c = { last: demoSeq.storeLast };
+        const num = nextSequentialFourDigit('store', c, 1);
+        demoSeq.storeLast = c.last;
+        return num;
+      }
+      if (key === 'udd') {
+        const c = { last: demoSeq.uddLast };
+        const num = nextSequentialFourDigit('udd', c, 3001);
+        demoSeq.uddLast = c.last;
+        return num;
+      }
+      if (Sim && typeof Sim.allocateNumberForSource === 'function') {
+        const state = { lastIssuedNumber: demoSeq.storeLast };
+        return Sim.allocateNumberForSource(key, state, demoUsedOnBoard(), demoRng);
+      }
+      return nextSequentialFourDigit('store', demoSeq, 1);
+    }
+
+    function normalizeManualNumber(sourceKey, raw) {
+      const trimmed = String(raw == null ? '' : raw).trim();
+      if (!trimmed) {
+        return null;
+      }
+      const Send = QMS.Controller && QMS.Controller.SendNumber;
+      if (Send && typeof Send.validateQuickSendNumber === 'function') {
+        const res = Send.validateQuickSendNumber(sourceKey, trimmed);
+        return res.ok ? res.normalized : null;
+      }
+      const MB = QMS.MilkshaBoard;
+      if (MB && typeof MB.normalizeBoardDisplayNumber === 'function') {
+        return MB.normalizeBoardDisplayNumber(trimmed, sourceKey);
+      }
+      return trimmed;
+    }
 
     function resetIdle() {
       if (idleTimer) {
@@ -135,6 +270,9 @@
     function setDrawerOpen(open) {
       drawerOpen = open;
       drawer.classList.toggle('open', open);
+      if (doc.body) {
+        doc.body.classList.toggle('milksha-demo-drawer-open', open);
+      }
       handle.hidden = open;
       if (open) {
         resetIdle();
@@ -187,6 +325,7 @@
 
     function pushContent(content) {
       currentContent = content.slice();
+      syncDemoSeqFromContent();
       board.applyPayload(currentContent);
       updatePreview();
       nextPushAt = autoPlay ? Date.now() + autoIntervalSec * 1000 : 0;
@@ -283,9 +422,19 @@
 
     btnAdd.addEventListener('click', function () {
       const key = selSource.value;
-      const num = (inpNumber.value || '').trim();
+      let num = (inpNumber.value || '').trim();
       if (!num) {
-        return;
+        num = allocateDemoNumber(key);
+        if (!num) {
+          return;
+        }
+      } else {
+        const normalized = normalizeManualNumber(key, num);
+        if (!normalized) {
+          return;
+        }
+        num = normalized;
+        inpNumber.value = num;
       }
       const st = sourceTypeFor(key, manualState === 'ready' ? 'ready' : 'preparing');
       currentContent = currentContent.concat([{ source_type: st, number: num }]);
@@ -364,6 +513,82 @@
       btnLand.classList.remove('sel');
       resetIdle();
     });
+
+    function clampAnimMs(raw, fallback) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        return fallback;
+      }
+      return Math.min(2000, Math.max(50, Math.round(n)));
+    }
+
+    function clampAnimGap(raw, fallback) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) {
+        return fallback;
+      }
+      return Math.min(3000, Math.max(0, Math.round(n)));
+    }
+
+    function updateAnimHint() {
+      if (!elAnimHint) {
+        return;
+      }
+      const twoOn = btnAnimTwo.classList.contains('sel');
+      const gap = clampAnimGap(inpAnimGap.value, 80);
+      const move = clampAnimMs(inpAnimMove.value, 300);
+      const enter = clampAnimMs(inpAnimEnter.value, 300);
+      if (!twoOn) {
+        elAnimHint.textContent =
+          '兩段式為「關」時：段間隔無效，新號與下移仍同時播放。請先開啟兩段式再調間隔。';
+        return;
+      }
+      elAnimHint.textContent =
+        '兩段式為「開」：約 ' +
+        move +
+        'ms 下移／退出 → 停 ' +
+        gap +
+        'ms → 約 ' +
+        enter +
+        'ms 新號與右欄第 6 格淡入（僅滿欄推挤時）。';
+    }
+
+    function applyDemoAnimOverrides() {
+      const cfgMod = QMS.MilkshaBoardAnimConfig;
+      if (!cfgMod || !cfgMod.setRuntimeOverrides) {
+        return;
+      }
+      const twoOn = btnAnimTwo.classList.contains('sel');
+      cfgMod.setRuntimeOverrides({
+        columnMoveTwoPhase: twoOn,
+        columnMovePhaseGapMs: clampAnimGap(inpAnimGap.value, 80),
+        columnMoveMs: clampAnimMs(inpAnimMove.value, 300),
+        columnMoveEnterMs: clampAnimMs(inpAnimEnter.value, 300),
+      });
+      updateAnimHint();
+    }
+
+    btnAnimTwo.addEventListener('click', function () {
+      const on = !btnAnimTwo.classList.contains('sel');
+      btnAnimTwo.classList.toggle('sel', on);
+      btnAnimTwo.textContent = on ? '開' : '關';
+      applyDemoAnimOverrides();
+      resetIdle();
+    });
+    function bindAnimInput(inp) {
+      inp.addEventListener('change', function () {
+        applyDemoAnimOverrides();
+        resetIdle();
+      });
+      inp.addEventListener('input', function () {
+        applyDemoAnimOverrides();
+      });
+    }
+    bindAnimInput(inpAnimGap);
+    bindAnimInput(inpAnimMove);
+    bindAnimInput(inpAnimEnter);
+
+    applyDemoAnimOverrides();
 
     doc.addEventListener('keydown', function (ev) {
       const tag = ev.target && ev.target.tagName ? ev.target.tagName.toLowerCase() : '';

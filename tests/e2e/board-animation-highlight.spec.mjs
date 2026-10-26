@@ -34,7 +34,7 @@ test.describe('board ready zone scale + fade pulse', () => {
         ]);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            const chip = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="store:7701"]');
+            const chip = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="ready::store:7701"]');
             if (!chip) {
               resolve({ found: false });
               return;
@@ -51,13 +51,13 @@ test.describe('board ready zone scale + fade pulse', () => {
     expect(scaleMid.beforeContent === 'none' || scaleMid.beforeContent === '').toBe(true);
     expect(await opacityAnimRunsSinceReset(page)).toBeGreaterThan(0);
 
-    const chip = page.locator('.milksha-ready .milksha-board-chip[data-item-id="store:7701"]');
+    const chip = page.locator('.milksha-ready .milksha-board-chip[data-item-id="ready::store:7701"]');
     await waitForChipsOpaque(page);
     await expect(chip).not.toHaveClass(/milksha-board-chip--highlight/);
 
     await page.waitForFunction(
       () => {
-        const el = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="store:7701"]');
+        const el = document.querySelector('.milksha-ready .milksha-board-chip[data-item-id="ready::store:7701"]');
         if (!el) {
           return false;
         }

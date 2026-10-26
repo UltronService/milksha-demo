@@ -93,12 +93,7 @@ test('partition and newly-ready detection follow demo script rings', function ()
         return MB.makeItemId(partsToken[0], partsToken[1]);
       });
       const poppedIds = split.popIds;
-      if (i + 1 === 8) {
-        assert.equal(poppedIds.length, 3);
-        assert.equal(JSON.stringify(poppedIds), JSON.stringify(expectedIds.slice(0, 3)));
-      } else {
-        assert.equal(JSON.stringify(poppedIds), JSON.stringify(expectedIds));
-      }
+      assert.equal(JSON.stringify(poppedIds), JSON.stringify(expectedIds));
     } else {
       assert.equal(newly.length, 0);
     }
