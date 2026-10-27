@@ -14,7 +14,17 @@
     return params.get(name) === '1' || params.get(name) === 'true';
   }
 
+  function shouldMountWebBuildLabel() {
+    if (!root.location || typeof root.location.pathname !== 'string') {
+      return false;
+    }
+    return /\/pr-preview\/pr-\d+(?:\/|$)/.test(root.location.pathname);
+  }
+
   function mountWebBuildLabel() {
+    if (!shouldMountWebBuildLabel()) {
+      return;
+    }
     const doc = root.document;
     if (!doc || !doc.body) {
       return;

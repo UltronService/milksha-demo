@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  root.MILKSHA_ASSET_VERSION = '20261026b';
+  root.MILKSHA_ASSET_VERSION = '20261026c';
   /** Visible board web build stamp (Asia/Taipei), MM/DD HH:MM */
   root.MILKSHA_BOARD_WEB_BUILD_LABEL = '10/26 00:00';
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

@@ -36,14 +36,13 @@ test('resolvePreviewPrNumber does not fall back to 123 when association is missi
 });
 
 test('loadExpectedPreviewAssetStamp reads version from config/asset-version.json', function () {
+  const assetVersionJsonText = readFileSync(join(root, 'config/asset-version.json'), 'utf8');
+  const configVersion = JSON.parse(assetVersionJsonText).version;
   const stamp = loadExpectedPreviewAssetStamp({
-    assetVersionJsonText: JSON.stringify({ version: '20261026b' }),
-    milkshaAssetVersionJsText: readFileSync(join(root, 'js/milksha-asset-version.js'), 'utf8').replace(
-      '20261026a',
-      '20261026b',
-    ),
+    assetVersionJsonText,
+    milkshaAssetVersionJsText: readFileSync(join(root, 'js/milksha-asset-version.js'), 'utf8'),
   });
-  assert.equal(stamp.expectedVersion, '20261026b');
+  assert.equal(stamp.expectedVersion, configVersion);
   assert.ok(stamp.expectedBuildLabel);
 });
 
