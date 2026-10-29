@@ -110,6 +110,10 @@
     let cloudReachable = true;
     let cloudOfflineUiVisible = false;
     let lastHeartbeatSucceeded = true;
+    let lastHeartbeatSentAtMs = 0;
+    let heartbeatRecoveryPending = false;
+    let offlineResyncBackoffMs = OFFLINE_WATCHDOG_RESYNC_MS;
+    let nextOfflineWatchdogAtMs = 0;
     let lastTickWallMs = Date.now();
     let resyncInFlight = null;
     let boardRecoveryInFlight = null;
@@ -628,6 +632,30 @@
       return heartbeatMs;
     }
 
+    function resetOfflineWatchdogSchedule() {
+      offlineResyncBackoffMs = OFFLINE_WATCHDOG_RESYNC_MS;
+      nextOfflineWatchdogAtMs = Date.now() + OFFLINE_WATCHDOG_RESYNC_MS;
+    }
+
+    function scheduleNextOfflineWatchdogAttempt() {
+      offlineResyncBackoffMs = Math.min(
+        Math.max(OFFLINE_WATCHDOG_RESYNC_MS, offlineResyncBackoffMs * 2),
+        effectiveHeartbeatIntervalMs(),
+      );
+      nextOfflineWatchdogAtMs = Date.now() + offlineResyncBackoffMs;
+    }
+
+    function shouldRunOfflineWatchdogResync() {
+      if (nextOfflineWatchdogAtMs <= 0) {
+        return false;
+      }
+      return Date.now() >= nextOfflineWatchdogAtMs;
+    }
+
+    function noteOfflineWatchdogResyncTriggered() {
+      scheduleNextOfflineWatchdogAttempt();
+    }
+
     function heartbeatEverySec() {
       return Math.max(1, Math.round(effectiveHeartbeatIntervalMs() / 1000));
     }
@@ -646,7 +674,7 @@
       }
       const intervalMs = effectiveHeartbeatIntervalMs();
       heartbeatTimer = root.setInterval(function () {
-        sendHeartbeat();
+        sendHeartbeat({ automatic: true });
       }, intervalMs);
     }
 
@@ -804,15 +832,21 @@
       }
     }
 
-    function markCloudReachable() {
+    function markCloudReachable(opts) {
+      const skipRecoveryKick = Boolean(opts && opts.skipRecoveryKick);
       const wasOffline = !cloudReachable;
       cloudReachable = true;
+      if (!skipRecoveryKick) {
+        resetOfflineWatchdogSchedule();
+      }
       if (wasOffline) {
         resetTransportFirestoreBackoff();
         syncCloudOfflineUi(false);
-        kickBoardRecoveryAfterOffline('reachable');
+        heartbeatRecoveryPending = false;
+        if (!skipRecoveryKick) {
+          kickBoardRecoveryAfterOffline('reachable');
+        }
       }
-      tryFlushDeferredReloadCommand();
     }
 
     function isAuthHttpError(err) {
@@ -848,7 +882,12 @@
         syncCloudGuestStatusUi(false);
         return;
       }
+      const wasReachable = cloudReachable;
       cloudReachable = false;
+      heartbeatRecoveryPending = true;
+      if (wasReachable && showCloudOfflineUi && nextOfflineWatchdogAtMs <= 0) {
+        resetOfflineWatchdogSchedule();
+      }
       if (boardListenActive || firestoreRealtime) {
         enterPollFallback();
       }
@@ -867,9 +906,6 @@
         return resyncInFlight;
       }
       resyncInFlight = Promise.resolve()
-        .then(function () {
-          return sendHeartbeat();
-        })
         .then(function () {
           return kickBoardRecoveryAfterOffline('resync_' + reason);
         })
@@ -1437,11 +1473,23 @@
       tl.push(Object.assign({ ts: Date.now(), kind: kind }, detail || {}));
     }
 
-    async function sendHeartbeat() {
+    async function sendHeartbeat(sendOpts) {
+      const opts = sendOpts || {};
+      const automatic = opts.automatic === true;
       if (authBlocksHeartbeat()) {
         return;
       }
       if (!cloudApi || !cloudApi.boxHeartbeat) {
+        return;
+      }
+      const mustSendAck = Boolean(pendingAckCommandId);
+      const nowMs = Date.now();
+      if (
+        automatic &&
+        !mustSendAck &&
+        lastHeartbeatSentAtMs > 0 &&
+        nowMs - lastHeartbeatSentAtMs < effectiveHeartbeatIntervalMs()
+      ) {
         return;
       }
       try {
@@ -1460,9 +1508,17 @@
           lastAckCommandId = pendingAckCommandId;
           pendingAckCommandId = '';
         }
+        lastHeartbeatSentAtMs = Date.now();
         lastHeartbeatSucceeded = true;
         pushBootTimeline('heartbeat_ok', {});
-        markCloudReachable();
+        if (heartbeatRecoveryPending) {
+          heartbeatRecoveryPending = false;
+          markCloudReachable();
+        } else if (!cloudReachable) {
+          /* heartbeat ok; board sync still offline — skip recovery kick */
+        } else {
+          markCloudReachable();
+        }
         tryFlushDeferredReloadCommand();
       } catch (e) {
         lastHeartbeatSucceeded = false;
@@ -1521,7 +1577,7 @@
       syncGuestClockAfterBoot();
 
       const kick = function () {
-        sendHeartbeat();
+        sendHeartbeat({ automatic: true });
         pollBoard();
         pollDevice();
       };
@@ -1531,7 +1587,9 @@
           .then(function () {
             kick();
             for (let burst = 1; burst <= 4; burst += 1) {
-              root.setTimeout(sendHeartbeat, burst * 500);
+              root.setTimeout(function () {
+                sendHeartbeat({ automatic: true });
+              }, burst * 500);
             }
             startFirestoreRealtimeIfPossible().catch(function () {
               /* fallback poll already active */
@@ -1575,7 +1633,7 @@
         onSyncAuthUi();
         syncCloudGuestStatusUi();
         if (documentHiddenForHeartbeat() && tickMs % heartbeatEverySec() === 0) {
-          sendHeartbeat();
+          sendHeartbeat({ automatic: true });
         }
         if (
           commandListenMode === 'poll' &&
@@ -1590,12 +1648,14 @@
           : boardPollMs;
         if (!cloudReachable && showCloudOfflineUi) {
           boardPollEvery = OFFLINE_RECOVERY_BOARD_POLL_MS;
-          if (tickMs % OFFLINE_WATCHDOG_RESYNC_MS === 0) {
+          if (shouldRunOfflineWatchdogResync()) {
+            noteOfflineWatchdogResyncTriggered();
             scheduleCloudResync('offline_watchdog');
           }
         } else if (postOfflineFastPoll) {
           boardPollEvery = POST_OFFLINE_FAST_POLL_MS;
-          if (tickMs % OFFLINE_WATCHDOG_RESYNC_MS === 0) {
+          if (shouldRunOfflineWatchdogResync()) {
+            noteOfflineWatchdogResyncTriggered();
             scheduleCloudResync('post_offline_watchdog');
           }
         }

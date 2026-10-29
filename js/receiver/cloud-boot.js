@@ -581,6 +581,14 @@
         showCloudOfflineUi: Boolean(homeBoard && milkshaRuntime),
         skipBootReceiverCache: Boolean(homeBoard && transportMode === 'cloud'),
         onCloudResync: function () {
+          const session = transport.session;
+          if (
+            session &&
+            ((session.isAuthStopped && session.isAuthStopped()) ||
+              (session.isUploadHalted && session.isUploadHalted()))
+          ) {
+            return Promise.resolve();
+          }
           if (transport.session && transport.session.refreshIdToken) {
             return transport.session
               .refreshIdToken()
@@ -594,9 +602,6 @@
                 if (cloud.triggerDevicePoll) {
                   cloud.triggerDevicePoll();
                 }
-                if (cloud.sendHeartbeat) {
-                  cloud.sendHeartbeat();
-                }
               });
           }
           return runEnsureIdToken(true).then(function () {
@@ -605,9 +610,6 @@
             }
             if (cloud.triggerDevicePoll) {
               cloud.triggerDevicePoll();
-            }
-            if (cloud.sendHeartbeat) {
-              cloud.sendHeartbeat();
             }
           });
         },
