@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: github-pages-milksha-demo
   cancel-in-progress: false
 
 jobs:
@@ -41,6 +41,13 @@ jobs:
             --exclude 'tools' \
             --exclude 'node_modules' \
             ./ _site/
+      - name: Preserve PR preview folders from live Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_PRESERVE_STRICT: "1"
+        run: |
+          set -euo pipefail
+          node scripts/preserve-pages-pr-preview.mjs _site ""
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

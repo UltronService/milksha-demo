@@ -55,6 +55,13 @@ test('devCommand validation matches fake-cloud module', async function () {
         preparing: [{ no: '091', sourceType: 'From_milksha_point_Preparing' }],
       },
     },
+    {
+      storeId: 's120030',
+      deviceId: 'stb-01',
+      type: 'push_numbers',
+      params: { ready: ['2001'], preparing: [] },
+      sentAtMs: 1_700_000_040_000,
+    },
   ];
   for (const c of cases) {
     const b = browser.buildDevCommandRequest(c);

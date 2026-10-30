@@ -371,7 +371,7 @@ test('no-motion: page-turn timer restarts from zero after new-number jump to pag
   runtime.destroy();
 });
 
-test('motion=on: new number on page 2 does not force page 1 (unchanged motion behavior)', async function () {
+test('motion=on: new prep on page 2+ jumps to page 1 (PM anim spec v1)', async function () {
   const harness = bootMilkshaBoardHarness('?motion=on');
   const runtime = harness.sandbox.QMS.bootMilkshaBoard(minimalBrand(), {
     document: harness.sandbox.document,
@@ -390,7 +390,7 @@ test('motion=on: new number on page 2 does not force page 1 (unchanged motion be
 
   runtime.applyPayload(prepPayload(nums.concat([9199])), { silent: true });
   const dom = parseBoardDom(harness.getBoardHtml());
-  assert.equal(pageFromIndicator(dom.prep.indicator).page, 1);
+  assertZonePage1(dom, runtime.getSnapshot(), 'prep');
 
   runtime.destroy();
 });

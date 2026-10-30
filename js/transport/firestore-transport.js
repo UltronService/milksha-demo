@@ -85,6 +85,12 @@
       client.destroy();
     }
 
+    function resetFirestoreBackoff() {
+      if (client.resetBackoff) {
+        client.resetBackoff();
+      }
+    }
+
     return {
       mode: 'firestore',
       paths: Paths,
@@ -96,6 +102,7 @@
       readReceiveLogs: readReceiveLogs,
       readCommands: readCommands,
       destroy: destroy,
+      resetFirestoreBackoff: resetFirestoreBackoff,
     };
   }
 

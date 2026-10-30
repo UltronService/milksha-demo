@@ -1,0 +1,60 @@
+# Optional fallback: Firebase Hosting preview channel (requires MILKSHA_QMS_DEV_FIREBASE_* secrets).
+name: Deploy board PR preview (Firebase Hosting)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.channel.outputs.preview_url }}
+    env:
+      PREVIEW_SITE: milksha-demo-board-preview
+      PR_NUMBER: '123'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare static site
+        env:
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          MILKSHA_DEV_POS_SIGN_SECRET: ${{ secrets.MILKSHA_DEV_POS_SIGN_SECRET }}
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.cursor' \
+            --exclude 'tests' \
+            --exclude 'tools' \
+            --exclude 'node_modules' \
+            ./ _site/
+          node scripts/inject-firebase-config.mjs _site/config/firebase.js
+      - name: Deploy preview channel
+        id: channel
+        env:
+          FIREBASE_TOKEN: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+          MILKSHA_QMS_DEV_FIREBASE_SA: ${{ secrets.MILKSHA_QMS_DEV_FIREBASE_SA }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MILKSHA_QMS_DEV_FIREBASE_SA" ] && [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Missing MILKSHA_QMS_DEV_FIREBASE_SA or MILKSHA_QMS_DEV_FIREBASE_TOKEN"
+            exit 1
+          fi
+          if [ -n "$MILKSHA_QMS_DEV_FIREBASE_SA" ]; then
+            echo "$MILKSHA_QMS_DEV_FIREBASE_SA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          fi
+          npx firebase-tools hosting:sites:create "$PREVIEW_SITE" --project milksha-qms-dev --non-interactive 2>/dev/null || true
+          channel="pr${PR_NUMBER}"
+          npx firebase-tools hosting:channel:deploy "$channel" \
+            --project milksha-qms-dev \
+            --only "hosting:${PREVIEW_SITE}" \
+            --expires 30d \
+            --non-interactive | tee channel-deploy.log
+          url=$(grep -Eo 'https://[^ ]+' channel-deploy.log | head -1)
+          echo "preview_url=${url%/}/" >> "$GITHUB_OUTPUT"

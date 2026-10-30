@@ -246,11 +246,27 @@
       const record = AutoPair.readBindRecord(local);
       let payload;
       if (AutoPair.hasBindRecord(local) && record) {
-        payload = {
-          mode: 'read',
-          storeId: String(record.storeId || '').trim(),
-          deviceId: deviceId,
-        };
+        const recordStoreId = String(record.storeId || '').trim();
+        const urlStoreNumber = storeNumber;
+        if (urlStoreNumber && recordStoreId && urlStoreNumber !== recordStoreId) {
+          const apiBrand = AutoPair.resolveApiBrand(
+            brandPack || { brandId: brandId },
+          );
+          if (!apiBrand) {
+            return Promise.resolve(null);
+          }
+          payload = {
+            brand: apiBrand,
+            storeNumber: urlStoreNumber,
+            deviceId: deviceId,
+          };
+        } else {
+          payload = {
+            mode: 'read',
+            storeId: recordStoreId,
+            deviceId: deviceId,
+          };
+        }
       } else {
         const apiBrand = AutoPair.resolveApiBrand(
           brandPack || { brandId: brandId },
