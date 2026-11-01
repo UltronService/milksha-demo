@@ -60,7 +60,7 @@ test('PR workflow installs Playwright before npm test', function () {
 test('nightly workflow runs live cloud only on zz-qa-ci-store', function () {
   const manifest = loadCiTierManifest();
   const yaml = readWorkflow(manifest.nightly.workflowFile);
-  assert.ok(yaml.includes("cron: '0 20 * * *'") || yaml.includes('0 20 * * *'), 'nightly cron');
+  assert.ok(!/^[\t ]*schedule\s*:/m.test(yaml), 'nightly must not have schedule trigger');
   assert.ok(yaml.includes('workflow_dispatch'), 'nightly must allow manual dispatch');
   assert.ok(yaml.includes(`LIVE_CLOUD_STORE_ID: ${manifest.nightly.liveCloudStoreId}`));
   for (const spec of manifest.nightly.e2eLiveCloud) {
