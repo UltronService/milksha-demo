@@ -5,6 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { mirrorPreviewTree, verifyPreviewFolderIntegrity } from './lib/pages-pr-preview-mirror.mjs';
 import {
   MANIFEST_REL_PATH,
   buildDeployedPreviewsManifest,
@@ -12,6 +13,7 @@ import {
   listPrNumbersFromDeploySite,
   mergePreservePrNumbers,
   parseDeployedPreviewsManifest,
+  verifyStrictPreviewFolders,
 } from './lib/pages-pr-preview-preserve.mjs';
 
 const ROOT_URL = 'https://ultronservice.github.io/milksha-demo';
@@ -68,25 +70,6 @@ function ghCursorPrNumbers() {
     .filter((n) => /^\d+$/.test(n));
 }
 
-function mirrorLivePreview(destDir, prNumber) {
-  mkdirSync(destDir, { recursive: true });
-  const url = `${ROOT_URL}/pr-preview/pr-${prNumber}/`;
-  const wget = spawnSync(
-    'wget',
-    ['-q', '-e', 'robots=off', '-r', '-np', '-nH', '-l', '30', url],
-    { cwd: destDir, encoding: 'utf8' },
-  );
-  if (wget.status === 0 && existsSync(join(destDir, 'index.html'))) {
-    return true;
-  }
-  const html = curlBody(`${url}index.html`);
-  if (!html) {
-    return false;
-  }
-  writeFileSync(join(destDir, 'index.html'), html, 'utf8');
-  return existsSync(join(destDir, 'index.html'));
-}
-
 const deploySite = process.argv[2];
 const currentPr = process.argv[3] || '';
 const strict = process.env.PAGES_PRESERVE_STRICT === '1';
@@ -134,10 +117,14 @@ for (const num of prNumbers) {
   let mirrored = false;
   if (!alreadyInArtifact && httpCode === '200') {
     console.log(`preserve: mirroring live pr-preview/pr-${num}/`);
-    mirrored = mirrorLivePreview(dest, num);
+    mirrored = mirrorPreviewTree(dest, ROOT_URL, num);
   } else if (alreadyInArtifact) {
     console.log(`preserve: pr-${num} already in artifact`);
   }
+
+  const integrity = verifyPreviewFolderIntegrity(dest, ROOT_URL);
+  const needsIntegrity =
+    strict && (mirrored || alreadyInArtifact || existsSync(join(dest, 'index.html')));
 
   const verdict = evaluatePreserveStep({
     strict,
@@ -146,6 +133,7 @@ for (const num of prNumbers) {
     mirrored,
     alreadyInArtifact,
     prNumber: num,
+    integrityOk: !needsIntegrity || integrity.ok,
   });
 
   if (verdict.action === 'fail') {
@@ -166,6 +154,18 @@ if (strict && failures > 0) {
 const deployed = listPrNumbersFromDeploySite(
   existsSync(prPreviewRoot) ? readdirSync(prPreviewRoot) : [],
 );
+
+if (strict && deployed.length > 0) {
+  const folderCheck = verifyStrictPreviewFolders(deploySite, ROOT_URL, deployed);
+  if (!folderCheck.ok) {
+    for (const err of folderCheck.errors) {
+      console.error(`preserve: ERROR ${err}`);
+    }
+    console.error('preserve: strict preview integrity check failed; aborting deploy');
+    process.exit(1);
+  }
+}
+
 const manifestPath = join(prPreviewRoot, '_deployed-previews.json');
 writeFileSync(manifestPath, buildDeployedPreviewsManifest(deployed), 'utf8');
 console.log(`preserve: wrote manifest (${deployed.length} preview folders)`);
