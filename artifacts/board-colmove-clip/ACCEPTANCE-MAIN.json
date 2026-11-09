@@ -1,0 +1,98 @@
+[
+  {
+    "viewport": "1080p",
+    "zone": "prep",
+    "frameCount": 33,
+    "fail": true,
+    "byKind": {
+      "title-overlap": 13,
+      "outside-cream": 13,
+      "diagonal-move": 1,
+      "chip-overlap": 10,
+      "cell-double-occupy": 28
+    },
+    "sampleViolation": {
+      "kind": "title-overlap",
+      "frame": 2,
+      "id": "store:8700",
+      "titleOverlap": 6965.77734375
+    }
+  },
+  {
+    "viewport": "1080p",
+    "zone": "ready",
+    "frameCount": 252,
+    "fail": true,
+    "byKind": {
+      "chip-overlap": 12,
+      "cell-double-occupy": 28,
+      "diagonal-move": 1
+    },
+    "sampleViolation": {
+      "kind": "chip-overlap",
+      "frame": 1,
+      "a": "store:9701",
+      "b": "clone-b",
+      "overlap": 15121.6875
+    }
+  },
+  {
+    "viewport": "4k",
+    "zone": "prep",
+    "frameCount": 32,
+    "fail": true,
+    "byKind": {
+      "outside-cream": 22,
+      "diagonal-move": 1,
+      "title-overlap": 2,
+      "chip-overlap": 15,
+      "cell-double-occupy": 30
+    },
+    "sampleViolation": {
+      "kind": "outside-cream",
+      "frame": 2,
+      "id": "store:8700",
+      "chip": {
+        "top": -970.625,
+        "left": 1269.125,
+        "right": 1642.5,
+        "bottom": -808.625
+      },
+      "cream": {
+        "top": 682,
+        "left": 202,
+        "right": 1798,
+        "bottom": 1960
+      }
+    }
+  },
+  {
+    "viewport": "4k",
+    "zone": "ready",
+    "frameCount": 253,
+    "fail": true,
+    "byKind": {
+      "outside-cream": 3,
+      "title-overlap": 2,
+      "chip-overlap": 16,
+      "cell-double-occupy": 30
+    },
+    "sampleViolation": {
+      "kind": "outside-cream",
+      "frame": 1,
+      "id": "1",
+      "chip": {
+        "top": 3358.25,
+        "left": 2700.1875,
+        "right": 3446.9375,
+        "bottom": 3682.25
+      },
+      "cream": {
+        "top": 682,
+        "left": 2042,
+        "right": 3638,
+        "bottom": 1958
+      }
+    }
+  }
+]
