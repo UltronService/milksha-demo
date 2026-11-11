@@ -1,0 +1,916 @@
+{
+  "at": "2026-10-19T01:24:56.163Z",
+  "policy": {
+    "a17": "Abort boardAutoPair + all cloud/auth/firestore POST (no server bind for a17)",
+    "zzQa": "Allow boardAutoPair + auth; abort heartbeat/devCommand/boxUpload/posReceiver only"
+  },
+  "httpAssets": [
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=a17",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/css/base.css",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-boot.js",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "url": "https://ultronservice.github.io/milksha-demo/config/firebase.js",
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "cloudChecks": {
+    "zzQaControllerDevLogin": {
+      "status": 200,
+      "code": null
+    },
+    "listStores": {
+      "status": 200,
+      "hasA17": false,
+      "storeCount": 27
+    },
+    "a17DeviceDevLogin": {
+      "status": 403,
+      "code": "store_id_invalid",
+      "message": "The store id format is invalid for developer tools registration."
+    }
+  },
+  "captures": {
+    "a17": {
+      "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=a17",
+      "dom": {
+        "bootError": true,
+        "h1": "無法載入叫號看板",
+        "p": "Failed to fetch",
+        "hasCanvas": false,
+        "pausedVisible": false,
+        "offlineVisible": false,
+        "title": "迷客夏 · 取餐叫號",
+        "receiverCloud": false
+      },
+      "consoleLines": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "warning",
+          "text": "[board-auto-pair] bind failed Failed to fetch"
+        }
+      ],
+      "requestLog": [
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=a17",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://fonts.googleapis.com/css2?family=Arimo:wght@400&display=swap",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/css/base.css?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/css/milksha-board.css?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/brand-loader.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/audio.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/today-board.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/board-auto-pair.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/board-auto-pair-host.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/landscape-art-layout.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/source-icons-layout.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim-config.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-seq.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/chime-policy.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/milksha-board.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/milksha-demo.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/app.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/config/firebase.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/paths.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firebase-sdk-bridge.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-realtime.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-value.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-settings.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/config-resolve.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/auth-session.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-sign.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/dev-command-validation.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-api.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-bind-api.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-rest.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-receiver-validate.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-poc-coord.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/push-numbers-params.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-cloud-shim.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/create-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/validate-request.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/device-command-time.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-runtime.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-boot.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/brand.json",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/assets/milksha-board-bg-1007.jpg",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boardAutoPair",
+          "action": "abort-boardAutoPair"
+        }
+      ],
+      "screenshot": "/workspace/artifacts/a17-board-open/board-a17-write-blocked-incl-pair-1920x1080.png"
+    },
+    "zzQa": {
+      "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-store-a",
+      "dom": {
+        "bootError": false,
+        "hasCanvas": true,
+        "pausedVisible": false,
+        "offlineVisible": false,
+        "title": "迷客夏 · 取餐叫號",
+        "receiverCloud": true
+      },
+      "consoleLines": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+        }
+      ],
+      "requestLog": [
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/?mode=cloud&store=zz-qa-store-a",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://fonts.googleapis.com/css2?family=Arimo:wght@400&display=swap",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/css/base.css?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/css/milksha-board.css?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/brand-loader.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/audio.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/today-board.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/board-auto-pair.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/board-auto-pair-host.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/landscape-art-layout.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/source-icons-layout.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim-config.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/board/milksha-board-anim.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-seq.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/chime-policy.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/milksha-board.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/milksha-demo.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/app.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/config/firebase.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/paths.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firebase-sdk-bridge.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-realtime.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-value.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-settings.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/config-resolve.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/auth-session.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-sign.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/dev-command-validation.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/cloud-api.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/board-bind-api.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-rest.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/pos-receiver-validate.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-poc-coord.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/push-numbers-params.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-cloud-shim.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/local-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/firestore-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/transport/create-transport.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/validate-request.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/device-command-time.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-runtime.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/js/receiver/cloud-boot.js?v=20261017d",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/brand.json",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://ultronservice.github.io/milksha-demo/assets/milksha-board-bg-1007.jpg",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boardAutoPair",
+          "action": "continue-boardAutoPair"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boardAutoPair",
+          "action": "continue-boardAutoPair"
+        },
+        {
+          "method": "POST",
+          "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&RID=42510&CVER=22&X-HTTP-Session-Id=gsessionid&zx=vxdol3",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://securetoken.googleapis.com/v1/token?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIet6PqyohxA&VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://securetoken.googleapis.com/v1/token?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://securetoken.googleapis.com/v1/token?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://securetoken.googleapis.com/v1/token?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://asia-east1-milksha-qms-dev.cloudfunctions.net/boxHeartbeat",
+          "action": "abort-write-fn"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/devices/stb-01?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmilksha-qms-dev%2Fdatabases%2F(default)&gsessionid=GN3US6lO0F8uxQrm9q8Pwl-5xGeCKNrrr0A-1a3tQquIe",
+          "action": "continue"
+        },
+        {
+          "method": "GET",
+          "url": "https://firestore.googleapis.com/v1/projects/milksha-qms-dev/databases/(default)/documents/stores/zz-qa-store-a/board/today_board?key=AIzaSyCvNMerP0u-bJhqR513K0eV-tdlioeD80Q",
+          "action": "continue"
+        }
+      ],
+      "screenshot": "/workspace/artifacts/a17-board-open/board-zz-qa-store-a-allow-pair-auth-block-heartbeat-cmd-1920x1080.png"
+    }
+  },
+  "codeWriteRequestsOnCloudBoardOpen": [
+    "POST boardAutoPair (initial: brand+storeNumber+deviceId, or read: storeId+deviceId) — before cloud runtime",
+    "POST accounts:signInWithCustomToken (Firebase)",
+    "POST devLogin (ensureIdToken after pair)",
+    "POST boxHeartbeat (interval after runtime start)",
+    "POST devCommand (command ack / control)",
+    "POST boxUpload",
+    "POST posReceiver (not home board path)",
+    "Firestore listener channel POST + possible command ack writes",
+    "localStorage: milksha:deviceId, milksha:board-bind-record, milksha:board-machine-id"
+  ],
+  "storeIdValidation": {
+    "frontendController": "KNOWN_LITERAL includes a17; also ^[a-z][0-9]{6}$ and ^zz-qa-*",
+    "frontendValidateRequestStores": "a17 in STORES array (demo catalog)",
+    "devCloudListStores": "a17 not in registry (see cloudChecks.listStores)",
+    "devCloudDevLoginA17": "403 store_id_invalid (see cloudChecks.a17DeviceDevLogin)"
+  }
+}
