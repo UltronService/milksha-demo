@@ -1,0 +1,73 @@
+=== QA 任務 ===
+You are QA doing a READ-ONLY recheck of PR #16 (https://github.com/UltronService/milksha-demo/pull/16), head branch cursor/cloud-mode-real-f69c. First confirm HEAD is <REDACTED>; if not, check out that exact commit. STRICT RULES: do NOT push, open PRs, comment on GitHub, approve, merge, or change draft state. Make no commits to remote. Do not use any production Firebase. Do not kill processes you did not start.
+
+The attached file uploads/pr16-f5d898a-review.md is QA's previous review of f5d898a with findings M1, M2, L1, one relaxed check, and T1-T7, with file:line refs. Recheck each on 1667ac0 (T7 was intentionally not fixed; just note it).
+
+Do:
+1. Run unit tests and the full e2e suite. Report pass/fail/skip. Confirm the 6975672 baseline comparison actually runs (not skipped) - set up the 6975672 worktree as the repo's CI does. Also check the CI run https://github.com/UltronService/milksha-demo/actions/runs/37130778587 is for 1667ac0 and green.
+2. M1: at 1920x1080 with '8888', measure rendered ring font-size and white box size for three font setups (DejaVu Sans, local default stack, real Roboto - verify the platform font actually used via CDP CSS.getPlatformFontsForNode, not fallback). Must be font 280px and box within 1px of 6975672 measured in the same environment. Rule: if '8888' fits, it must not shrink. Report whether DejaVu shrinks and whether '8888' fits for DejaVu at 280. Also try the widest digit string.
+3. Overlay: screenshot 1920x1080 '8888' on 1667ac0 and on 6975672 in the same env; pixel-diff; report differing pixel count.
+4. M2: at 2560x1080 and 2560x1440, measure rendered ring glyph size vs the ready-card number size (rendered, not CSS design values). Must be more than 2x. Also 1366x768, 1280x720, 1920x1080. Check the white box scales proportionally above 1920.
+5. Margins (director's rule): measure from the INNER edge of the white box to the digit glyph ink edge, left and right, as a percentage of the white box inner width, at 1920x1080, 1366x768, 1280x720, 2560x1080, 2560x1440. Rule: each width's per-side % must be within 2 percentage points of 1920's. Use pixel ink bounds from screenshots (not text box metrics) and also report the text-box-metric figure, so we can explain why the frontend says ~9.4% and UI/UX measured 10.8%/11.8% at 1920.
+6. L1: window.__receiverHandleAuthFailure / __receiverSyncAuthUi removed; callbacks via options.
+7. Relaxed check: the >=2x e2e test now measures rendered font/glyph vs card rendered size.
+8. T1 ports unique; T2 asserts font == 280 and box == 6975672 measured; T3 baseline compare fails (not skips) if 6975672 unavailable; T4 Roboto platform-font check; T5 no pkill/fuser, only owned PIDs; T6 403 via /test/devLoginAccessCode without route mock.
+9. Review the full diff f5d898a..1667ac0 for regressions, and confirm: no font files added to the site, no secrets, no external URLs, all error handling reads {code,message} only, no removed or loosened validation/error handling/security checks (Ponytail trial).
+
+Final message (concise): verdict PASS or NEEDS FIXES; counts High/Medium/Low, missing checks, removed/loosened checks, test issues, doc issues; per item M1/M2/L1/relaxed/T1-T6 closed or not with evidence; margin table (ink-based and box-metric) for 5 widths and the diff vs 1920; ring/card ratios; font names actually rendered; overlay diff count; any new findings with file:line and suggested fix. Save screenshots (1920 current vs 6975672, 2560x1080, 2560x1440, 1366, 1280) and notes as artifacts.
+
+=== Cursor 代理人最終報告 ===
+
+**HEAD** `<REDACTED>` 已確認。  
+**CI** [run 37130778587](https://github.com/UltronService/milksha-demo/actions/runs/37130778587)：`headSha=1667ac0`，`success`。
+
+| 計數 | 值 |
+|------|-----|
+| High / Medium / Low | 0 / **1** / 0 |
+| 缺少檢查 | 0 |
+| 放寬檢查 | 0 |
+| 測試問題 | 1（T7） |
+| 文件 | 0 |
+
+**測試**：單元 **114/114**；E2E **73 pass / 0 skip**（含 `global-setup` 建 `/tmp/wt-6975672` 與 `board-viewport-screenshots` 6975672 比對，**未 skip**）。
+
+---
+
+### 項目結案
+
+| 項 | 狀態 |
+|----|------|
+| **M1** | **未結** — 框寬 **848.640625**（=6975672）；**字級非 280**：DejaVu **229.87**（**會縮**；280 時 **'8888' 放不下** `fitsAt280=false`）；local/Roboto **276.416**（CDP：**DejaVu Sans** / **Roboto Black** / **Roboto Black**）。框高 vs 6975672(456)：439/440/390。1920 overlay **像素差 11,760** / 2,073,600。 |
+| **M2** | **已結** — 字形寬 ring/ready：**2.02 / 2.15 / 2.14 / 2.87 / 2.15**（皆 >2×）。2560 白框寬 **1.414×** 1920（vw 理論 1.333）。 |
+| **L1** | **已結** — 無 `window.__receiver*`；`cloud-boot.js` 用 `onAuthFailure` / `onSyncAuthUi`。 |
+| **放寬 ≥2×** | **已結** — `guest-clock.spec.mjs:392-418` 量 **glyph width**。 |
+| **T1–T6** | **已結**（port 18791/18792、條件式 T2、worktree 失敗即 throw、Roboto CDP、無 pkill、403 走 `devLoginAccessCode`）。 |
+| **T7** | **未修** — 最寬仍 **0000**（tabular-nums）。 |
+
+---
+
+### 邊距（白框內緣 → **Range 字形框**，% of 外框寬）
+
+| 寬度 | 左 | 右 | vs 1920 |
+|------|-----|-----|---------|
+| 1920×1080 | 9.46 | 9.47 | — |
+| 1366×768 | 9.60 | 9.60 | +0.14 / +0.14 |
+| 1280×720 | 9.70 | 9.70 | +0.23 / +0.24 |
+| 2560×1080 | 9.50 | 9.50 | +0.04 / +0.03 |
+| 2560×1440 | 9.50 | 9.50 | +0.04 / +0.03 |
+
+皆 **±2pp** 內。前端 ~**9.4%** = 上表；UI/UX ~**10.8–11.8%** 較像 **墨跡**（截圖上數字為黑，與 Range 差 ~1.1×）。
+
+---
+
+### Diff `f5d898a..1667ac0`（Ponytail）
+
+無新增字型檔、無新 secret/外連；auth 改 options；未見放寬驗證或安全檢查。
+
+---
+
+### 產物
+
+`/opt/cursor/artifacts/pr16-1667ac0/`：`qa-recheck-notes.json`、`qa-pixeldiff-1920-current-vs-6975672.png`、`qa-overlay-8888-1667ac0-*`、`qa-overlay-8888-6975672-1920x1080.png`（E2E 亦寫入 `board-ready-*`）。
+
+**建議（M1）**：`ring-host.js:288-292` — 1920/6975672 佈局在 **'8888' 於 280px 仍溢出內容寬** 時縮字（DejaVu 尤甚）；若規格要求 280 + 6975672 視覺一致，需放寬內容槽或 DejaVu 專案策略。

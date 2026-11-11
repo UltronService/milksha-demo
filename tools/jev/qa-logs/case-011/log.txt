@@ -1,0 +1,35 @@
+=== QA 任務 ===
+Thanks. B, C, D are accepted. Item A is not valid yet because the board was never really hidden. Re-run only item A on the public site (ada3679), fresh and legacy contexts, no code changes, no reload.
+
+Make the board truly backgrounded:
+1. Run Chromium headed under xvfb (xvfb-run or Xvfb + DISPLAY), not headless.
+2. Open the board page, then open a second page in the SAME browser context/window and call bringToFront() on it so the board tab is hidden.
+3. Before continuing, assert on the board page that document.visibilityState === 'hidden' and document.hidden === true (record the value and timestamp). If headed mode still reports visible, use the CDP session on the board page: Emulation.setFocusEmulationEnabled false plus Page.setWebLifecycleState {state:'frozen'} for the hidden period, then {state:'active'} on return, and record which method you used. Also log the board's visibilitychange events.
+4. Keep it hidden at least 600 seconds. During that time press 清空看板 on the controller (separate context).
+5. bringToFront() the board page, assert visibilityState === 'visible', then PASS if the board is empty within 10 seconds without reload (board load count stays 1) and a following controller send shows on the board.
+
+You may run fresh and legacy in parallel in two separate browser instances to save time. Reset s120030 state before each. Save pr23live-A2-* screenshots and pr23live-A2-results.json to /opt/cursor/artifacts/. Report PASS/FAIL per context with the hidden-state evidence and one sentence each.
+
+=== Cursor 代理人最終報告 ===
+## Item A 重測（ada3679 公開站）
+
+環境：**xvfb-run + Chromium headed**（非 headless）；雙 context；各項前 **清空看板** 重置；背景 **≥610s**；無手動 reload（`boardLoads=1`）。
+
+### 背景隱藏方式（兩 context 相同）
+- 同 context 開第二頁並 `bringToFront()` 後，看板仍為 **`visibilityState: visible` / `hidden: false`**（約 **02:48:22Z**）。
+- 已加 **CDP**：`Emulation.setFocusEmulationEnabled(false)` + `Page.setWebLifecycleState: frozen`；記錄方法 **`tab-bringToFront+CDP(focus-off,frozen)`**。
+- `visibilitychange` 日誌為空（frozen 期間未觸發事件）。
+
+---
+
+| Context | 結果 | 一句話 |
+|--------|------|--------|
+| **fresh** | **PASS** | CDP 背景約 **610s** 內清空；回前景 **10s 內 ready=0**，送號約 **2.5s** 顯示。 |
+| **legacy** | **PASS** | 同上（`emptyOk`、無 reload、送號成功）。 |
+
+回前景後 **`visibilityState: visible`**（02:58:33Z）。
+
+---
+
+
+產物：`/opt/cursor/artifacts/pr23live-A2-results.json`、`pr23live-A2-*-after-front.png`、`pr23live-A2-*-after-send.png`

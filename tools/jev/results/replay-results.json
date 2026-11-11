@@ -1,0 +1,282 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-10-16T15:36:35.250Z",
+    "case_count": 26,
+    "api_errors": 0,
+    "overall_accuracy": 0.2692307692307692,
+    "label_agreement_all_cases": 0.8461538461538461,
+    "accuracy_non_fallback": 1,
+    "fail_recall_non_fallback": 1,
+    "fail_recall_overall": 1,
+    "fallback_rate": 0.7307692307692307,
+    "usage": {
+      "input_tokens": 55819,
+      "output_tokens": 1233,
+      "estimated_cost_usd": 0.002344398
+    },
+    "confidence_threshold": 0.85,
+    "logs_dir": "/tmp/jev-qa-logs"
+  },
+  "rows": [
+    {
+      "case": "case-001",
+      "qa_verdict": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.53,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-002",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.74,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-003",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.91,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-004",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.98,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-005",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.77,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-006",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.69,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-007",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.94,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-008",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.43,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-009",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.95,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-010",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.69,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-011",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.53,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-012",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.79,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-013",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.72,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-014",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.4,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-015",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.74,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-016",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.77,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-017",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.33,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-018",
+      "qa_verdict": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.13,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-019",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.73,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-020",
+      "qa_verdict": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.55,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-021",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.66,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-022",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.98,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-023",
+      "qa_verdict": "通過",
+      "jev_answer": "通過",
+      "confidence": 0.79,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-024",
+      "qa_verdict": "通過",
+      "jev_answer": "不通過",
+      "confidence": 0.22,
+      "fallback": true,
+      "match": null,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-025",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.92,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    },
+    {
+      "case": "case-026",
+      "qa_verdict": "不通過",
+      "jev_answer": "不通過",
+      "confidence": 0.97,
+      "fallback": false,
+      "match": true,
+      "had_report_section": true,
+      "error": ""
+    }
+  ]
+}

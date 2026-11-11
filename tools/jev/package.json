@@ -1,0 +1,12 @@
+{
+  "name": "@milksha/jev-qa-trial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "replay": "node scripts/replay-qa-logs.mjs",
+    "compare-answer-key": "node scripts/jev-compare-answer-key.mjs",
+    "prepare-qa-logs": "node scripts/prepare-qa-logs-for-commit.mjs",
+    "audit-qa-log-verdicts": "node scripts/audit-qa-log-verdicts.mjs"
+  }
+}

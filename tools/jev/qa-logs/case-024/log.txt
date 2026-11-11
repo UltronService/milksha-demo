@@ -1,0 +1,50 @@
+=== QA 任務 ===
+QA of milksha-demo PR #64 (controller source picker) at head 4d314b9. Finish by 08:30 Taipei. No git activity (no commit/push/PR/branch).
+1. Read the PR body, the coding agent's QA report and the diff vs main.
+2. Owner allowed skipping exactly ONE test: 'send again after clear' (清空後再送). Confirm only that one is skipped (skip/only/xit/todo/retries, removed tests, widened tolerances, relaxed asserts, timeouts). List every skipped or loosened test vs main. Known bug 'read back source' (讀回來源) is fixed in #65 and does not block #64; note it, but don't fail on it.
+3. Run the unit/browser tests on 4d314b9 and give pass/fail counts.
+4. Check that validation, error handling and security checks were not removed. Controller must send per-ticket {no, sourceType} matching milksha-cloud #23 rules: store 4 digits; 迷點 3-4 with leading 0; Uber/Udd 4-6 alnum uppercased; foodpanda 4-6 digits strip #; max 6 chars. Ponytail H/M/L.
+5. If a preview build exists, live check on zz-qa-store-a only (never s120030; clear_now at end): one number per source shows on the public board within 3s.
+Report PASS/FAIL with a one-sentence reason, the skip list, test counts and Ponytail. Artifacts in artifacts/pr64/.
+
+=== Cursor 代理人最終報告 ===
+
+
+## Skips vs `main` (loosened)
+
+| Item | vs main |
+|------|---------|
+| **Owner-allowed (only one)** | `controller-source-live-cloud.spec.mjs` › `push_numbers five sourceTypes via controller devCommand payload` — **`test.skip`** (清空後再送) |
+| **New loosening** | `retries: 1` on that **new** describe only (test does not run) |
+| **Unchanged env skips (4)** | `board-viewport-screenshots` ×3, `controller-zone-layout` ×1 — same as main |
+| **Not found** | Removed tests, widened timeouts/asserts on **existing** specs, `only`/`xit`/`todo` |
+
+**#65 note:** 「讀回來源」is fixed in **#65**; not a #64 fail.
+
+## Test counts (`4d314b9`)
+
+| Suite | Pass | Fail | Skip |
+|-------|------|------|------|
+| `npm test` | **239** | 0 | 0 |
+| Playwright e2e (excl. `*-live-cloud`, CI `test` job) | **230** | **2** | **4** |
+| `controller-source-live-cloud.spec.mjs` | 0 | 0 | **1** |
+
+Failures: **`guest-clock.spec.mjs`** (2) — **unchanged vs `main`** (not a #64 regression).
+
+## Validation / wire
+
+- **Added** `{ no, sourceType }` + legacy strings in `dev-command-validation`; auth/1KB caps retained.
+- Quick-send rules: store 4-digit; 迷點 3–4 + leading 0; Uber/Udd 4–6 alnum uppercase; foodpanda 4–6 digits, strip `#`.
+
+## Live
+
+- **No** public preview: Pages still **`20261013a`** (not `20261013c`).
+- Branch route on **zz-qa-store-a**: **5/5** sources on board, **359–598 ms** (`artifacts/pr64/live-store-a-branch-route.json`); **`clear_now`** at end.
+
+## Ponytail
+
+| H | M | L |
+|---|---|---|
+| **2 guest-clock** e2e fails (pre-existing) | No **20261013c** Pages preview | `retries:1` on skipped live describe |
+
+Artifacts: `artifacts/pr64/` (`REPORT.md`, `results.json`, `skip-analysis.json`, logs, live JSON).

@@ -1,0 +1,57 @@
+=== QA 任務 ===
+New public retest: milksha-demo PR #25 (fixed 1920x1080 16:9 canvas with uniform viewport scale) merged 2026-10-09 00:41 Taipei, main = 6ef1359 (also contains #31 b0980bc). Pages deploy for 6ef1359 completed 00:42:23 Taipei. Do NOT start before 00:53 Taipei (16:53 UTC); first confirm the public site serves 6ef1359 assets (e.g. check the board CSS/JS contains the new canvas scaling code). Record the actual test start time.
+
+Target: https://ultronservice.github.io/milksha-demo/ — real public site, no manual refresh, no local route override.
+
+Browsers: (1) fresh profile; (2) old-settings profile seeded via localStorage only with the legacy-key cloud settings plus s120030/poc-target/stale cache (as in pr27live). Never send to s120030.
+
+Checks, in each browser:
+1. Board at viewport 1920x1080 and at 3840x2160: the board canvas stays 16:9; at 4K it is a uniform 2x scale of the 1080p layout (not stretched: equal X/Y scale, compare element bounding boxes / computed transform; also test one non-16:9 viewport such as 1920x1200 or 1280x1024 to confirm letterbox not stretch). Numbers render correctly and are readable (no overflow/clipping). Use a zz-qa store board with numbers on it.
+2. Controller send-to-board still works: use scripts/public-pages-pr27-live-qa.mjs (now with b on zz-qa-store-a) or equivalent; one full main flow per browser. For b, record separately: boardReadyMs (board navigation start to board cloud-ready) and sendToDisplayMs (press, with button enabled, to first number in DOM; standard ≤3000ms). Check c (clear, ~1s, send, still there after 10s, real clear empties) and d with zz-deny-test.
+
+Safety: write only to existing zz-qa-* stores (zz-qa-store-a / zz-qa-store-b); c030020 read only (no sends, no clears); never touch s120030; no new fake store IDs; never s999999. No product code changes, no PRs.
+
+Report: pass/fail per browser per check with numbers (scale factors, aspect ratios, boardReadyMs, sendToDisplayMs); screenshots at 1080p, 4K and the non-16:9 viewport for both browsers under artifacts/pr25live/ plus results.json; the deployed commit seen.
+
+=== Cursor 代理人最終報告 ===
+## PR #25 public retest — complete
+
+**Actual test start:** `2026-10-08T16:53:00.660Z` (**2026-10-09 00:53:00 Taipei**) — after the 00:53 gate and deploy asset check.
+
+**Deployed commit (expected):** `6ef1359` (+ `#31` `b0980bc` on main).  
+**Public asset verification (pre-run):** `milksha-board.js` includes `milksha-board-canvas`, `computeViewportScale`, and `transform = 'scale('` — **ok** (22,839 bytes; sha16 `d7788ac29f1b32dc`).  
+**Target:** https://ultronservice.github.io/milksha-demo/ (no route override, no local patch).
+
+**Artifacts:** `/opt/cursor/artifacts/pr25live/results.json`, `wait-meta.json`, `run.log`, screenshots under `/opt/cursor/artifacts/pr25live/screenshots/` (6 canvas shots + flow shots). **Harness exit: 0**; `c030020Final.empty: true`.
+
+---
+
+### Browser: **fresh**
+
+| Check | Result | Key numbers |
+|--------|--------|-------------|
+| **1 — Canvas 16:9 / uniform scale** | **PASS** | 1080p: scale **1**, canvas **1920×1080**; 4K: scale **2**, canvas **3840×2160**; **scaleRatio 2**, **sizeRatioW 2**; 1920×1200: scale **1**, viewport **1920×1080** @ **top 60** (letterbox); no clipping |
+| **b — Send to board (`zz-qa-store-a`)** | **PASS** | **boardReadyMs 77**; **sendToDisplayMs 406** (≤3000) |
+| **c — Isolation A/B** | **PASS** | 3 rounds: clear → 1s → send → 10s persist → clear; sends **969–1602 ms** |
+| **d — `zz-deny-test`** | **PASS** | `連線暫停`, devLogin **1**, **0** in 60s |
+| *(extra a/e)* | PASS | c030020 read-only OK; offline recover OK |
+
+---
+
+### Browser: **old-settings** (legacy cloud-settings + s120030 poc/stale cache; **no s120030 traffic**)
+
+| Check | Result | Key numbers |
+|--------|--------|-------------|
+| **1 — Canvas** | **PASS** | Same as fresh: scales **1 / 2 / 1**, 4K **2×** bbox, letterbox **top 60** @ 1920×1200 |
+| **b** | **PASS** | **boardReadyMs 1216**; **sendToDisplayMs 293** |
+| **c** | **PASS** | 3 rounds all pass |
+| **d** | **PASS** | Same deny behavior as fresh |
+| *(extra a/e)* | PASS | No stale 9999 / no s120030 auth on c030020 board |
+
+---
+
+### Canvas screenshots (both browsers)
+
+- `fresh-canvas-1920x1080.png`, `fresh-canvas-3840x2160.png`, `fresh-canvas-1920x1200.png`
+- `old-settings-canvas-1920x1080.png`, `old-settings-canvas-3840x2160.png`, `old-settings-canvas-1920x1200.png`
+

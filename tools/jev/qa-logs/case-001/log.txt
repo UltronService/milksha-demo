@@ -1,0 +1,80 @@
+=== QA 任務 ===
+You are QA doing a READ-ONLY final review of PR #2 (https://github.com/UltronService/milksha-cloud/pull/2), head branch cursor/qa-live-fixes-f6f1. First confirm HEAD is <REDACTED>; if not, check out that exact commit. Base is main 46ed61f. STRICT RULES: do NOT push, open PRs, comment on GitHub, approve, or merge. Make no commits to any remote branch. Do not touch any real Firebase project; use only the Firebase emulator with project id `demo-milksha-qa`. Use test-only values for POS_SIGNATURE_SECRET, ADMIN_BOOTSTRAP_SECRET and DEV_ACCESS_CODE if tests need them. Never print secrets.
+
+Context: the backend's own check of the previous sha 5c2daa2 failed with 1 blocker (after upgrading from the old cloud version, the box's board could get stuck forever) and 3 Mediums, described in https://github.com/UltronService/milksha-cloud/pull/2#issuecomment-5968856699 (read it via the GitHub API or gh). The backend says df0463c fixes all of them; self-check: https://github.com/UltronService/milksha-cloud/pull/2#issuecomment-5969203439 (407 tests, 0 skipped, run twice).
+
+Do:
+1. Run the full test suite twice on the emulator. Report pass/fail/skip counts. Any skipped test is a finding.
+2. Verify the blocker independently: after upgrade from old cloud data, the board keeps updating with 1 box and with 2 boxes. Write your own scratch scenario if the PR's test looks weak (do not push it). Mutation check: revert the fix locally and confirm the test fails.
+3. Verify each of the 3 Mediums from comment 5968856699 is fixed, with a test that fails without the fix.
+4. Verify these team decisions with evidence (file:line plus test or scenario):
+ - Resends return the first status.
+ - deviceSessionId = installId.
+ - stale_list carries lastAcceptedSequence; box retries at most 3 times.
+ - Only the newest list resends.
+ - Session retention is 1 active plus 20 deactivated.
+ - Same sequence with different content gives stale_list; same content gives duplicate.
+ - ackCommandId must match.
+ - issuedAtMs is present on commands.
+ - bizDate, clock_uncertain and 03:00 clearing rules.
+ - 404 device_not_found; device-exists check inside the transaction; other writes use update, not set-merge.
+ - OPTIONS allows only POST and OPTIONS.
+ - All error responses (400/401/403/404/413/500) are {code, message} with no `error` field; 500 returns only internal_error with no internal message; order 413, then 401, then 400/404, then 500; one shared auth helper.
+ - R3: a late upload from an old session is rejected.
+ - Legacy adopted records keep their deviceReceivedAtMs.
+5. Ponytail trial check: compare df0463c with 5c2daa2 and with main. List any removed or loosened validation, error handling, or security checks. Say whether the Firestore rules file changed.
+
+Final message (concise): verdict PASS or NEEDS FIXES; counts High/Medium/Low; missing checks; removed/loosened checks; test issues; doc issues; rules file changed or not; each finding with file:line, why it matters, and a suggested fix; list of passed decisions; test output summary. Save detailed notes as a markdown artifact.
+
+=== Cursor 代理人最終報告 ===
+
+| 嚴重度 | 數量 |
+|--------|-----:|
+| High | 0 |
+| Medium | 0 |
+| Low | 2 |
+
+**HEAD** `df0463c` 已確認。`firestore.rules` **未變**。
+
+### 測試（`demo-milksha-qa` emulator，需先 `npm --prefix functions run build`）
+
+| 次數 | passed | failed | skipped |
+|------|--------|--------|---------|
+| 1 | **407** | 0 | 0 |
+| 2 | **407** | 0 | 0 |
+
+未先 build 時曾出現 3 個 HTTP 測試 404（emulator 載不到 functions），屬流程問題見 L-1。
+
+### 阻斷項 H-1（main 遷移後看板持續更新）
+
+- **修復：** `entry-b-list-state.ts:131-138`（僅 writer 種入）、`:156-170`（種入 `clockTrusted=null`）、`:164-166`（`default` 不當 current session）、`:261-271`（untrusted 較舊不覆寫）
+- **測試：** `25-r4-pr2-qa.test.ts` H-1a / H-1b / A3
+- **舊碼 `5c2daa2`：** 同測試 **失敗**（`qa-artifacts/old-sha-h1.log`）
+- **突變：** trusted seed、移除 writer gate → **KILLED**
+
+### 三個 Medium（5968856699）
+
+| 項 | 舊 `5c2daa2` | df0463c 突變 |
+|----|--------------|--------------|
+| M-1 ms/種入 | 25-r4 失敗 | 僅改 2 段 token 未殺測試（L-2）；舊 SHA 已證 |
+| M-2 receive_log | 失敗 | 移除 log 欄位複製 → **KILLED** |
+| M-3 untrusted 較舊 | 失敗 | 改回 apply → **KILLED** |
+
+### Ponytail（`5c2daa2` / `main`）
+
+R4 為**收緊**（writer 門檻、種入不信任、untrusted 較舊拒絕、log 欄位）。相對 main 的刪行多為重構至 `ingest-transaction`/`box-upload`，**未見**刻意放寬驗證或安全規則。
+
+### Low 發現
+
+1. **L-1** `package.json` `test` 未含 `functions` build → 乾淨環境可能假失敗。**建議：** test 前加 `npm --prefix functions run build`。
+2. **L-2** `25-r4` M-1 對「只還原 2 段 token」不敏感。**建議：** 斷言看板 token 必為 3 段或無 board ms 種入情境。
+
+### 缺口
+
+- **「stale_list 最多重試 3 次」** 雲端程式／測試**無**；僅文件客戶端行為（`entry-b-box-upload.md:152`）。
+
+### 已核對的團隊決策（摘要）
+
+重送首筆狀態（`20-r10-qa`）、`installId`（doc:160）、`lastAcceptedSequence`（`23-sequence-rollback-qa` + `entry-b-list-state.ts:423-426`）、1 current + 20 retired（`:3`, `:557`）、同序不同內容/duplicate（`23`）、`ackCommandId`（`heartbeat.ts:136-145`）、`issuedAtMs`（`dev-command.ts:74-99`）、營業日/03:00（`21`/`22`）、OPTIONS POST（`http-cors.ts:81`）、錯誤形狀（`15-unified-http-error-shape`）、舊 session 晚到（`23:171-218`）、legacy ms（`entry-b-list-state.ts:68-71`、`ingest-transaction.ts:518-520`）。`device_not_found` 目前見於 **`dev-command.ts:111-128`**，非 boxUpload 路徑。
+
+詳細筆記：`/workspace/qa-artifacts/pr2-qa-final-review-df0463c.md`

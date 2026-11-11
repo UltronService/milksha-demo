@@ -1,0 +1,38 @@
+=== QA 任務 ===
+Your #23 run tested the wrong shape. Actual PR #23 (merged 0577cff, deployed milksha-qms-dev): push_numbers `ready`/`preparing` entries may be plain strings (legacy store) OR objects `{ no, sourceType? }` with raw POS sourceType strings, fed through sanitizePosNumberContent (same rules as posReceiver); board tickets[].sourceType persisted. No top-level source. Redo live API checks on zz-qa-store-a only (controller login as before; never s120030; no git activity; clear_now at end), and confirm each on the public default board within 3s:
+1. ready [{no:'091',sourceType:'From_milksha_point_OK'}] -> board shows 091, sourceType kept.
+2. Uber {no:'c7458',sourceType:'From_UberEat_OK'} -> C7458.
+3. foodpanda {no:'#6406',sourceType:'From_foodpanda_OK'} (use the exact foodpanda sourceType string from repo docs/tests) -> 6406.
+4. Udd 4-6 alnum -> uppercased.
+5. legacy ready ['4001'] -> store ticket 4001.
+6. store 3-digit {no:'123',sourceType:'From_Store_OK'} -> dropped invalid_format while other valid channel tickets in same push remain.
+7. Same number from store and Uber (1234) -> 2 separate cells; same source+number -> 1. Also preparing zone via _Preparing suffix.
+Also re-check: >6 chars dropped, 1KB cap and auth 401/403 still hold. Report PASS/FAIL per item + send->board ms. Artifacts artifacts/cloud23b/. Finish by 23:20 Taipei.
+
+=== Cursor 代理人最終報告 ===
+
+
+## Per-item (send → public board)
+
+| # | Scenario | Result | ms |
+|---|----------|--------|-----|
+| 1 | Point `091` + `From_milksha_point_OK` | **PASS** | **2185** |
+| 2 | Uber `c7458` → **C7458** | **PASS** | **2** |
+| 3 | `#6406` + **`From_FoodPanda_OK`** (repo/tests spelling) | **PASS** | **2** |
+| 4 | Udd `ab12xy` → **AB12XY** | **PASS** | **2** |
+| 5 | Legacy `['4001']` → store | **PASS** | **2** |
+| 6 | `123` store dropped; `091` kept | **PASS** | **2** |
+| 7 | Two `1234` cells (store + Uber); duplicate Uber dropped; prep `5678` ×2 channels | **PASS** | **3** |
+
+## Extras
+
+| Check | Result |
+|-------|--------|
+| `1234567` | **PASS** (`invalid_format`) |
+| ~1.5KB params body | **PASS** (**400** `invalid_command_params`) |
+| No bearer | **PASS** (**401** `unauthorized`) |
+| `s120030` token mismatch | **PASS** (**403** `store_mismatch`) |
+
+Teardown: **`clear_now`** — board empty (0 prep / 0 ready).
+
+Artifacts: `artifacts/cloud23b/` (`REPORT.md`, `results.json`, `run-pr23b.mjs`, `run.log`).

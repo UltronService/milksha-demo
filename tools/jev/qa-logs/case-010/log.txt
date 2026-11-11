@@ -1,0 +1,29 @@
+=== QA 任務 ===
+Focused retest only (READ-ONLY). Public URL, cloud mode, two contexts, NO manual reload.
+
+A) Clear then 10 sends on a CLEAN board:
+1. Board context + controller context, store s120030, connect both.
+2. Press 清空看板 once; wait until board shows 0 ready numbers (poll up to 10s). Screenshot after clear.
+3. Then press 送出號碼 exactly 10 times; after each press wait until ready count increases by 1 (or page flips). Final ready count must be 10 (not 1). Record if any press drops the count (e.g. 10→1). If board already had numbers before clear, clear MUST empty them first — if clear fails, FAIL item A with evidence.
+
+B) store_not_allowed (confirm only the working path):
+Fresh context, localStorage empty, set store to not-a-store / s999999 BEFORE first connect. Expect pink banner. Do NOT connect s120030 first.
+
+Return Traditional Chinese: PASS/FAIL for A and B only, one overall line for public acceptance of PR #22 remote send (director cares: two devices, ≤3s already proven, clear board, one-per-press). Screenshots p22live-retest-*.png.
+
+=== Cursor 代理人最終報告 ===
+## A）清空後連送 10 次（雲端、雙 context、無 reload）
+
+- 連線前看板已有 **10** 筆 ready；按 **清空看板** 後 **10s 內降至 0**（`clearOk`）
+- 再按 **送出號碼** 共 **10** 次，每次 ready **+1**，最終 **10** 筆；**無** 10→1 等掉號
+- 截圖：`p22live-retest-A-after-clear.png`、`p22live-retest-A-final-board.png` 等
+
+## B）store_not_allowed（僅驗可走路徑）
+
+- 全新 context、`localStorage` 清空；載入時阻擋雲端 auth，店號 **not-a-store**、**未**先連上 s120030（`connectedBefore/After = 0`）
+- 解除阻擋後按連線 → 粉色 banner：「這家店不能用控制端測試，請用 s120030」
+- 截圖：`p22live-retest-B-store-denied.png`  
+- （B 需短暫阻擋雲端 auth，避免頁面自動以 s120030 連線；屬測試手法，非產品步驟）
+
+
+詳細 JSON：`/opt/cursor/artifacts/p22live-retest-results.json`
