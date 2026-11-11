@@ -1,0 +1,82 @@
+{
+  "store": "zz-qa-ci-store",
+  "commits": [
+    {
+      "sha": "4146812",
+      "label": "pre-pr53"
+    },
+    {
+      "sha": "0ed3056",
+      "label": "post-pr53"
+    }
+  ],
+  "anyWorse": true,
+  "table": {
+    "qaSetMismatchEvents1080": {
+      "before": 70,
+      "after": 192,
+      "verdict": "WORSE"
+    },
+    "slotMismatchEvents1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "lastPageTenOldEvents1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "missingOver3sCount1080": {
+      "before": 17,
+      "after": 16,
+      "verdict": "better"
+    },
+    "crossZoneRoundCount1080": {
+      "before": 8,
+      "after": 12,
+      "verdict": "WORSE"
+    },
+    "applyPayloadAvgPerRound1080": {
+      "before": 1.8333333333333333,
+      "after": 1.8666666666666667,
+      "verdict": "WORSE"
+    },
+    "qaSetMismatchEvents4k": {
+      "before": 62,
+      "after": 94,
+      "verdict": "WORSE"
+    },
+    "slotMismatchEvents4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "lastPageTenOldEvents4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "missingOver3sCount4k": {
+      "before": 5,
+      "after": 16,
+      "verdict": "WORSE"
+    },
+    "crossZoneRoundCount4k": {
+      "before": 4,
+      "after": 14,
+      "verdict": "WORSE"
+    },
+    "applyPayloadAvgPerRound4k": {
+      "before": 1.9333333333333333,
+      "after": 1.8333333333333333,
+      "verdict": "better"
+    }
+  },
+  "cycles": 30,
+  "hypothesis1": {
+    "crossZoneRoundsBefore": 12,
+    "crossZoneRoundsAfter": 26,
+    "note": "prep 7xxx visible in ready zone on stable settled frames"
+  }
+}

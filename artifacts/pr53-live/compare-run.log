@@ -1,0 +1,85 @@
+
+=== pre-pr53 (4146812) ===
+
+=== post-pr53 (0ed3056) ===
+{
+  "beforeSha": "4146812",
+  "afterSha": "0ed3056",
+  "anyWorse": true,
+  "table": {
+    "mainFlowLatOver3Total": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "mainFlowLatMaxMs": {
+      "before": 1044,
+      "after": 1016,
+      "verdict": "better"
+    },
+    "pageMismatch1080": {
+      "before": 2,
+      "after": 0,
+      "verdict": "better"
+    },
+    "pageMismatch4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "missingOver3s1080": {
+      "before": 3,
+      "after": 4,
+      "verdict": "WORSE"
+    },
+    "missingOver3s4k": {
+      "before": 2,
+      "after": 4,
+      "verdict": "WORSE"
+    },
+    "correctedMismatch1080": {
+      "before": 77,
+      "after": 70,
+      "verdict": "better"
+    },
+    "correctedMismatch4k": {
+      "before": 75,
+      "after": 70,
+      "verdict": "better"
+    },
+    "midNew1080": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    },
+    "midNew4k": {
+      "before": 0,
+      "after": 0,
+      "verdict": "not fixed"
+    }
+  },
+  "before": {
+    "mainFlowLatOver3Total": 0,
+    "mainFlowLatMaxMs": 1044,
+    "pageMismatch1080": 2,
+    "pageMismatch4k": 0,
+    "missingOver3s1080": 3,
+    "missingOver3s4k": 2,
+    "correctedMismatch1080": 77,
+    "correctedMismatch4k": 75,
+    "midNew1080": 0,
+    "midNew4k": 0
+  },
+  "after": {
+    "mainFlowLatOver3Total": 0,
+    "mainFlowLatMaxMs": 1016,
+    "pageMismatch1080": 0,
+    "pageMismatch4k": 0,
+    "missingOver3s1080": 4,
+    "missingOver3s4k": 4,
+    "correctedMismatch1080": 70,
+    "correctedMismatch4k": 70,
+    "midNew1080": 0,
+    "midNew4k": 0
+  }
+}

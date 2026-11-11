@@ -1,0 +1,43 @@
+name: PR53 live cloud diagnose
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/pr53-live-diagnose-ed3b
+
+concurrency:
+  group: live-cloud-zz-qa-ci-store
+  cancel-in-progress: false
+
+jobs:
+  pr53-real-cloud-30r:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Install e2e platform fonts (Roboto, DejaVu)
+        run: sudo apt-get update && sudo apt-get install -y fonts-roboto fonts-dejavu-core && fc-cache -f
+      - name: Real cloud page-turn 30 rounds (4146812 vs 0ed3056)
+        run: node artifacts/pr53-live/run-real-cloud-ci-compare.mjs
+        env:
+          LIVE_CLOUD_STORE_ID: zz-qa-ci-store
+          PR53_LIVE_CYCLES: '30'
+          MILKSHA_FIREBASE_API_KEY: ${{ secrets.MILKSHA_FIREBASE_API_KEY }}
+          FONTCONFIG_FILE: ${{ github.workspace }}/tests/e2e/fonts/fontconfig-e2e.conf
+      - name: Upload pr53-live artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr53-live-real-cloud
+          path: |
+            artifacts/pr53-live/real-cloud-*.json
+            artifacts/pr53-live/HYPOTHESES.md
