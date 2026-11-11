@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>叫號控制端 · 設計預覽</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="mockup.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>叫號控制端</h1>
+      <span class="status-pill" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        已連線 · 看板在線
+      </span>
+    </header>
+    <p class="preview-banner">設計預覽稿（靜態 HTML，未連接正式系統）</p>
+
+    <main class="main">
+      <section class="card" aria-labelledby="store-heading">
+        <h2 class="card-title" id="store-heading">目前門市</h2>
+        <div class="field">
+          <label for="fld-store">選擇門市</label>
+          <select id="fld-store" name="store">
+            <option value="zz-qa-store-a" selected>zz-qa-store-a（測試店 A · 在線）</option>
+            <option value="zz-qa-store-b">zz-qa-store-b（測試店 B）</option>
+            <option value="s120030">s120030（示範店）</option>
+          </select>
+          <p class="field-hint">切換門市後會重新連線；綠色標示代表看板目前有心跳。</p>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="send-heading">
+        <h2 class="card-title" id="send-heading">送出號碼</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label for="fld-source">來源</label>
+            <select id="fld-source">
+              <option selected>門市</option>
+              <option>Uber Eats</option>
+              <option>foodpanda</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fld-status">狀態</label>
+            <select id="fld-status">
+              <option>準備中</option>
+              <option selected>請取餐</option>
+            </select>
+          </div>
+        </div>
+        <div class="field number-field">
+          <label for="fld-no">號碼</label>
+          <input id="fld-no" type="text" inputmode="numeric" value="2001" autocomplete="off" />
+        </div>
+        <button type="button" class="btn btn-primary">送出號碼</button>
+        <div class="toast-success" role="status">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              stroke="#16a34a"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <div>
+            <strong>已送出 2001（門市 · 請取餐）</strong>
+            看板約 1 秒內更新；可繼續輸入下一筆。
+          </div>
+        </div>
+        <p class="route-line">路由：雲端 · device stb-01</p>
+      </section>
+
+      <section class="card clear-section" aria-labelledby="clear-heading">
+        <h2 class="card-title" id="clear-heading">清空看板</h2>
+        <p class="clear-warning">會立即清除看板上所有號碼，營運中請再三確認。</p>
+        <button type="button" class="btn btn-destructive">清空看板</button>
+      </section>
+    </main>
+
+    <!-- 靜態展示：確認對話框（實作時需接真實二次確認） -->
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal">
+        <h2 id="confirm-title">確定要清空看板？</h2>
+        <p>門市 <strong>zz-qa-store-a</strong> 上的準備中與可取餐號碼將全部移除，此動作無法自動復原。</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-destructive">確認清空</button>
+          <button type="button" class="btn btn-ghost">取消</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
