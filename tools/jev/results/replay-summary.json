@@ -1,0 +1,18 @@
+{
+  "generated_at_utc": "2026-10-16T15:36:35.250Z",
+  "case_count": 26,
+  "api_errors": 0,
+  "overall_accuracy": 0.2692307692307692,
+  "label_agreement_all_cases": 0.8461538461538461,
+  "accuracy_non_fallback": 1,
+  "fail_recall_non_fallback": 1,
+  "fail_recall_overall": 1,
+  "fallback_rate": 0.7307692307692307,
+  "usage": {
+    "input_tokens": 55819,
+    "output_tokens": 1233,
+    "estimated_cost_usd": 0.002344398
+  },
+  "confidence_threshold": 0.85,
+  "logs_dir": "/tmp/jev-qa-logs"
+}
