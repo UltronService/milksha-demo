@@ -1,0 +1,57 @@
+{
+  "viewport": "1920x1080",
+  "layout": "UI/UX slot 1.0F + gap 0.2F + number; store empty slot; icons not in width math",
+  "liveProductionFontPx": 81,
+  "atLive81px": {
+    "prep": {
+      "ok": true
+    },
+    "ready": {
+      "ok": true
+    }
+  },
+  "maxUniformFontPx_bothZonesSame": {
+    "actualLogShapedSamples": {
+      "fontPx": 85.078125,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
+        "maxW": 376.27
+      }
+    },
+    "worstCase_iconPlus5Chars": {
+      "fontPx": 85.078125,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "BFBEF",
+        "width": 376.4282592773437,
+        "maxW": 376.27
+      }
+    },
+    "worstCase_iconPlusHash999999": {
+      "fontPx": 73.875,
+      "bindingAtMax": {
+        "zone": "prep",
+        "ok": false,
+        "index": 1,
+        "text": "#999999",
+        "width": 376.428173828125,
+        "maxW": 376.27
+      }
+    }
+  },
+  "deltaFromLive81px": {
+    "actualSamples": -4.078125,
+    "iconPlus5": -4.078125,
+    "iconPlusHash6": 7.125
+  },
+  "previewBRecommendation": {
+    "useFontPx": 85.078125,
+    "skipSeparateBIfGte81": true
+  }
+}

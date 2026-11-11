@@ -1,0 +1,641 @@
+{
+  "fontPxPreview": 64,
+  "preview_png": "mockups/artifacts/source-icons-mockup/source-icons-font-preview-64px-1920x1080.png",
+  "source_files": {
+    "nidin.png": {
+      "path": "assets/source-icons/nidin.png",
+      "canvas_px": {
+        "w": 183,
+        "h": 91,
+        "ratio_wh": 2.010989
+      },
+      "corners_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "ink_bbox_alpha_gt_0": {
+        "left": 0,
+        "top": 0,
+        "right": 183,
+        "bottom": 91,
+        "w": 183,
+        "h": 91,
+        "ratio_wh": 2.010989
+      },
+      "ink_bbox_alpha_gt_8": {
+        "left": 0,
+        "top": 0,
+        "right": 183,
+        "bottom": 91,
+        "w": 183,
+        "h": 91
+      },
+      "ink_bbox_alpha_gt_250": {
+        "left": 1,
+        "top": 1,
+        "right": 182,
+        "bottom": 90,
+        "w": 181,
+        "h": 89
+      },
+      "transparent_padding_vs_alpha0": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "has_significant_transparent_margin": false
+    },
+    "foodpanda.png": {
+      "path": "assets/source-icons/foodpanda.png",
+      "canvas_px": {
+        "w": 800,
+        "h": 782,
+        "ratio_wh": 1.023018
+      },
+      "corners_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "ink_bbox_alpha_gt_0": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 782,
+        "w": 800,
+        "h": 782,
+        "ratio_wh": 1.023018
+      },
+      "ink_bbox_alpha_gt_8": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 782,
+        "w": 800,
+        "h": 782
+      },
+      "ink_bbox_alpha_gt_250": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 782,
+        "w": 800,
+        "h": 782
+      },
+      "transparent_padding_vs_alpha0": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "has_significant_transparent_margin": false
+    },
+    "ubereats.png": {
+      "path": "assets/source-icons/ubereats.png",
+      "canvas_px": {
+        "w": 800,
+        "h": 800,
+        "ratio_wh": 1
+      },
+      "corners_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "ink_bbox_alpha_gt_0": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 800,
+        "w": 800,
+        "h": 800,
+        "ratio_wh": 1
+      },
+      "ink_bbox_alpha_gt_8": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 800,
+        "w": 800,
+        "h": 800
+      },
+      "ink_bbox_alpha_gt_250": {
+        "left": 0,
+        "top": 0,
+        "right": 800,
+        "bottom": 800,
+        "w": 800,
+        "h": 800
+      },
+      "transparent_padding_vs_alpha0": {
+        "left": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "has_significant_transparent_margin": false
+    }
+  },
+  "preview_dom_measures": {
+    "fontPx": 64,
+    "css_expect_px": {
+      "slotW": 64,
+      "capH": 45.82716049382716,
+      "iconBoxS": 51.2
+    },
+    "icons": [
+      {
+        "index": 0,
+        "sourceKey": "nidin",
+        "itemId": "point:0096",
+        "natural_px": {
+          "w": 183,
+          "h": 91,
+          "ratio": 2.010989010989011
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 1.010989010989011,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 1,
+        "sourceKey": "fp",
+        "itemId": "fp:5821",
+        "natural_px": {
+          "w": 800,
+          "h": 782,
+          "ratio": 1.0230179028132993
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0.023017902813299296,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 2,
+        "sourceKey": "uber",
+        "itemId": "uber:A2C9E",
+        "natural_px": {
+          "w": 800,
+          "h": 800,
+          "ratio": 1
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0,
+        "likely_distorted": false,
+        "box_clips_painted": false
+      },
+      {
+        "index": 3,
+        "sourceKey": "nidin",
+        "itemId": "point:0412",
+        "natural_px": {
+          "w": 183,
+          "h": 91,
+          "ratio": 2.010989010989011
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 1.010989010989011,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 4,
+        "sourceKey": "fp",
+        "itemId": "fp:6405",
+        "natural_px": {
+          "w": 800,
+          "h": 782,
+          "ratio": 1.0230179028132993
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0.023017902813299296,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 5,
+        "sourceKey": "nidin",
+        "itemId": "point:087",
+        "natural_px": {
+          "w": 183,
+          "h": 91,
+          "ratio": 2.010989010989011
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 1.010989010989011,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 6,
+        "sourceKey": "uber",
+        "itemId": "uber:BFBEF",
+        "natural_px": {
+          "w": 800,
+          "h": 800,
+          "ratio": 1
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0,
+        "likely_distorted": false,
+        "box_clips_painted": false
+      },
+      {
+        "index": 7,
+        "sourceKey": "fp",
+        "itemId": "fp:4817",
+        "natural_px": {
+          "w": 800,
+          "h": 782,
+          "ratio": 1.0230179028132993
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0.023017902813299296,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 8,
+        "sourceKey": "nidin",
+        "itemId": "point:0041",
+        "natural_px": {
+          "w": 183,
+          "h": 91,
+          "ratio": 2.010989010989011
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 1.010989010989011,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 9,
+        "sourceKey": "uber",
+        "itemId": "uber:E3F4A",
+        "natural_px": {
+          "w": 800,
+          "h": 800,
+          "ratio": 1
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0,
+        "likely_distorted": false,
+        "box_clips_painted": false
+      },
+      {
+        "index": 10,
+        "sourceKey": "fp",
+        "itemId": "fp:6601",
+        "natural_px": {
+          "w": 800,
+          "h": 782,
+          "ratio": 1.0230179028132993
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0.023017902813299296,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 11,
+        "sourceKey": "nidin",
+        "itemId": "point:095",
+        "natural_px": {
+          "w": 183,
+          "h": 91,
+          "ratio": 2.010989010989011
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 1.010989010989011,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      },
+      {
+        "index": 12,
+        "sourceKey": "uber",
+        "itemId": "uber:D4E8A",
+        "natural_px": {
+          "w": 800,
+          "h": 800,
+          "ratio": 1
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0,
+        "likely_distorted": false,
+        "box_clips_painted": false
+      },
+      {
+        "index": 13,
+        "sourceKey": "fp",
+        "itemId": "fp:9021",
+        "natural_px": {
+          "w": 800,
+          "h": 782,
+          "ratio": 1.0230179028132993
+        },
+        "displayed_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "ratio": 1
+        },
+        "icon_box_px": {
+          "w": 51.1875,
+          "h": 51.1875,
+          "overflow": "visible"
+        },
+        "slot_px": {
+          "w": 64,
+          "h": 45.8125,
+          "overflow": "visible"
+        },
+        "css": {
+          "width": "51.1875px",
+          "height": "51.1875px",
+          "objectFit": "contain",
+          "maxWidth": "none"
+        },
+        "ratio_delta_vs_native": 0.023017902813299296,
+        "likely_distorted": true,
+        "box_clips_painted": false
+      }
+    ]
+  },
+  "compare_artifact": {
+    "png": "mockups/artifacts/source-icons-mockup/source-icons-icon-debug-original-vs-64px-fixed.png",
+    "html": "mockups/artifacts/source-icons-mockup/source-icons-icon-debug-compare.html"
+  },
+  "sizing_rules_applied": {
+    "iconBoxS": "0.8 × F",
+    "slotW": "1.0 × F",
+    "gap": "0.2 × F",
+    "objectFit": "contain",
+    "slotOverflow": "visible"
+  }
+}

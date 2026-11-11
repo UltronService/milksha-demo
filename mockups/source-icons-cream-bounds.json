@@ -1,0 +1,20 @@
+{
+  "source": "assets/milksha-board-bg-1007.jpg",
+  "method": "inner-cream pixel bbox (r>=253,g>=249,b 193-222,y>=320)",
+  "prep": {
+    "left": 101,
+    "top": 341,
+    "right": 899,
+    "bottom": 979,
+    "width": 799,
+    "height": 639
+  },
+  "ready": {
+    "left": 1020,
+    "top": 340,
+    "right": 1819,
+    "bottom": 979,
+    "width": 800,
+    "height": 640
+  }
+}

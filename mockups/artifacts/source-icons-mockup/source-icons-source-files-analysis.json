@@ -1,0 +1,140 @@
+{
+  "nidin.png": {
+    "path": "assets/source-icons/nidin.png",
+    "canvas_px": {
+      "w": 183,
+      "h": 91,
+      "ratio_wh": 2.010989
+    },
+    "corners_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "ink_bbox_alpha_gt_0": {
+      "left": 0,
+      "top": 0,
+      "right": 183,
+      "bottom": 91,
+      "w": 183,
+      "h": 91,
+      "ratio_wh": 2.010989
+    },
+    "ink_bbox_alpha_gt_8": {
+      "left": 0,
+      "top": 0,
+      "right": 183,
+      "bottom": 91,
+      "w": 183,
+      "h": 91
+    },
+    "ink_bbox_alpha_gt_250": {
+      "left": 1,
+      "top": 1,
+      "right": 182,
+      "bottom": 90,
+      "w": 181,
+      "h": 89
+    },
+    "transparent_padding_vs_alpha0": {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    },
+    "has_significant_transparent_margin": false
+  },
+  "foodpanda.png": {
+    "path": "assets/source-icons/foodpanda.png",
+    "canvas_px": {
+      "w": 800,
+      "h": 782,
+      "ratio_wh": 1.023018
+    },
+    "corners_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "ink_bbox_alpha_gt_0": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 782,
+      "w": 800,
+      "h": 782,
+      "ratio_wh": 1.023018
+    },
+    "ink_bbox_alpha_gt_8": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 782,
+      "w": 800,
+      "h": 782
+    },
+    "ink_bbox_alpha_gt_250": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 782,
+      "w": 800,
+      "h": 782
+    },
+    "transparent_padding_vs_alpha0": {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    },
+    "has_significant_transparent_margin": false
+  },
+  "ubereats.png": {
+    "path": "assets/source-icons/ubereats.png",
+    "canvas_px": {
+      "w": 800,
+      "h": 800,
+      "ratio_wh": 1.0
+    },
+    "corners_alpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "ink_bbox_alpha_gt_0": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 800,
+      "w": 800,
+      "h": 800,
+      "ratio_wh": 1.0
+    },
+    "ink_bbox_alpha_gt_8": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 800,
+      "w": 800,
+      "h": 800
+    },
+    "ink_bbox_alpha_gt_250": {
+      "left": 0,
+      "top": 0,
+      "right": 800,
+      "bottom": 800,
+      "w": 800,
+      "h": 800
+    },
+    "transparent_padding_vs_alpha0": {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    },
+    "has_significant_transparent_margin": false
+  }
+}

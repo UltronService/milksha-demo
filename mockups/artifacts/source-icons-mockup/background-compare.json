@@ -1,0 +1,8 @@
+{
+  "baselinePng": "/workspace/mockups/artifacts/source-icons-mockup/live-board-baseline-1920x1080.png",
+  "mockPng": "/workspace/mockups/artifacts/source-icons-mockup/source-icons-full-1920x1080.png",
+  "backgroundAsset": "assets/milksha-board-bg-1007.jpg",
+  "nonCreamPixelMatchRatio": 1,
+  "creamPixelsWithInkEitherImage": 0,
+  "creamPixelTotal": 0
+}

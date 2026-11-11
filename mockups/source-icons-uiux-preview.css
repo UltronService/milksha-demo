@@ -1,0 +1,83 @@
+/**
+ * UI/UX icon row: slot 1.0F, gap 0.2F, cap-height alignment, no chip-scale.
+ */
+.source-icons-uiux-preview .milksha-board-chip,
+.source-icons-uiux-preview .milksha-board-chip--with-icon,
+.source-icons-uiux-preview .milksha-board-chip--with-slot {
+  transform: none !important;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  vertical-align: middle;
+}
+
+.source-icons-uiux-preview .milksha-zone {
+  --source-icons-chip-scale: 1 !important;
+  --source-icons-slot-w: calc(var(--milksha-num-font, 81px) * 1);
+  --source-icons-gap: calc(var(--milksha-num-font, 81px) * 0.2);
+  --source-icons-cap-h: calc(var(--milksha-num-font, 81px) * 58 / 81);
+  --source-icons-icon-box: calc(var(--milksha-num-font, 81px) * 0.8);
+}
+
+.source-icons-uiux-preview .source-icons-live__icon-slot {
+  flex: none;
+  width: var(--source-icons-slot-w);
+  min-width: var(--source-icons-slot-w);
+  max-width: var(--source-icons-slot-w);
+  height: var(--source-icons-cap-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  box-sizing: border-box;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+.source-icons-uiux-preview .source-icons-live__icon-slot--empty {
+  /* store: reserved 1.0F */
+}
+
+.source-icons-uiux-preview .source-icons-live__icon-box {
+  flex: none;
+  width: var(--source-icons-icon-box);
+  height: var(--source-icons-icon-box);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.source-icons-uiux-preview .source-icons-live__icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  flex: none;
+  pointer-events: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.source-icons-uiux-preview .milksha-board-chip--with-slot .milksha-num,
+.source-icons-uiux-preview .milksha-board-chip--with-icon .milksha-num {
+  margin-left: var(--source-icons-gap);
+  flex: none;
+}
+
+.source-icons-uiux-preview .milksha-num {
+  line-height: 1;
+}
+
+.source-icons-uiux-preview .milksha-board.milksha-board--landscape-art .milksha-art-numbers .milksha-num-cell {
+  justify-content: flex-start;
+  width: calc(var(--source-icons-slot-w, 81px) * 2.2);
+  max-width: 50%;
+}
