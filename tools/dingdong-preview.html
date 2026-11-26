@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>叮咚試聽（現行版 vs Proto B）</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 36rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      button {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        margin: 0.25rem 0.5rem 0.25rem 0;
+        cursor: pointer;
+      }
+      .hint {
+        color: #444;
+        font-size: 0.9rem;
+      }
+      code {
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>看板「叮咚」試聽</h1>
+    <p class="hint">純瀏覽器 Web Audio，不需後端。首次播放前請點任一按鈕（解鎖音訊）。</p>
+    <p>
+      <button type="button" id="btn-current">播放現行版（舊參數）</button>
+      <button type="button" id="btn-proto-b">播放 Proto B（bright）</button>
+    </p>
+    <p id="status" class="hint" aria-live="polite"></p>
+    <h2>參數摘要</h2>
+    <ul>
+      <li><strong>現行版</strong>：659.25 Hz／0.45 s／peak 0.4；523.25 Hz／延遲 0.22 s／0.65 s／peak 0.5；純正弦、無限幅。</li>
+      <li>
+        <strong>Proto B</strong>：659.25 Hz／0.7 s／peak 0.4；523.25 Hz／延遲 0.3 s／1.0 s／peak 0.5；加第 2、3 諧波（0.35／0.15），諧波較快衰減；整體
+        <code>outputScale ≈ 1.558</code> 使峰值約 0.95。
+      </li>
+    </ul>
+    <p class="hint">本機開啟：在 repo 根目錄執行 <code>python3 -m http.server 8765</code>，瀏覽器開 <code>http://localhost:8765/tools/dingdong-preview.html</code>。</p>
+    <script>
+      (function () {
+        'use strict';
+
+        const GAIN_FLOOR = 0.001;
+        const ATTACK_S = 0.02;
+
+        const LEGACY_NOTES = [
+          { freq: 659.25, offsetS: 0, durationS: 0.45, peak: 0.4 },
+          { freq: 523.25, offsetS: 0.22, durationS: 0.65, peak: 0.5 },
+        ];
+
+        const PROTO_B = {
+          outputScale: 1.5583461918705759,
+          harmonicH2: 0.35,
+          harmonicH3: 0.15,
+          harmonicDurationH2: 0.55,
+          harmonicDurationH3: 0.4,
+          notes: [
+            { freq: 659.25, offsetS: 0, durationS: 0.7, peak: 0.4 },
+            { freq: 523.25, offsetS: 0.3, durationS: 1.0, peak: 0.5 },
+          ],
+        };
+
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function ensureCtx() {
+          if (!AudioContextClass) {
+            return null;
+          }
+          if (!audioCtx) {
+            audioCtx = new AudioContextClass();
+          }
+          if (audioCtx.state === 'suspended' && audioCtx.resume) {
+            audioCtx.resume().catch(function () {});
+          }
+          return audioCtx;
+        }
+
+        function playTone(ctx, freq, startTime, duration, peak) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(peak, startTime + ATTACK_S);
+          gain.gain.exponentialRampToValueAtTime(GAIN_FLOOR, startTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        }
+
+        function playBrightNote(ctx, freq, startTime, duration, peak, proto) {
+          const scale = proto.outputScale;
+          playTone(ctx, freq, startTime, duration, peak * scale);
+          playTone(
+            ctx,
+            freq * 2,
+            startTime,
+            duration * proto.harmonicDurationH2,
+            peak * proto.harmonicH2 * scale,
+          );
+          playTone(
+            ctx,
+            freq * 3,
+            startTime,
+            duration * proto.harmonicDurationH3,
+            peak * proto.harmonicH3 * scale,
+          );
+        }
+
+        function playLegacy() {
+          const ctx = ensureCtx();
+          if (!ctx) {
+            return Promise.reject(new Error('no AudioContext'));
+          }
+          const now = ctx.currentTime;
+          for (let i = 0; i < LEGACY_NOTES.length; i += 1) {
+            const n = LEGACY_NOTES[i];
+            playTone(ctx, n.freq, now + n.offsetS, n.durationS, n.peak);
+          }
+          return Promise.resolve();
+        }
+
+        function playProtoB() {
+          const ctx = ensureCtx();
+          if (!ctx) {
+            return Promise.reject(new Error('no AudioContext'));
+          }
+          const now = ctx.currentTime;
+          for (let i = 0; i < PROTO_B.notes.length; i += 1) {
+            const n = PROTO_B.notes[i];
+            playBrightNote(ctx, n.freq, now + n.offsetS, n.durationS, n.peak, PROTO_B);
+          }
+          return Promise.resolve();
+        }
+
+        const statusEl = document.getElementById('status');
+
+        function bind(id, label, fn) {
+          document.getElementById(id).addEventListener('click', function () {
+            statusEl.textContent = '播放中：' + label + '…';
+            fn()
+              .then(function () {
+                statusEl.textContent = '已播放：' + label;
+              })
+              .catch(function () {
+                statusEl.textContent = '無法播放（此瀏覽器可能不支援 Web Audio）';
+              });
+          });
+        }
+
+        bind('btn-current', '現行版', playLegacy);
+        bind('btn-proto-b', 'Proto B', playProtoB);
+      })();
+    </script>
+  </body>
+</html>
