@@ -124,18 +124,54 @@
       }
     }
 
+    const DING_DONG_GAIN_FLOOR = 0.001;
+    const DING_DONG_ATTACK_S = 0.02;
+
+    /** Proto B (bright): matches artifacts/dingdong-preview/generate_dingdong_wav.py */
+    const DING_DONG_PROTO_B = {
+      outputScale: 1.5583461918705759,
+      harmonicH2: 0.35,
+      harmonicH3: 0.15,
+      harmonicDurationH2: 0.55,
+      harmonicDurationH3: 0.4,
+      resolveMs: 1400,
+      notes: [
+        { freq: 659.25, offsetS: 0, durationS: 0.7, peak: 0.4 },
+        { freq: 523.25, offsetS: 0.3, durationS: 1.0, peak: 0.5 },
+      ],
+    };
+
     function playTone(ctx, freq, startTime, duration, peak) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, startTime);
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(peak, startTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      gain.gain.linearRampToValueAtTime(peak, startTime + DING_DONG_ATTACK_S);
+      gain.gain.exponentialRampToValueAtTime(DING_DONG_GAIN_FLOOR, startTime + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(startTime);
       osc.stop(startTime + duration);
+    }
+
+    function playBrightNote(ctx, freq, startTime, duration, peak, proto) {
+      const scale = proto.outputScale;
+      playTone(ctx, freq, startTime, duration, peak * scale);
+      playTone(
+        ctx,
+        freq * 2,
+        startTime,
+        duration * proto.harmonicDurationH2,
+        peak * proto.harmonicH2 * scale,
+      );
+      playTone(
+        ctx,
+        freq * 3,
+        startTime,
+        duration * proto.harmonicDurationH3,
+        peak * proto.harmonicH3 * scale,
+      );
     }
 
     function playDingDong() {
@@ -151,9 +187,12 @@
         }
         try {
           const now = ctx.currentTime;
-          playTone(ctx, 659.25, now, 0.45, 0.4);
-          playTone(ctx, 523.25, now + 0.22, 0.65, 0.5);
-          setTimeout(resolve, 750);
+          const proto = DING_DONG_PROTO_B;
+          for (let i = 0; i < proto.notes.length; i += 1) {
+            const note = proto.notes[i];
+            playBrightNote(ctx, note.freq, now + note.offsetS, note.durationS, note.peak, proto);
+          }
+          setTimeout(resolve, proto.resolveMs);
         } catch (error) {
           markDingDongFailed();
           resolve();
