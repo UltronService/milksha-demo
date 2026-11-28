@@ -61,6 +61,19 @@ test('strict main deploy fails when manifest requires folder but live is 404', f
   assert.equal(v.action, 'fail');
 });
 
+test('strict main deploy fails when mirrored folder lacks index-referenced assets', function () {
+  const v = evaluatePreserveStep({
+    strict: true,
+    inManifest: true,
+    httpCode: '200',
+    mirrored: true,
+    alreadyInArtifact: false,
+    prNumber: '124',
+    integrityOk: false,
+  });
+  assert.equal(v.action, 'fail');
+});
+
 test('non-strict deploy may skip 404 previews not listed in manifest', function () {
   const v = evaluatePreserveStep({
     strict: false,
